@@ -1,0 +1,251 @@
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
+import {hp, wp, Images} from '../../utilities';
+// import Icon from 'react-native-vector-icons/Ionicons';
+
+const articles = [
+  {
+    id: '1',
+    title: 'Portion Control for Health',
+    description:
+      'Portion control is a key aspect of healthy eating, particularly in the context of the Indian diet...',
+    image: Images.KNOWLEDGE_1,
+  },
+  {
+    id: '2',
+    title: 'Managing Emotional Eating',
+    description:
+      'Stress eating, also known as emotional eating, is a common response to feelings of anxiety...',
+    image: Images.KNOWLEDGE_2,
+  },
+  {
+    id: '3',
+    title: 'Diabetes: Prevention, Early Detection, and Control',
+    description:
+      'Diabetes is a chronic condition that often develops gradually, with early signs easy to miss...',
+    image: Images.KNOWLEDGE_3,
+  },
+  {
+    id: '4',
+    title: 'Creating Identity Based Habits',
+    description:
+      'Identity-based habits focus on who you want to become rather than just achieving specific goals...',
+    image: Images.KNOWLEDGE_4,
+  },
+  {
+    id: '5',
+    title: 'Overcoming Tobacco Cravings',
+    description:
+      'Quitting tobacco can be challenging, but with the right strategies, you can manage cravings...',
+    image: Images.KNOWLEDGE_5,
+  },
+  {
+    id: '6',
+    title: 'The Cardiovascular Disease Paradox',
+    description:
+      'Despite traditionally lower cholesterol levels, India faces an alarming rise in coronary artery...',
+    image: Images.KNOWLEDGE_6,
+  },
+];
+
+const CuoreKnowledge = ({navigation}) => {
+  const [search, setSearch] = useState('');
+
+  const filteredArticles = articles.filter(item =>
+    item.title.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const renderItem = ({item}) => (
+    <TouchableOpacity
+      onPress={() => navigation.navigate('KnowledgeDetails')}
+      style={styles.card}>
+      <Image source={item.image} style={styles.image} />
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.description}>{item.description}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={{flex: 1, backgroundColor: '#EFF6FF'}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          backgroundColor: '#FFFFFF',
+          paddingTop: hp(2),
+          elevation: 1,
+        }}>
+        <TouchableOpacity
+          style={{paddingHorizontal: hp(1)}}
+          onPress={() => navigation.goBack()}>
+          <Image
+            source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+            style={{
+              marginTop:Platform.OS =='ios' && hp(
+                4
+              ),
+              resizeMode: 'contain',
+              height: hp(3.5),
+              width: wp(4),
+            }}
+          />
+        </TouchableOpacity>
+
+        {/* Header Icon */}
+        <View style={styles.headerIconContainer}>
+          <View
+            style={{padding: hp(0.8), borderWidth: 3, borderRadius: hp(10)}}>
+            <Image source={Images.DOCTOR_PROFILE} style={styles.headerIcon} />
+          </View>
+          <Text style={styles.heading}>Recommended Articles</Text>
+        </View>
+
+        {/* Heading */}
+      </View>
+
+      <View style={styles.container}>
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <Image
+            source={Images.SEARCH} // Replace with actual key in your `images` object
+            style={{
+              resizeMode: 'contain',
+              height: hp(2),
+              width: wp(4),
+              marginRight: hp(1),
+              //   margin: 0,
+              //   tintColor: '#000000',
+            }}
+            resizeMode="contain"
+          />
+          <TextInput
+            placeholderTextColor={'#6B7280'}
+            placeholder="Search articles..."
+            style={styles.searchInput}
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
+
+        {/* Info Text */}
+        <Text style={styles.infoText}>Finish this set to unlock the next!</Text>
+
+        {/* Article List */}
+        <FlatList
+          data={filteredArticles}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{paddingBottom: hp(10)}}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    padding: wp(4),
+    // backgroundColor: '#f6f9ff',
+    flex: 1,
+  },
+  backArrow: {
+    position: 'absolute',
+    top: hp(3),
+    left: wp(4),
+    zIndex: 1,
+  },
+  headerIconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: hp(5),
+    marginLeft: hp(-4),
+    marginBottom: hp(2),
+    // backgroundColor: 'red',
+    width: '100%',
+  },
+  headerIcon: {
+    // borderWidth: 3,
+    // borderRadius: hp(10),
+    width: wp(10),
+    height: wp(10),
+    resizeMode: 'contain',
+  },
+  heading: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#1E64AC',
+    textAlign: 'center',
+    marginTop: hp(2),
+  },
+  searchContainer: {
+    marginTop: hp(2),
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: hp(0.5),
+    paddingHorizontal: wp(4),
+    height: hp(5.5),
+    // elevation: 2,
+    borderColor: '#E5E7EB',
+  },
+  searchInput: {
+    fontFamily: 'Roboto-Regular',
+    flex: 1,
+    fontSize: hp(1.8),
+    color: '#000',
+  },
+  infoText: {
+    fontFamily: 'Roboto-Regular',
+    color: '#1E64AC',
+    marginVertical: hp(2),
+    fontWeight: '400',
+    fontSize: 16,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: hp(0.5),
+    flexDirection: 'row',
+    marginBottom: hp(2),
+    padding: wp(2),
+    // paddingVertical: hp(),
+    elevation: 1,
+  },
+  image: {
+    width: wp(18),
+    height: wp(18),
+    borderRadius: hp(0.3),
+  },
+  textContainer: {
+    flex: 1,
+    marginLeft: wp(3),
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 14,
+    fontFamily: 'Roboto-Regular',
+    fontWeight: '400',
+    color: '#000000',
+  },
+  description: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: hp(0.5),
+    fontWeight: '400',
+  },
+});
+
+export default CuoreKnowledge;
