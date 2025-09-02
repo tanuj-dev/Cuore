@@ -492,6 +492,43 @@ const Health = ({navigation}) => {
               RBS: 230
             </Text>
           </View>
+            <View style={styles.card}>
+            <View
+              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+              <Text style={styles.sectionTitle}>Disease Progression Risk</Text>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                {/* <Image
+                  style={{
+                    height: hp(1.5),
+                    width: hp(2),
+                    resizeMode: 'contain',
+                    marginHorizontal: hp(1),
+                  }}
+                  source={Images.NOTICE}></Image> */}
+                {/* <Text style={{width: wp(45), fontSize: 12, color: '#6B7280'}}>
+                  Accuracy depends on clarity and legibility of handwriting.
+                </Text> */}
+              </View>
+            </View>
+             <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+          You may have a 52% chance of developing diabetes and early kidney issues within the next 4 years.
+            </Text>
+
+            {/* <Text style={styles.bold}>History: </Text>
+           
+
+            <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
+            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+              Diabetes on metformin   Hypertension (HTN) on Cardace
+            </Text>
+
+            <Text style={[styles.label, {marginTop: hp(1)}]}>
+              <Text style={styles.bold}>Labs:</Text>
+            </Text>
+            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+              RBS: 230
+            </Text> */}
+          </View>
         </View>
       </View>
     </ScrollView>

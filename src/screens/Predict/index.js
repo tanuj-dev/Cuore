@@ -347,9 +347,9 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 20,
     width: wp(90),
-    // shadowColor: '#000',
-    // shadowOpacity: 0.1,
-    // shadowRadius: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
   },
   cardHeader: {

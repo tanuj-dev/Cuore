@@ -92,7 +92,7 @@ const OnBoardingFive = () => {
         )}
 
         <Text style={styles.question}>
-          Pick your preferred rest day for exercise
+          select your weekly rest day from exercise
         </Text>
         <View style={styles.dayRow}>
           {['Mon', 'Tue', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun'].map(day => (

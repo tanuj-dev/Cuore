@@ -115,7 +115,7 @@ const CuoreKnowledge = ({navigation}) => {
 
       <View style={styles.container}>
         {/* Search */}
-        <View style={styles.searchContainer}>
+        {/* <View style={styles.searchContainer}>
           <Image
             source={Images.SEARCH} // Replace with actual key in your `images` object
             style={{
@@ -135,10 +135,10 @@ const CuoreKnowledge = ({navigation}) => {
             value={search}
             onChangeText={setSearch}
           />
-        </View>
+        </View> */}
 
         {/* Info Text */}
-        <Text style={styles.infoText}>Finish this set to unlock the next!</Text>
+        {/* <Text style={styles.infoText}>Finish this set to unlock the next!</Text> */}
 
         {/* Article List */}
         <FlatList

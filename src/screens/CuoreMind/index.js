@@ -191,7 +191,7 @@ const Mind = ({navigation}) => {
         </ScrollView>
 
         <Text style={styles.footerNote}>
-          Stick to one meditation for 10–15 days to build deeper benefits
+         Stick to one meditation for 21 days to unlock deeper benefits
         </Text>
       </ScrollView>
       {/* <MindTab></MindTab> */}

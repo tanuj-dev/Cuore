@@ -67,7 +67,7 @@ const OnBoardingThree = () => {
       <View style={styles.tagsWrapper}>
         <TextInput
           style={styles.input}
-          placeholder="Heart Attack / L thigh fracture / GB removal"
+          placeholder="Condition 1 / Condition 2 / …."
           multiline
           value={text}
           onChangeText={handleChangeText}

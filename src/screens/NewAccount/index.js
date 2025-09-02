@@ -88,10 +88,10 @@ const CreateAccountScreen = () => {
             keyboardType="phone-pad"
           />
 
-          <Text style={styles.label}>Caregiver Mobile Number</Text>
+          <Text style={styles.label}>Family member's mobile number</Text>
           <TextInput
             style={styles.input}
-            placeholder="Give family access to your progress and alerts"
+            placeholder="So they can see your progress"
             placeholderTextColor="#6B7280"
             keyboardType="phone-pad"
           />

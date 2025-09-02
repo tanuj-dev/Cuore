@@ -14,8 +14,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 const RadioOption = ({label, selected, onPress}) => (
   <TouchableOpacity style={styles.radioOption} onPress={onPress}>
     <View
-      style={[styles.radioCircle, selected && styles.radioCircleSelected]}
-    />
+      style={styles.radioCircle }
+    >
+        {selected && <View style={styles.radioCircleSelected}>
+    </View>}
+    </View>
     <Text style={styles.radioLabel}>{label}</Text>
   </TouchableOpacity>
 );
@@ -180,16 +183,22 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
   },
   radioCircle: {
-    width: wp(4),
-    height: wp(4),
-    borderRadius: wp(2),
-    borderWidth: 1,
+   width: wp(4.5),
+    height: wp(4.5),
+    borderRadius: wp(2.25),
+    borderWidth: 1.5,
     borderColor: '#D1D5DB',
-    marginRight: wp(2),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: wp(3),
   },
   radioCircleSelected: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
+   
+    width: wp(2.5),
+    height: wp(2.5),
+    borderRadius: wp(1.25),
+    backgroundColor: '#007bff',
+   
   },
   radioLabel: {
     fontFamily: 'Roboto-Regular',

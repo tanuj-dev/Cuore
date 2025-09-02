@@ -8,6 +8,7 @@ import {
   Image,
   StyleSheet,
   ScrollView,
+  Platform,
 } from 'react-native';
 import {Images, hp, wp} from '../../utilities';
 
@@ -101,12 +102,13 @@ const Doctor = ({navigation}) => {
   return (
     <ScrollView>
       <View style={{flex: 1, backgroundColor: ''}}>
-        <View
+        <View style={{    elevation: 1,         backgroundColor: '#FFFFFF',}}>
+           <View
           style={{
             flexDirection: 'row',
-            backgroundColor: '#FFFFFF',
-
-            elevation: 1,
+   
+            marginTop:Platform.OS == 'ios' && hp(5),
+        
             alignItems: 'center',
 
             padding: hp(2),
@@ -131,11 +133,13 @@ const Doctor = ({navigation}) => {
               fontSize: 20,
               fontWeight: '400',
               color: '#000000',
-              marginLeft: hp(1),
+              marginLeft: hp(7),
             }}>
-            Cuore-Partnered Doctors
+          Cuore-Partnered Doctors
           </Text>
         </View>
+        </View>
+       
 
         <View style={styles.container}>
           <View
@@ -199,7 +203,7 @@ const Doctor = ({navigation}) => {
               keyExtractor={item => item.id}
             />
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.navigate('Checkout')}
               style={styles.button}>
               <Text style={styles.buttonText}>Request Supervision</Text>
             </TouchableOpacity>

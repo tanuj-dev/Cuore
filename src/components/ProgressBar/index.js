@@ -10,7 +10,7 @@ const ProgressBarWithImage = ({navigation}) => {
   const indicatorPosition = progress * progressBarWidth;
 
   return (
-    <View style={styles.container}>
+    <TouchableOpacity onPress={()=>navigation.navigate('Score')} style={styles.container}>
       <View style={styles.labelRow}>
         <Text style={styles.label}>Aug '24</Text>
         <Text style={styles.label}>Dec '24</Text>
@@ -54,7 +54,7 @@ const ProgressBarWithImage = ({navigation}) => {
           <Text style={styles.percentText}>{'>75%'}</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

@@ -144,7 +144,7 @@ const Explore = ({navigation}) => {
                 styles.subheading,
                 {marginLeft: wp(4), marginTop: hp(1)},
               ]}>
-              Your health journey, summarized and shareable
+            Your Health Journey
             </Text>
           </View>
 
