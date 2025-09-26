@@ -99,6 +99,7 @@ const images = {
   RENEW_SUBSCRIPTION: require('../assets/images/renewsubscription.png'),
   SELECT_PERSONA: require('../assets/images/selectpersona.png'),
   DELETE_ACCOUNT: require('../assets/images/deleteaccount.png'),
+  MIKE: require('../assets/images/mike.png'),
 };
 
 export default images;

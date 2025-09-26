@@ -9,7 +9,7 @@ import {
   Modal,
   Alert,
 } from 'react-native';
-import {hp, wp, Images} from '../../utilities';
+import { hp, wp, Images } from '../../utilities';
 
 const profileOptions = [
   {
@@ -56,7 +56,7 @@ const profileOptions = [
   },
 ];
 
-const Profile = ({navigation}) => {
+const Profile = ({ navigation }) => {
   // Group the options by section
   const groupedSections = profileOptions.reduce((acc, item) => {
     if (!acc[item.section]) acc[item.section] = [];
@@ -94,7 +94,8 @@ const Profile = ({navigation}) => {
             }
           }}
           key={index}
-          style={styles.item}>
+          style={styles.item}
+        >
           <Image
             source={item.icon}
             style={styles.itemIcon}
@@ -109,38 +110,49 @@ const Profile = ({navigation}) => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Logo at the top */}
-      <View style={{   padding: hp(2),  elevation: 2,
-          // height: hp(7),
-          backgroundColor: '#FFFFFF',}}> 
-         <View
-        style={{
-        marginTop:Platform.OS =='ios'&& hp(5),
-          justifyContent: 'center',
-        
-        }}>
-        <Image
-          source={Images.APP_LOGO}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-      </View>
-     
-      <View style={{padding: wp(4)}}>
-        {/* User profile card */}
-        <TouchableOpacity
-          onPress={() => navigation.navigate('EditProfile')}
-          style={styles.profileCard}>
-          <Image source={Images.UNCLE} style={styles.profileImage} />
-          <Text style={styles.name}>M. Johnson</Text>
-          <Image source={Images.RIGHT_ARROW} style={styles.profileArrow} />
-        </TouchableOpacity>
+      <View style={{ backgroundColor: '#FAFAFA' }}>
+        {/* Logo at the top */}
+        <View
+          style={{
+            padding: hp(2),
+            elevation: 2,
+            // height: hp(7),
+            backgroundColor: '#FFFFFF',
+          }}
+        >
+          <View
+            style={{
+              marginTop: Platform.OS == 'ios' && hp(5),
+              justifyContent: 'center',
+            }}
+          >
+            <Image
+              source={Images.APP_LOGO}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
 
-        {/* Render sections */}
-        {Object.entries(groupedSections).map(([sectionTitle, items]) =>
-          renderSection(sectionTitle, items),
-        )}
+        <View style={{ padding: wp(4) }}>
+          {/* User profile card */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditProfile')}
+            style={styles.profileCard}
+          >
+            <Image source={Images.UNCLE} style={styles.profileImage} />
+            <Text style={styles.name}>M. Johnson</Text>
+            <Image source={Images.RIGHT_ARROW} style={styles.profileArrow} />
+          </TouchableOpacity>
+
+          {/* Render sections */}
+          {Object.entries(groupedSections).map(([sectionTitle, items]) =>
+            renderSection(sectionTitle, items),
+          )}
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text>login</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   );
@@ -149,7 +161,7 @@ const Profile = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: 'white',
   },
   logo: {
     // backgroundColor:'red',
@@ -166,7 +178,7 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
     shadowColor: '#000',
     shadowOpacity: 0.05,
-    shadowOffset: {width: 0, height: 1},
+    shadowOffset: { width: 0, height: 1 },
     shadowRadius: 3,
     elevation: 2,
   },

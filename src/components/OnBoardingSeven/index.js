@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Platform,
 } from 'react-native';
-import {Images, color, hp, wp} from '../../utilities'; // Make sure this utility works
+import { Images, color, hp, wp } from '../../utilities'; // Make sure this utility works
 
 const OnBoardingSeven = () => {
   const [oxygen, setOxygen] = useState('');
@@ -21,7 +22,7 @@ const OnBoardingSeven = () => {
   const [hdl, setHdl] = useState('');
   const [ldl, setLdl] = useState('');
   const [triglycerides, setTriglycerides] = useState('');
-  const [hscrp, setHscrp] = useState('');
+  const [hscrp, setHscrp] = useState('mg/dl');
 
   const renderDoubleInputRow = (
     label1,
@@ -59,7 +60,8 @@ const OnBoardingSeven = () => {
     <View
       // showsVerticalScrollIndicator={false}
       style={styles.container}
-      contentContainerStyle={{padding: wp(5), paddingBottom: hp(5)}}>
+      contentContainerStyle={{ padding: wp(5), paddingBottom: hp(5) }}
+    >
       <Text style={styles.sectionTitle}>Vital Signs (Resting values)</Text>
 
       {renderDoubleInputRow(
@@ -81,10 +83,11 @@ const OnBoardingSeven = () => {
       )}
 
       <Text style={styles.sectionTitle}>Blood Tests</Text>
-      <View style={{flexDirection: 'row'}}>
+      <View style={{ flexDirection: 'row' }}>
         <Image
-          style={{height: hp(2), width: wp(4), marginRight: hp(1)}}
-          source={Images.NOTICE}></Image>
+          style={{ height: hp(2), width: wp(4), marginRight: hp(1) }}
+          source={Images.NOTICE}
+        ></Image>
         <Text style={styles.note}>
           Yearly for non-diabetics, unless advised
         </Text>
@@ -118,7 +121,13 @@ const OnBoardingSeven = () => {
         setTriglycerides,
       )}
 
-      <View style={styles.row}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginBottom: hp(2),
+        }}
+      >
         <View style={styles.inputGroup}>
           <Text style={styles.label}>HsCRP (Annual)</Text>
           <TextInput
@@ -128,7 +137,37 @@ const OnBoardingSeven = () => {
             onChangeText={setHscrp}
           />
         </View>
-        <View style={[styles.inputGroup, {opacity: 0}]}>
+        <View style={styles.unitContainer}>
+          <TouchableOpacity
+            style={[
+              styles.unitButton,
+              hscrp === 'mg/dl' && styles.unitButtonSelected,
+            ]}
+            onPress={() => setHscrp('mg/dl')}
+          >
+            <Text
+              style={[styles.unitText, hscrp === 'mg/dl' && { color: 'white' }]}
+            >
+              mg/dl
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.unitButton,
+              hscrp === 'mg/L' && styles.unitButtonSelected,
+            ]}
+            onPress={() => setHscrp('mg/L')}
+          >
+            <Text
+              style={[styles.unitText, hscrp === 'mg/L' && { color: 'white' }]}
+            >
+              mg/L
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.inputGroup, { opacity: 0 }]}>
           {/* Empty view to keep row layout even */}
           <Text style={styles.label}>Hidden</Text>
           <TextInput style={styles.input} editable={false} />
@@ -182,6 +221,27 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(3),
     borderRadius: wp(2),
+  },
+  unitContainer: {
+    paddingVertical: hp(1),
+    // flexDirection: 'row',
+    marginTop: Platform.OS == 'android ' ? hp(4) : hp(1.5),
+  },
+  unitButton: {
+    padding: hp(0.5),
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 5,
+    backgroundColor: '#9CA3AF',
+  },
+  unitButtonSelected: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  unitText: {
+    fontSize: hp(1),
+    color: '#000',
   },
 });
 

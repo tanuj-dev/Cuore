@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,10 @@ import {
   Image,
   Modal,
 } from 'react-native';
-import {hp, wp, Images} from '../../utilities';
+import { hp, wp, Images } from '../../utilities';
 import PaymentConfirmation from '../../components/PaymentCoinfirmation';
 
-const PaymentScreen = ({route, navigation}) => {
+const PaymentScreen = ({ route, navigation }) => {
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
@@ -30,15 +30,19 @@ const PaymentScreen = ({route, navigation}) => {
   };
 
   return (
-    <ScrollView style={{flex: 1, backgroundColor: '#F9FAFB'}}>
+    <ScrollView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
       <View
         style={{
           flexDirection: 'row',
           backgroundColor: '#FFFFFF',
           paddingTop: hp(2),
           elevation: 1,
-        }}>
-        <TouchableOpacity style={{ marginTop:Platform.OS =='ios'&& hp(8)}} onPress={() => navigation.goBack()}>
+        }}
+      >
+        <TouchableOpacity
+          style={{ marginTop: Platform.OS == 'ios' && hp(8) }}
+          onPress={() => navigation.goBack()}
+        >
           <Image
             source={Images.BACK_BUTTON}
             style={{
@@ -68,20 +72,22 @@ const PaymentScreen = ({route, navigation}) => {
           />
 
           <View style={styles.row}>
-            <View style={{width: wp(40)}}>
+            <View style={{ width: wp(40) }}>
               <Text style={styles.upperInputText}>Expiry Date</Text>
               <TextInput
                 placeholder="MM/YY"
-                style={[styles.input, {flex: 1, marginRight: wp(2)}]}
+                style={[styles.input, { flex: 1, marginRight: wp(2) }]}
                 value={expiryDate}
                 onChangeText={setExpiryDate}
+                keyboardType="numeric" // 👈 shows only number keyboard
+                maxLength={5}
               />
             </View>
-            <View style={{width: wp(40)}}>
+            <View style={{ width: wp(40) }}>
               <Text style={styles.upperInputText}>CVV</Text>
               <TextInput
                 placeholder="123"
-                style={[styles.input, {flex: 1}]}
+                style={[styles.input, { flex: 1 }]}
                 keyboardType="number-pad"
                 secureTextEntry
                 value={cvv}
@@ -108,10 +114,11 @@ const PaymentScreen = ({route, navigation}) => {
                 fontSize: 14,
                 fontWeight: '400',
                 color: '#000000',
-              }}>
+              }}
+            >
               Progress
             </Text>
-            <Text style={{color: '#000000', fontSize: 14}}>
+            <Text style={{ color: '#000000', fontSize: 14 }}>
               ₹{progressAmount.toFixed(2)}
             </Text>
           </View>
@@ -129,7 +136,8 @@ const PaymentScreen = ({route, navigation}) => {
                 fontSize: 14,
                 fontWeight: '400',
                 color: '#000000',
-              }}>
+              }}
+            >
               GST 18%
             </Text>
             <Text>₹{gst.toFixed(2)}</Text>
@@ -148,7 +156,8 @@ const PaymentScreen = ({route, navigation}) => {
                 fontWeight: '400',
                 fontSize: 14,
                 color: '#000000',
-              }}>
+              }}
+            >
               Total
             </Text>
             <Text
@@ -157,7 +166,8 @@ const PaymentScreen = ({route, navigation}) => {
                 fontWeight: '400',
                 fontSize: 14,
                 color: '#000000',
-              }}>
+              }}
+            >
               ₹{totalAmount.toFixed(2)}
             </Text>
           </View>
@@ -183,7 +193,8 @@ const PaymentScreen = ({route, navigation}) => {
             alignItems: 'center',
             justifyContent: 'center',
             marginVertical: hp(1),
-          }}>
+          }}
+        >
           <Image
             source={Images.SECURE}
             style={{
@@ -201,9 +212,8 @@ const PaymentScreen = ({route, navigation}) => {
       <PaymentConfirmation
         navigation={navigation}
         setPaymentSuccessModalVisible={setPaymentSuccessModalVisible}
-        paymentSuccessModalVisible={
-          paymentSuccessModalVisible
-        }></PaymentConfirmation>
+        paymentSuccessModalVisible={paymentSuccessModalVisible}
+      ></PaymentConfirmation>
     </ScrollView>
   );
 };
@@ -270,7 +280,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
   },

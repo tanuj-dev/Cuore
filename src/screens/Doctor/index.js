@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,12 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
+  Touchable,
+  Alert,
 } from 'react-native';
-import {Images, hp, wp} from '../../utilities';
+import { Images, hp, wp } from '../../utilities';
 
-const Doctor = ({navigation}) => {
+const Doctor = ({ navigation }) => {
   const [doctors, setDoctors] = useState([
     {
       id: '1',
@@ -47,12 +49,12 @@ const Doctor = ({navigation}) => {
   const toggleSelection = id => {
     setDoctors(prev =>
       prev.map(doc =>
-        doc.id === id ? {...doc, selected: !doc.selected} : doc,
+        doc.id === id ? { ...doc, selected: !doc.selected } : doc,
       ),
     );
   };
 
-  const renderDoctorCard = ({item}) => (
+  const renderDoctorCard = ({ item }) => (
     <View
       style={{
         flexDirection: 'row',
@@ -61,23 +63,30 @@ const Doctor = ({navigation}) => {
         alignItems: 'center',
         // justifyContent: 'center',
         width: '100%',
-      }}>
+      }}
+    >
       {item.selected ? (
-        <Image source={Images.RIGHT} style={styles.checkbox} />
+        <TouchableOpacity onPress={() => toggleSelection(item.id)}>
+          <Image source={Images.RIGHT} style={styles.checkbox} />
+        </TouchableOpacity>
       ) : (
-        <View
-          style={{
-            marginRight: hp(1),
-            height: hp(2),
-            width: wp(4),
-            borderWidth: 1,
-            borderColor: '#D1D5DB',
-          }}></View>
+        <TouchableOpacity onPress={() => toggleSelection(item.id)}>
+          <View
+            style={{
+              marginRight: hp(1),
+              height: hp(2),
+              width: wp(4),
+              borderWidth: 1,
+              borderColor: '#D1D5DB',
+            }}
+          ></View>
+        </TouchableOpacity>
       )}
 
       <TouchableOpacity
         style={styles.card}
-        onPress={() => toggleSelection(item.id)}>
+        onPress={() => toggleSelection(item.id)}
+      >
         <View style={styles.row}>
           <View style={styles.details}>
             <Text style={styles.name}>{item.name}</Text>
@@ -90,10 +99,15 @@ const Doctor = ({navigation}) => {
             flexDirection: 'row',
             justifyContent: 'space-between',
             marginTop: hp(1),
-          }}>
-          <Text style={{color: '#6B7280', fontSize: 12}}>Fee</Text>
-          <Text style={{color: '#6B7280', fontSize: 12}}>6 months: ₹1000 </Text>
-          <Text style={{color: '#6B7280', fontSize: 12}}>12 months: ₹1000</Text>
+          }}
+        >
+          <Text style={{ color: '#6B7280', fontSize: 12 }}>Fee</Text>
+          <Text style={{ color: '#6B7280', fontSize: 12 }}>
+            6 months: ₹1000{' '}
+          </Text>
+          <Text style={{ color: '#6B7280', fontSize: 12 }}>
+            12 months: ₹1000
+          </Text>
         </View>
       </TouchableOpacity>
     </View>
@@ -101,45 +115,46 @@ const Doctor = ({navigation}) => {
 
   return (
     <ScrollView>
-      <View style={{flex: 1, backgroundColor: ''}}>
-        <View style={{    elevation: 1,         backgroundColor: '#FFFFFF',}}>
-           <View
-          style={{
-            flexDirection: 'row',
-   
-            marginTop:Platform.OS == 'ios' && hp(5),
-        
-            alignItems: 'center',
-
-            padding: hp(2),
-            flexDirection: 'row',
-          }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Image
-              source={Images.BACK_BUTTON}
-              style={{
-                height: hp(3),
-                width: wp(4),
-                resizeMode: 'contain',
-                tintColor: '#000000',
-              }}
-            />
-          </TouchableOpacity>
-
-          <Text
+      <View style={{ flex: 1, backgroundColor: '' }}>
+        <View style={{ elevation: 1, backgroundColor: '#FFFFFF' }}>
+          <View
             style={{
-              fontFamily: 'Roboto-Regular',
-              fontFamily: 'Roboto-Regular',
-              fontSize: 20,
-              fontWeight: '400',
-              color: '#000000',
-              marginLeft: hp(7),
-            }}>
-          Cuore-Partnered Doctors
-          </Text>
+              flexDirection: 'row',
+
+              marginTop: Platform.OS == 'ios' && hp(5),
+
+              alignItems: 'center',
+
+              padding: hp(2),
+              flexDirection: 'row',
+            }}
+          >
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Image
+                source={Images.BACK_BUTTON}
+                style={{
+                  height: hp(3),
+                  width: wp(4),
+                  resizeMode: 'contain',
+                  tintColor: '#000000',
+                }}
+              />
+            </TouchableOpacity>
+
+            <Text
+              style={{
+                fontFamily: 'Roboto-Regular',
+                fontFamily: 'Roboto-Regular',
+                fontSize: 20,
+                fontWeight: '400',
+                color: '#000000',
+                marginLeft: hp(7),
+              }}
+            >
+              Cuore-Partnered Doctors
+            </Text>
+          </View>
         </View>
-        </View>
-       
 
         <View style={styles.container}>
           <View
@@ -158,8 +173,9 @@ const Doctor = ({navigation}) => {
               shadowOpacity: 0.1,
               shadowRadius: 4,
               elevation: 0, // Android-specific
-            }}>
-            <Text style={{alignSelf: 'center', marginBottom: hp(2)}}>
+            }}
+          >
+            <Text style={{ alignSelf: 'center', marginBottom: hp(2) }}>
               <Text
                 style={{
                   color: 'black',
@@ -168,7 +184,8 @@ const Doctor = ({navigation}) => {
                   fontStyle: 'italic',
                   alignSelf: 'center',
                   textAlign: 'center',
-                }}>
+                }}
+              >
                 Note:
               </Text>
               <Text
@@ -179,7 +196,8 @@ const Doctor = ({navigation}) => {
                   color: '#374151',
                   fontSize: 14,
                   fontStyle: 'italic',
-                }}>
+                }}
+              >
                 Cuore doesn’t collect supervision fees — You need to pay your
                 doctor directly for remote supervision
               </Text>
@@ -203,8 +221,25 @@ const Doctor = ({navigation}) => {
               keyExtractor={item => item.id}
             />
             <TouchableOpacity
-              onPress={() => navigation.navigate('Checkout')}
-              style={styles.button}>
+              onPress={() => {
+                Alert.alert(
+                  'Confirm Checkout',
+                  'Are you sure you want to request supervision and go to checkout?',
+                  [
+                    {
+                      text: 'Cancel',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'Yes',
+                      onPress: () => navigation.navigate('Checkout'),
+                    },
+                  ],
+                  { cancelable: true },
+                );
+              }}
+              style={styles.button}
+            >
               <Text style={styles.buttonText}>Request Supervision</Text>
             </TouchableOpacity>
             <Text
@@ -215,7 +250,8 @@ const Doctor = ({navigation}) => {
                 textAlign: 'center',
                 color: '#374151',
                 marginTop: hp(3),
-              }}>
+              }}
+            >
               Your request has been sent. Someone from the doctor's office will
               get in touch with you.
             </Text>
@@ -227,7 +263,7 @@ const Doctor = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  container: {backgroundColor: '#F3F4F6', flex: 1},
+  container: { backgroundColor: '#F3F4F6', flex: 1 },
   heading: {
     fontFamily: 'Roboto-Regular',
     fontSize: wp(5),
@@ -286,9 +322,9 @@ const styles = StyleSheet.create({
     padding: wp(3),
     marginBottom: hp(1),
   },
-  row: {flexDirection: 'row', alignItems: 'center'},
-  checkbox: {width: wp(4), height: wp(5), marginRight: wp(2)},
-  details: {flex: 1},
+  row: { flexDirection: 'row', alignItems: 'center' },
+  checkbox: { width: wp(4), height: wp(5), marginRight: wp(2) },
+  details: { flex: 1 },
   name: {
     fontFamily: 'Roboto-Regular',
     fontWeight: '700',

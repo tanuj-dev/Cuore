@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,10 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import {hp, wp, Images} from '../../utilities';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { hp, wp, Images } from '../../utilities';
 
-const EditProfile = ({navigation}) => {
+const EditProfile = ({ navigation }) => {
   const [userName, setUserName] = useState('M. Johnson');
   const [userMobile, setUserMobile] = useState('981121234');
   const [confirmMobile, setConfirmMobile] = useState('981121234');
@@ -140,7 +140,7 @@ const EditProfile = ({navigation}) => {
           style: 'cancel',
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
   };
 
@@ -162,7 +162,14 @@ const EditProfile = ({navigation}) => {
     setEditConfirm(false);
   };
 
-  const renderInputField = (label, value, editable, setValue, toggleEdit) => (
+  const renderInputField = (
+    label,
+    value,
+    editable,
+    setValue,
+    toggleEdit,
+    numeric,
+  ) => (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputWrapper}>
@@ -172,6 +179,7 @@ const EditProfile = ({navigation}) => {
           editable={editable}
           onChangeText={setValue}
           placeholder={label}
+          keyboardType={numeric == 'numeric' ? 'numeric' : 'default'}
         />
         <TouchableOpacity onPress={toggleEdit}>
           <Image source={Images.EDIT} style={styles.arrowIcon} />
@@ -184,54 +192,58 @@ const EditProfile = ({navigation}) => {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? hp(8) : 0}
-      style={{flex: 1}}>
+      style={{ flex: 1 }}
+    >
       <ScrollView
-        contentContainerStyle={{flexGrow: 1}}
-        keyboardShouldPersistTaps="handled">
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <View>
-           <View style={{
-          backgroundColor: '#FFFFFF',
-          elevation: 1,
-      }}>
- <View
-        style={{
-       
-        
-          alignItems: 'center',
-          padding: hp(2),
-          flexDirection: 'row',
-           marginTop:Platform.OS =='ios'&& hp(5),
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON}
+          <View
             style={{
-              height: hp(3),
-              width: wp(4),
-              resizeMode: 'contain',
-              tintColor: '#000000',
+              backgroundColor: '#FFFFFF',
+              elevation: 1,
             }}
-          />
-        </TouchableOpacity>
+          >
+            <View
+              style={{
+                alignItems: 'center',
+                padding: hp(2),
+                flexDirection: 'row',
+                marginTop: Platform.OS == 'ios' && hp(5),
+              }}
+            >
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Image
+                  source={Images.BACK_BUTTON}
+                  style={{
+                    height: hp(3),
+                    width: wp(4),
+                    resizeMode: 'contain',
+                    tintColor: '#000000',
+                  }}
+                />
+              </TouchableOpacity>
 
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontSize: 20,
-            fontWeight: '400',
-            color: '#000000',
-           marginLeft: hp(2),
-          }}>
-         Edit Profile
-        </Text>
-      </View>
-      </View>
+              <Text
+                style={{
+                  fontFamily: 'Roboto-Regular',
+                  fontSize: 20,
+                  fontWeight: '400',
+                  color: '#000000',
+                  marginLeft: hp(2),
+                }}
+              >
+                Edit Profile
+              </Text>
+            </View>
+          </View>
           <View style={styles.container}>
-            <View style={{flexDirection: 'row', marginBottom: hp(4)}}>
+            <View style={{ flexDirection: 'row', marginBottom: hp(4) }}>
               <TouchableOpacity onPress={showImagePickerOptions}>
                 {profileImage ? (
                   <Image
-                    source={{uri: profileImage}}
+                    source={{ uri: profileImage }}
                     style={{
                       width: wp(13),
                       height: wp(13),
@@ -260,9 +272,11 @@ const EditProfile = ({navigation}) => {
                   marginLeft: hp(5),
                   borderColor: '#E5E7EB',
                   borderRadius: hp(0.5),
-                }}>
+                }}
+              >
                 <Text
-                  style={{fontSize: 16, fontWeight: '400', color: '#374151'}}>
+                  style={{ fontSize: 16, fontWeight: '400', color: '#374151' }}
+                >
                   Upload Profile Picture
                 </Text>
               </TouchableOpacity>
@@ -273,6 +287,7 @@ const EditProfile = ({navigation}) => {
               editName,
               setUserName,
               () => setEditName(true),
+              'alpha',
             )}
             {renderInputField(
               'User Mobile',
@@ -280,6 +295,7 @@ const EditProfile = ({navigation}) => {
               editMobile,
               setUserMobile,
               () => setEditMobile(true),
+              'alpha',
             )}
             {renderInputField(
               'Confirm User Mobile',
@@ -287,6 +303,7 @@ const EditProfile = ({navigation}) => {
               editConfirm,
               setConfirmMobile,
               () => setEditConfirm(true),
+              'numeric',
             )}
 
             <View style={styles.buttonRow}>
@@ -299,7 +316,8 @@ const EditProfile = ({navigation}) => {
                   navigation.goBack();
 
                   handleCancel();
-                }}>
+                }}
+              >
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
             </View>

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,13 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import {images, wp, hp, color, Images} from '../../utilities';
+import { images, wp, hp, color, Images } from '../../utilities';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const OnBoardingFive = () => {
   const [exerciseMinutes, setExerciseMinutes] = useState('');
   const [eatingPreference, setEatingPreference] = useState('');
-  const [cuisine, setCuisine] = useState({indian: false, global: false});
+  const [cuisine, setCuisine] = useState({ indian: false, global: false });
   const [fruitsVeg, setFruitsVeg] = useState('');
   const [processedFood, setProcessedFood] = useState('');
   const [fiberFood, setFiberFood] = useState('');
@@ -26,7 +26,8 @@ const OnBoardingFive = () => {
       <TouchableOpacity
         key={index}
         onPress={() => onSelect(option)}
-        style={styles.optionRow}>
+        style={styles.optionRow}
+      >
         <View style={styles.radioOuter}>
           {selected === option && <View style={styles.radioInner} />}
         </View>
@@ -50,7 +51,8 @@ const OnBoardingFive = () => {
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.container}>
+      contentContainerStyle={styles.container}
+    >
       {/* Card */}
       <View style={styles.card}>
         <Text style={styles.question}>
@@ -68,8 +70,9 @@ const OnBoardingFive = () => {
         <Text style={styles.note}>Ideal range: 6:30 AM to 6:30 PM</Text>
         <TouchableOpacity
           style={styles.timeButton}
-          onPress={() => setShowTimePicker(true)}>
-          <Text style={{fontFamily: 'Roboto-Regular', fontSize: wp(4)}}>
+          onPress={() => setShowTimePicker(true)}
+        >
+          <Text style={{ fontFamily: 'Roboto-Regular', fontSize: wp(4) }}>
             {formatTime(time)}
           </Text>
           <Image
@@ -79,7 +82,8 @@ const OnBoardingFive = () => {
               width: wp(5),
               tintColor: '#000000',
             }}
-            source={Images.WATCH}></Image>
+            source={Images.WATCH}
+          ></Image>
         </TouchableOpacity>
         {showTimePicker && (
           <DateTimePicker
@@ -92,7 +96,7 @@ const OnBoardingFive = () => {
         )}
 
         <Text style={styles.question}>
-          select your weekly rest day from exercise
+          Select your weekly rest day from exercise
         </Text>
         <View style={styles.dayRow}>
           {['Mon', 'Tue', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun'].map(day => (
@@ -102,12 +106,14 @@ const OnBoardingFive = () => {
               style={[
                 styles.dayChip,
                 restDay === day && styles.selectedDayChip,
-              ]}>
+              ]}
+            >
               <Text
                 style={[
                   styles.dayText,
                   restDay === day && styles.selectedDayText,
-                ]}>
+                ]}
+              >
                 {day}
               </Text>
             </TouchableOpacity>

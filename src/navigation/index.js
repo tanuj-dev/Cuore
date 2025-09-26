@@ -1,8 +1,8 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import images from '../utilities/Images';
 
 import Login from '../screens/Login';
@@ -47,7 +47,7 @@ import Recipe from '../screens/Recipe';
 import Doctor from '../screens/Doctor';
 import Health from '../screens/Health';
 
-import {ExploreStack} from './ExploreStack';
+import { ExploreStack } from './ExploreStack';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -64,12 +64,13 @@ function BottomTabNavigator() {
         headerShown: false,
         tabBarActiveTintColor: '#1E64AC',
         // tabBarInactiveTintColor: 'yellow',
-      }}>
+      }}
+    >
       <Tab.Screen
         name="Today"
         component={TodayStack}
         options={{
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Image
               source={images.HOME}
               style={{
@@ -87,7 +88,7 @@ function BottomTabNavigator() {
         component={ExploreStack}
         options={{
           unmountOnBlur: true,
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Image
               source={images.EXPLORE}
               style={{
@@ -105,7 +106,7 @@ function BottomTabNavigator() {
         component={PredictStack}
         options={{
           unmountOnBlur: true,
-          tabBarIcon: ({color, size, focused}) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <Image
               source={images.PREDICT}
               style={{
@@ -123,7 +124,7 @@ function BottomTabNavigator() {
         component={Chat}
         options={{
           unmountOnBlur: true,
-          tabBarIcon: ({color, size, focused}) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <Image
               source={images.CHAT}
               style={{
@@ -141,7 +142,7 @@ function BottomTabNavigator() {
         component={ProfileStack}
         options={{
           unmountOnBlur: true,
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Image
               source={images.PROFILE}
               // source={{
@@ -164,7 +165,7 @@ function BottomTabNavigator() {
 }
 function ProfileStack() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileMain" component={Profile} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
@@ -184,7 +185,7 @@ function ProfileStack() {
 }
 function PredictStack() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Predict" component={Predict} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
       <Stack.Screen name="Health" component={Health} />
@@ -213,7 +214,7 @@ function PredictStack() {
 // }
 function TodayStack() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="TodayMain" component={Today} />
       <Stack.Screen name="CalorieIgnite" component={CalorieIgnite} />
       <Stack.Screen name="MidMorningBoost" component={MidMorningBoost} />
@@ -229,7 +230,8 @@ export default function Navigator() {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="Splash"
-        screenOptions={{headerShown: false}}>
+        screenOptions={{ headerShown: false }}
+      >
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="OtpScreen" component={OtpScreen} />
@@ -237,8 +239,8 @@ export default function Navigator() {
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="OnBoarding" component={OnBoarding} />
         <Stack.Screen name="Score" component={Score} />
-         <Stack.Screen name="Home" component={BottomTabNavigator} />
-           <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
+        <Stack.Screen name="Home" component={BottomTabNavigator} />
+        <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
         <Stack.Screen name="Checkout" component={Checkout} />
         <Stack.Screen name="Tobacco" component={Tobacco} />
         <Stack.Screen name="Mind" component={Mind} />
@@ -249,15 +251,15 @@ export default function Navigator() {
         <Stack.Screen name="EditCaregiver" component={EditCaregive} />
         <Stack.Screen name="EditDoctor" component={EditDoctor} />
         <Stack.Screen name="SelectPersona" component={SelectPersona} />
-         <Stack.Screen name="HealthRecords" component={HealthRecords} />
+        <Stack.Screen name="HealthRecords" component={HealthRecords} />
         <Stack.Screen name="Support" component={Support} />
         <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
         <Stack.Screen name="TermsAndConditions" component={TermsAndCondtion} />
         <Stack.Screen name="RenewSubscription" component={RenewSubscription} />
         <Stack.Screen name="CuoreKnowledge" component={CuoreKnowledge} />
-         <Stack.Screen name="KnowledgeDetails" component={KnowledgeDetails} />
+        <Stack.Screen name="KnowledgeDetails" component={KnowledgeDetails} />
         <Stack.Screen name="Nutrition" component={Nutrition} />
-         <Stack.Screen name="CalorieIgnite" component={CalorieIgnite} />
+        <Stack.Screen name="CalorieIgnite" component={CalorieIgnite} />
         <Stack.Screen name="MidMorningBoost" component={MidMorningBoost} />
         <Stack.Screen name="RefrestRefuel" component={RefreshRefuel} />
         <Stack.Screen name="MealBuilder" component={MealBuilder} />
@@ -265,10 +267,8 @@ export default function Navigator() {
         <Stack.Screen name="MealBuilder2" component={MealBuilder2} />
         <Stack.Screen name="Recipe" component={Recipe} />
         <Stack.Screen name="Doctor" component={Doctor} />
-        <Stack.Screen name="Health" component={Health} /> 
+        <Stack.Screen name="Health" component={Health} />
         <Stack.Screen name="ScoreMeter" component={ScoreMeter} />
-        
-       
       </Stack.Navigator>
     </NavigationContainer>
   );

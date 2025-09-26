@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import {hp, wp, color, Images} from '../../utilities';
+import { hp, wp, color, Images } from '../../utilities';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import {Ionicons} from '@expo/vector-icons'; // Optional icon pack
 
@@ -18,13 +18,13 @@ const Chat = () => {
       type: 'info',
       text: 'Cuore Assist offers personalized responses based on your Health Records and Assessments. It does not provide a medical diagnosis or recommend any medication',
     },
-    {type: 'queriesLeft', count: 9},
+    { type: 'queriesLeft', count: 9 },
     {
       type: 'bot',
       text: 'Hello Mike! How can I help you today?',
       time: '10:30 AM',
     },
-    {type: 'user', text: 'How is my overall health?', time: '10:30 AM'},
+    { type: 'user', text: 'How is my overall health?', time: '10:30 AM' },
     {
       type: 'bot',
       text: `You have Diabetes for the last 8 years, you are taking metformin twice daily which has kept your sugar levels well controlled.\nYour nutrition is good, but you need to increase your exercise - daily 30 min walk is recommended ......`,
@@ -45,7 +45,7 @@ const Chat = () => {
 
     setMessages(prev => [
       ...prev,
-      {type: 'user', text: input.trim(), time},
+      { type: 'user', text: input.trim(), time },
       {
         type: 'bot',
         text: 'This is a placeholder response. You can implement backend logic here.',
@@ -55,7 +55,7 @@ const Chat = () => {
     setInput('');
   };
 
-  const renderItem = ({item}) => {
+  const renderItem = ({ item }) => {
     if (item.type === 'user') {
       return (
         <View style={styles.userMsgContainer}>
@@ -78,27 +78,24 @@ const Chat = () => {
   };
 
   return (
-    <SafeAreaView edges={[, 'left', 'right']}  style={{flex: 1}}>
-     <View style={{  backgroundColor: '#FFFFFF',}}>
-
+    <SafeAreaView edges={[, 'left', 'right']} style={{ flex: 1 }}>
+      <View style={{ backgroundColor: '#FFFFFF' }}>
         <View
-        style={{
-          flexDirection: 'row',
-          
-          paddingTop: hp(2),
-          elevation: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-           marginTop:Platform.OS =='ios'&& hp(5),
-          // height: hp(8),
-          // paddingVertical:hp(4)
-        }}>
-        <Text style={styles.title}>Cuore Assist</Text>
+          style={{
+            flexDirection: 'row',
+
+            paddingTop: hp(2),
+            elevation: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: Platform.OS == 'ios' && hp(5),
+            // height: hp(8),
+            // paddingVertical:hp(4)
+          }}
+        >
+          <Text style={styles.title}>Cuore Assist</Text>
+        </View>
       </View>
-     </View>
-       
-     
-     
 
       <View
         style={{
@@ -108,7 +105,8 @@ const Chat = () => {
           alignItems: 'center',
           padding: hp(1),
           borderRadius: hp(1),
-        }}>
+        }}
+      >
         <Text
           style={{
             fontSize: 14,
@@ -116,7 +114,8 @@ const Chat = () => {
             color: '#1E64AC',
             alignSelf: 'center',
             fontFamily: 'Roboto-Regular',
-          }}>
+          }}
+        >
           Cuore Assist offers personalized responses based on your Health
           Records and Assessments. It does not provide a medical diagnosis or
           recommend any medication
@@ -128,7 +127,8 @@ const Chat = () => {
             fontSize: 14,
             fontWeight: '400',
             color: '#374151',
-          }}>
+          }}
+        >
           9 of 10 queries remaining
         </Text>
       </View>
@@ -138,26 +138,34 @@ const Chat = () => {
           data={messages}
           renderItem={renderItem}
           keyExtractor={(_, index) => index.toString()}
-          contentContainerStyle={{padding: 16}}
+          contentContainerStyle={{ padding: 16 }}
         />
       </View>
       <View style={styles.inputBar}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type your message..."
-          value={input}
-          onChangeText={setInput}
-        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Type your message..."
+            value={input}
+            onChangeText={setInput}
+          />
+          <Image
+            source={Images.MIKE} // or Images.SHARE
+            style={styles.icon}
+          />
+        </View>
+
         <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
           <Image
             style={{
               resizeMode: 'contain',
               height: hp(2.5),
-              width: wp(5),
+              width: wp(4),
               marginRight: hp(1),
               tintColor: '#FFFFFF',
             }}
-            source={Images.SHARE}></Image>
+            source={Images.SHARE}
+          ></Image>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -234,17 +242,35 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     flex: 1,
     height: hp(5),
-    borderWidth: 1,
+    // borderWidth: 1,
+
+    paddingHorizontal: 24,
+  },
+  inputContainer: {
     backgroundColor: '#F9FAFB',
-    borderRadius: hp(1),
-    paddingHorizontal: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#000000',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    // height: 40,
+    flex: 1,
+  },
+  icon: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
+    resizeMode: 'contain',
+    tintColor: '#1E64AC',
   },
   sendButton: {
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#000000',
-    borderRadius: hp(20),
-    padding: 10,
+    borderRadius: hp(1),
+    paddingHorizontal: hp(0.4),
+    paddingVertical: hp(1),
     marginLeft: 8,
   },
 });

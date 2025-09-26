@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   Image,
   View,
@@ -14,8 +14,8 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {Images, hp, wp, Color} from '../../utilities';
+import { useNavigation } from '@react-navigation/native';
+import { Images, hp, wp, Color } from '../../utilities';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import color from '../../utilities/Color';
 import images from '../../utilities/Images';
@@ -27,19 +27,22 @@ const CreateAccountScreen = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{flex: 1}}>
+      style={{ flex: 1 }}
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+        >
           <Pressable
             style={styles.backArrow}
-            onPress={() => navigation.goBack()}>
+            onPress={() => navigation.goBack()}
+          >
             <Image
               source={Images.BACK_BUTTON}
               style={{
                 height: hp(3.5),
-                
+
                 width: wp(4),
                 // marginLeft: hp(2),
                 // tintColor: '#000000',
@@ -62,7 +65,8 @@ const CreateAccountScreen = () => {
           <Text style={styles.label}>
             Full Name
             <Text
-              style={[styles.label, {fontStyle: 'italic', fontWeight: '400'}]}>
+              style={[styles.label, { fontStyle: 'italic', fontWeight: '400' }]}
+            >
               {' '}
               (Required)
             </Text>
@@ -76,7 +80,8 @@ const CreateAccountScreen = () => {
           <Text style={styles.label}>
             Mobile Number
             <Text
-              style={[styles.label, {fontStyle: 'italic', fontWeight: '400'}]}>
+              style={[styles.label, { fontStyle: 'italic', fontWeight: '400' }]}
+            >
               {' '}
               (Required)
             </Text>
@@ -100,7 +105,7 @@ const CreateAccountScreen = () => {
 
           <TextInput
             style={styles.input}
-            placeholder="Connect to a partnered doctor for remote supervision"
+            placeholder="Connect to partnered doctor for supervision"
             placeholderTextColor="#6B7280"
           />
 
@@ -127,9 +132,8 @@ const CreateAccountScreen = () => {
                   I have read and agree to the{' '}
                   <Text
                     style={styles.link}
-                    onPress={() =>
-                      Linking.openURL('https://example.com/terms')
-                    }>
+                    onPress={() => Linking.openURL('https://example.com/terms')}
+                  >
                     Terms and Conditions
                   </Text>{' '}
                   and{' '}
@@ -137,7 +141,8 @@ const CreateAccountScreen = () => {
                     style={styles.link}
                     onPress={() =>
                       Linking.openURL('https://example.com/privacy')
-                    }>
+                    }
+                  >
                     Privacy Policy
                   </Text>
                   .
@@ -169,7 +174,7 @@ const styles = StyleSheet.create({
   },
   backArrow: {
     marginBottom: hp(2),
-    marginTop:Platform.OS =='ios'&& hp(2),
+    marginTop: Platform.OS == 'ios' && hp(2),
   },
   title: {
     color: '#111827',

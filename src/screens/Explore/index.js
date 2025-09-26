@@ -8,8 +8,8 @@ import {
   Alert,
 } from 'react-native';
 import React from 'react';
-import {hp, wp, Images, color} from '../../utilities';
-import {ScrollView} from 'react-native-gesture-handler';
+import { hp, wp, Images, color } from '../../utilities';
+import { ScrollView } from 'react-native-gesture-handler';
 
 const modules = [
   {
@@ -60,8 +60,8 @@ const routeMap = {
   // Add more mappings if needed
 };
 
-const Explore = ({navigation}) => {
-  const renderItem = ({item}) => (
+const Explore = ({ navigation }) => {
+  const renderItem = ({ item }) => (
     <TouchableOpacity
       onPress={() => {
         const route = routeMap[item.title]; // Corrected here
@@ -73,7 +73,8 @@ const Explore = ({navigation}) => {
           Alert.alert('Route not found');
         }
       }}
-      style={styles.card}>
+      style={styles.card}
+    >
       <Image source={item.image} style={styles.image} resizeMode="contain" />
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.subtitle}>{item.subtitle}</Text>
@@ -81,27 +82,32 @@ const Explore = ({navigation}) => {
   );
 
   return (
-    <ScrollView>
-      <View style={{   padding: hp(1.5),
-          backgroundColor: 'white',
-         paddingVertical:hp(1)}}>
-          <View
+    <ScrollView style={{ backgroundColor: 'white' }}>
+      <View
         style={{
-          justifyContent: 'space-between',
-          flexDirection: 'row',
-       
-            marginTop:Platform.OS =='ios'&& hp(6),
-        }}>
-        <Image source={Images.APP_LOGO} style={styles.logo} />
-        <Image
-          source={Images.UNCLE}
-          style={[styles.logo, {marginLeft: hp(25)}]}
-        />
+          padding: hp(1.5),
+          backgroundColor: 'white',
+          paddingVertical: hp(1),
+        }}
+      >
+        <View
+          style={{
+            justifyContent: 'space-between',
+            flexDirection: 'row',
+
+            marginTop: Platform.OS == 'ios' && hp(6),
+          }}
+        >
+          <Image source={Images.APP_LOGO} style={styles.logo} />
+          <Image
+            source={Images.UNCLE}
+            style={[styles.logo, { marginLeft: hp(25) }]}
+          />
+        </View>
       </View>
-      </View>
-    
+
       <View style={styles.container}>
-        <View style={{flex: 1}}>
+        <View style={{ flex: 1 }}>
           <View
             style={[
               styles.header,
@@ -112,7 +118,8 @@ const Explore = ({navigation}) => {
                 zIndex: 10,
                 bottom: hp(3),
               },
-            ]}>
+            ]}
+          >
             <TouchableOpacity
               onPress={() => navigation.navigate('Health')}
               style={{
@@ -127,7 +134,8 @@ const Explore = ({navigation}) => {
                 elevation: 4,
                 // alignSelf: 'flex-start', // keeps button from stretching full width
                 marginLeft: wp(4), // keeps it aligned from the left like before
-              }}>
+              }}
+            >
               <Image
                 style={{
                   resizeMode: 'contain',
@@ -142,14 +150,15 @@ const Explore = ({navigation}) => {
             <Text
               style={[
                 styles.subheading,
-                {marginLeft: wp(4), marginTop: hp(1)},
-              ]}>
-            Your Health Journey
+                { marginLeft: wp(4), marginTop: hp(1) },
+              ]}
+            >
+              Your Health Journey
             </Text>
           </View>
 
           {/* Add some padding to prevent content being overlapped */}
-          <View style={{paddingTop: hp(10)}}>
+          <View style={{ paddingTop: hp(10) }}>
             {/* Your other content here */}
           </View>
         </View>
@@ -214,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.05,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowRadius: 6,
     elevation: 1,
   },
