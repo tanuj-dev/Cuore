@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import {Images, hp, images, wp} from '../../utilities';
+import { Images, hp, images, wp } from '../../utilities';
 import ProgressBarWithImage from '../../components/ProgressBar';
 import Modal from 'react-native-modal';
 import Reminder from '../../components/Reminder';
@@ -53,9 +53,10 @@ const routeMap = {
   'Wake Up': 'CalorieIgnite',
   Medication: 'MidMorningBoost',
 };
-const Today = ({navigation}) => {
+const Today = ({ navigation }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('Feb 26');
+  const [checked, setChecked] = useState(false);
 
   const dates = ['Feb 25', 'Feb 26', 'Feb 27'];
   const [cards, setCards] = useState([
@@ -94,7 +95,7 @@ const Today = ({navigation}) => {
   };
 
   return (
-    <View style={{flex: 1}}>
+    <View style={{ flex: 1 }}>
       <View style={styles.floatingText}>
         {/* <Text style={styles.floatingTextLabel}>Floating Reminder</Text> */}
         <TouchableOpacity onPress={() => setIsVisible(true)}>
@@ -115,7 +116,8 @@ const Today = ({navigation}) => {
               <Text
                 style={
                   activeTab === date ? styles.activeTab : styles.inactiveTab
-                }>
+                }
+              >
                 {date}
               </Text>
             </TouchableOpacity>
@@ -126,10 +128,16 @@ const Today = ({navigation}) => {
             alignItems: 'center',
             flexDirection: 'row',
             backgroundColor: '#FEF2F2',
-          }}>
+          }}
+        >
           <Image
-            style={{height: hp(2), resizeMode: 'contain', tintColor: '#EF4444'}}
-            source={Images.NOTICE}></Image>
+            style={{
+              height: hp(2),
+              resizeMode: 'contain',
+              tintColor: '#EF4444',
+            }}
+            source={Images.NOTICE}
+          ></Image>
           <Text style={styles.alert}>2 tasks missed</Text>
         </View>
 
@@ -138,7 +146,7 @@ const Today = ({navigation}) => {
           <TouchableOpacity
             onPress={() => {
               const STEP = 7;
-              navigation.navigate('OnBoarding', {STEP});
+              navigation.navigate('OnBoarding', { STEP });
             }}
             style={{
               alignItems: 'center',
@@ -147,12 +155,14 @@ const Today = ({navigation}) => {
               paddingVertical: hp(1),
               width: hp(12),
               borderRadius: hp(1),
-            }}>
+            }}
+          >
             <Text
               style={[
                 styles.progressTitle,
-                {color: '#FFFFFF', fontSize: 12.5},
-              ]}>
+                { color: '#FFFFFF', fontSize: 12.5 },
+              ]}
+            >
               Update Biomarkers
             </Text>
           </TouchableOpacity>
@@ -160,7 +170,7 @@ const Today = ({navigation}) => {
           {/* Add progress bar visuals */}
         </View>
         <ProgressBarWithImage navigation={navigation}></ProgressBarWithImage>
-        <View style={{paddingHorizontal: hp(3)}}>
+        <View style={{ paddingHorizontal: hp(3) }}>
           <Text style={styles.quote}>
             Every choice you make today sets you up for a healthier tomorrow.
           </Text>
@@ -179,7 +189,8 @@ const Today = ({navigation}) => {
                   marginRight: hp(1),
                   backgroundColor: item.bgColor,
                   position: 'relative', // ✅ Needed for absolute child positioning
-                }}>
+                }}
+              >
                 <Image
                   style={{
                     resizeMode: 'contain',
@@ -191,7 +202,7 @@ const Today = ({navigation}) => {
                   source={Images.WARNING}
                 />
 
-                <Text style={{color: item.textStyle, marginRight: hp(2)}}>
+                <Text style={{ color: item.textStyle, marginRight: hp(2) }}>
                   {item.text}
                 </Text>
 
@@ -202,7 +213,8 @@ const Today = ({navigation}) => {
                     right: hp(1),
                     top: hp(1),
                     // padding: hp(1),
-                  }}>
+                  }}
+                >
                   <Image
                     style={{
                       backgroundColor: '#F6F0F1',
@@ -218,7 +230,7 @@ const Today = ({navigation}) => {
             ))}
           </ScrollView>
         </View>
-        <View style={{backgroundColor: '#F9FAFB'}}>
+        <View style={{ backgroundColor: '#F9FAFB' }}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
               Optimize Your Health with Smart Guidance
@@ -235,7 +247,8 @@ const Today = ({navigation}) => {
                   height: hp(8),
                   marginRight: 2,
                   borderColor: '#E5E7EB',
-                }}>
+                }}
+              >
                 <Text style={styles.time}>{task.time}</Text>
                 <View
                   style={{
@@ -245,7 +258,8 @@ const Today = ({navigation}) => {
                     marginLeft: hp(3.5),
                     marginTop: hp(1),
                     // backgroundColor: 'red',
-                  }}>
+                  }}
+                >
                   <Image
                     style={{
                       height: hp(2),
@@ -279,7 +293,8 @@ const Today = ({navigation}) => {
                   justifyContent: 'center',
                   borderRadius: hp(2),
                   borderColor: '#101010',
-                }}>
+                }}
+              >
                 <View
                   style={{
                     borderWidth: 1,
@@ -287,7 +302,8 @@ const Today = ({navigation}) => {
                     width: hp(1.5),
                     borderRadius: hp(2),
                     backgroundColor: '#000000',
-                  }}></View>
+                  }}
+                ></View>
               </View>
 
               <TouchableOpacity
@@ -297,7 +313,8 @@ const Today = ({navigation}) => {
                     navigation.navigate(routeName);
                   }
                 }}
-                style={[styles.taskCard, {borderLeftColor: task.color}]}>
+                style={[styles.taskCard, { borderLeftColor: task.color }]}
+              >
                 <View style={styles.taskHeader}>
                   <Image source={task.icon} style={styles.taskIcon} />
                   <Text style={styles.taskTitle}>{task.title}</Text>
@@ -318,8 +335,10 @@ const Today = ({navigation}) => {
               alignItems: 'center',
               justifyContent: 'center',
               marginVertical: hp(2),
-            }}>
-            <View
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => setChecked(!checked)}
               style={{
                 height: hp(3),
                 width: wp(6),
@@ -327,14 +346,24 @@ const Today = ({navigation}) => {
                 borderRadius: hp(0.5),
                 marginRight: hp(1),
                 borderColor: '#9CA3AF',
-              }}></View>
+                backgroundColor: checked ? '#1E64AC' : 'transparent',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {checked && (
+                <Text style={{ color: 'white', fontSize: 12 }}>✔</Text>
+              )}
+            </TouchableOpacity>
+
             <Text
               style={{
                 fontFamily: 'Roboto-Regular',
                 color: '#4B5563',
                 fontSize: 15,
                 fontWeight: '400',
-              }}>
+              }}
+            >
               Check Off All Tasks
             </Text>
           </View>
@@ -348,7 +377,8 @@ const Today = ({navigation}) => {
             paddingVertical: hp(2),
             marginHorizontal: hp(1),
             elevation: 1,
-          }}>
+          }}
+        >
           <Image source={Images.FIRE} />
           <Text
             style={{
@@ -356,7 +386,8 @@ const Today = ({navigation}) => {
               color: '#1E64AC',
               fontSize: 15,
               fontWeight: '400',
-            }}>
+            }}
+          >
             14-Day Streak
           </Text>
           <Text
@@ -365,7 +396,8 @@ const Today = ({navigation}) => {
               color: '#1E64AC',
               fontSize: 15,
               fontWeight: '400',
-            }}>
+            }}
+          >
             Maintain your progress,{' '}
           </Text>
           <Text
@@ -374,7 +406,8 @@ const Today = ({navigation}) => {
               color: '#1E64AC',
               fontSize: 15,
               fontWeight: '400',
-            }}>
+            }}
+          >
             log today’s tasks by 12:30 AM
           </Text>
         </View>
@@ -385,24 +418,24 @@ const Today = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#F9FAFB'},
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
-      marginTop:Platform.OS =='ios'&& hp(5),
+    marginTop: Platform.OS == 'ios' && hp(5),
     fontFamily: 'Roboto-Regular',
     padding: hp(1.5),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  username: {fontFamily: 'Roboto-Regular', fontSize: 17, fontWeight: '400'},
-  userIcon: {width: hp(3), height: hp(3.5), resizeMode: 'contain'},
+  username: { fontFamily: 'Roboto-Regular', fontSize: 17, fontWeight: '400' },
+  userIcon: { width: hp(3), height: hp(3.5), resizeMode: 'contain' },
   tabs: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginVertical: 16,
   },
-  activeTab: {fontWeight: '500', fontSize: 16, color: '#1E64AC'},
-  inactiveTab: {fontSize: 16, color: '#9CA3AF'},
+  activeTab: { fontWeight: '500', fontSize: 16, color: '#1E64AC' },
+  inactiveTab: { fontSize: 16, color: '#9CA3AF' },
   alert: {
     fontFamily: 'Roboto-Regular',
     color: 'red',
@@ -472,7 +505,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1E64AC',
   },
-  addIcon: {width: hp(4), height: hp(4), resizeMode: 'contain'},
+  addIcon: { width: hp(4), height: hp(4), resizeMode: 'contain' },
   taskRow: {
     // backgroundColor: 'red',
     // marginBottom: hp(2),
@@ -497,7 +530,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
   },
-  taskHeader: {flexDirection: 'row', alignItems: 'center'},
+  taskHeader: { flexDirection: 'row', alignItems: 'center' },
   taskIcon: {
     width: hp(3),
     height: hp(2),
@@ -510,7 +543,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#9CA3AF',
   },
-  taskDescription: {marginTop: 4, color: '#9CA3AF', marginLeft: hp(4)},
+  taskDescription: { marginTop: 4, color: '#9CA3AF', marginLeft: hp(4) },
   checkIcon: {
     resizeMode: 'contain',
     width: hp(2),

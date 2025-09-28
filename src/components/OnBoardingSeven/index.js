@@ -223,9 +223,10 @@ const styles = StyleSheet.create({
     borderRadius: wp(2),
   },
   unitContainer: {
+    // marginLeft: wp(2),
     paddingVertical: hp(1),
-    // flexDirection: 'row',
-    marginTop: Platform.OS == 'android ' ? hp(4) : hp(1.5),
+    flexDirection: 'row',
+    marginTop: Platform.OS == 'android ' ? hp(4) : hp(2.9),
   },
   unitButton: {
     padding: hp(0.5),
@@ -234,13 +235,15 @@ const styles = StyleSheet.create({
     borderColor: '#aaa',
     borderRadius: 5,
     backgroundColor: '#9CA3AF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   unitButtonSelected: {
     backgroundColor: '#007AFF',
     borderColor: '#007AFF',
   },
   unitText: {
-    fontSize: hp(1),
+    fontSize: hp(1.5),
     color: '#000',
   },
 });

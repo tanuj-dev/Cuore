@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,24 @@ import {
   Alert,
   TextInput,
 } from 'react-native';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
-import {hp, wp, Images} from '../../utilities';
+import { hp, wp, Images } from '../../utilities';
 // import {Ionicons, MaterialIcons, Feather} from '@expo/vector-icons';
+const formatDate = date => {
+  return date ? date.toLocaleDateString() : '';
+};
 
-const EditableSection = ({label, value, onChange, isEditing, toggleEdit}) => (
+const EditableSection = ({
+  label,
+  value,
+  onChange,
+  isEditing,
+  toggleEdit,
+  show,
+  isDate = false, // ✅ new prop to tell if it's a date field
+}) => (
   <View
     style={{
       marginTop: hp(1),
@@ -24,8 +36,9 @@ const EditableSection = ({label, value, onChange, isEditing, toggleEdit}) => (
       flexDirection: 'row',
       justifyContent: 'space-between',
       width: '85%',
-    }}>
-    <View style={{width: hp(14)}}>
+    }}
+  >
+    <View style={{ width: hp(14) }}>
       <Text style={styles.bold}>{label}</Text>
     </View>
 
@@ -34,8 +47,18 @@ const EditableSection = ({label, value, onChange, isEditing, toggleEdit}) => (
         width: hp(30),
         flexDirection: 'row',
         alignItems: 'center',
-      }}>
-      {isEditing ? (
+      }}
+    >
+      {show && isDate && (
+        <DateTimePicker
+          value={value} // must be a Date object
+          mode="date"
+          display="default"
+          onChange={onChange}
+        />
+      )}
+
+      {isEditing && !isDate ? (
         <TextInput
           value={value}
           onChangeText={onChange}
@@ -49,8 +72,11 @@ const EditableSection = ({label, value, onChange, isEditing, toggleEdit}) => (
           }}
         />
       ) : (
-        <Text style={[styles.label, {flex: 1}]}>{value}</Text>
+        <Text style={[styles.label, { flex: 1 }]}>
+          {isDate ? formatDate(value) : value}
+        </Text>
       )}
+
       <TouchableOpacity onPress={toggleEdit}>
         <Image
           source={Images.EDIT}
@@ -59,14 +85,15 @@ const EditableSection = ({label, value, onChange, isEditing, toggleEdit}) => (
             height: hp(2.5),
             width: hp(4),
             marginLeft: hp(1),
-            marginRight:hp(3)
+            marginRight: hp(3),
           }}
         />
       </TouchableOpacity>
     </View>
   </View>
 );
-const Health = ({navigation}) => {
+
+const Health = ({ navigation }) => {
   const [profileImage, setProfileImage] = useState(null);
   const [pastHistory, setPastHistory] = useState(
     'Diabetes, HTN, Heart Attack, GB Removal, L Thigh Fracture',
@@ -79,6 +106,18 @@ const Health = ({navigation}) => {
   const [editPast, setEditPast] = useState(false);
   const [editMeds, setEditMeds] = useState(false);
   const [editConsulted, setEditConsulted] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const [show, setShow] = useState(false);
+
+  const onDateChange = (event, selectedDate) => {
+    if (event.type === 'dismissed') {
+      setShow(false);
+      return;
+    }
+    const currentDate = selectedDate || date;
+    setShow(Platform.OS === 'ios');
+    setDate(currentDate);
+  };
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -196,78 +235,77 @@ const Health = ({navigation}) => {
           style: 'cancel',
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
   };
 
   const healthObservationsData = [
-    {parameter: 'Heart Rate', value: '78 bpm', status: '#22C55E'},
-    {parameter: 'Blood Pressure', value: '142/92 mmHg', status: '#EF4444'},
-    {parameter: 'Blood Sugar PP', value: '180 mg/dL', status: '#EF4444'},
-    {parameter: 'HbA1c', value: '7.2%', status: '#EAB308'},
-    {parameter: 'TG/HDL Ratio', value: '3.8', status: '#EAB308'},
-    {parameter: 'HsCRP', value: '2.8 mg/L', status: '#EAB308'},
-    {parameter: 'Lifestyle Score', value: '65%', status: '#EAB308'},
+    { parameter: 'Heart Rate', value: '78 bpm', status: '#22C55E' },
+    { parameter: 'Blood Pressure', value: '142/92 mmHg', status: '#EF4444' },
+    { parameter: 'Blood Sugar PP', value: '180 mg/dL', status: '#EF4444' },
+    { parameter: 'HbA1c', value: '7.2%', status: '#EAB308' },
+    { parameter: 'TG/HDL Ratio', value: '3.8', status: '#EAB308' },
+    { parameter: 'HsCRP', value: '2.8 mg/L', status: '#EAB308' },
+    { parameter: 'Lifestyle Score', value: '65%', status: '#EAB308' },
   ];
 
   return (
     <ScrollView style={{}}>
       {/* Header */}
 
-      <View style={{flex: 1}}>
-        <View style={{    elevation: 1,   backgroundColor: '#FFFFFF',}}>
+      <View style={{ flex: 1 }}>
+        <View style={{ elevation: 1, backgroundColor: '#FFFFFF' }}>
           <View
-          style={{
-            flexDirection: 'row',
-           marginTop:Platform.OS =='ios' && hp(
-                4
-              ),
-            justifyContent: 'space-between',
-            padding: hp(1),
-        
-            alignItems: 'center',
-          }}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={{}}>
-            <Image
-              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-              style={{
-                resizeMode: 'contain',
-                height: hp(2.5),
-                width: hp(4),
-                // marginLeft: hp(-1.8),
-              }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-          <View>
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 20,
-                fontWeight: '400',
-                color: '#1F2937',
-                marginTop: hp(3),
-                // marginLeft: hp(1),
-              }}>
-              Cuore Health
-            </Text>
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Image
-              source={Images.SHARE_4} // Replace with actual key in your `images` object
-              style={{
-                resizeMode: 'contain',
-                height: hp(2),
-                width: hp(3),
-                tintColor: 'black',
-                // marginLeft: hp(-1.8),
-              }}
-              resizeMode="contain"
-            />
+            style={{
+              flexDirection: 'row',
+              marginTop: Platform.OS == 'ios' && hp(4),
+              justifyContent: 'space-between',
+              padding: hp(1),
+
+              alignItems: 'center',
+            }}
+          >
+            <TouchableOpacity onPress={() => navigation.goBack()} style={{}}>
+              <Image
+                source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+                style={{
+                  resizeMode: 'contain',
+                  height: hp(2.5),
+                  width: hp(4),
+                  // marginLeft: hp(-1.8),
+                }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+            <View>
+              <Text
+                style={{
+                  fontFamily: 'Roboto-Regular',
+                  fontSize: 20,
+                  fontWeight: '400',
+                  color: '#1F2937',
+                  marginTop: hp(3),
+                  // marginLeft: hp(1),
+                }}
+              >
+                Cuore Health
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Image
+                source={Images.SHARE_4} // Replace with actual key in your `images` object
+                style={{
+                  resizeMode: 'contain',
+                  height: hp(2),
+                  width: hp(3),
+                  tintColor: 'black',
+                  // marginLeft: hp(-1.8),
+                }}
+                resizeMode="contain"
+              />
+            </View>
           </View>
         </View>
-        </View>
-        
 
         {/* Patient Info */}
 
@@ -283,7 +321,7 @@ const Health = ({navigation}) => {
                   resizeMode: 'contain',
                 }}
               />
-              <View style={{marginLeft: hp(3)}}>
+              <View style={{ marginLeft: hp(3) }}>
                 <Text style={styles.name}>M. Johnson</Text>
                 <Text style={styles.detail}>42 years Smoker</Text>
               </View>
@@ -307,10 +345,15 @@ const Health = ({navigation}) => {
 
             <EditableSection
               label="Last Consulted: "
-              value={lastConsulted}
-              onChange={setLastConsulted}
+              value={date}
+              show={show}
+              isDate={true} // ✅ tell component this is a date
+              onChange={onDateChange}
               isEditing={editConsulted}
-              toggleEdit={() => setEditConsulted(!editConsulted)}
+              toggleEdit={() => {
+                setEditConsulted(!editConsulted);
+                setShow(!show);
+              }}
             />
           </View>
 
@@ -322,14 +365,16 @@ const Health = ({navigation}) => {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 marginBottom: hp(2),
-              }}>
+              }}
+            >
               <Text
                 style={{
                   fontSize: 15,
                   fontWeight: '700',
                   color: '#374151',
                   fontFamily: 'Roboto-Regular',
-                }}>
+                }}
+              >
                 Parameter
               </Text>
               <Text
@@ -338,7 +383,8 @@ const Health = ({navigation}) => {
                   fontWeight: '700',
                   color: '#374151',
                   fontFamily: 'Roboto-Regular',
-                }}>
+                }}
+              >
                 Value
               </Text>
               <Text
@@ -347,25 +393,28 @@ const Health = ({navigation}) => {
                   fontWeight: '700',
                   color: '#000000',
                   fontFamily: 'Roboto-Regular',
-                }}>
+                }}
+              >
                 Status
               </Text>
             </View>
             <FlatList
               data={healthObservationsData}
               keyExtractor={(item, index) => index.toString()}
-              renderItem={({item}) => (
+              renderItem={({ item }) => (
                 <View
                   style={{
                     paddingVertical: hp(2),
                     borderBottomWidth: 1,
                     borderColor: '#E5E7EB',
-                  }}>
+                  }}
+                >
                   <View
                     style={{
                       flexDirection: 'row',
                       justifyContent: 'space-between',
-                    }}>
+                    }}
+                  >
                     <Text
                       style={{
                         // backgroundColor: 'pink',
@@ -374,7 +423,8 @@ const Health = ({navigation}) => {
                         fontWeight: '500',
                         color: '#000000',
                         fontFamily: 'Roboto-Regular',
-                      }}>
+                      }}
+                    >
                       {item.parameter}
                     </Text>
 
@@ -387,7 +437,8 @@ const Health = ({navigation}) => {
                         fontWeight: '500',
                         color: '#374151',
                         fontFamily: 'Roboto-Regular',
-                      }}>
+                      }}
+                    >
                       {item.value}
                     </Text>
                     <View
@@ -395,7 +446,8 @@ const Health = ({navigation}) => {
                         width: hp(17),
                         alignItems: 'flex-start',
                         // justifyContent: 'flex-start',
-                      }}>
+                      }}
+                    >
                       <View
                         style={{
                           // marginLeft: hp(1.5),
@@ -403,11 +455,13 @@ const Health = ({navigation}) => {
                           width: hp(2),
                           borderRadius: hp(4),
                           backgroundColor: item.status,
-                        }}></View>
+                        }}
+                      ></View>
                     </View>
                   </View>
                 </View>
-              )}></FlatList>
+              )}
+            ></FlatList>
           </View>
 
           <Text></Text>
@@ -415,19 +469,22 @@ const Health = ({navigation}) => {
           {/* Health Records */}
           <TouchableOpacity
             onPress={() => navigation.navigate('HealthRecords')}
-            style={styles.card}>
+            style={styles.card}
+          >
             <Text style={styles.sectionTitle}>Health Records</Text>
             <View
-              style={{borderStyle: 'dotted', borderWidth: 1, padding: hp(1)}}>
+              style={{ borderStyle: 'dotted', borderWidth: 1, padding: hp(1) }}
+            >
               {profileImage ? (
                 <Image
-                  source={{uri: profileImage}}
+                  source={{ uri: profileImage }}
                   style={{
                     width: '100%',
                     height: 150,
                     resizeMode: 'contain',
                     borderRadius: 6,
-                  }}></Image>
+                  }}
+                ></Image>
               ) : (
                 <Image source={Images.PRECRIPTION} style={styles.recordImage} />
               )}
@@ -435,7 +492,8 @@ const Health = ({navigation}) => {
 
             <TouchableOpacity
               onPress={showImagePickerOptions}
-              style={styles.button}>
+              style={styles.button}
+            >
               <Image
                 source={Images.CAMERA} // Replace with actual key in your `images` object
                 style={{
@@ -458,9 +516,10 @@ const Health = ({navigation}) => {
           {/* Summary of Records */}
           <View style={styles.card}>
             <View
-              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+              style={{ flexDirection: 'row', justifyContent: 'space-between' }}
+            >
               <Text style={styles.sectionTitle}>Summary of Records</Text>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Image
                   style={{
                     height: hp(1.5),
@@ -468,35 +527,39 @@ const Health = ({navigation}) => {
                     resizeMode: 'contain',
                     marginHorizontal: hp(1),
                   }}
-                  source={Images.NOTICE}></Image>
-                <Text style={{width: wp(45), fontSize: 12, color: '#6B7280'}}>
+                  source={Images.NOTICE}
+                ></Image>
+                <Text style={{ width: wp(45), fontSize: 12, color: '#6B7280' }}>
                   Accuracy depends on clarity and legibility of handwriting.
                 </Text>
               </View>
             </View>
 
             <Text style={styles.bold}>History: </Text>
-            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+            <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
               Cholecystectomy (Gallbladder removal)   Left thigh fracture
             </Text>
 
-            <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
-            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+            <Text style={[styles.bold, { marginTop: hp(1) }]}>
+              Medications:
+            </Text>
+            <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
               Diabetes on metformin   Hypertension (HTN) on Cardace
             </Text>
 
-            <Text style={[styles.label, {marginTop: hp(1)}]}>
+            <Text style={[styles.label, { marginTop: hp(1) }]}>
               <Text style={styles.bold}>Labs:</Text>
             </Text>
-            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+            <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
               RBS: 230
             </Text>
           </View>
-            <View style={styles.card}>
+          <View style={styles.card}>
             <View
-              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+              style={{ flexDirection: 'row', justifyContent: 'space-between' }}
+            >
               <Text style={styles.sectionTitle}>Disease Progression Risk</Text>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 {/* <Image
                   style={{
                     height: hp(1.5),
@@ -510,8 +573,9 @@ const Health = ({navigation}) => {
                 </Text> */}
               </View>
             </View>
-             <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
-          You may have a 52% chance of developing diabetes and early kidney issues within the next 4 years.
+            <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
+              You may have a 52% chance of developing diabetes and early kidney
+              issues within the next 4 years.
             </Text>
 
             {/* <Text style={styles.bold}>History: </Text>

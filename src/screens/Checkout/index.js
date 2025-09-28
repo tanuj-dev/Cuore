@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,18 +9,9 @@ import {
   Image,
   //   CheckBox,
 } from 'react-native';
-import {hp, wp, Images} from '../../utilities';
+import { hp, wp, Images } from '../../utilities';
 
 const plans = [
-  {
-    title: 'Try Out',
-    subtitle: 'Start small—discover what works best for you',
-    duration: '1 Month',
-    oldPrice: 669,
-    newPrice: 449,
-    daily: ' ₹15/day',
-    discount: '33%',
-  },
   {
     title: 'Stabilise',
     subtitle: 'Build steady habits with expert guidance',
@@ -41,7 +32,7 @@ const plans = [
     topPick: true,
   },
   {
-    title: 'Flourish',
+    title: 'Thrive',
     subtitle: 'Sustain your best health—long term',
     duration: '12 Months',
     oldPrice: 3299,
@@ -51,7 +42,7 @@ const plans = [
   },
 ];
 
-const Checkout = ({navigation}) => {
+const Checkout = ({ navigation }) => {
   const [selectedPlan, setSelectedPlan] = useState('Progress');
   const [promoCode, setPromoCode] = useState('');
   const [autoRenew, setAutoRenew] = useState(false);
@@ -66,12 +57,20 @@ const Checkout = ({navigation}) => {
   return (
     <ScrollView>
       <View
-        style={{backgroundColor: '#FFFFFF', paddingTop: hp(2), elevation: 1}}>
+        style={{ backgroundColor: '#FFFFFF', paddingTop: hp(2), elevation: 1 }}
+      >
         <View
           style={{
             flexDirection: 'row',
-          }}>
-          <TouchableOpacity style={{ marginTop:Platform.OS =='ios'&& hp(7),marginBottom:hp(2)}} onPress={() => navigation.goBack()}>
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              marginTop: Platform.OS == 'ios' && hp(7),
+              marginBottom: hp(2),
+            }}
+            onPress={() => navigation.goBack()}
+          >
             <Image
               source={Images.BACK_BUTTON}
               style={{
@@ -86,7 +85,7 @@ const Checkout = ({navigation}) => {
           </TouchableOpacity>
           <Text style={styles.title}>Checkout</Text>
         </View>
-        <View style={{marginBottom: hp(1)}}>
+        <View style={{ marginBottom: hp(1) }}>
           <Text
             style={{
               fontFamily: 'Roboto-Regular',
@@ -95,7 +94,8 @@ const Checkout = ({navigation}) => {
               fontWeight: '400',
               color: '#000000',
               marginHorizontal: hp(2),
-            }}>
+            }}
+          >
             Remote supervision is billed separately by the doctor, & does not
             include consultation
           </Text>
@@ -112,22 +112,31 @@ const Checkout = ({navigation}) => {
                 styles.planBox,
                 selectedPlan === plan.title && styles.selectedBox,
               ]}
-              onPress={() => setSelectedPlan(plan.title)}>
-              <Text style={styles.discount}>🔻{plan.discount} OFF</Text>
-              {plan.topPick && <Text style={styles.topPick}>Top Pick</Text>}
-              <Text style={styles.planTitle}>{plan.title}</Text>
+              onPress={() => setSelectedPlan(plan.title)}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                }}
+              >
+                <Text style={styles.planTitle}>{plan.title}</Text>
+                <Text style={styles.discount}>🔻{plan.discount} OFF</Text>
+              </View>
+
               <Text style={styles.planSubtitle}>{plan.subtitle}</Text>
               <Text style={styles.planDuration}>Duration: {plan.duration}</Text>
               <Text style={styles.priceOld}>₹{plan.oldPrice}</Text>
               <Text style={styles.priceNew}>Now ₹{plan.newPrice}</Text>
-              <Text style={styles.dailyPrice}>Less than{plan.daily}</Text>
+              <Text style={styles.dailyPrice}>~{plan.daily}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         <Text style={styles.sectionTitle}>Payment Method</Text>
         <View style={styles.paymentMethods}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity
               onPress={() => setSelectPaymentMethod('Credit')}
               style={{
@@ -137,7 +146,8 @@ const Checkout = ({navigation}) => {
                 borderRadius: hp(2),
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}>
+              }}
+            >
               <View
                 style={{
                   height: hp(1.5),
@@ -145,7 +155,8 @@ const Checkout = ({navigation}) => {
                   borderRadius: hp(4),
                   backgroundColor:
                     selectPaymentMethod === 'Credit' ? '#000000' : '',
-                }}></View>
+                }}
+              ></View>
             </TouchableOpacity>
             <Image
               source={Images.CREDIT}
@@ -162,7 +173,8 @@ const Checkout = ({navigation}) => {
                 fontSize: 14,
                 fontWeight: '400',
                 color: '#000000',
-              }}>
+              }}
+            >
               Credit/Debit Card
             </Text>
           </View>
@@ -174,7 +186,8 @@ const Checkout = ({navigation}) => {
               flexDirection: 'row',
               marginTop: hp(1),
               alignItems: 'center',
-            }}>
+            }}
+          >
             <TouchableOpacity
               onPress={() => setSelectPaymentMethod('PayPal')}
               style={{
@@ -184,7 +197,8 @@ const Checkout = ({navigation}) => {
                 borderRadius: hp(2),
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}>
+              }}
+            >
               <View
                 style={{
                   height: hp(1.5),
@@ -192,7 +206,8 @@ const Checkout = ({navigation}) => {
                   borderRadius: hp(4),
                   backgroundColor:
                     selectPaymentMethod == 'PayPal' ? '#000000' : '#FFFFFF',
-                }}></View>
+                }}
+              ></View>
             </TouchableOpacity>
             <Image
               source={Images.PAYPAL}
@@ -209,7 +224,8 @@ const Checkout = ({navigation}) => {
                 fontSize: 14,
                 fontWeight: '400',
                 color: '#000000',
-              }}>
+              }}
+            >
               PayPal
             </Text>
           </View>
@@ -222,14 +238,16 @@ const Checkout = ({navigation}) => {
               flexDirection: 'row',
               justifyContent: 'space-between',
               marginBottom: hp(3),
-            }}>
+            }}
+          >
             <Text
               style={{
                 fontFamily: 'Roboto-Regular',
                 fontSize: 14,
                 fontWeight: '400',
                 color: '#000000',
-              }}>
+              }}
+            >
               Subscription: {selected.title}
             </Text>
             <Text
@@ -238,7 +256,8 @@ const Checkout = ({navigation}) => {
                 fontSize: 14,
                 fontWeight: '400',
                 color: '#000000',
-              }}>
+              }}
+            >
               ₹{(selected.newPrice - gstAmount).toFixed(2)}
             </Text>
           </View>
@@ -250,14 +269,16 @@ const Checkout = ({navigation}) => {
               borderTopWidth: 1,
               borderBottomWidth: 1,
               borderColor: '#E5E7EB',
-            }}>
+            }}
+          >
             <Text
               style={{
                 fontFamily: 'Roboto-Regular',
                 fontSize: 14,
                 fontWeight: '400',
                 color: '#000000',
-              }}>
+              }}
+            >
               GST 18%:{' '}
             </Text>
             <Text
@@ -266,7 +287,8 @@ const Checkout = ({navigation}) => {
                 fontSize: 14,
                 fontWeight: '400',
                 color: '#000000',
-              }}>
+              }}
+            >
               ₹{gstAmount.toFixed(2)}
             </Text>
           </View>
@@ -290,7 +312,8 @@ const Checkout = ({navigation}) => {
               borderTopWidth: 1,
               paddingTop: hp(1),
               borderColor: '#E5E7EB',
-            }}>
+            }}
+          >
             <Text style={styles.total}>Total: </Text>
             <Text style={styles.total}> ₹{totalAmount.toFixed(2)}</Text>
           </View>
@@ -306,7 +329,8 @@ const Checkout = ({navigation}) => {
               borderRadius: hp(0.7),
               alignItems: 'center',
               justifyContent: 'center',
-            }}>
+            }}
+          >
             <View
               style={{
                 height: hp(1.5),
@@ -314,7 +338,8 @@ const Checkout = ({navigation}) => {
                 borderRadius: hp(4),
                 backgroundColor:
                   enableAutoRenewal == true ? '#000000' : '#FFFFFF',
-              }}></View>
+              }}
+            ></View>
           </TouchableOpacity>
           <Text style={styles.checkboxText}>Enable auto-renewal</Text>
         </View>
@@ -322,7 +347,8 @@ const Checkout = ({navigation}) => {
         <TouchableOpacity
           onPress={() => navigation.navigate('PaymentDetails')}
           activeOpacity={0.9}
-          style={styles.checkoutButton}>
+          style={styles.checkoutButton}
+        >
           <Image
             source={Images.LOCK}
             style={{
@@ -344,7 +370,8 @@ const Checkout = ({navigation}) => {
             justifyContent: 'center',
             alignItems: 'center',
             marginTop: hp(2),
-          }}>
+          }}
+        >
           <Image
             source={Images.SECURE}
             style={{
@@ -360,7 +387,8 @@ const Checkout = ({navigation}) => {
               fontFamily: 'Roboto-Regular',
               fontSize: 14,
               color: 'black',
-            }}>
+            }}
+          >
             {' '}
             Secure Checkout
           </Text>
@@ -373,7 +401,8 @@ const Checkout = ({navigation}) => {
             fontWeight: '400',
             color: '#000000',
             fontFamily: 'Roboto-Regular',
-          }}>
+          }}
+        >
           FAQ
         </Text>
         <TouchableOpacity style={styles.faqSection}>
@@ -383,7 +412,8 @@ const Checkout = ({navigation}) => {
               fontSize: 14,
               fontWeight: '400',
               color: '#000000',
-            }}>
+            }}
+          >
             Does remote supervision include consultation?
           </Text>
           <Image
@@ -397,14 +427,15 @@ const Checkout = ({navigation}) => {
             resizeMode="contain"
           />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.faqSection, {marginBottom: hp(22)}]}>
+        <TouchableOpacity style={[styles.faqSection, { marginBottom: hp(22) }]}>
           <Text
             style={{
               fontFamily: 'Roboto-Regular',
               fontSize: 14,
               fontWeight: '400',
               color: '#000000',
-            }}>
+            }}
+          >
             Is there a refund policy?
           </Text>
           <Image
@@ -424,7 +455,7 @@ const Checkout = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  container: {padding: wp(4), backgroundColor: '#F9FAFB'},
+  container: { padding: wp(4), backgroundColor: '#F9FAFB' },
   title: {
     fontFamily: 'Roboto-Regular',
     marginTop: hp(2),
@@ -457,12 +488,13 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   planContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    // flexDirection: 'row',
+    // flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   planBox: {
-    width: '49%',
+    width: '90%',
     borderWidth: 2,
     borderColor: '#E5E7EB',
     borderRadius: 8,
@@ -470,13 +502,14 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
     // elevation: 70,
   },
-  selectedBox: {borderColor: 'white', backgroundColor: '#D1D5DB'},
+  selectedBox: { borderColor: 'white', backgroundColor: '#D1D5DB' },
   discount: {
     fontFamily: 'Roboto-Regular',
     color: '#000000',
     fontWeight: '400',
     fontSize: 16,
-    alignSelf: 'flex-end',
+    marginLeft: hp(4),
+    // alignSelf: 'flex-end',
   },
   topPick: {
     color: '#FFFFFF',
@@ -492,9 +525,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     fontSize: 18,
 
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#1E64AC',
-    alignSelf: 'center',
+
+    marginLeft: hp(12),
     marginVertical: hp(1),
   },
   planSubtitle: {
@@ -502,14 +536,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#374151',
     fontWeight: '400',
-    marginVertical: hp(1),
+    // marginVertical: hp(1),
+    numberOfLines: 2,
+    width: '60%',
   },
   planDuration: {
+    position: 'absolute',
     fontFamily: 'Roboto-Regular',
     fontSize: 14,
     color: '#374151',
     fontWeight: '400',
+    top: hp(11),
     marginTop: hp(1),
+    left: hp(2),
   },
   priceOld: {
     fontFamily: 'Roboto-Regular',
@@ -517,7 +556,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 21,
     fontWeight: '400',
-    marginVertical: hp(2),
+    // marginVertical: hp(2),
     alignSelf: 'flex-end',
   },
   priceNew: {
@@ -531,7 +570,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     fontSize: 14,
     color: '#1E64ACBF',
-    alignSelf: 'center',
+    // marginTop: hp(-1),
+    // alignSelf: 'center',
   },
   paymentMethods: {
     marginBottom: hp(2),
@@ -581,7 +621,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: hp(2),
   },
-  checkboxText: {marginLeft: 8, marginLeft: hp(1)},
+  checkboxText: { marginLeft: 8, marginLeft: hp(1) },
   checkoutButton: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -591,7 +631,11 @@ const styles = StyleSheet.create({
     borderRadius: hp(0.5),
     alignItems: 'center',
   },
-  checkoutText: {color: '#fff', fontSize: hp(2), fontFamily: 'Roboto-Regular'},
+  checkoutText: {
+    color: '#fff',
+    fontSize: hp(2),
+    fontFamily: 'Roboto-Regular',
+  },
   ssl: {
     fontFamily: 'Roboto-Regular',
     textAlign: 'center',

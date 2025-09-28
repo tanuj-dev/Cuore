@@ -48,9 +48,10 @@ const Doctor = ({ navigation }) => {
 
   const toggleSelection = id => {
     setDoctors(prev =>
-      prev.map(doc =>
-        doc.id === id ? { ...doc, selected: !doc.selected } : doc,
-      ),
+      prev.map(doc => ({
+        ...doc,
+        selected: doc.id === id, // only one doctor can be selected
+      })),
     );
   };
 

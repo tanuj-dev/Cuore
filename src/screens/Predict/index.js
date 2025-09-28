@@ -56,7 +56,7 @@ const healthGraphs = [
     },
   },
   {
-    title: ' A1C',
+    title: 'A1C',
     data: {
       labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep'],
       datasets: [
@@ -231,7 +231,7 @@ const Predict = ({ navigation }) => {
                     } else if (item.title == 'Blood Sugar') {
                       const STEP = 7;
                       navigation.navigate('OnBoarding', { STEP });
-                    } else if (item.title == 'HbA1c (A1C)') {
+                    } else if (item.title == 'A1C') {
                       const STEP = 7;
                       navigation.navigate('OnBoarding', { STEP });
                     } else if (item.title == 'BMI & Body Fat') {
