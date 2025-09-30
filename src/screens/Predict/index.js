@@ -151,7 +151,9 @@ const Predict = ({ navigation }) => {
         {healthGraphs.map((item, index) => {
           return (
             <View key={`module-${index}`} style={styles.card}>
-              {item.title === 'Blood Pressure & Heart Rate' && (
+              {['Blood Pressure & Heart Rate', 'Blood Sugar'].includes(
+                item.title,
+              ) && (
                 <View style={styles.tabContainer}>
                   <TouchableOpacity
                     onPress={() => setActiveTab('Predict')}

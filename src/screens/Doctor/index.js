@@ -225,15 +225,16 @@ const Doctor = ({ navigation }) => {
               onPress={() => {
                 Alert.alert(
                   'Confirm Checkout',
-                  'Are you sure you want to request supervision and go to checkout?',
+                  "Your request has been sent. Someone from the doctor's office will get in touch with you.",
                   [
                     {
-                      text: 'Cancel',
+                      text: 'ok',
                       style: 'cancel',
-                    },
-                    {
-                      text: 'Yes',
-                      onPress: () => navigation.navigate('Checkout'),
+                      onPress: () =>
+                        navigation.reset({
+                          index: 0,
+                          routes: [{ name: 'Home' }],
+                        }),
                     },
                   ],
                   { cancelable: true },
@@ -243,7 +244,7 @@ const Doctor = ({ navigation }) => {
             >
               <Text style={styles.buttonText}>Request Supervision</Text>
             </TouchableOpacity>
-            <Text
+            {/* <Text
               style={{
                 fontSize: 14,
                 fontWeight: '400',
@@ -255,7 +256,7 @@ const Doctor = ({ navigation }) => {
             >
               Your request has been sent. Someone from the doctor's office will
               get in touch with you.
-            </Text>
+            </Text> */}
           </View>
         </View>
       </View>

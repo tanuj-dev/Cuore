@@ -250,7 +250,7 @@ const Health = ({ navigation }) => {
   ];
 
   return (
-    <ScrollView style={{}}>
+    <ScrollView style={{ backgroundColor: '#FFFFFF', flex: 1 }}>
       {/* Header */}
 
       <View style={{ flex: 1 }}>

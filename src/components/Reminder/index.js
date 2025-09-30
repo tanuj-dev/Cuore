@@ -7,17 +7,23 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
+  Image,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { Images } from '../../utilities';
 
 const Reminder = ({ isVisible, setIsVisible }) => {
   const [reminderText, setReminderText] = useState('');
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState(null);
+  const [time, setTime] = useState(null); // null initially
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [repeat, setRepeat] = useState('Daily');
+  const [repeat, setRepeat] = useState('');
+  const [encRepeat, setEncRepeat] = useState('');
+  const [showPicker, setShowPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
   const [endRepeat, setEndRepeat] = useState('Never');
   const [flagAsMedication, setFlagAsMedication] = useState(false);
 
@@ -28,17 +34,33 @@ const Reminder = ({ isVisible, setIsVisible }) => {
   ];
 
   const handleDateChange = (event, selectedDate) => {
-    setShowDatePicker(false);
-    if (selectedDate) setDate(selectedDate);
+    setShowDatePicker(false); // hide picker
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
   };
 
   const handleTimeChange = (event, selectedTime) => {
-    setShowTimePicker(false);
-    if (selectedTime) setDate(selectedTime);
+    setShowTimePicker(false); // hide picker
+    if (selectedTime) {
+      setTime(selectedTime); // ✅ update state with selected time
+    }
+  };
+
+  // format time helper
+  const formatTime = date => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
   };
 
   return (
     <Modal
+      swipeThreshold={10}
+      propagateSwipe={true}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      swipeDirection="down"
       isVisible={isVisible}
       onBackdropPress={() => setIsVisible(false)}
       style={styles.modal}
@@ -46,7 +68,25 @@ const Reminder = ({ isVisible, setIsVisible }) => {
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Title */}
-          <Text style={styles.title}>Add/Delete Entry</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Text style={styles.title}>Add/Delete Entry</Text>
+            <TouchableOpacity onPress={() => setIsVisible(false)}>
+              <Image
+                style={{
+                  width: 13,
+                  height: 13,
+                  resizeMode: 'contain',
+                  tintColor: '#6B7280',
+                }}
+                source={Images.CROSS}
+              />
+            </TouchableOpacity>
+          </View>
 
           {/* Existing Entries */}
           <Text style={styles.subtitle}>Existing Entries</Text>
@@ -56,11 +96,21 @@ const Reminder = ({ isVisible, setIsVisible }) => {
                 <Text style={styles.entryText}>{entry.name}</Text>
                 <Text style={styles.entrySubtext}>{entry.schedule}</Text>
               </View>
+
               <TouchableOpacity style={styles.iconButton}>
-                <Text style={{ fontSize: 16, color: '#1E64AC' }}>✎</Text>
+                <Image
+                  source={Images.EDIT} // replace with your edit icon path
+                  style={{ width: 16, height: 16 }}
+                  resizeMode="contain"
+                />
               </TouchableOpacity>
+
               <TouchableOpacity style={styles.iconButton}>
-                <Text style={{ fontSize: 18, color: 'red' }}>🗑</Text>
+                <Image
+                  source={Images.DELETE} // replace with your delete icon path
+                  style={{ width: 16, height: 16, tintColor: '#EF4444' }}
+                  resizeMode="contain"
+                />
               </TouchableOpacity>
             </View>
           ))}
@@ -79,35 +129,59 @@ const Reminder = ({ isVisible, setIsVisible }) => {
               value={reminderText}
               onChangeText={setReminderText}
             />
-            <Text style={styles.infoText}>
-              Use '/' to separate multiple reminders set for the same time
-            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: 6,
+              }}
+            >
+              <Image
+                source={Images.NOTICE} // replace with your image path
+                style={{ width: 16, height: 16, marginRight: 6 }}
+              />
+              <Text style={styles.infoText}>
+                Use '/' to separate multiple reminders set for the same time
+              </Text>
+            </View>
           </View>
 
           {/* Date & Time */}
           <View style={styles.dateTimeRow}>
+            {/* Date Picker */}
             <TouchableOpacity
               style={styles.dateTimeInput}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text>{date.toDateString()}</Text>
-              <Text>📅</Text>
+              <Text style={{ color: date ? '#000' : '#888' }}>
+                {date ? date.toDateString() : 'Start Date'}{' '}
+                {/* placeholder text */}
+              </Text>
+
+              <Image
+                source={Images.CALANDER} // replace with your calendar image
+                style={{ width: 18, height: 18, marginLeft: 8 }}
+              />
             </TouchableOpacity>
+
+            {/* Time Picker */}
             <TouchableOpacity
               style={styles.dateTimeInput}
               onPress={() => setShowTimePicker(true)}
             >
-              <Text>
-                {date.getHours()}:
-                {date.getMinutes().toString().padStart(2, '0')}
+              <Text style={{ color: time ? '#000' : '#888' }}>
+                {time ? formatTime(time) : 'HH:MM'} {/* placeholder text */}
               </Text>
-              <Text>⏰</Text>
+              <Image
+                source={Images.CLOCK} // replace with your clock image
+                style={{ width: 18, height: 18, marginLeft: 8 }}
+              />
             </TouchableOpacity>
           </View>
 
           {showDatePicker && (
             <DateTimePicker
-              value={date}
+              value={date || new Date()}
               mode="date"
               display="default"
               onChange={handleDateChange}
@@ -115,7 +189,7 @@ const Reminder = ({ isVisible, setIsVisible }) => {
           )}
           {showTimePicker && (
             <DateTimePicker
-              value={date}
+              value={time || new Date()}
               mode="time"
               display="default"
               onChange={handleTimeChange}
@@ -123,26 +197,84 @@ const Reminder = ({ isVisible, setIsVisible }) => {
           )}
 
           {/* Repeat */}
-          <Picker
-            selectedValue={repeat}
-            onValueChange={itemValue => setRepeat(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label="Daily" value="Daily" />
-            <Picker.Item label="Weekly" value="Weekly" />
-            <Picker.Item label="Monthly" value="Monthly" />
-          </Picker>
+          <View style={styles.pickercontainer}>
+            {/* Fake input */}
+            <TouchableOpacity
+              style={styles.pickerinput}
+              onPress={() => setShowPicker(!showPicker)}
+            >
+              <Text style={{ color: repeat ? '#000' : '#888' }}>Repeat</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  style={{ fontSize: 14, fontWeight: '500', color: '#6B7280' }}
+                >
+                  {' '}
+                  {repeat ? repeat : 'Daily'}
+                </Text>
+                <Image style={{ marginLeft: 4 }} source={Images.DOWN}></Image>
+              </View>
+            </TouchableOpacity>
+
+            {/* Conditionally show Picker */}
+            {showPicker && (
+              <Picker
+                selectedValue={repeat}
+                onValueChange={itemValue => {
+                  setRepeat(itemValue);
+                  setShowPicker(false); // hide after selection
+                }}
+                style={styles.repeatpicker}
+              >
+                <Picker.Item label="Daily" value="Daily" />
+                <Picker.Item label="Weekly" value="Weekly" />
+                <Picker.Item label="Monthly" value="Monthly" />
+              </Picker>
+            )}
+          </View>
 
           {/* End Repeat */}
-          <Picker
+
+          <View style={[styles.pickercontainer, { marginTop: -10 }]}>
+            {/* Fake input */}
+            <TouchableOpacity
+              style={styles.pickerinput}
+              onPress={() => setShowEndPicker(!showEndPicker)}
+            >
+              <Text style={{ color: '#888' }}>End Repeat</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  style={{ fontSize: 14, fontWeight: '500', color: '#6B7280' }}
+                >
+                  {endRepeat ? endRepeat : 'Never'}
+                </Text>
+                <Image style={{ marginLeft: 4 }} source={Images.DOWN}></Image>
+              </View>
+            </TouchableOpacity>
+
+            {/* Conditionally show Picker */}
+            {showEndPicker && (
+              <Picker
+                selectedValue={endRepeat}
+                onValueChange={itemValue => {
+                  setEndRepeat(itemValue);
+                  setShowEndPicker(false); // hide after selection
+                }}
+                style={styles.repeatpicker}
+              >
+                <Picker.Item label="Never" value="Never" />
+                <Picker.Item label="After 1 Month" value="1 Month" />
+                <Picker.Item label="After 6 Months" value="6 Months" />
+              </Picker>
+            )}
+          </View>
+
+          {/* <Picker
             selectedValue={endRepeat}
             onValueChange={itemValue => setEndRepeat(itemValue)}
             style={styles.picker}
           >
-            <Picker.Item label="Never" value="Never" />
-            <Picker.Item label="After 1 Month" value="1Month" />
-            <Picker.Item label="After 6 Months" value="6Months" />
-          </Picker>
+           
+          </Picker> */}
 
           {/* Flag as medication */}
           <View style={styles.switchRow}>
@@ -154,7 +286,10 @@ const Reminder = ({ isVisible, setIsVisible }) => {
           </View>
 
           {/* Add Entry Button */}
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity
+            onPress={() => setIsVisible(false)}
+            style={styles.addButton}
+          >
             <Text style={styles.addButtonText}>Add Entry</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -171,8 +306,18 @@ const styles = StyleSheet.create({
     padding: 20,
     height: '90%',
   },
-  title: { fontSize: 18, fontWeight: '600', marginBottom: 15 },
-  subtitle: { fontSize: 16, fontWeight: '500', marginVertical: 10 },
+  title: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginBottom: 15,
+    color: '#000000',
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    marginVertical: 10,
+    color: '#000',
+  },
   entryCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -182,7 +327,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   entryText: { fontSize: 14, fontWeight: '500', color: '#000' },
-  entrySubtext: { fontSize: 13, color: '#4B5563' },
+  entrySubtext: { fontSize: 13, color: '#4B5563', marginTop: 4 },
   iconButton: { paddingHorizontal: 8 },
   divider: {
     borderBottomWidth: 1,
@@ -227,6 +372,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   addButtonText: { color: '#fff', fontSize: 15, fontWeight: '500' },
+  pickercontainer: {
+    marginVertical: 20,
+    // margin: 20,
+  },
+  pickerinput: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    padding: 12,
+    borderRadius: 6,
+  },
+  repeatpicker: {
+    // marginTop: 10,
+  },
 });
 
 export default Reminder;

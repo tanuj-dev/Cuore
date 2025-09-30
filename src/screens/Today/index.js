@@ -6,6 +6,7 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
+  StatusBar,
 } from 'react-native';
 import { Images, hp, images, wp } from '../../utilities';
 import ProgressBarWithImage from '../../components/ProgressBar';
@@ -97,6 +98,7 @@ const Today = ({ navigation }) => {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.floatingText}>
+        {/* <StatusBar hidden={true} /> */}
         {/* <Text style={styles.floatingTextLabel}>Floating Reminder</Text> */}
         <TouchableOpacity onPress={() => setIsVisible(true)}>
           <Image source={Images.PLUS} style={styles.addIcon} />
