@@ -1,19 +1,25 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  Image,
-  ScrollView,
+  Modal,
+  FlatList,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
-import {Picker} from '@react-native-picker/picker';
-import {images, hp, wp, Images, color} from '../../utilities'; // ensure image path is valid
+
+const genderOptions = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+  { label: 'Other', value: 'other' },
+];
 
 const OnBoarding2 = () => {
   const [gender, setGender] = useState('');
+  const [showGenderModal, setShowGenderModal] = useState(false);
   const [form, setForm] = useState({
     age: '',
     height: '',
@@ -22,20 +28,25 @@ const OnBoarding2 = () => {
   });
 
   const handleChange = (key, value) => {
-    setForm(prev => ({...prev, [key]: value}));
+    setForm(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleGenderSelect = value => {
+    setGender(value);
+    setShowGenderModal(false);
   };
 
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.container}>
+      contentContainerStyle={styles.container}
+    >
       <SafeAreaView>
-        {/* Input Card */}
         <View style={styles.card}>
           <Text style={styles.label}>Age</Text>
           <TextInput
-            placeholderTextColor={'#6B7280'}
             placeholder="Your age"
+            placeholderTextColor="#6B7280"
             value={form.age}
             keyboardType="numeric"
             onChangeText={text => handleChange('age', text)}
@@ -43,28 +54,21 @@ const OnBoarding2 = () => {
           />
 
           <Text style={styles.label}>Gender</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              // fontSize={12}
-              selectedValue={gender}
-              onValueChange={itemValue => setGender(itemValue)}
-              style={styles.picker}
-              itemStyle={styles.pickerItem}>
-              <Picker.Item
-                style={{fontSize: 14}}
-                label="Choose gender"
-                value=""
-              />
-              <Picker.Item label="Male" value="male" />
-              <Picker.Item label="Female" value="female" />
-              <Picker.Item label="Other" value="other" />
-            </Picker>
-          </View>
+          <TouchableOpacity
+            style={styles.input}
+            onPress={() => setShowGenderModal(true)}
+          >
+            <Text style={{ color: gender ? '#6B7280' : '#6B7280' }}>
+              {gender
+                ? gender.charAt(0).toUpperCase() + gender.slice(1)
+                : 'Choose gender'}
+            </Text>
+          </TouchableOpacity>
 
           <Text style={styles.label}>Height (cm)</Text>
           <TextInput
-            placeholderTextColor={'#6B7280'}
             placeholder="Your height in cm"
+            placeholderTextColor="#6B7280"
             value={form.height}
             keyboardType="numeric"
             onChangeText={text => handleChange('height', text)}
@@ -73,8 +77,8 @@ const OnBoarding2 = () => {
 
           <Text style={styles.label}>Weight (kg)</Text>
           <TextInput
-            placeholderTextColor={'#6B7280'}
             placeholder="Morning, empty stomach weight in kgs"
+            placeholderTextColor="#6B7280"
             value={form.weight}
             keyboardType="numeric"
             onChangeText={text => handleChange('weight', text)}
@@ -83,8 +87,8 @@ const OnBoarding2 = () => {
 
           <Text style={styles.label}>Waist (in)</Text>
           <TextInput
-            placeholderTextColor={'#6B7280'}
             placeholder="Measured just above your belly button"
+            placeholderTextColor="#6B7280"
             value={form.waist}
             keyboardType="numeric"
             onChangeText={text => handleChange('waist', text)}
@@ -92,7 +96,37 @@ const OnBoarding2 = () => {
           />
         </View>
 
-        {/* Next Button */}
+        {/* Gender Modal */}
+        <Modal
+          visible={showGenderModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowGenderModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Select Gender</Text>
+              <FlatList
+                data={genderOptions}
+                keyExtractor={item => item.value}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.modalItem}
+                    onPress={() => handleGenderSelect(item.value)}
+                  >
+                    <Text style={styles.modalItemText}>{item.label}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+              <TouchableOpacity
+                style={styles.modalCancel}
+                onPress={() => setShowGenderModal(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </ScrollView>
   );
@@ -167,5 +201,37 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '80%',
+    borderRadius: 10,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  modalItem: {
+    paddingVertical: 12,
+  },
+  modalItemText: {
+    fontSize: 14,
+    color: '#000',
+  },
+  modalCancel: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    color: '#007bff',
+    fontSize: 14,
   },
 });
