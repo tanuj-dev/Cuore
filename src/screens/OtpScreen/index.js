@@ -1,23 +1,34 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Pressable,
   Image,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
-import {hp, wp, Images} from '../../utilities';
-// import Icon from 'react-native-vector-icons/Ionicons';
-import {useNavigation} from '@react-navigation/native';
+import { hp, wp, Images } from '../../utilities';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { verifyOtp, sendOtp } from '../../redux/slices';
+import EncryptedStorage from 'react-native-encrypted-storage';
 
-const OtpScreen = ({}) => {
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(30);
-  const inputs = useRef([]);
+const OtpScreen = () => {
+  const route = useRoute();
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+
+  const loading = useSelector(state => state.auth.loading);
+
+  const { phone, requestId, retryAfter, testOtp } = route.params;
+
+  const [otp, setOtp] = useState([...testOtp]);
+  const [timer, setTimer] = useState(retryAfter || 30);
+  const [loader, setLoader] = useState(false);
+
+  const inputs = useRef([]);
 
   useEffect(() => {
     if (timer > 0) {
@@ -47,24 +58,77 @@ const OtpScreen = ({}) => {
     }
   };
 
-  const handleResend = () => {
-    setTimer(30);
-    // Trigger resend logic here
+  const handleVerifyOtp = async () => {
+    try {
+      const enteredOtp = otp.join('');
+      const result = await dispatch(
+        verifyOtp({ requestId, testOtp: enteredOtp }),
+      ).unwrap();
+      console.log('OTP verified:', result);
+
+      const { access_token, refresh_token, user_id, expires_in, new_user } =
+        result.data;
+
+      const tokenPayload = {
+        accessToken: access_token,
+        refreshToken: refresh_token,
+        userId: user_id,
+        expiresIn: expires_in,
+        newUser: new_user,
+      };
+
+      // ✅ Save token securely
+      await EncryptedStorage.setItem(
+        'auth_tokens',
+        JSON.stringify(tokenPayload),
+      );
+      console.log('Token saved to EncryptedStorage');
+
+      // ✅ Read it back immediately for confirmation
+      const storedToken = await EncryptedStorage.getItem('auth_tokens');
+      console.log('Retrieved token from storage:', storedToken);
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
+    } catch (err) {
+      console.log('OTP verification failed:', err.message);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      setLoader(true);
+      const result = await dispatch(sendOtp(`+91${phone}`)).unwrap();
+      console.log('OTP resent:', result);
+
+      setTimer(result.retryAfter || 30);
+      setOtp([...result.testOtp]);
+    } catch (err) {
+      console.log('Resend OTP failed:', err.message);
+    } finally {
+      setLoader(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backArrow} onPress={() => navigation.goBack()}>
+      <TouchableOpacity
+        style={styles.backArrow}
+        onPress={() => navigation.goBack()}
+      >
         <Image
           source={Images.BACK_BUTTON}
           style={{
             resizeMode: 'contain',
             height: hp(3.5),
             width: wp(4),
-            // marginLeft: hp(2),
             tintColor: '#000000',
-          }}></Image>
+          }}
+        />
       </TouchableOpacity>
+
       <Text style={styles.title}>OTP Verification</Text>
 
       <View style={styles.otpContainer}>
@@ -87,25 +151,41 @@ const OtpScreen = ({}) => {
       </Text>
 
       <TouchableOpacity
-        onPress={() => navigation.navigate('OnBoarding')}
-        style={styles.submitButton}>
-        <Text style={styles.submitText}>Submit</Text>
+        onPress={handleVerifyOtp}
+        style={styles.submitButton}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.submitText}>Submit</Text>
+        )}
       </TouchableOpacity>
 
       <Text style={styles.timerText}>
         Didn't receive code? Resend in: {timer}s
       </Text>
 
-      <TouchableOpacity onPress={handleResend} disabled={timer > 0}>
+      <TouchableOpacity
+        onPress={handleResendOtp}
+        disabled={timer > 0 || loader}
+      >
         <View style={styles.resendContainer}>
-          <Image
-            source={Images.SHARE}
-            style={{
-              resizeMode: 'contain',
-              height: hp(2),
-              width: wp(4),
-            }}></Image>
-          <Text style={styles.resendText}> Resend OTP</Text>
+          {loader ? (
+            <ActivityIndicator color="#1E64AC" />
+          ) : (
+            <>
+              <Image
+                source={Images.SHARE}
+                style={{
+                  resizeMode: 'contain',
+                  height: hp(2),
+                  width: wp(4),
+                }}
+              />
+              <Text style={styles.resendText}> Resend OTP</Text>
+            </>
+          )}
         </View>
       </TouchableOpacity>
     </View>
@@ -120,7 +200,7 @@ const styles = StyleSheet.create({
     paddingTop: hp(3),
   },
   backArrow: {
-      marginTop:Platform.OS =='ios'&& hp(2),
+    marginTop: Platform.OS === 'ios' ? hp(2) : 0,
     marginBottom: hp(3),
   },
   title: {
@@ -131,7 +211,6 @@ const styles = StyleSheet.create({
     marginBottom: hp(3),
   },
   otpContainer: {
-    // marginTop: hp(10),
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: hp(2),

@@ -7,7 +7,7 @@ let API_VERSION_2 = 'api/2.0';
 
 let MAIN_URL = MAIN_URL_QA_A2;
 
-let BASE_URL = MAIN_URL + API_VERSION;
+let BASE_URL = 'https://cuore-backend-1.onrender.com';
 let BASE_URL_V2 = MAIN_URL + API_VERSION_2;
 
 let IS_PRODUCTION = MAIN_URL === MAIN_URL_PRODUCTION ? true : false;
@@ -25,3 +25,8 @@ const REGEX = {
   NAME: /^([a-zA-Z]+\s)*[a-zA-Z]+$/,
   FULLNAME: /^[a-zA-Z]{2,40}( [a-zA-Z]{2,40})+$/,
 };
+
+const Constants = {
+  BASEURL: BASE_URL,
+};
+export default Constants;

@@ -1,4 +1,5 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import {
   View,
   Text,
@@ -7,11 +8,53 @@ import {
   StyleSheet,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import {Images, hp, wp} from '../../utilities';
+import { Images, hp, wp } from '../../utilities';
+import Constants from '../../utilities/Constants';
+import { sendOtp } from '../../redux/slices';
 
-const Login = ({navigation}) => {
+const Login = ({ navigation }) => {
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [tab, setTab] = useState('User');
+  const [loading, setLoading] = useState(false);
+
+  const dispatch = useDispatch();
+
+  const handleSendOtp = async () => {
+    if (!/^\d{10}$/.test(phoneNumber)) {
+      Alert.alert(
+        'Invalid Number',
+        'Please enter a valid 10-digit mobile number.',
+      );
+      return;
+    }
+
+    setLoading(true);
+    console.log('Dispatching sendOtp with phone number:', phoneNumber);
+
+    try {
+      const result = await dispatch(sendOtp(`+91${phoneNumber}`)).unwrap();
+
+      console.log('OTP sent:', result);
+
+      navigation.navigate('OtpScreen', {
+        phone: phoneNumber,
+        requestId: result.requestId,
+        retryAfter: result.retryAfter,
+        testOtp: result.testOtp,
+      });
+    } catch (err) {
+      console.log('OTP failed:', err.message);
+      Alert.alert(
+        'Error',
+        err.message || 'Failed to send OTP. Please try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Image source={Images.APP_LOGO} style={styles.logo} />
@@ -22,23 +65,27 @@ const Login = ({navigation}) => {
         <View style={styles.switchTabs}>
           <TouchableOpacity
             onPress={() => setTab('User')}
-            style={tab == 'User' ? styles.activeTab : styles.inactiveTab}>
+            style={tab == 'User' ? styles.activeTab : styles.inactiveTab}
+          >
             <Text
               style={
                 tab == 'User' ? styles.activeTabText : styles.inactiveTabText
-              }>
+              }
+            >
               User
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setTab('Caregiver')}
-            style={tab == 'Caregiver' ? styles.activeTab : styles.inactiveTab}>
+            style={tab == 'Caregiver' ? styles.activeTab : styles.inactiveTab}
+          >
             <Text
               style={
                 tab == 'Caregiver'
                   ? styles.activeTabText
                   : styles.inactiveTabText
-              }>
+              }
+            >
               Caregiver
             </Text>
           </TouchableOpacity>
@@ -53,6 +100,7 @@ const Login = ({navigation}) => {
             placeholder="9876543210"
             keyboardType="numeric"
             placeholderTextColor="#999"
+            onChangeText={text => setPhoneNumber(text)}
           />
         </View>
         {tab == 'User' && (
@@ -64,9 +112,15 @@ const Login = ({navigation}) => {
         )}
 
         <TouchableOpacity
-          onPress={() => navigation.navigate('OtpScreen')}
-          style={styles.verifyButton}>
-          <Text style={styles.verifyText}>Verify</Text>
+          onPress={handleSendOtp}
+          style={styles.verifyButton}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.verifyText}>Verify</Text>
+          )}
         </TouchableOpacity>
       </View>
       {/* <TouchableOpacity

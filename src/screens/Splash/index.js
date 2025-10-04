@@ -1,18 +1,55 @@
-import React, {useEffect} from 'react';
-import {View, Text, StyleSheet, Image} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {hp, wp, Images} from '../../utilities'; // adjust path accordingly
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import EncryptedStorage from 'react-native-encrypted-storage';
+import { setUserData } from '../../redux/Auth/slice'; // ✅ Redux Toolkit action
+import { hp, wp, Images, Strings } from '../../utilities';
 
 const Splash = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const authState = useSelector(state => state.auth);
+  useEffect(() => {
+    console.log('Redux auth state:', authState);
+  }, [authState]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Login'); // use replace to avoid going back to Splash
-    }, 2000);
+    const checkLoginStatus = async () => {
+      console.log('Checking auth tokens in storage...');
+      try {
+        const tokenData = await EncryptedStorage.getItem('auth_tokens');
+        console.log('Token data retrieved:', tokenData);
+        if (tokenData) {
+          const parsed = JSON.parse(tokenData);
+          console.log('Parsed token data:', parsed);
 
-    return () => clearTimeout(timer);
-  }, [navigation]);
+          // ✅ Optional: check token expiry
+          const access_token = parsed.accessToken;
+          if (!access_token) {
+            await EncryptedStorage.removeItem('auth_tokens');
+            navigation.replace('Login');
+            return;
+          } else {
+            dispatch(setUserData(parsed));
+            navigation.replace('Home');
+          }
+        } else {
+          navigation.replace('Login');
+        }
+      } catch (err) {
+        console.log('Error reading token:', err.message);
+        navigation.replace('Login');
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -47,7 +84,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 5,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     marginBottom: hp(3),

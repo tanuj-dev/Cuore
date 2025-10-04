@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,10 @@ import {
   Image,
   ScrollView,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {hp, wp, Images} from '../../utilities'; // Your responsive helpers
+import { Ionicons } from '@expo/vector-icons';
+import { hp, wp, Images } from '../../utilities'; // Your responsive helpers
 
-const EditDoctor = ({navigation}) => {
+const EditDoctor = ({ navigation }) => {
   const [doctorName, setDoctorName] = useState('Dr. Sarah James');
   const [doctorMobile, setDoctorMobile] = useState('981121234');
   const [confirmMobile, setConfirmMobile] = useState('981121234');
@@ -57,111 +57,119 @@ const EditDoctor = ({navigation}) => {
   );
 
   return (
-    <ScrollView>
-       <View style={{
-          backgroundColor: '#FFFFFF',
-          elevation: 1,
-      }}>
- <View
-        style={{
-       
-        
-          alignItems: 'center',
-          padding: hp(2),
-          flexDirection: 'row',
-           marginTop:Platform.OS =='ios'&& hp(5),
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON}
+    <ScrollView style={{ backgroundColor: 'white' }}>
+      <View style={{ backgroundColor: '#F3F4F6', flex: 1 }}>
+        <View
+          style={{
+            backgroundColor: '#FFFFFF',
+            elevation: 1,
+          }}
+        >
+          <View
             style={{
-              height: hp(3),
-              width: wp(4),
-              resizeMode: 'contain',
-              tintColor: '#000000',
+              alignItems: 'center',
+              padding: hp(2),
+              flexDirection: 'row',
+              marginTop: Platform.OS == 'ios' && hp(5),
             }}
-          />
-        </TouchableOpacity>
+          >
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Image
+                source={Images.BACK_BUTTON}
+                style={{
+                  height: hp(3),
+                  width: wp(4),
+                  resizeMode: 'contain',
+                  tintColor: '#000000',
+                }}
+              />
+            </TouchableOpacity>
 
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontSize: 20,
-            fontWeight: '400',
-            color: '#000000',
-     marginLeft: hp(2),
-          }}>
-          Add/Edit Doctor
-        </Text>
-      </View>
-      </View>
-      <View style={styles.container}>
-        {renderInputField(
-          'Doctor Name',
-          doctorName,
-          editName,
-          setDoctorName,
-          () => setEditName(true),
-        )}
-        {renderInputField(
-          'Doctor Mobile',
-          doctorMobile,
-          editMobile,
-          setDoctorMobile,
-          () => setEditMobile(true),
-        )}
-        {renderInputField(
-          'Doctor Code',
-          confirmMobile,
-          editConfirm,
-          setConfirmMobile,
-          () => setEditConfirm(true),
-        )}
-
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-            <Text style={styles.saveText}>Notify</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.cancelBtn}
-            onPress={() => {
-              navigation.goBack();
-
-              handleCancel();
-            }}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
+            <Text
+              style={{
+                fontFamily: 'Roboto-Regular',
+                fontSize: 20,
+                fontWeight: '400',
+                color: '#000000',
+                marginLeft: hp(2),
+              }}
+            >
+              Add/Edit Doctor
+            </Text>
+          </View>
         </View>
-        <Text
-          style={{
-            alignSelf: 'center',
-            color: '#000000',
-            fontSize: 15,
-            fontWeight: '400',
-            fontStyle: 'italic',
-            marginTop: hp(24),
-          }}>
-          I do not have a Cuore-partnered doctor
-        </Text>
-        <TouchableOpacity
-          onPressIn={() => navigation.navigate('Doctor')}
-          style={{
-            backgroundColor: '#1E64AC',
-            padding: hp(1.5),
-            marginHorizontal: hp(6),
-            borderRadius: hp(0.5),
-            marginTop: hp(1),
-          }}>
+        <View style={styles.container}>
+          {renderInputField(
+            'Doctor Name',
+            doctorName,
+            editName,
+            setDoctorName,
+            () => setEditName(true),
+          )}
+          {renderInputField(
+            'Doctor Mobile',
+            doctorMobile,
+            editMobile,
+            setDoctorMobile,
+            () => setEditMobile(true),
+          )}
+          {renderInputField(
+            'Doctor Code',
+            confirmMobile,
+            editConfirm,
+            setConfirmMobile,
+            () => setEditConfirm(true),
+          )}
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+              <Text style={styles.saveText}>Notify</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelBtn}
+              onPress={() => {
+                navigation.goBack();
+
+                handleCancel();
+              }}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
           <Text
             style={{
-              color: '#FFFFFF',
-              fontSize: 14,
-              fontWeight: '400',
               alignSelf: 'center',
-            }}>
-            Find Cuore-Partnered Doctors
+              color: '#000000',
+              fontSize: 15,
+              fontWeight: '400',
+              fontStyle: 'italic',
+              marginTop: hp(24),
+            }}
+          >
+            I do not have a Cuore-partnered doctor
           </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPressIn={() => navigation.navigate('Doctor')}
+            style={{
+              backgroundColor: '#1E64AC',
+              padding: hp(1.5),
+              marginHorizontal: hp(6),
+              borderRadius: hp(0.5),
+              marginTop: hp(1),
+            }}
+          >
+            <Text
+              style={{
+                color: '#FFFFFF',
+                fontSize: 14,
+                fontWeight: '400',
+                alignSelf: 'center',
+              }}
+            >
+              Find Cuore-Partnered Doctors
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   );

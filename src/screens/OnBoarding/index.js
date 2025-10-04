@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import {ProgressBar} from 'react-native-paper';
-import {Images, hp, wp} from '../../utilities';
+import { ProgressBar } from 'react-native-paper';
+import { Images, hp, wp } from '../../utilities';
 import OnBoarding2 from '../../components/OnBoardingOne';
 import OnBoardingThree from '../../components/OnBoardingThree';
 import OnBoardingFour from '../../components/OnBoardingFour';
@@ -17,8 +17,8 @@ import OnBoardingSix from '../../components/OnBoardingSix';
 import OnBoardingSeven from '../../components/OnBoardingSeven';
 import images from '../../utilities/Images';
 
-const OnBoarding = ({navigation, route}) => {
-  const {STEP} = route.params ?? {}; // fallback in case params are missing
+const OnBoarding = ({ navigation, route }) => {
+  const { STEP } = route.params ?? {}; // fallback in case params are missing
   const [step, setStep] = useState(1);
 
   // Set step from params when screen mounts
@@ -59,17 +59,20 @@ const OnBoarding = ({navigation, route}) => {
         {step == 1 ? (
           <Image source={Images.APP_LOGO} style={styles.logo} />
         ) : (
-          <TouchableOpacity onPress={handleBack} style={{ marginTop:Platform.OS =='ios'&& hp(3),}}>
+          <TouchableOpacity
+            onPress={handleBack}
+            style={{ marginTop: Platform.OS == 'ios' && hp(3) }}
+          >
             <Image
               source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-              style={{resizeMode: 'contain', height: hp(3.5), width: wp(4)}}
+              style={{ resizeMode: 'contain', height: hp(3.5), width: wp(4) }}
               resizeMode="contain"
             />
           </TouchableOpacity>
         )}
 
         {/* Main Banner */}
-        <View style={{backgroundColor: 'white'}}>
+        <View style={{ backgroundColor: 'white' }}>
           <Image source={Images[`ON_BOARD${step}`]} style={styles.banner} />
         </View>
 
@@ -133,19 +136,21 @@ const OnBoarding = ({navigation, route}) => {
                 justifyContent: 'center',
                 marginRight: hp(1),
                 marginTop: hp(3),
-              }}>
+              }}
+            >
               <Image
-                style={{resizeMode: 'contain', height: hp(2), width: hp(2)}}
+                style={{ resizeMode: 'contain', height: hp(2), width: hp(2) }}
                 source={images.NOTICE}
               />
             </View>
-            <View style={{paddingHorizontal: hp(2)}}>
+            <View style={{ paddingHorizontal: hp(2) }}>
               <Text
                 style={{
                   fontSize: hp(2),
                   color: '#4B5563',
                   fontFamily: 'Roboto-Regular',
-                }}>
+                }}
+              >
                 Keep your biomarkers up to date{'\n'}
               </Text>
               <Text style={styles.warningText}>
@@ -172,12 +177,12 @@ const OnBoarding = ({navigation, route}) => {
           <View>
             <View style={styles.cardInfo}>
               <Image source={Images.NOTICE} style={[styles.cardIcon]}></Image>
-              <Text style={[styles.cardText, {color: '4B5563'}]}>
+              <Text style={[styles.cardText, { color: '4B5563' }]}>
                 Please have a weighing scale and measuring tape ready.
               </Text>
             </View>
 
-            <View style={[styles.cardInfo, {backgroundColor: '#FBFAE5'}]}>
+            <View style={[styles.cardInfo, { backgroundColor: '#FBFAE5' }]}>
               <Image source={Images.WARNING} style={[styles.cardIcon]}></Image>
               <Text style={styles.cardText}>
                 This plan is tailored for you — using it for others can impact
@@ -187,7 +192,7 @@ const OnBoarding = ({navigation, route}) => {
 
             {/* Disclaimer */}
             <Text style={styles.disclaimer}>
-              <Text style={{fontWeight: 'bold'}}>Disclaimer:</Text> This
+              <Text style={{ fontWeight: 'bold' }}>Disclaimer:</Text> This
               assessment is not a substitute for professional medical advice.
               Always consult your doctor before beginning any new therapy or
               treatment.
@@ -268,7 +273,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   logo: {
-     marginTop:Platform.OS =='ios'&& hp(4),
+    marginTop: Platform.OS == 'ios' && hp(4),
     width: wp(20),
     height: hp(3),
     resizeMode: 'contain',
@@ -374,7 +379,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 20,
   },
-  warningText: {fontFamily: 'Roboto-Regular', color: '#333', fontSize: 14},
+  warningText: { fontFamily: 'Roboto-Regular', color: '#333', fontSize: 14 },
   bottomText: {
     fontSize: 12,
     fontWeight: '400',
