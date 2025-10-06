@@ -13,16 +13,102 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Images, hp, wp, Color } from '../../utilities';
+import { useDispatch, useSelector } from 'react-redux';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
+import { Images, hp, wp, Color } from '../../utilities';
 import color from '../../utilities/Color';
 import images from '../../utilities/Images';
+import { createAccountThunk } from '../../redux/slices';
+import EncryptedStorage from 'react-native-encrypted-storage';
+import { create } from 'react-test-renderer';
 
 const CreateAccountScreen = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+
+  // 🧩 Local state for all input fields
+  const [fullName, setFullName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [familyNumber, setFamilyNumber] = useState('');
+  const [doctorCode, setDoctorCode] = useState('');
+  const [corporateCode, setCorporateCode] = useState('');
   const [isChecked, setIsChecked] = useState(false);
+
+  // 🔄 Optional: get loading from redux
+  const { loading } = useSelector(state => state.auth || {});
+
+  const handleCreateAccount = async () => {
+    // 🔹 Validations
+    if (!fullName.trim() || !mobileNumber.trim()) {
+      Alert.alert('Missing Fields', 'Please fill all required fields.');
+      return;
+    }
+
+    if (!isChecked) {
+      Alert.alert(
+        'Terms Required',
+        'Please agree to the Terms and Conditions.',
+      );
+      return;
+    }
+
+    // 🔹 Payload (match backend keys)
+    const payload = {
+      phone: `+91${mobileNumber}`,
+      display_name: fullName,
+      caregiver_mobile: `+91${familyNumber}`,
+      doctor_code: doctorCode.toString(),
+      corporate_code: corporateCode.toString(),
+      consent_flags: {
+        tos: true,
+        share_with_doctor: false,
+      },
+    };
+
+    try {
+      const resultAction = await dispatch(createAccountThunk(payload));
+      console.log('Create Account Result:', resultAction);
+
+      if (createAccountThunk.fulfilled.match(resultAction)) {
+        Alert.alert(
+          'Account Created',
+          'Your account has been created successfully. Please log in to continue.',
+          [
+            {
+              text: 'OK',
+              onPress: () =>
+                navigation.navigate('OtpScreen', {
+                  requestId: resultAction?.payload.request_id,
+                  testOtp: resultAction?.payload.test_otp_code,
+                  CreateAccountScreen: true,
+                }),
+            },
+          ],
+        );
+
+        await EncryptedStorage.setItem(
+          'userid',
+          JSON.stringify({
+            user_id: resultAction.user_id,
+            request_id: resultAction?.request_id,
+          }),
+        );
+        console.log('[EncryptedStorage] Saved user_id and request_id');
+      } else {
+        Alert.alert(
+          'Error',
+          resultAction.payload?.message ||
+            'Failed to create account. Please try again.',
+        );
+      }
+    } catch (error) {
+      console.error('Create Account Error:', error);
+      Alert.alert('Error', error.message || 'Something went wrong.');
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -34,6 +120,7 @@ const CreateAccountScreen = () => {
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled"
         >
+          {/* 🔙 Back Button */}
           <Pressable
             style={styles.backArrow}
             onPress={() => navigation.goBack()}
@@ -42,14 +129,13 @@ const CreateAccountScreen = () => {
               source={Images.BACK_BUTTON}
               style={{
                 height: hp(3.5),
-
                 width: wp(4),
-                // marginLeft: hp(2),
-                // tintColor: '#000000',
                 resizeMode: 'contain',
               }}
             />
           </Pressable>
+
+          {/* 🩺 Logo */}
           <Image
             style={{
               resizeMode: 'contain',
@@ -60,68 +146,73 @@ const CreateAccountScreen = () => {
             source={images.APP_LOGO}
           />
 
+          {/* 🧾 Title */}
           <Text style={styles.title}>Create Account</Text>
 
+          {/* Full Name */}
           <Text style={styles.label}>
-            Full Name
-            <Text
-              style={[styles.label, { fontStyle: 'italic', fontWeight: '400' }]}
-            >
-              {' '}
-              (Required)
-            </Text>
+            Full Name <Text style={styles.optional}>(Required)</Text>
           </Text>
           <TextInput
             style={styles.input}
             placeholder="Enter user’s full name"
             placeholderTextColor="#6B7280"
+            value={fullName}
+            onChangeText={setFullName}
           />
 
+          {/* Mobile Number */}
           <Text style={styles.label}>
-            Mobile Number
-            <Text
-              style={[styles.label, { fontStyle: 'italic', fontWeight: '400' }]}
-            >
-              {' '}
-              (Required)
-            </Text>
+            Mobile Number <Text style={styles.optional}>(Required)</Text>
           </Text>
           <TextInput
             style={styles.input}
             placeholder="Enter your registered mobile number"
             placeholderTextColor="#6B7280"
             keyboardType="phone-pad"
+            value={mobileNumber}
+            onChangeText={setMobileNumber}
           />
 
+          {/* Family member's mobile */}
           <Text style={styles.label}>Family member's mobile number</Text>
           <TextInput
             style={styles.input}
             placeholder="So they can see your progress"
             placeholderTextColor="#6B7280"
             keyboardType="phone-pad"
+            value={familyNumber}
+            onChangeText={setFamilyNumber}
           />
 
+          {/* Doctor's code */}
           <Text style={styles.label}>Doctor's Code</Text>
-
           <TextInput
             style={styles.input}
             placeholder="Connect to partnered doctor for supervision"
             placeholderTextColor="#6B7280"
+            value={doctorCode}
+            onChangeText={setDoctorCode}
           />
 
+          {/* Corporate code */}
           <Text style={styles.label}>Corporate Code</Text>
           <TextInput
             style={styles.input}
             placeholder="Only for corporate plan users"
             placeholderTextColor="#6B7280"
+            value={corporateCode}
+            onChangeText={setCorporateCode}
           />
 
+          {/* Info */}
           <Text style={styles.infoText}>
             By entering your caregiver’s and doctor’s contact details, you
             authorize Cuore to share relevant health information with them to
-            enable coordinated, personalized care as part of your program
+            enable coordinated, personalized care as part of your program.
           </Text>
 
+          {/* Terms Checkbox */}
           <View style={styles.checkboxContainer}>
             <BouncyCheckbox
               size={20}
@@ -153,12 +244,18 @@ const CreateAccountScreen = () => {
             />
           </View>
 
+          {/* Verify Button */}
           <TouchableOpacity
-            onPress={() => navigation.navigate('OtpScreen')}
-            style={styles.verifyButton}
-            // disabled={!isChecked}
+            onPress={handleCreateAccount}
+            style={[
+              styles.verifyButton,
+              { backgroundColor: loading ? '#9CA3AF' : color.DARK_BLUE },
+            ]}
+            disabled={loading}
           >
-            <Text style={styles.verifyText}>Verify</Text>
+            <Text style={styles.verifyText}>
+              {loading ? 'Creating...' : 'Verify'}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </TouchableWithoutFeedback>
@@ -166,6 +263,7 @@ const CreateAccountScreen = () => {
   );
 };
 
+// 🧾 Styles
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
@@ -190,6 +288,10 @@ const styles = StyleSheet.create({
     marginBottom: hp(0.8),
     marginTop: hp(1.5),
     fontFamily: 'Roboto-Regular',
+  },
+  optional: {
+    fontStyle: 'italic',
+    fontWeight: '400',
   },
   input: {
     borderWidth: 1,
@@ -223,7 +325,6 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   verifyButton: {
-    backgroundColor: color.DARK_BLUE,
     paddingVertical: hp(1.6),
     borderRadius: wp(2),
     alignItems: 'center',

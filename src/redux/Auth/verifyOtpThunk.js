@@ -4,7 +4,7 @@ import EndPoints from '../../utilities/Endpoints';
 
 export const verifyOtp = createAsyncThunk(
   'auth/verifyOtp',
-  async ({ requestId, testOtp }, { rejectWithValue }) => {
+  async ({ endpoint, requestId, testOtp }, { rejectWithValue }) => {
     console.log('[verifyOtp] Triggered with:', { requestId, testOtp });
 
     try {
@@ -15,10 +15,17 @@ export const verifyOtp = createAsyncThunk(
           app_version: '1.0',
         },
       };
+      const payload2 = {
+        request_id: requestId,
+        otp_code: testOtp,
+      };
 
       console.log('[verifyOtp] Sending payload:', payload);
 
-      const res = await postApiCall(EndPoints.VERIFYOTP, payload);
+      const res = await postApiCall(
+        endpoint,
+        endpoint == 'api/v1/auth/verify-new-user-otp' ? payload2 : payload,
+      );
 
       console.log('[verifyOtp] Raw response:', res);
 

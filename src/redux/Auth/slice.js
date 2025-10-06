@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { verifyOtp } from './verifyOtpThunk';
+import { createAccountThunk } from './authThunk';
 
 const initialState = {
   accessToken: null,
@@ -53,6 +54,41 @@ const authSlice = createSlice({
       });
   },
 });
+const createAccountSlice = createSlice({
+  name: 'createAccount',
+  initialState: {
+    loading: false,
+    data: null,
+    error: null,
+  },
+  reducers: {
+    resetCreateAccount: state => {
+      state.loading = false;
+      state.data = null;
+      state.error = null;
+    },
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(createAccountThunk.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createAccountThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(createAccountThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
+});
 
-export const { setUserData, logout } = authSlice.actions;
-export default authSlice.reducer;
+export const { logout, setUserData } = authSlice.actions;
+export const { resetCreateAccount } = createAccountSlice.actions;
+
+export default {
+  auth: authSlice.reducer,
+  createAccount: createAccountSlice.reducer,
+};

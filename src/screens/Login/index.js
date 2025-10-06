@@ -46,9 +46,16 @@ const Login = ({ navigation }) => {
       });
     } catch (err) {
       console.log('OTP failed:', err.message);
+
       Alert.alert(
         'Error',
         err.message || 'Failed to send OTP. Please try again.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('NewAccount'),
+          },
+        ],
       );
     } finally {
       setLoading(false);
@@ -113,6 +120,7 @@ const Login = ({ navigation }) => {
 
         <TouchableOpacity
           onPress={handleSendOtp}
+          // onPress={() => navigation.navigate('OnBoarding')}
           style={styles.verifyButton}
           disabled={loading}
         >

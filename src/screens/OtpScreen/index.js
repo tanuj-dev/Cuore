@@ -14,6 +14,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { verifyOtp, sendOtp } from '../../redux/slices';
 import EncryptedStorage from 'react-native-encrypted-storage';
+import Endpoints from '../../utilities/Endpoints';
 
 const OtpScreen = () => {
   const route = useRoute();
@@ -22,7 +23,9 @@ const OtpScreen = () => {
 
   const loading = useSelector(state => state.auth.loading);
 
-  const { phone, requestId, retryAfter, testOtp } = route.params;
+  const { phone, requestId, retryAfter, testOtp, CreateAccountScreen } =
+    route.params;
+  console.log('Route params:', route.params);
 
   const [otp, setOtp] = useState([...testOtp]);
   const [timer, setTimer] = useState(retryAfter || 30);
@@ -62,7 +65,13 @@ const OtpScreen = () => {
     try {
       const enteredOtp = otp.join('');
       const result = await dispatch(
-        verifyOtp({ requestId, testOtp: enteredOtp }),
+        verifyOtp({
+          endpoint: CreateAccountScreen
+            ? Endpoints.NEWUSEROTP
+            : Endpoints.VERIFYOTP,
+          requestId,
+          testOtp: enteredOtp,
+        }),
       ).unwrap();
       console.log('OTP verified:', result);
 
@@ -86,11 +95,11 @@ const OtpScreen = () => {
 
       // ✅ Read it back immediately for confirmation
       const storedToken = await EncryptedStorage.getItem('auth_tokens');
-      console.log('Retrieved token from storage:', storedToken);
+      console.log('Retrieved token from storage:', JSON.parse(storedToken));
 
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Home' }],
+        routes: [{ name: 'OnBoarding' }],
       });
     } catch (err) {
       console.log('OTP verification failed:', err.message);

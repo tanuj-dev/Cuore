@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { use, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,11 @@ import {
   Alert,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
+import { useSelector } from 'react-redux';
+import { logout } from '../../redux/Auth/slice';
+import { useDispatch } from 'react-redux';
+import EncryptedStorage from 'react-native-encrypted-storage';
+import { resetCreateAccount } from '../../redux/Auth/slice';
 
 const profileOptions = [
   {
@@ -57,6 +62,7 @@ const profileOptions = [
 ];
 
 const Profile = ({ navigation }) => {
+  const dispatch = useDispatch();
   // Group the options by section
   const groupedSections = profileOptions.reduce((acc, item) => {
     if (!acc[item.section]) acc[item.section] = [];
@@ -108,6 +114,14 @@ const Profile = ({ navigation }) => {
     </View>
   );
 
+  const handleLogout = async () => {
+    await EncryptedStorage.removeItem('auth_tokens');
+    await EncryptedStorage.removeItem('userid');
+    dispatch(logout());
+    dispatch(resetCreateAccount());
+    navigation.replace('Login'); // or navigate, depending on your flow
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={{ backgroundColor: '#FAFAFA' }}>
@@ -149,7 +163,11 @@ const Profile = ({ navigation }) => {
           {Object.entries(groupedSections).map(([sectionTitle, items]) =>
             renderSection(sectionTitle, items),
           )}
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity
+            onPress={async () => {
+              handleLogout();
+            }}
+          >
             <Text>login</Text>
           </TouchableOpacity>
         </View>

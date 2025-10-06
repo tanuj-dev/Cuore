@@ -14,6 +14,9 @@ import {
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { hp, wp, Images } from '../../utilities';
+import { useDispatch } from 'react-redux';
+import EncryptedStorage from 'react-native-encrypted-storage';
+import { updateProfile } from './../../redux/slices';
 
 const EditProfile = ({ navigation }) => {
   const [userName, setUserName] = useState('M. Johnson');
@@ -23,6 +26,8 @@ const EditProfile = ({ navigation }) => {
   const [editName, setEditName] = useState(false);
   const [editMobile, setEditMobile] = useState(false);
   const [editConfirm, setEditConfirm] = useState(false);
+
+  const dispatch = useDispatch();
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -144,12 +149,49 @@ const EditProfile = ({ navigation }) => {
     );
   };
 
-  const handleSave = () => {
-    if (userMobile !== confirmMobile) {
-      Alert.alert('Error', 'Mobile numbers do not match');
-      return;
+  const handleSave = async () => {
+    try {
+      // 1️⃣ Validate phone numbers
+      if (editMobile || editConfirm) {
+        if (userMobile !== confirmMobile) {
+          Alert.alert('Error', 'Mobile numbers do not match');
+          return;
+        }
+      }
+
+      // 2️⃣ Get userId from storage
+      const authDataString = await EncryptedStorage.getItem('auth_tokens');
+      if (!authDataString) return;
+
+      const authData = JSON.parse(authDataString);
+      const userId = authData.userId;
+      if (!userId) return;
+
+      // 3️⃣ Build payload depending on what was edited
+      const payload = { consent_flags: { tos: true, share_with_doctor: true } };
+
+      if (editName) payload.display_name = userName;
+      if (editMobile) payload.phone = userMobile;
+      // confirmMobile is just validation, usually not sent
+
+      if (Object.keys(payload).length === 0) {
+        Alert.alert('No changes', 'Please edit a field first');
+        return;
+      }
+
+      // 4️⃣ Dispatch profile update thunk
+      dispatch(updateProfile({ userId, profileData: payload }));
+
+      // 5️⃣ Reset edit flags
+      if (editName) setEditName(false);
+      if (editMobile) setEditMobile(false);
+      if (editConfirm) setEditConfirm(false);
+
+      Alert.alert('Success', 'Profile updated successfully!');
+    } catch (error) {
+      console.error('Profile update error:', error);
+      Alert.alert('Error', 'Failed to update profile');
     }
-    Alert.alert('Success', 'Profile updated successfully!');
   };
 
   const handleCancel = () => {

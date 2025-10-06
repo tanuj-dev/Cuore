@@ -1,7 +1,7 @@
-// import {Common} from '@utilities'
 import Common from './Common';
-// import Storagedb from './Storagedb';
 import EndPoints from './Endpoints';
+
+import EncryptedStorage from 'react-native-encrypted-storage';
 
 async function setupHeaders(isPost = true, endPoint = '') {
   const headers = {
@@ -13,10 +13,23 @@ async function setupHeaders(isPost = true, endPoint = '') {
     headers['Accept'] = 'application/json, text/html, */*';
   }
 
+  try {
+    const tokenData = await EncryptedStorage.getItem('auth_tokens');
+
+    if (tokenData) {
+      const parsed = JSON.parse(tokenData);
+      const access_token = parsed.accessToken;
+      headers['Authorization'] = `Bearer ${access_token}`;
+    }
+  } catch (error) {
+    console.warn('⚠️ Failed to get token from storage:', error);
+  }
+
   return headers;
 }
 
-export async function postApiCall(endPoint, params, isHeader = false) {
+// 🔸 POST API
+export async function postApiCall(endPoint, params) {
   try {
     const headers = await setupHeaders(true, endPoint);
     const response = await Common.axiosInstance.post(endPoint, params, {
@@ -29,7 +42,8 @@ export async function postApiCall(endPoint, params, isHeader = false) {
   }
 }
 
-export async function getApiCall(endPoint, paramsData = '', isHeader = false) {
+// 🔸 GET API
+export async function getApiCall(endPoint, paramsData = '') {
   try {
     const headers = await setupHeaders(false, endPoint);
     const response = await Common.axiosInstance.get(endPoint + paramsData, {
@@ -38,6 +52,20 @@ export async function getApiCall(endPoint, paramsData = '', isHeader = false) {
     return response;
   } catch (error) {
     console.log('GET API ERROR:', error);
+    return error.response;
+  }
+}
+
+// 🔸 PUT API (for profile update, etc.)
+export async function putApiCall(endPoint, params) {
+  try {
+    const headers = await setupHeaders(true, endPoint);
+    const response = await Common.axiosInstance.put(endPoint, params, {
+      headers,
+    });
+    return response;
+  } catch (error) {
+    console.log('PUT API ERROR:', error);
     return error.response;
   }
 }

@@ -68,3 +68,27 @@ export const sendOtp = createAsyncThunk(
     }
   },
 );
+
+// ✅ CREATE ACCOUNT THUNK
+export const createAccountThunk = createAsyncThunk(
+  'auth/createAccount',
+  async (payload, { rejectWithValue }) => {
+    try {
+      // Example: payload = { name, email, phone, password }
+      const response = await postApiCall(EndPoints.CREATEACCOUNT, payload);
+
+      if (response?.status === 200 || response?.status === 201) {
+        return response.data;
+      } else {
+        return rejectWithValue(
+          response?.data || { message: 'Failed to create account' },
+        );
+      }
+    } catch (error) {
+      console.log('CREATEACCOUNT ERROR:', error);
+      return rejectWithValue(
+        error?.response?.data || { message: 'Something went wrong' },
+      );
+    }
+  },
+);
