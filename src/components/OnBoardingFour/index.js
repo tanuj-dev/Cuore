@@ -1,24 +1,30 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Image,
 } from 'react-native';
-import {images, hp, wp} from '../../utilities';
+import { hp, wp } from '../../utilities';
 
-const OnBoardingFour = () => {
-  const [tobacco, setTobacco] = useState('');
-  const [alcohol, setAlcohol] = useState('');
+const OnBoardingFour = ({ onFormChange, initialData = {} }) => {
+  const [tobacco, setTobacco] = useState(initialData?.smoking || '');
+  const [alcohol, setAlcohol] = useState(initialData?.alcohol || '');
+
+  // ✅ Update parent when state changes (only when data changes)
+  useEffect(() => {
+    const formData = { smoking: tobacco, alcohol: alcohol };
+    onFormChange && onFormChange(formData);
+  }, [tobacco, alcohol]);
 
   const renderOptions = (options, selected, onSelect) =>
     options.map((option, index) => (
       <TouchableOpacity
         key={index}
         onPress={() => onSelect(option)}
-        style={styles.optionRow}>
+        style={styles.optionRow}
+      >
         <View style={styles.radioOuter}>
           {selected === option && <View style={styles.radioInner} />}
         </View>
@@ -29,8 +35,8 @@ const OnBoardingFour = () => {
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.container}>
-      {/* Card */}
+      contentContainerStyle={styles.container}
+    >
       <View style={styles.card}>
         <Text style={styles.question}>
           In the last one year, how often have you used tobacco products?
@@ -58,8 +64,6 @@ const OnBoardingFour = () => {
           setAlcohol,
         )}
       </View>
-
-      {/* Next Button */}
     </ScrollView>
   );
 };

@@ -37,7 +37,6 @@ const Login = ({ navigation }) => {
       const result = await dispatch(sendOtp(`+91${phoneNumber}`)).unwrap();
 
       console.log('OTP sent:', result);
-
       navigation.navigate('OtpScreen', {
         phone: phoneNumber,
         requestId: result.requestId,

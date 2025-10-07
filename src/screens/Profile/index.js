@@ -115,8 +115,9 @@ const Profile = ({ navigation }) => {
   );
 
   const handleLogout = async () => {
+    console.log(await EncryptedStorage.getItem('auth_tokens'));
     await EncryptedStorage.removeItem('auth_tokens');
-    await EncryptedStorage.removeItem('userid');
+    // await EncryptedStorage.removeItem('userid');
     dispatch(logout());
     dispatch(resetCreateAccount());
     navigation.replace('Login'); // or navigate, depending on your flow
@@ -165,6 +166,7 @@ const Profile = ({ navigation }) => {
           )}
           <TouchableOpacity
             onPress={async () => {
+              console.log('Logging out...');
               handleLogout();
             }}
           >

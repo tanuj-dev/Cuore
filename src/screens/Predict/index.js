@@ -150,7 +150,7 @@ const Predict = ({ navigation }) => {
 
         {healthGraphs.map((item, index) => {
           return (
-            <View key={`module-${index}`} style={styles.card}>
+            <View key={`module-${item.title}-${index}`} style={styles.card}>
               {['Blood Pressure & Heart Rate', 'Blood Sugar'].includes(
                 item.title,
               ) && (
@@ -274,7 +274,7 @@ const Predict = ({ navigation }) => {
                 withDots
                 renderDotContent={({ x, y, index, indexData }) => (
                   <Text
-                    key={index}
+                    key={`chart-${index}-dot-${index}-${indexData}`}
                     style={{
                       position: 'absolute',
                       left: x - 10,
@@ -283,7 +283,6 @@ const Predict = ({ navigation }) => {
                       fontSize: 10,
                     }}
                   >
-                    {/* {showBPData ? indexData : ''} */}
                     {indexData}
                   </Text>
                 )}

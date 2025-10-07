@@ -4,22 +4,21 @@ import { postApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
 import EncryptedStorage from 'react-native-encrypted-storage';
 
-export const updateBasicInfo = createAsyncThunk(
+export const onBoarding2 = createAsyncThunk(
   'user/updateBasicInfo',
   async (basicInfoData, { rejectWithValue }) => {
     try {
       // 🔐 Retrieve auth data
-      const authDataString = await EncryptedStorage.getItem('auth_tokens');
-      if (!authDataString) throw new Error('Auth tokens not found');
+      // const authDataString = await EncryptedStorage.getItem('auth_tokens');
+      // if (!authDataString) throw new Error('Auth tokens not found');
 
-      const authData = JSON.parse(authDataString);
-      const userId = authData?.userId;
+      // const authData = JSON.parse(authDataString);
+      // const userId = authData?.userId;
 
-      if (!userId) throw new Error('User ID missing in auth data');
+      // if (!userId) throw new Error('User ID missing in auth data');
 
       // 🧠 Prepare endpoint
-      const endPoint = `${EndPoints.BASICINFO}/${userId}/basic-info`;
-
+      const endPoint = EndPoints.BASICINFO;
       // ⚡ POST API (headers auto-set by setupHeaders)
       const response = await postApiCall(endPoint, basicInfoData);
 
@@ -40,7 +39,7 @@ export const updateBasicInfo = createAsyncThunk(
     }
   },
 );
-export const submitHealthHistory = createAsyncThunk(
+export const onBoarding3 = createAsyncThunk(
   'user/submitHealthHistory',
   async (healthData, { rejectWithValue }) => {
     try {
@@ -59,8 +58,7 @@ export const submitHealthHistory = createAsyncThunk(
       };
 
       // 🧠 Endpoint (example: /api/v1/users/:userId/health-history)
-      const endPoint = `${EndPoints.HEALTHHISTORY}/${userId}/health-history`;
-
+      const endPoint = EndPoints.HEALTHHISTORY;
       // 🚀 Call API
       const response = await postApiCall(endPoint, payload);
 
@@ -82,7 +80,7 @@ export const submitHealthHistory = createAsyncThunk(
   },
 );
 
-export const submitLifestyle = createAsyncThunk(
+export const onBoarding4 = createAsyncThunk(
   'user/submitLifestyle',
   async (lifestyleData, { rejectWithValue }) => {
     try {
@@ -101,8 +99,7 @@ export const submitLifestyle = createAsyncThunk(
       };
 
       // 🧠 Endpoint (example: /api/v1/users/:userId/lifestyle)
-      const endPoint = `${EndPoints.LIFESTYLE}/${userId}/lifestyle`;
-
+      const endPoint = EndPoints.LIFESTYLE;
       // 🚀 API call
       const response = await postApiCall(endPoint, payload);
 
@@ -123,7 +120,7 @@ export const submitLifestyle = createAsyncThunk(
     }
   },
 );
-export const submitEatingExercise = createAsyncThunk(
+export const onBoarding5 = createAsyncThunk(
   'user/submitEatingExercise',
   async (exerciseData, { rejectWithValue }) => {
     try {
@@ -142,10 +139,8 @@ export const submitEatingExercise = createAsyncThunk(
       };
 
       // 🧠 Endpoint (example: /api/v1/users/:userId/eating-exercise)
-      const endPoint = `${EndPoints.EATINGEXCERCISE}/${userId}/eating-exercise`;
-
       // 🚀 API call
-      const response = await postApiCall(endPoint, payload);
+      const response = await postApiCall(EndPoints.EATINGEXCERCISE, payload);
 
       console.log('[submitEatingExercise] response:', response?.data);
 
@@ -164,7 +159,7 @@ export const submitEatingExercise = createAsyncThunk(
     }
   },
 );
-export const submitSleepStress = createAsyncThunk(
+export const onBoarding6 = createAsyncThunk(
   'user/submitSleepStress',
   async (sleepStressData, { rejectWithValue }) => {
     try {
@@ -183,10 +178,9 @@ export const submitSleepStress = createAsyncThunk(
       };
 
       // 🔸 Example endpoint: /api/v1/users/:userId/sleep-stress
-      const endPoint = `${EndPoints.SLEEPSTRESS}/${userId}/sleep-stress`;
 
       // 🚀 API call
-      const response = await postApiCall(endPoint, payload);
+      const response = await postApiCall(EndPoints.SLEEPSTRESS, payload);
 
       console.log('[submitSleepStress] response:', response?.data);
 
@@ -205,7 +199,7 @@ export const submitSleepStress = createAsyncThunk(
     }
   },
 );
-export const submitBiomarkers = createAsyncThunk(
+export const onBoarding7 = createAsyncThunk(
   'user/submitBiomarkers',
   async (biomarkerData, { rejectWithValue }) => {
     try {
@@ -224,8 +218,7 @@ export const submitBiomarkers = createAsyncThunk(
       };
 
       // 🔸 Construct endpoint
-      const endPoint = `${EndPoints.BIOMARKERS}/${userId}/biomarkers`;
-
+      const endPoint = EndPoints.BIOMARKERS;
       // 🚀 Call API
       const response = await postApiCall(endPoint, payload);
 

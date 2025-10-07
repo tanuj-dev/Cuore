@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,23 +17,40 @@ const genderOptions = [
   { label: 'Other', value: 'other' },
 ];
 
-const OnBoarding2 = () => {
+const OnBoarding2 = ({ onFormChange, initialData = {} }) => {
   const [gender, setGender] = useState('');
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [form, setForm] = useState({
     age: '',
-    height: '',
-    weight: '',
-    waist: '',
+    height_cm: '',
+    weight_kg: '',
+    waist_cm: '',
   });
 
+  // ✅ Prefill data when user revisits
+  useEffect(() => {
+    if (Object.keys(initialData).length) {
+      setForm({
+        age: initialData.age || '',
+        height_cm: initialData.height_cm || '',
+        weight_kg: initialData.weight_kg || '',
+        waist_cm: initialData.waist_cm || '',
+      });
+      setGender(initialData.gender || '');
+    }
+  }, [initialData]);
+
+  // ✅ Trigger form change only when user types or selects
   const handleChange = (key, value) => {
-    setForm(prev => ({ ...prev, [key]: value }));
+    const updatedForm = { ...form, [key]: value };
+    setForm(updatedForm);
+    onFormChange?.({ ...updatedForm, gender });
   };
 
   const handleGenderSelect = value => {
     setGender(value);
     setShowGenderModal(false);
+    onFormChange?.({ ...form, gender: value });
   };
 
   return (
@@ -58,7 +75,7 @@ const OnBoarding2 = () => {
             style={styles.input}
             onPress={() => setShowGenderModal(true)}
           >
-            <Text style={{ color: gender ? '#6B7280' : '#6B7280' }}>
+            <Text style={{ color: '#6B7280' }}>
               {gender
                 ? gender.charAt(0).toUpperCase() + gender.slice(1)
                 : 'Choose gender'}
@@ -69,9 +86,9 @@ const OnBoarding2 = () => {
           <TextInput
             placeholder="Your height in cm"
             placeholderTextColor="#6B7280"
-            value={form.height}
+            value={form.height_cm}
             keyboardType="numeric"
-            onChangeText={text => handleChange('height', text)}
+            onChangeText={text => handleChange('height_cm', text)}
             style={styles.input}
           />
 
@@ -79,9 +96,9 @@ const OnBoarding2 = () => {
           <TextInput
             placeholder="Morning, empty stomach weight in kgs"
             placeholderTextColor="#6B7280"
-            value={form.weight}
+            value={form.weight_kg}
             keyboardType="numeric"
-            onChangeText={text => handleChange('weight', text)}
+            onChangeText={text => handleChange('weight_kg', text)}
             style={styles.input}
           />
 
@@ -89,9 +106,9 @@ const OnBoarding2 = () => {
           <TextInput
             placeholder="Measured just above your belly button"
             placeholderTextColor="#6B7280"
-            value={form.waist}
+            value={form.waist_cm}
             keyboardType="numeric"
-            onChangeText={text => handleChange('waist', text)}
+            onChangeText={text => handleChange('waist_cm', text)}
             style={styles.input}
           />
         </View>
@@ -131,7 +148,6 @@ const OnBoarding2 = () => {
     </ScrollView>
   );
 };
-
 export default OnBoarding2;
 
 const styles = StyleSheet.create({

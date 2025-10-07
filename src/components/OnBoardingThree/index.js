@@ -1,14 +1,13 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Image,
   TextInput,
 } from 'react-native';
-import {images, hp, wp} from '../../utilities';
+import { hp, wp } from '../../utilities';
 
 const options = [
   'One of my parents was diagnosed with diabetes before the age of 60',
@@ -19,35 +18,59 @@ const options = [
   "I've noticed an increase in hunger, thirst, or the need to urinate frequently",
 ];
 
-const OnBoardingThree = () => {
+const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);
-
   const [text, setText] = useState('');
+
+  // ✅ Prefill if user revisits onboarding
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      setSelectedOptions(initialData.selectedOptions || []);
+      setText(initialData.other_conditions || '');
+    }
+  }, [initialData]);
+
+  // ✅ Send data to parent only when user updates something
+  const updateParent = (
+    updatedOptions = selectedOptions,
+    updatedText = text,
+  ) => {
+    onFormChange?.({
+      selectedOptions: updatedOptions,
+      other_conditions: updatedText,
+    });
+  };
+
   const handleChangeText = input => {
     if (input.length <= 60) {
       setText(input);
+      updateParent(selectedOptions, input);
     }
   };
 
   const toggleOption = option => {
-    setSelectedOptions(prev =>
-      prev.includes(option)
+    setSelectedOptions(prev => {
+      const updated = prev.includes(option)
         ? prev.filter(item => item !== option)
-        : [...prev, option],
-    );
+        : [...prev, option];
+      updateParent(updated, text);
+      return updated;
+    });
   };
 
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.container}>
+      contentContainerStyle={styles.container}
+    >
       {/* Options */}
       <View style={styles.card}>
         {options.map((option, index) => (
           <TouchableOpacity
             key={index}
             onPress={() => toggleOption(option)}
-            style={styles.optionRow}>
+            style={styles.optionRow}
+          >
             <View
               style={[
                 styles.checkbox,
@@ -59,7 +82,7 @@ const OnBoardingThree = () => {
         ))}
       </View>
 
-      {/* Tag input display */}
+      {/* Additional input */}
       <Text style={styles.tagTitle}>
         List any important medical or surgical conditions you’ve been treated
         for. Use ‘/’ to separate multiple conditions
@@ -72,12 +95,8 @@ const OnBoardingThree = () => {
           value={text}
           onChangeText={handleChangeText}
         />
-        <Text style={styles.wordCount}>
-          Characters: {text.trim().split(/\s+/).filter(Boolean).length}/60
-        </Text>
+        <Text style={styles.wordCount}>Characters: {text.length}/60</Text>
       </View>
-
-      {/* Next Button */}
     </ScrollView>
   );
 };

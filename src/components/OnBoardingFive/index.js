@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,20 +6,83 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+  Platform,
 } from 'react-native';
-import { images, wp, hp, color, Images } from '../../utilities';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { wp, hp, Images, color } from '../../utilities';
 
-const OnBoardingFive = () => {
+const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
   const [exerciseMinutes, setExerciseMinutes] = useState('');
   const [eatingPreference, setEatingPreference] = useState('');
-  const [cuisine, setCuisine] = useState({ indian: false, global: false });
   const [fruitsVeg, setFruitsVeg] = useState('');
   const [processedFood, setProcessedFood] = useState('');
   const [fiberFood, setFiberFood] = useState('');
-  const [restDay, setRestDay] = useState('Sun'); // Just mock selection
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [restDay, setRestDay] = useState('Sun');
   const [time, setTime] = useState(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  // ✅ Prefill from parent once
+  useEffect(() => {
+    if (Object.keys(initialData).length > 0) {
+      setExerciseMinutes(initialData.min_exercise_per_week || '');
+      setEatingPreference(initialData.eating_preference || '');
+      setFruitsVeg(initialData.fruits_veg || '');
+      setProcessedFood(initialData.processed_food || '');
+      setFiberFood(initialData.high_fiber || '');
+      setRestDay(initialData.rest_day || 'Sun');
+
+      if (initialData.preferred_ex_time) {
+        const [timeStr, ampm] = initialData.preferred_ex_time.split(' ');
+        const [hourStr, minStr] = timeStr.split(':');
+        let hour = parseInt(hourStr);
+        const min = parseInt(minStr);
+        if (ampm === 'PM' && hour < 12) hour += 12;
+        if (ampm === 'AM' && hour === 12) hour = 0;
+        const dateObj = new Date();
+        dateObj.setHours(hour);
+        dateObj.setMinutes(min);
+        setTime(dateObj);
+      }
+    }
+  }, []); // ✅ Run only once
+
+  const formatTime = date => {
+    const hours = date.getHours();
+    const mins = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHour = hours % 12 || 12;
+    const formattedMin = mins < 10 ? `0${mins}` : mins;
+    return `${formattedHour}:${formattedMin} ${ampm}`;
+  };
+
+  const onChangeTime = (event, selectedTime) => {
+    setShowTimePicker(false);
+    if (selectedTime) setTime(selectedTime);
+  };
+
+  // ✅ Send data to parent — only when something changes
+  useEffect(() => {
+    if (onFormChange) {
+      const payload = {
+        min_exercise_per_week: exerciseMinutes,
+        preferred_ex_time: formatTime(time),
+        rest_day: restDay,
+        eating_preference: eatingPreference,
+        fruits_veg: fruitsVeg,
+        processed_food: processedFood,
+        high_fiber: fiberFood,
+      };
+      onFormChange(payload);
+    }
+  }, [
+    exerciseMinutes,
+    eatingPreference,
+    fruitsVeg,
+    processedFood,
+    fiberFood,
+    restDay,
+    time,
+  ]);
 
   const renderRadioOptions = (options, selected, onSelect) =>
     options.map((option, index) => (
@@ -35,25 +98,11 @@ const OnBoardingFive = () => {
       </TouchableOpacity>
     ));
 
-  const formatTime = date => {
-    const hours = date.getHours();
-    const mins = date.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const formattedHour = hours % 12 || 12;
-    const formattedMin = mins < 10 ? `0${mins}` : mins;
-    return `${formattedHour}:${formattedMin} ${ampm}`;
-  };
-  const onChangeTime = (event, selectedTime) => {
-    setShowTimePicker(false);
-    if (selectedTime) setTime(selectedTime);
-  };
-
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.container}
     >
-      {/* Card */}
       <View style={styles.card}>
         <Text style={styles.question}>
           How many minutes of exercise do you typically get per week?
@@ -83,7 +132,7 @@ const OnBoardingFive = () => {
               tintColor: '#000000',
             }}
             source={Images.WATCH}
-          ></Image>
+          />
         </TouchableOpacity>
         {showTimePicker && (
           <DateTimePicker
@@ -99,7 +148,7 @@ const OnBoardingFive = () => {
           Select your weekly rest day from exercise
         </Text>
         <View style={styles.dayRow}>
-          {['Mon', 'Tue', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun'].map(day => (
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
             <TouchableOpacity
               key={day}
               onPress={() => setRestDay(day)}
@@ -126,26 +175,6 @@ const OnBoardingFive = () => {
           eatingPreference,
           setEatingPreference,
         )}
-
-        {/* <Text style={styles.question}>What type of cuisine do you prefer?</Text>
-        {['Indian', 'Global'].map(type => (
-          <TouchableOpacity
-            key={type}
-            onPress={() =>
-              setCuisine({
-                indian: type === 'Indian',
-                global: type === 'Global',
-              })
-            }
-            style={styles.optionRow}>
-            <View style={styles.checkbox}>
-              {(type === 'Indian' ? cuisine.indian : cuisine.global) && (
-                <View style={styles.checkboxTick} />
-              )}
-            </View>
-            <Text style={styles.optionText}>{type}</Text>
-          </TouchableOpacity>
-        ))} */}
 
         <Text style={styles.question}>
           How often do you eat at least 4-5 servings of fruits and vegetables?

@@ -1,126 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Image,
-  Platform,
 } from 'react-native';
-import { Images, color, hp, wp } from '../../utilities'; // Make sure this utility works
+import { Images, color, hp, wp } from '../../utilities';
 
-const OnBoardingSeven = () => {
-  const [oxygen, setOxygen] = useState('');
-  const [pulse, setPulse] = useState('');
-  const [bpUpper, setBpUpper] = useState('');
-  const [bpLower, setBpLower] = useState('');
-  const [fastingSugar, setFastingSugar] = useState('');
-  const [afterMealSugar, setAfterMealSugar] = useState('');
-  const [hba1c, setHba1c] = useState('');
-  const [hdl, setHdl] = useState('');
-  const [ldl, setLdl] = useState('');
-  const [triglycerides, setTriglycerides] = useState('');
-  const [hscrp, setHscrp] = useState('mg/dl');
+const OnBoardingSeven = ({ initialData, onFormChange }) => {
+  const [formData, setFormData] = useState({
+    oxygen: '',
+    pulse: '',
+    bpUpper: '',
+    bpLower: '',
+    fastingSugar: '',
+    afterMealSugar: '',
+    hba1c: '',
+    hdl: '',
+    ldl: '',
+    triglycerides: '',
+    hscrp: 'mg/dl',
+  });
 
-  const renderDoubleInputRow = (
-    label1,
-    value1,
-    onChange1,
-    label2,
-    value2,
-    onChange2,
-    placeholder2,
-  ) => (
+  // Hydrate formData from initialData on mount
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, []);
+
+  // Notify parent on every form change
+  useEffect(() => {
+    onFormChange?.(formData);
+  }, [formData]);
+
+  const handleChange = (key, value) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const renderDoubleInputRow = (first, second) => (
     <View style={styles.row}>
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>{label1}</Text>
+        <Text style={styles.label}>{first.label}</Text>
         <TextInput
           style={styles.input}
           keyboardType="numeric"
-          value={value1}
-          onChangeText={onChange1}
+          placeholder={first.placeholder}
+          value={formData[first.key]}
+          onChangeText={text => handleChange(first.key, text)}
         />
       </View>
+
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>{label2}</Text>
+        <Text style={styles.label}>{second.label}</Text>
         <TextInput
-          placeholder={placeholder2}
           style={styles.input}
           keyboardType="numeric"
-          value={value2}
-          onChangeText={onChange2}
+          placeholder={second.placeholder}
+          value={formData[second.key]}
+          onChangeText={text => handleChange(second.key, text)}
         />
       </View>
     </View>
   );
 
   return (
-    <View
-      // showsVerticalScrollIndicator={false}
-      style={styles.container}
-      contentContainerStyle={{ padding: wp(5), paddingBottom: hp(5) }}
-    >
+    <View style={styles.container}>
+      {/* Vital Signs */}
       <Text style={styles.sectionTitle}>Vital Signs (Resting values)</Text>
-
       {renderDoubleInputRow(
-        'Oxygen Saturation (%)',
-        oxygen,
-        setOxygen,
-        'Pulse (bpm)',
-        pulse,
-        setPulse,
+        { label: 'Oxygen Saturation (%)', key: 'oxygen' },
+        { label: 'Pulse (bpm)', key: 'pulse' },
+      )}
+      {renderDoubleInputRow(
+        { label: 'BP (Upper Reading)', key: 'bpUpper' },
+        { label: 'BP (Lower Reading)', key: 'bpLower' },
       )}
 
-      {renderDoubleInputRow(
-        'BP (Upper Reading)',
-        bpUpper,
-        setBpUpper,
-        'BP (Lower Reading)',
-        bpLower,
-        setBpLower,
-      )}
-
+      {/* Blood Tests */}
       <Text style={styles.sectionTitle}>Blood Tests</Text>
-      <View style={{ flexDirection: 'row' }}>
+      <View style={{ flexDirection: 'row', marginBottom: hp(2) }}>
         <Image
           style={{ height: hp(2), width: wp(4), marginRight: hp(1) }}
           source={Images.NOTICE}
-        ></Image>
+        />
         <Text style={styles.note}>
           Yearly for non-diabetics, unless advised
         </Text>
       </View>
-
       {renderDoubleInputRow(
-        'Blood Sugar (Fasting)',
-        fastingSugar,
-        setFastingSugar,
-        'Blood Sugar (After Meal)',
-        afterMealSugar,
-        setAfterMealSugar,
-        '2 hours after meal',
+        { label: 'Blood Sugar (Fasting)', key: 'fastingSugar' },
+        {
+          label: 'Blood Sugar (After Meal)',
+          key: 'afterMealSugar',
+          placeholder: '2 hours after meal',
+        },
+      )}
+      {renderDoubleInputRow(
+        { label: 'HbA1c', key: 'hba1c' },
+        { label: 'HDL (Annual)', key: 'hdl' },
+      )}
+      {renderDoubleInputRow(
+        { label: 'LDL (Annual)', key: 'ldl' },
+        { label: 'Triglycerides (Annual)', key: 'triglycerides' },
       )}
 
-      {renderDoubleInputRow(
-        'HbA1c',
-        hba1c,
-        setHba1c,
-        'HDL (Annual)',
-        hdl,
-        setHdl,
-      )}
-
-      {renderDoubleInputRow(
-        'LDL (Annual)',
-        ldl,
-        setLdl,
-        'Triglycerides (Annual)',
-        triglycerides,
-        setTriglycerides,
-      )}
-
+      {/* HsCRP */}
       <View
         style={{
           flexDirection: 'row',
@@ -133,42 +120,34 @@ const OnBoardingSeven = () => {
           <TextInput
             style={styles.input}
             keyboardType="numeric"
-            value={hscrp}
-            onChangeText={setHscrp}
+            value={formData.hscrp}
+            onChangeText={text => handleChange('hscrp', text)}
           />
         </View>
-        <View style={styles.unitContainer}>
-          <TouchableOpacity
-            style={[
-              styles.unitButton,
-              hscrp === 'mg/dl' && styles.unitButtonSelected,
-            ]}
-            onPress={() => setHscrp('mg/dl')}
-          >
-            <Text
-              style={[styles.unitText, hscrp === 'mg/dl' && { color: 'white' }]}
-            >
-              mg/dl
-            </Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.unitButton,
-              hscrp === 'mg/L' && styles.unitButtonSelected,
-            ]}
-            onPress={() => setHscrp('mg/L')}
-          >
-            <Text
-              style={[styles.unitText, hscrp === 'mg/L' && { color: 'white' }]}
+        <View style={styles.unitContainer}>
+          {['mg/dl', 'mg/L'].map(unit => (
+            <TouchableOpacity
+              key={unit}
+              style={[
+                styles.unitButton,
+                formData.hscrp === unit && styles.unitButtonSelected,
+              ]}
+              onPress={() => handleChange('hscrp', unit)}
             >
-              mg/L
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.unitText,
+                  formData.hscrp === unit && { color: 'white' },
+                ]}
+              >
+                {unit}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         <View style={[styles.inputGroup, { opacity: 0 }]}>
-          {/* Empty view to keep row layout even */}
           <Text style={styles.label}>Hidden</Text>
           <TextInput style={styles.input} editable={false} />
         </View>

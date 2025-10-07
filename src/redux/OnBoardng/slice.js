@@ -1,11 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { updateBasicInfo } from '../thunks/basicInfoThunk';
-import { submitHealthHistory } from '../thunks/healthHistoryThunk';
-import { submitLifestyle } from '../thunks/lifestyleThunk';
-import { submitEatingExercise } from '../thunks/eatingExerciseThunk';
-import { submitSleepStress } from '../thunks/sleepStressThunk';
+import {
+  onBoarding2,
+  onBoarding3,
+  onBoarding4,
+  onBoarding5,
+  onBoarding6,
+  onBoarding7,
+} from './onBoardingThunk';
 
-const basicInfoSlice = createSlice({
+const onBoardingTwo = createSlice({
   name: 'basicInfo',
   initialState: {
     loading: false,
@@ -15,22 +18,22 @@ const basicInfoSlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
-      .addCase(updateBasicInfo.pending, state => {
+      .addCase(onBoarding2.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(updateBasicInfo.fulfilled, (state, action) => {
+      .addCase(onBoarding2.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
       })
-      .addCase(updateBasicInfo.rejected, (state, action) => {
+      .addCase(onBoarding2.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || 'Something went wrong';
       });
   },
 });
 
-const healthHistorySlice = createSlice({
+const onBoardingThree = createSlice({
   name: 'healthHistory',
   initialState: {
     loading: false,
@@ -40,22 +43,22 @@ const healthHistorySlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
-      .addCase(submitHealthHistory.pending, state => {
+      .addCase(onBoarding3.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(submitHealthHistory.fulfilled, (state, action) => {
+      .addCase(onBoarding3.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
       })
-      .addCase(submitHealthHistory.rejected, (state, action) => {
+      .addCase(onBoarding3.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || 'Something went wrong';
       });
   },
 });
 
-const lifestyleSlice = createSlice({
+const onBoardingFour = createSlice({
   name: 'lifestyle',
   initialState: {
     loading: false,
@@ -65,21 +68,21 @@ const lifestyleSlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
-      .addCase(submitLifestyle.pending, state => {
+      .addCase(onBoarding4.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(submitLifestyle.fulfilled, (state, action) => {
+      .addCase(onBoarding4.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
       })
-      .addCase(submitLifestyle.rejected, (state, action) => {
+      .addCase(onBoarding4.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || 'Something went wrong';
       });
   },
 });
-const eatingExerciseSlice = createSlice({
+const onBoardingFive = createSlice({
   name: 'eatingExercise',
   initialState: {
     loading: false,
@@ -89,22 +92,22 @@ const eatingExerciseSlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
-      .addCase(submitEatingExercise.pending, state => {
+      .addCase(onBoarding5.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(submitEatingExercise.fulfilled, (state, action) => {
+      .addCase(onBoarding5.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
       })
-      .addCase(submitEatingExercise.rejected, (state, action) => {
+      .addCase(onBoarding5.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || 'Something went wrong';
       });
   },
 });
 
-const sleepStressSlice = createSlice({
+const onBoardingSix = createSlice({
   name: 'sleepStress',
   initialState: {
     loading: false,
@@ -114,21 +117,21 @@ const sleepStressSlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
-      .addCase(submitSleepStress.pending, state => {
+      .addCase(onBoarding6.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(submitSleepStress.fulfilled, (state, action) => {
+      .addCase(onBoarding6.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
       })
-      .addCase(submitSleepStress.rejected, (state, action) => {
+      .addCase(onBoarding6.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || 'Something went wrong';
       });
   },
 });
-const biomarkersSlice = createSlice({
+const onBoardingSeven = createSlice({
   name: 'biomarkers',
   initialState: {
     loading: false,
@@ -138,15 +141,15 @@ const biomarkersSlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
-      .addCase(submitBiomarkers.pending, state => {
+      .addCase(onBoarding7.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(submitBiomarkers.fulfilled, (state, action) => {
+      .addCase(onBoarding7.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
       })
-      .addCase(submitBiomarkers.rejected, (state, action) => {
+      .addCase(onBoarding7.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || 'Something went wrong';
       });
@@ -154,10 +157,10 @@ const biomarkersSlice = createSlice({
 });
 
 export default {
-  basicInfo: basicInfoSlice.reducer,
-  healthHistory: healthHistorySlice.reducer,
-  lifestyle: lifestyleSlice.reducer,
-  eatingExercise: eatingExerciseSlice.reducer,
-  biomarkers: biomarkersSlice.reducer,
-  sleepStress: sleepStressSlice.reducer,
+  basicInfo: onBoardingTwo.reducer,
+  healthHistory: onBoardingThree.reducer,
+  lifestyle: onBoardingFour.reducer,
+  eatingExercise: onBoardingFive.reducer,
+  biomarkers: onBoardingSeven.reducer,
+  sleepStress: onBoardingSix.reducer,
 };

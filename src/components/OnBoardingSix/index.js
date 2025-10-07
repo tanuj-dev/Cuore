@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,30 +6,50 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  Platform,
 } from 'react-native';
-import {Images, wp, hp, color} from '../../utilities';
-import {Calendar as CalendarIcon} from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Images, wp, hp, color } from '../../utilities';
 
-const RadioOption = ({label, selected, onPress}) => (
+const RadioOption = ({ label, selected, onPress }) => (
   <TouchableOpacity style={styles.radioOption} onPress={onPress}>
-    <View
-      style={styles.radioCircle }
-    >
-        {selected && <View style={styles.radioCircleSelected}>
-    </View>}
+    <View style={styles.radioCircle}>
+      {selected && <View style={styles.radioCircleSelected} />}
     </View>
     <Text style={styles.radioLabel}>{label}</Text>
   </TouchableOpacity>
 );
 
-const OnBoardingSix = () => {
+const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
   const [sleepHours, setSleepHours] = useState('');
   const [problems, setProblems] = useState('');
   const [enjoyment, setEnjoyment] = useState('');
   const [anxiety, setAnxiety] = useState('');
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [time, setTime] = useState(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  // ✅ Prefill data when coming back to this screen
+  useEffect(() => {
+    if (Object.keys(initialData).length > 0) {
+      setSleepHours(initialData.sleep_hours || '');
+      setProblems(initialData.problems_overwhelming || '');
+      setEnjoyment(initialData.enjoyable || '');
+      setAnxiety(initialData.felt_nervous || '');
+
+      if (initialData.wake_time) {
+        const [timeStr, ampm] = initialData.wake_time.split(' ');
+        const [hourStr, minStr] = timeStr.split(':');
+        let hour = parseInt(hourStr);
+        const min = parseInt(minStr);
+        if (ampm === 'PM' && hour < 12) hour += 12;
+        if (ampm === 'AM' && hour === 12) hour = 0;
+        const dateObj = new Date();
+        dateObj.setHours(hour);
+        dateObj.setMinutes(min);
+        setTime(dateObj);
+      }
+    }
+  }, []); // ✅ Run once only
 
   const formatTime = date => {
     const hours = date.getHours();
@@ -39,17 +59,31 @@ const OnBoardingSix = () => {
     const formattedMin = mins < 10 ? `0${mins}` : mins;
     return `${formattedHour}:${formattedMin} ${ampm}`;
   };
+
   const onChangeTime = (event, selectedTime) => {
     setShowTimePicker(false);
     if (selectedTime) setTime(selectedTime);
   };
 
+  // ✅ Send data upward only when it changes
+  useEffect(() => {
+    if (onFormChange) {
+      const payload = {
+        sleep_hours: sleepHours,
+        wake_time: formatTime(time),
+        problems_overwhelming: problems,
+        enjoyable: enjoyment,
+        felt_nervous: anxiety,
+      };
+      onFormChange(payload);
+    }
+  }, [sleepHours, time, problems, enjoyment, anxiety]);
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Card */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>
-          How many hours do you sleep regularly
+          How many hours do you sleep regularly?
         </Text>
         {[
           'Less than 6 hours',
@@ -66,15 +100,16 @@ const OnBoardingSix = () => {
           />
         ))}
 
-        {/* Wake-up time */}
-        <Text style={[styles.cardTitle, {marginTop: hp(2)}]}>
+        <Text style={[styles.cardTitle, { marginTop: hp(2) }]}>
           What is your preferred wake-up time?
         </Text>
         <Text style={styles.subHint}>(Ideal between 5:30 AM - 7:00 AM)</Text>
+
         <TouchableOpacity
           style={styles.timeButton}
-          onPress={() => setShowTimePicker(true)}>
-          <Text style={{fontFamily: 'Roboto-Regular', fontSize: wp(4)}}>
+          onPress={() => setShowTimePicker(true)}
+        >
+          <Text style={{ fontFamily: 'Roboto-Regular', fontSize: wp(4) }}>
             {formatTime(time)}
           </Text>
           <Image
@@ -84,8 +119,10 @@ const OnBoardingSix = () => {
               width: wp(5),
               tintColor: '#000000',
             }}
-            source={Images.WATCH}></Image>
+            source={Images.WATCH}
+          />
         </TouchableOpacity>
+
         {showTimePicker && (
           <DateTimePicker
             mode="time"
@@ -96,7 +133,6 @@ const OnBoardingSix = () => {
           />
         )}
 
-        {/* Question: Problems overwhelming */}
         <Text style={styles.cardTitle}>
           In the past 3 months, have your problems felt overwhelming?
         </Text>
@@ -109,7 +145,6 @@ const OnBoardingSix = () => {
           />
         ))}
 
-        {/* Question: Less enjoyable */}
         <Text style={styles.cardTitle}>
           Lately, have activities felt less enjoyable or engaging?
         </Text>
@@ -122,7 +157,6 @@ const OnBoardingSix = () => {
           />
         ))}
 
-        {/* Question: Anxiety */}
         <Text style={styles.cardTitle}>
           Have you felt nervous, anxious, or on edge lately?
         </Text>
@@ -183,7 +217,7 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
   },
   radioCircle: {
-   width: wp(4.5),
+    width: wp(4.5),
     height: wp(4.5),
     borderRadius: wp(2.25),
     borderWidth: 1.5,
@@ -193,12 +227,10 @@ const styles = StyleSheet.create({
     marginRight: wp(3),
   },
   radioCircleSelected: {
-   
     width: wp(2.5),
     height: wp(2.5),
     borderRadius: wp(1.25),
     backgroundColor: '#007bff',
-   
   },
   radioLabel: {
     fontFamily: 'Roboto-Regular',

@@ -25,7 +25,7 @@ export const sendOtp = createAsyncThunk(
 
       const status = res?.status;
       const data = res?.data;
-      const message = data?.message || 'OTP request accepted';
+      const message = data?.message;
       const testOtp = data?.test_otp_code;
       const requestId = data?.request_id;
       const retryAfter = data?.retry_after_seconds;

@@ -16,10 +16,22 @@ import OnBoardingFive from '../../components/OnBoardingFive';
 import OnBoardingSix from '../../components/OnBoardingSix';
 import OnBoardingSeven from '../../components/OnBoardingSeven';
 import images from '../../utilities/Images';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { onBoarding2 } from '../../redux/slices';
+import EncryptedStorage from 'react-native-encrypted-storage';
 
 const OnBoarding = ({ navigation, route }) => {
+  const dispatch = useDispatch();
   const { STEP } = route.params ?? {}; // fallback in case params are missing
   const [step, setStep] = useState(1);
+
+  const [onboarding2Data, setOnboarding2Data] = useState({});
+  const [onboarding3Data, setOnboarding3Data] = useState({});
+  const [onboarding4Data, setOnboarding4Data] = useState({});
+  const [onboarding5Data, setOnboarding5Data] = useState({});
+  const [onboarding6Data, setOnboarding6Data] = useState({});
+  const [onboarding7Data, setOnboarding7Data] = useState({});
 
   // Set step from params when screen mounts
   useEffect(() => {
@@ -28,12 +40,60 @@ const OnBoarding = ({ navigation, route }) => {
     }
   }, [STEP]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < 7) {
       setStep(prev => prev + 1);
       scrollToTop();
+
+      if (step == 2) {
+        // const res = await dispatch(onBoarding2(onboarding2Data));
+        // console.log('OnBoarding2 Response:', onBoarding2);
+
+        console.log('Onboarding Step 2 Data:', onboarding2Data);
+      }
+      if (step == 3) {
+        console.log('Onboarding Step 3 Data:', onboarding3Data);
+      }
+      if (step == 4) {
+        console.log('Onboarding Step 4 Data:', onboarding4Data);
+      }
+      if (step == 5) {
+        console.log('Onboarding Step 5 Data:', onboarding5Data);
+      }
+      if (step == 6) {
+        console.log('Onboarding Step 6 Data:', onboarding6Data);
+      }
     } else {
-      navigation.navigate('Score');
+      console.log('Onboarding Step 7 Data:', onboarding7Data);
+      // navigation.navigate('Score');
+
+      const finalPayload = {
+        // user_id: userId, // from EncryptedStorage or Redux
+        submitted_at: new Date().toISOString(),
+        onboarding2: onboarding2Data,
+        onboarding3: onboarding3Data,
+        onboarding4: onboarding4Data,
+        onboarding5: onboarding5Data,
+        onboarding6: onboarding6Data,
+        onboarding7: onboarding7Data,
+      };
+      console.log('Final Onboarding Payload:', finalPayload);
+
+      try {
+        await EncryptedStorage.setItem(
+          'onboardingData',
+          JSON.stringify(finalPayload),
+        );
+        await EncryptedStorage.setItem('onboardingCompleted', 'true');
+        console.log('Onboarding data saved successfully');
+        console.log(
+          'Retrieved Onboarding Data:',
+          JSON.parse(await EncryptedStorage.getItem('onboardingData')),
+        );
+        navigation.navigate('Score');
+      } catch (error) {
+        console.error('Error saving onboarding data:', error);
+      }
     }
   };
 
@@ -200,12 +260,56 @@ const OnBoarding = ({ navigation, route }) => {
           </View>
         )}
 
-        {step == 2 && <OnBoarding2></OnBoarding2>}
-        {step == 3 && <OnBoardingThree></OnBoardingThree>}
-        {step == 4 && <OnBoardingFour></OnBoardingFour>}
-        {step == 5 && <OnBoardingFive></OnBoardingFive>}
-        {step == 6 && <OnBoardingSix></OnBoardingSix>}
-        {step == 7 && <OnBoardingSeven></OnBoardingSeven>}
+        {step == 2 && (
+          <OnBoarding2
+            initialData={onboarding2Data}
+            onFormChange={setOnboarding2Data}
+          ></OnBoarding2>
+        )}
+        {step == 3 && (
+          <OnBoardingThree
+            initialData={onboarding3Data}
+            onFormChange={setOnboarding3Data}
+          ></OnBoardingThree>
+        )}
+        {step == 4 && (
+          <OnBoardingFour
+            initialData={onboarding4Data}
+            onFormChange={setOnboarding4Data}
+          ></OnBoardingFour>
+        )}
+        {step == 5 && (
+          <OnBoardingFive
+            initialData={onboarding5Data}
+            onFormChange={data => {
+              // ✅ Only update if data actually changed
+              setOnboarding5Data(prev => {
+                if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+                return data;
+              });
+            }}
+          />
+        )}
+        {step == 6 && (
+          <OnBoardingSix
+            initialData={onboarding6Data}
+            onFormChange={data => {
+              setOnboarding6Data(prev => {
+                if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+                return data;
+              });
+            }}
+          />
+        )}
+        {step == 7 && (
+          <OnBoardingSeven
+            initialData={onboarding7Data}
+            onFormChange={data => {
+              setOnboarding7Data(data);
+              // console.log('OnBoarding7 Data:', data);
+            }}
+          ></OnBoardingSeven>
+        )}
 
         {/* Start Button */}
         <TouchableOpacity style={styles.button} onPress={handleNext}>
@@ -213,52 +317,6 @@ const OnBoarding = ({ navigation, route }) => {
             {step == 7 ? 'Submit' : step == 1 ? ' Start' : 'Next'}
           </Text>
         </TouchableOpacity>
-        {/* <View
-          style={{
-            zIndex: 10000,
-            // backgroundColor: 'red',
-            // width: '100%',
-            // position: 'absolute',
-            flexDirection: 'row',
-            flex: 1,
-            justifyContent: 'space-between',
-            borderTopWidth: 1,
-            bottom: hp(3.5),
-            paddingTop: hp(1),
-            borderColor: '#E5E7EB',
-            paddingHorizontal: hp(2),
-          }}>
-          <View style={{alignItems: 'center'}}>
-            <Image
-              style={{height: hp(3), width: wp(5), tintColor: '#9CA3AF'}}
-              source={Images.HOME}></Image>
-            <Text style={styles.bottomText}>home</Text>
-          </View>
-          <View style={{alignItems: 'center'}}>
-            <Image
-              style={{height: hp(3), width: wp(5), tintColor: '#9CA3AF'}}
-              source={Images.EXPLORE}></Image>
-            <Text style={styles.bottomText}>Explore</Text>
-          </View>
-          <View style={{alignItems: 'center'}}>
-            <Image
-              style={{height: hp(3), width: wp(5), tintColor: '#9CA3AF'}}
-              source={Images.PREDICT}></Image>
-            <Text style={styles.bottomText}>Predict</Text>
-          </View>
-          <View style={{alignItems: 'center'}}>
-            <Image
-              style={{height: hp(3), width: wp(5), tintColor: '#9CA3AF'}}
-              source={Images.CHAT}></Image>
-            <Text style={styles.bottomText}>Chat</Text>
-          </View>
-          <View style={{alignItems: 'center'}}>
-            <Image
-              style={{height: hp(3), width: wp(5), tintColor: '#9CA3AF'}}
-              source={Images.PROFILE}></Image>
-            <Text style={styles.bottomText}>Profile</Text>
-          </View>
-        </View> */}
       </ScrollView>
     </>
   );
