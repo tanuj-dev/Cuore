@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,40 +6,81 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Platform,
 } from 'react-native';
 import { Images, color, hp, wp } from '../../utilities';
 
 const OnBoardingSeven = ({ initialData, onFormChange }) => {
   const [formData, setFormData] = useState({
-    oxygen: '',
+    o2_sat: '',
     pulse: '',
-    bpUpper: '',
-    bpLower: '',
-    fastingSugar: '',
-    afterMealSugar: '',
-    hba1c: '',
-    hdl: '',
-    ldl: '',
-    triglycerides: '',
-    hscrp: 'mg/dl',
+    bp_upper: '',
+    bp_lower: '',
+    bs_f: '',
+    bs_am: '',
+    A1C: '',
+    HDL: '',
+    LDL: '',
+    Trig: '',
+    HsCRP: '',
+    hscrp_unit: '',
   });
 
-  // Hydrate formData from initialData on mount
+  const lastSentData = useRef(formData);
+
+  // ✅ Sync from parent
   useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
+    if (initialData && Object.keys(initialData).length > 0) {
+      setFormData(prev => {
+        const updated = { ...prev, ...initialData };
+        if (JSON.stringify(prev) !== JSON.stringify(updated)) {
+          return updated;
+        }
+        return prev;
+      });
     }
-  }, []);
+  }, [initialData]);
 
-  // Notify parent on every form change
+  // ✅ Notify parent only if data actually changed
   useEffect(() => {
-    onFormChange?.(formData);
-  }, [formData]);
+    if (
+      typeof onFormChange === 'function' &&
+      JSON.stringify(lastSentData.current) !== JSON.stringify(formData)
+    ) {
+      lastSentData.current = formData;
+      onFormChange(formData);
+    }
+  }, [formData, onFormChange]);
 
+  // ✅ Handle numeric conversion
   const handleChange = (key, value) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
+    const numericKeys = [
+      'o2_sat',
+      'pulse',
+      'bp_upper',
+      'bp_lower',
+      'bs_f',
+      'bs_am',
+      'A1C',
+      'HDL',
+      'LDL',
+      'Trig',
+      'HsCRP', // still numeric but separate from unit
+    ];
+
+    let newValue = value;
+
+    // If numeric field → strip invalid chars and convert to number
+    if (numericKeys.includes(key)) {
+      // Only digits and at most one dot
+      const filtered = value.replace(/[^0-9.]/g, '');
+      newValue = filtered === '' ? '' : Number(filtered); // empty string stays empty
+    }
+
+    setFormData(prev => ({ ...prev, [key]: newValue }));
   };
 
+  // ✅ Render helper
   const renderDoubleInputRow = (first, second) => (
     <View style={styles.row}>
       <View style={styles.inputGroup}>
@@ -48,7 +89,7 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           style={styles.input}
           keyboardType="numeric"
           placeholder={first.placeholder}
-          value={formData[first.key]}
+          value={formData[first.key]?.toString() || ''}
           onChangeText={text => handleChange(first.key, text)}
         />
       </View>
@@ -59,7 +100,7 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           style={styles.input}
           keyboardType="numeric"
           placeholder={second.placeholder}
-          value={formData[second.key]}
+          value={formData[second.key]?.toString() || ''}
           onChangeText={text => handleChange(second.key, text)}
         />
       </View>
@@ -71,12 +112,12 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
       {/* Vital Signs */}
       <Text style={styles.sectionTitle}>Vital Signs (Resting values)</Text>
       {renderDoubleInputRow(
-        { label: 'Oxygen Saturation (%)', key: 'oxygen' },
+        { label: 'Oxygen Saturation (%)', key: 'o2_sat' },
         { label: 'Pulse (bpm)', key: 'pulse' },
       )}
       {renderDoubleInputRow(
-        { label: 'BP (Upper Reading)', key: 'bpUpper' },
-        { label: 'BP (Lower Reading)', key: 'bpLower' },
+        { label: 'BP (Upper Reading)', key: 'bp_upper' },
+        { label: 'BP (Lower Reading)', key: 'bp_lower' },
       )}
 
       {/* Blood Tests */}
@@ -90,21 +131,18 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           Yearly for non-diabetics, unless advised
         </Text>
       </View>
+
       {renderDoubleInputRow(
-        { label: 'Blood Sugar (Fasting)', key: 'fastingSugar' },
-        {
-          label: 'Blood Sugar (After Meal)',
-          key: 'afterMealSugar',
-          placeholder: '2 hours after meal',
-        },
+        { label: 'Blood Sugar (Fasting)', key: 'bs_f' },
+        { label: 'Blood Sugar (After Meal)', key: 'bs_am' },
       )}
       {renderDoubleInputRow(
-        { label: 'HbA1c', key: 'hba1c' },
-        { label: 'HDL (Annual)', key: 'hdl' },
+        { label: 'HbA1c', key: 'A1C' },
+        { label: 'HDL (Annual)', key: 'HDL' },
       )}
       {renderDoubleInputRow(
-        { label: 'LDL (Annual)', key: 'ldl' },
-        { label: 'Triglycerides (Annual)', key: 'triglycerides' },
+        { label: 'LDL (Annual)', key: 'LDL' },
+        { label: 'Triglycerides (Annual)', key: 'Trig' },
       )}
 
       {/* HsCRP */}
@@ -120,25 +158,26 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           <TextInput
             style={styles.input}
             keyboardType="numeric"
-            value={formData.hscrp}
-            onChangeText={text => handleChange('hscrp', text)}
+            value={formData.HsCRP?.toString() || ''}
+            onChangeText={text => handleChange('HsCRP', text)}
           />
         </View>
 
+        {/* Unit Buttons */}
         <View style={styles.unitContainer}>
           {['mg/dl', 'mg/L'].map(unit => (
             <TouchableOpacity
               key={unit}
               style={[
                 styles.unitButton,
-                formData.hscrp === unit && styles.unitButtonSelected,
+                formData.hscrp_unit === unit && styles.unitButtonSelected,
               ]}
-              onPress={() => handleChange('hscrp', unit)}
+              onPress={() => handleChange('hscrp_unit', unit)}
             >
               <Text
                 style={[
                   styles.unitText,
-                  formData.hscrp === unit && { color: 'white' },
+                  formData.hscrp_unit === unit && { color: 'white' },
                 ]}
               >
                 {unit}
@@ -147,6 +186,7 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           ))}
         </View>
 
+        {/* Spacer */}
         <View style={[styles.inputGroup, { opacity: 0 }]}>
           <Text style={styles.label}>Hidden</Text>
           <TextInput style={styles.input} editable={false} />
@@ -156,6 +196,7 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
   );
 };
 
+// --- Styles ---
 const styles = StyleSheet.create({
   container: {
     padding: hp(1),
@@ -202,10 +243,9 @@ const styles = StyleSheet.create({
     borderRadius: wp(2),
   },
   unitContainer: {
-    // marginLeft: wp(2),
-    paddingVertical: hp(1),
     flexDirection: 'row',
-    marginTop: Platform.OS == 'android ' ? hp(4) : hp(2.9),
+    paddingVertical: hp(1),
+    marginTop: Platform.OS === 'android' ? hp(3.8) : hp(2.9),
   },
   unitButton: {
     padding: hp(0.5),

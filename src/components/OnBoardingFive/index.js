@@ -46,6 +46,15 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
     }
   }, []); // ✅ Run only once
 
+  const dayMap = {
+    Mon: 'Monday',
+    Tue: 'Tuesday',
+    Wed: 'Wednesday',
+    Thu: 'Thursday',
+    Fri: 'Friday',
+    Sat: 'Saturday',
+    Sun: 'Sunday',
+  };
   const formatTime = date => {
     const hours = date.getHours();
     const mins = date.getMinutes();
@@ -147,20 +156,21 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
         <Text style={styles.question}>
           Select your weekly rest day from exercise
         </Text>
+
         <View style={styles.dayRow}>
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+          {Object.keys(dayMap).map(day => (
             <TouchableOpacity
               key={day}
-              onPress={() => setRestDay(day)}
+              onPress={() => setRestDay(dayMap[day])} // Save full day name
               style={[
                 styles.dayChip,
-                restDay === day && styles.selectedDayChip,
+                restDay === dayMap[day] && styles.selectedDayChip,
               ]}
             >
               <Text
                 style={[
                   styles.dayText,
-                  restDay === day && styles.selectedDayText,
+                  restDay === dayMap[day] && styles.selectedDayText,
                 ]}
               >
                 {day}

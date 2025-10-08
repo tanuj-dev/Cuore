@@ -27,23 +27,35 @@ const OnBoarding2 = ({ onFormChange, initialData = {} }) => {
     waist_cm: '',
   });
 
-  // ✅ Prefill data when user revisits
+  // Prefill data
   useEffect(() => {
     if (Object.keys(initialData).length) {
       setForm({
-        age: initialData.age || '',
-        height_cm: initialData.height_cm || '',
-        weight_kg: initialData.weight_kg || '',
-        waist_cm: initialData.waist_cm || '',
+        age: initialData.age ?? '',
+        height_cm: initialData.height_cm ?? '',
+        weight_kg: initialData.weight_kg ?? '',
+        waist_cm: initialData.waist_cm ?? '',
       });
-      setGender(initialData.gender || '');
+      setGender(initialData.gender ?? '');
     }
   }, [initialData]);
 
-  // ✅ Trigger form change only when user types or selects
+  // Handle numeric conversion
+  const numericKeys = ['age', 'height_cm', 'weight_kg', 'waist_cm'];
+
   const handleChange = (key, value) => {
-    const updatedForm = { ...form, [key]: value };
+    let newValue = value;
+
+    if (numericKeys.includes(key)) {
+      // Remove any non-digit and non-dot characters
+      const filtered = value.replace(/[^0-9.]/g, '');
+      // If filtered is empty, store null; else convert to number
+      newValue = filtered === '' ? null : Number(filtered);
+    }
+
+    const updatedForm = { ...form, [key]: newValue };
     setForm(updatedForm);
+
     onFormChange?.({ ...updatedForm, gender });
   };
 
@@ -64,7 +76,7 @@ const OnBoarding2 = ({ onFormChange, initialData = {} }) => {
           <TextInput
             placeholder="Your age"
             placeholderTextColor="#6B7280"
-            value={form.age}
+            value={form.age?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('age', text)}
             style={styles.input}
@@ -86,7 +98,7 @@ const OnBoarding2 = ({ onFormChange, initialData = {} }) => {
           <TextInput
             placeholder="Your height in cm"
             placeholderTextColor="#6B7280"
-            value={form.height_cm}
+            value={form.height_cm?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('height_cm', text)}
             style={styles.input}
@@ -96,7 +108,7 @@ const OnBoarding2 = ({ onFormChange, initialData = {} }) => {
           <TextInput
             placeholder="Morning, empty stomach weight in kgs"
             placeholderTextColor="#6B7280"
-            value={form.weight_kg}
+            value={form.weight_kg?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('weight_kg', text)}
             style={styles.input}
@@ -106,7 +118,7 @@ const OnBoarding2 = ({ onFormChange, initialData = {} }) => {
           <TextInput
             placeholder="Measured just above your belly button"
             placeholderTextColor="#6B7280"
-            value={form.waist_cm}
+            value={form.waist_cm?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('waist_cm', text)}
             style={styles.input}
@@ -148,15 +160,12 @@ const OnBoarding2 = ({ onFormChange, initialData = {} }) => {
     </ScrollView>
   );
 };
+
 export default OnBoarding2;
 
+// --- Styles (unchanged)
 const styles = StyleSheet.create({
-  container: {
-    padding: 2,
-    backgroundColor: '#fff',
-    flexGrow: 1,
-  },
-
+  container: { padding: 2, backgroundColor: '#fff', flexGrow: 1 },
   card: {
     backgroundColor: '#FFFFFF',
     elevation: 3,
@@ -178,45 +187,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    // backgroundColor:'red',
-
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 14,
-  },
-  pickerWrapper: {
-    // color: 'red',
-    justifyContent: 'center',
-    height: 40,
-    borderWidth: 1,
-    borderColor: '#d0d0d0',
-    borderRadius: 8,
-    marginBottom: 14,
-  },
-  picker: {
-    fontSize: 14,
-    color: '#6B7280',
-    height: 60,
-    width: '100%',
-    // marginTop:hp
-  },
-  pickerItem: {
-    fontSize: 14, // 👈 Smaller font size
-    color: '#000',
-  },
-  button: {
-    backgroundColor: '#007bff',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  buttonText: {
-    fontFamily: 'Roboto-Regular',
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
@@ -230,24 +204,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
   },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  modalItem: {
-    paddingVertical: 12,
-  },
-  modalItemText: {
-    fontSize: 14,
-    color: '#000',
-  },
-  modalCancel: {
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  modalCancelText: {
-    color: '#007bff',
-    fontSize: 14,
-  },
+  modalTitle: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
+  modalItem: { paddingVertical: 12 },
+  modalItemText: { fontSize: 14, color: '#000' },
+  modalCancel: { marginTop: 10, alignItems: 'center' },
+  modalCancelText: { color: '#007bff', fontSize: 14 },
 });

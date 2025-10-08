@@ -6,7 +6,11 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  Alert,
+  Platform,
+  Modal,
 } from 'react-native';
+import { useCallback } from 'react';
 import { ProgressBar } from 'react-native-paper';
 import { Images, hp, wp } from '../../utilities';
 import OnBoarding2 from '../../components/OnBoardingOne';
@@ -18,8 +22,8 @@ import OnBoardingSeven from '../../components/OnBoardingSeven';
 import images from '../../utilities/Images';
 import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
-import { onBoarding2 } from '../../redux/slices';
 import EncryptedStorage from 'react-native-encrypted-storage';
+import { submitOnboarding } from '../../redux/OnBoardng/onBoardingThunk';
 
 const OnBoarding = ({ navigation, route }) => {
   const dispatch = useDispatch();
@@ -32,6 +36,44 @@ const OnBoarding = ({ navigation, route }) => {
   const [onboarding5Data, setOnboarding5Data] = useState({});
   const [onboarding6Data, setOnboarding6Data] = useState({});
   const [onboarding7Data, setOnboarding7Data] = useState({});
+  const [showValidationModal, setShowValidationModal] = useState(false);
+
+  const validateStepData = step => {
+    switch (step) {
+      case 2:
+        return (
+          onboarding2Data?.age &&
+          onboarding2Data?.height_cm &&
+          onboarding2Data?.weight_kg &&
+          onboarding2Data?.waist_cm &&
+          onboarding2Data?.gender
+        );
+
+      case 4:
+        return onboarding4Data?.smoking && onboarding4Data?.alcohol;
+      case 5:
+        return (
+          onboarding5Data?.min_exercise_per_week &&
+          onboarding5Data?.preferred_ex_time &&
+          onboarding5Data?.rest_day &&
+          onboarding5Data?.eating_preference &&
+          onboarding5Data?.fruits_veg &&
+          onboarding5Data?.processed_food &&
+          onboarding5Data?.high_fiber
+        );
+      case 6:
+        return (
+          onboarding6Data?.sleep_hours &&
+          onboarding6Data?.wake_time &&
+          onboarding6Data?.problems_overwhelming &&
+          onboarding6Data?.enjoyable &&
+          onboarding6Data?.felt_nervous
+        );
+
+      default:
+        return true;
+    }
+  };
 
   // Set step from params when screen mounts
   useEffect(() => {
@@ -41,61 +83,69 @@ const OnBoarding = ({ navigation, route }) => {
   }, [STEP]);
 
   const handleNext = async () => {
+    if (!validateStepData(step)) {
+      setShowValidationModal(true);
+      return;
+    }
+
     if (step < 7) {
       setStep(prev => prev + 1);
       scrollToTop();
 
-      if (step == 2) {
-        // const res = await dispatch(onBoarding2(onboarding2Data));
-        // console.log('OnBoarding2 Response:', onBoarding2);
-
-        console.log('Onboarding Step 2 Data:', onboarding2Data);
-      }
-      if (step == 3) {
-        console.log('Onboarding Step 3 Data:', onboarding3Data);
-      }
-      if (step == 4) {
-        console.log('Onboarding Step 4 Data:', onboarding4Data);
-      }
-      if (step == 5) {
-        console.log('Onboarding Step 5 Data:', onboarding5Data);
-      }
-      if (step == 6) {
-        console.log('Onboarding Step 6 Data:', onboarding6Data);
-      }
+      if (step === 2) console.log('Onboarding Step 2 Data:', onboarding2Data);
+      if (step === 3) console.log('Onboarding Step 3 Data:', onboarding3Data);
+      if (step === 4) console.log('Onboarding Step 4 Data:', onboarding4Data);
+      if (step === 5) console.log('Onboarding Step 5 Data:', onboarding5Data);
+      if (step === 6) console.log('Onboarding Step 6 Data:', onboarding6Data);
     } else {
       console.log('Onboarding Step 7 Data:', onboarding7Data);
-      // navigation.navigate('Score');
 
       const finalPayload = {
-        // user_id: userId, // from EncryptedStorage or Redux
-        submitted_at: new Date().toISOString(),
-        onboarding2: onboarding2Data,
-        onboarding3: onboarding3Data,
-        onboarding4: onboarding4Data,
-        onboarding5: onboarding5Data,
-        onboarding6: onboarding6Data,
-        onboarding7: onboarding7Data,
+        o2Data: onboarding2Data,
+        o3Data: onboarding3Data,
+        o4Data: onboarding4Data,
+        o5Data: onboarding5Data,
+        o6Data: onboarding6Data,
+        o7Data: onboarding7Data,
       };
+
       console.log('Final Onboarding Payload:', finalPayload);
 
       try {
-        await EncryptedStorage.setItem(
-          'onboardingData',
-          JSON.stringify(finalPayload),
-        );
-        await EncryptedStorage.setItem('onboardingCompleted', 'true');
-        console.log('Onboarding data saved successfully');
-        console.log(
-          'Retrieved Onboarding Data:',
-          JSON.parse(await EncryptedStorage.getItem('onboardingData')),
-        );
-        navigation.navigate('Score');
+        const res = await dispatch(submitOnboarding(finalPayload));
+        console.log('Dispatch Result:', res);
+
+        if (res && res.payload.status === 'success') {
+          console.log('OnBoarding2 Response:', res);
+          await EncryptedStorage.setItem(
+            'onboardingData',
+            JSON.stringify(finalPayload),
+          );
+          await EncryptedStorage.setItem('onboardingCompleted', 'true');
+          console.log('Onboarding data saved successfully');
+          console.log(
+            'Retrieved Onboarding Data:',
+            JSON.parse(await EncryptedStorage.getItem('onboardingData')),
+          );
+          navigation.navigate('Score');
+        } else {
+          // navigation.navigate('Score');
+        }
       } catch (error) {
+        Alert.alert(
+          'Submission Error',
+          'There was an error submitting your data. Please try again.',
+        );
+
         console.error('Error saving onboarding data:', error);
       }
     }
   };
+
+  const handleOnboarding7Change = useCallback(data => {
+    setOnboarding7Data(data);
+    // console.log('OnBoarding7 Data:', data);
+  }, []);
 
   const handleBack = () => {
     if (step > 1) {
@@ -304,11 +354,8 @@ const OnBoarding = ({ navigation, route }) => {
         {step == 7 && (
           <OnBoardingSeven
             initialData={onboarding7Data}
-            onFormChange={data => {
-              setOnboarding7Data(data);
-              // console.log('OnBoarding7 Data:', data);
-            }}
-          ></OnBoardingSeven>
+            onFormChange={handleOnboarding7Change}
+          />
         )}
 
         {/* Start Button */}
@@ -317,6 +364,27 @@ const OnBoarding = ({ navigation, route }) => {
             {step == 7 ? 'Submit' : step == 1 ? ' Start' : 'Next'}
           </Text>
         </TouchableOpacity>
+        <Modal
+          visible={showValidationModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowValidationModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              <Text style={styles.modalTitle}>Incomplete</Text>
+              <Text style={styles.modalMessage}>
+                Please fill all the details before continuing.
+              </Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowValidationModal(false)}
+              >
+                <Text style={styles.modalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </>
   );
@@ -443,5 +511,40 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#9CA3AF',
     fontFamily: 'Roboto-Regular',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBox: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: '#374151',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: '#2563EB',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

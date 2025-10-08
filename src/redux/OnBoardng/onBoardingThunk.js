@@ -239,3 +239,30 @@ export const onBoarding7 = createAsyncThunk(
     }
   },
 );
+export const submitOnboarding = createAsyncThunk(
+  'user/submitOnboarding',
+  async (onboardingData, { rejectWithValue }) => {
+    try {
+      // 🧠 Endpoint for onboarding
+      const endPoint = EndPoints.SUBMITONBOARDING;
+
+      // ⚡ API call
+      const response = await postApiCall(endPoint, onboardingData);
+
+      console.log('[submitOnboarding] response:', response?.data);
+
+      if (response?.status === 200 || response?.status === 201) {
+        return response.data;
+      } else {
+        return rejectWithValue(
+          response?.data || { message: 'Failed to submit onboarding data' },
+        );
+      }
+    } catch (error) {
+      console.error('[submitOnboarding] error:', error);
+      return rejectWithValue(
+        error?.response?.data || { message: error.message },
+      );
+    }
+  },
+);

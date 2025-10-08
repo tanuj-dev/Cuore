@@ -9,6 +9,7 @@ const Endpoints = {
   BIOMARKERS: '/api/v1/onboarding/biomarkers',
   CREATEACCOUNT: '/api/v1/auth/create-account',
   NEWUSEROTP: '/api/v1/auth/verify-new-user-otp',
+  SUBMITONBOARDING: '/api/v1/onboarding/submit-all',
 };
 
 export default Endpoints;

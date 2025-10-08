@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { use } from 'react';
 import {
   View,
   Text,
@@ -8,178 +8,258 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {hp, wp, Images, color} from '../../utilities';
+import { hp, wp, Images, color } from '../../utilities';
+import { useSelector } from 'react-redux';
 
 // import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const Score = ({navigation}) => {
+const Score = ({ navigation }) => {
+  console.log(
+    useSelector(state => state.onboarding),
+    'onboarding state',
+  );
+  const health_metrics = useSelector(
+    state => state.onboarding?.data?.data?.health_metrics,
+  );
+
+  const convertVitalsToArray = vitals => {
+    const result = [];
+
+    if (vitals.blood_pressure) {
+      result.push({
+        label: 'Resting BP',
+        value: vitals.blood_pressure.current,
+        target: vitals.blood_pressure.target,
+      });
+    }
+
+    if (vitals.blood_sugar) {
+      result.push({
+        label: 'Blood Sugar (Fasting)',
+        value: vitals.blood_sugar.fasting?.value,
+        target: vitals.blood_sugar.fasting?.target,
+      });
+      result.push({
+        label: 'Blood Sugar (After Meal)',
+        value: vitals.blood_sugar.after_meal?.value,
+        target: vitals.blood_sugar.after_meal?.target || '—',
+      });
+    }
+
+    if (vitals.body_fat) {
+      result.push({
+        label: 'Body Fat',
+        value: `${vitals.body_fat.value}${vitals.body_fat.unit}`,
+        target: `${vitals.body_fat.target}${vitals.body_fat.unit}`,
+      });
+    }
+
+    if (vitals.cholesterol?.tg_hdl_ratio) {
+      result.push({
+        label: 'Cholesterol (TG/HDL)',
+        value: vitals.cholesterol.tg_hdl_ratio.value,
+        target: vitals.cholesterol.tg_hdl_ratio.target,
+      });
+    }
+
+    return result;
+  };
+
+  console.log('score data', health_metrics);
   return (
     <ScrollView style={styles.container}>
-      <View style={{backgroundColor: '#FFFFFF', elevation: 1}}>
-        <View
-          style={{
-            flexDirection: 'row',
-            // backgroundColor: 'red',
-             marginTop:Platform.OS =='ios'&& hp(4),
-            justifyContent: 'space-between',
-            padding: hp(1),
-          }}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={{   }}>
-            <Image
-              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+      <View style={{ backgroundColor: '#F9FAFB' }}>
+        <View style={{ backgroundColor: '#FFFFFF', elevation: 1 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              // backgroundColor: 'red',
+              marginTop: Platform.OS == 'ios' && hp(4),
+              justifyContent: 'space-between',
+              padding: hp(1),
+            }}
+          >
+            <TouchableOpacity onPress={() => navigation.goBack()} style={{}}>
+              <Image
+                source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+                style={{
+                  resizeMode: 'contain',
+                  height: hp(3.5),
+                  width: wp(4),
+                  marginLeft: hp(1.5),
+                  tintColor: '#000000',
+                }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Image
+                source={Images.SHARE_4} // Replace with actual key in your `images` object
+                style={{
+                  resizeMode: 'contain',
+                  height: hp(2),
+                  tintColor: 'black',
+                  // marginLeft: hp(-1.8),
+                }}
+                resizeMode="contain"
+              />
+              <Image
+                source={Images.UNCLE} // Replace with actual key in your `images` object
+                style={{
+                  // tintColor: 'red',
+                  width: wp(9),
+                  resizeMode: 'cover',
+                  height: hp(3),
+                  // marginLeft: hp(-1.8),
+                }}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
+          <View style={styles.header}>
+            <Text style={styles.date}>Feb 25, 2025</Text>
+            <Text style={styles.title}>Cuore Score</Text>
+            <View style={styles.avatarWrapper}>
+              <Image source={Images.avatar} style={styles.avatar} />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.scoreCard}>
+          <Image source={Images.SCORE_METER_1} style={styles.meter} />
+          <Text
+            style={{
+              fontSize: hp(2.5),
+              color: 'red',
+              // marginLeft: hp(1),
+              fontFamily: 'Roboto-Regular',
+              marginBottom: hp(1),
+            }}
+          >
+            {health_metrics.health_score}
+          </Text>
+          {/* <Text style={styles.score}>78</Text> */}
+          <Text style={styles.timeToTarget}>Estimated Time to Target</Text>
+          <View style={{ flexDirection: 'row' }}>
+            <Text
               style={{
-                resizeMode: 'contain',
-                height: hp(3.5),
-                width: wp(4),
-                marginLeft: hp(1.5),
-                tintColor: '#000000',
+                fontFamily: 'Roboto-Regular',
+                fontSize: 17,
+                color: '#1E64AC',
+                fontWeight: '500',
               }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            >
+              {health_metrics?.estimated_time_to_target?.value}
+            </Text>
+            <Text style={styles.months}>
+              {' '}
+              {health_metrics?.estimated_time_to_target?.unit}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('OnBoarding')}
+            style={styles.reassessButton}
+          >
             <Image
-              source={Images.SHARE_4} // Replace with actual key in your `images` object
+              source={Images.EDIT} // Replace with actual key in your `images` object
               style={{
                 resizeMode: 'contain',
                 height: hp(2),
-                tintColor: 'black',
-                // marginLeft: hp(-1.8),
-              }}
-              resizeMode="contain"
-            />
-            <Image
-              source={Images.UNCLE} // Replace with actual key in your `images` object
-              style={{
-                // tintColor: 'red',
-                width: wp(9),
-                resizeMode: 'cover',
-                height: hp(3),
-                // marginLeft: hp(-1.8),
-              }}
-              resizeMode="contain"
-            />
-          </View>
-        </View>
-        <View style={styles.header}>
-          <Text style={styles.date}>Feb 25, 2025</Text>
-          <Text style={styles.title}>Cuore Score</Text>
-          <View style={styles.avatarWrapper}>
-            <Image source={Images.avatar} style={styles.avatar} />
-          </View>
-        </View>
-      </View>
 
-      <View style={styles.scoreCard}>
-        <Image source={Images.SCORE_METER_1} style={styles.meter} />
-        {/* <Text style={styles.score}>78</Text> */}
-        <Text style={styles.timeToTarget}>Estimated Time to Target</Text>
-        <View style={{flexDirection: 'row'}}>
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 17,
-              color: '#1E64AC',
-              fontWeight: '500',
-            }}>
-            7
+                marginLeft: hp(2),
+              }}
+            />
+
+            <Text style={styles.reassessText}>Re-assess</Text>
+          </TouchableOpacity>
+          <Text style={styles.reassessNote}>
+            As your health evolves, so should your plan Re-assess monthly
           </Text>
-          <Text style={styles.months}> months</Text>
+        </View>
+
+        <View style={styles.row}>
+          <InfoCard
+            label="Metabolic Age"
+            value={health_metrics.metabolic_age.value}
+            subText={`+${
+              health_metrics.metabolic_age?.value -
+              health_metrics.metabolic_age?.target
+            }`}
+          />
+          <InfoCard
+            label="Weight"
+            value={health_metrics?.weight?.current}
+            subText={`${health_metrics?.weight?.target} kg`}
+          />
+        </View>
+        <View style={styles.row}>
+          <InfoCard
+            label="BMI"
+            value={health_metrics.bmi.value}
+            subText={`Target: ${health_metrics?.bmi?.target}`}
+          />
+          <InfoCard
+            label="Lifestyle"
+            value={`${health_metrics?.lifestyle_score?.value?.toFixed(1)}%`}
+            subText={`Target: >${health_metrics?.lifestyle_score.target}`}
+          />
+        </View>
+
+        <View style={styles.row}>
+          <InfoCard
+            label="Recommended Calories"
+            value={`${health_metrics?.recommended?.calories?.value} kcal`}
+          />
+          <InfoCard
+            label="Recommended Exercise"
+            value={`${health_metrics?.recommended?.exercise?.value} min`}
+          />
+        </View>
+        <View
+          style={{
+            marginTop: hp(1),
+            marginHorizontal: hp(1.5),
+            elevation: 2,
+            backgroundColor: 'white',
+          }}
+        >
+          {convertVitalsToArray(health_metrics?.vitals).map((item, index) => (
+            <View
+              key={index}
+              style={{ marginVertical: index === 2 ? hp(2) : 0 }}
+            >
+              <VitalCard
+                data={item.health_metrics?.vitals}
+                label={item.label}
+                // hint={'ta'}
+                value={item.value}
+                target={item.target}
+                colorCode={'red'}
+              />
+            </View>
+          ))}
+
+          <View style={styles.focusRow}>
+            <Text style={styles.focusLabel}>Main Focus</Text>
+            <View style={styles.focusTags}>
+              <Text style={styles.focusTag}>
+                {health_metrics?.main_focus?.[0]}
+              </Text>
+              <Text style={styles.focusTag}>
+                {health_metrics?.main_focus?.[1]}
+              </Text>
+            </View>
+          </View>
         </View>
 
         <TouchableOpacity
-          onPress={() => navigation.navigate('OnBoarding')}
-          style={styles.reassessButton}>
-          <Image
-            source={Images.EDIT} // Replace with actual key in your `images` object
-            style={{
-              resizeMode: 'contain',
-              height: hp(2),
-
-              marginLeft: hp(2),
-            }}
-          />
-
-          <Text style={styles.reassessText}>Re-assess</Text>
+          onPress={() => navigation.navigate('Checkout')}
+          style={styles.continueButton}
+        >
+          <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
-        <Text style={styles.reassessNote}>
-          As your health evolves, so should your plan Re-assess monthly
-        </Text>
-      </View>
-
-      <View style={styles.row}>
-        <InfoCard label="Metabolic Age" value="38 years" subText="+4 years" />
-        <InfoCard label="Weight" value="74 kg" subText="Target: 68" />
-      </View>
-      <View style={styles.row}>
-        <InfoCard label="BMI" value="26.4" subText="Target: 23" />
-        <InfoCard label="Lifestyle" value="63%" subText="Target: >75%" />
-      </View>
-
-      <View style={styles.row}>
-        <InfoCard label="Recommended Calories" value="1600 kcal" />
-        <InfoCard label="Recommended Exercise" value="30 min" />
-      </View>
-      <View
-        style={{
-          marginTop: hp(1),
-          marginHorizontal: hp(1.5),
-          elevation: 2,
-          backgroundColor: 'white',
-        }}>
-        <VitalCard
-          label="Resting BP"
-          hint=""
-          value="135/85"
-          target="120/80"
-          colorCode="yellow"
-        />
-        <VitalCard
-          label="Blood Sugar "
-          hint="(Fasting)"
-          value="110"
-          target="<160"
-          colorCode="green"
-        />
-        <View style={{marginVertical: hp(2)}}>
-          <VitalCard
-            label="Blood Sugar "
-            hint="(After Meal)"
-            value="180"
-            target="<180"
-            colorCode="green"
-          />
-        </View>
-
-        <VitalCard
-          label="Cholesterol "
-          hint="(TG/HDL)"
-          value="3.3"
-          target="2.5"
-          colorCode="yellow"
-        />
-        <VitalCard
-          label="Body Fat%"
-          hint=""
-          value="28%"
-          target="23%"
-          colorCode="red"
-        />
-        <View style={styles.focusRow}>
-          <Text style={styles.focusLabel}>Main Focus</Text>
-          <View style={styles.focusTags}>
-            <Text style={styles.focusTag}>Nutrition</Text>
-            <Text style={styles.focusTag}>Tobacco Cessation</Text>
-          </View>
-        </View>
-      </View>
-
-      <TouchableOpacity
-        onPress={() => navigation.navigate('Checkout')}
-        style={styles.continueButton}>
-        <Text style={styles.continueText}>Continue</Text>
-      </TouchableOpacity>
-      {/* <View
+        {/* <View
         style={{
           zIndex: 10000,
           // backgroundColor: 'red',
@@ -225,11 +305,12 @@ const Score = ({navigation}) => {
           <Text style={styles.bottomText}>Profile</Text>
         </View>
       </View> */}
+      </View>
     </ScrollView>
   );
 };
 
-const InfoCard = ({label, value, subText}) => (
+const InfoCard = ({ label, value, subText }) => (
   <View style={styles.infoCard}>
     <Text style={styles.infoLabel}>{label}</Text>
     <Text style={styles.infoValue}>{value}</Text>
@@ -238,7 +319,7 @@ const InfoCard = ({label, value, subText}) => (
   </View>
 );
 
-const VitalCard = ({label, value, target, colorCode, hint}) => (
+const VitalCard = ({ label, value, target, colorCode, hint }) => (
   <View style={styles.vitalCard}>
     <View style={styles.vitalRow}>
       <View
@@ -247,12 +328,13 @@ const VitalCard = ({label, value, target, colorCode, hint}) => (
           // backgroundColor: 'yellow',
           alignItems: 'center',
           justifyContent: 'center',
-        }}>
+        }}
+      >
         <Text
-          style={[styles.vitalLabel, {marginTop: hint == '' ? hp(2) : hp(0)}]}>
+          style={[styles.vitalLabel, { marginTop: hint == '' ? hp(2) : hp(0) }]}
+        >
           {label}
         </Text>
-        <Text style={styles.vitalLabel}>{hint}</Text>
       </View>
       <View
         style={{
@@ -260,11 +342,12 @@ const VitalCard = ({label, value, target, colorCode, hint}) => (
           width: wp(20),
           alignItems: 'center',
           justifyContent: 'center',
-        }}>
+        }}
+      >
         <Text style={styles.vitalValue}>{value}</Text>
       </View>
-      <View style={{flexDirection: 'row', width: hp(22)}}>
-        <View style={[styles.vitalBar, styles[colorCode]]} />
+      <View style={{ flexDirection: 'row', width: hp(22) }}>
+        <View style={[styles.vitalBar, { backgroundColor: 'green' }]} />
 
         <Text style={styles.vitalTarget}>{target}</Text>
       </View>
@@ -273,7 +356,7 @@ const VitalCard = ({label, value, target, colorCode, hint}) => (
 );
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff'},
+  container: { flex: 1, backgroundColor: '#fff' },
   header: {
     padding: wp(4),
     flexDirection: 'row',
@@ -295,7 +378,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   avatarWrapper: {},
-  avatar: {width: wp(10), height: wp(10), borderRadius: wp(5)},
+  avatar: { width: wp(10), height: wp(10), borderRadius: wp(5) },
 
   scoreCard: {
     backgroundColor: 'red',
@@ -307,8 +390,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: hp(2),
   },
-  meter: {width: wp(70), height: wp(34), resizeMode: 'cover'},
-  score: {fontSize: wp(10), fontWeight: 'bold', color: '#0047AB'},
+  meter: { width: wp(70), height: wp(34), resizeMode: 'cover' },
+  score: { fontSize: wp(10), fontWeight: 'bold', color: '#0047AB' },
   timeToTarget: {
     fontFamily: 'Roboto-Regular',
     fontSize: 15,
@@ -436,9 +519,9 @@ const styles = StyleSheet.create({
     borderRadius: wp(2),
     marginHorizontal: wp(2),
   },
-  green: {backgroundColor: '#4CAF50'},
-  yellow: {backgroundColor: '#FFC107'},
-  red: {backgroundColor: '#F44336'},
+  green: { backgroundColor: '#4CAF50' },
+  yellow: { backgroundColor: '#FFC107' },
+  red: { backgroundColor: '#F44336' },
 
   focusRow: {
     justifyContent: 'space-between',
@@ -455,7 +538,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
   },
-  focusTags: {flexDirection: 'row', gap: wp(3)},
+  focusTags: { flexDirection: 'row', gap: wp(3) },
   focusTag: {
     fontFamily: 'Roboto-Regular',
     paddingHorizontal: wp(4),
