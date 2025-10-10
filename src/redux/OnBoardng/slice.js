@@ -2,8 +2,10 @@ import { createSlice } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import { submitOnboarding } from './onBoardingThunk';
+import { getOnboardingThunk } from './onBoardingThunk';
+import { createReassessment } from './onBoardingThunk';
 
-const onboardingSlice = createSlice({
+export const onboardingSlice = createSlice({
   name: 'onboarding',
   initialState: {
     loading: false,
@@ -28,4 +30,65 @@ const onboardingSlice = createSlice({
   },
 });
 
-export default onboardingSlice.reducer;
+const onBoardingDataInitialState = {
+  data: null,
+  loading: false,
+  error: null,
+};
+
+export const onboardingSliceData = createSlice({
+  name: 'onboarding',
+  initialState: onBoardingDataInitialState,
+  reducers: {},
+  extraReducers: builder => {
+    builder
+      .addCase(getOnboardingThunk.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getOnboardingThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(getOnboardingThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
+});
+
+const initialState = {
+  loading: false,
+  data: null,
+  error: null,
+};
+
+export const reassessmentSlice = createSlice({
+  name: 'reassessment',
+  initialState,
+  reducers: {
+    resetReassessment: state => {
+      state.loading = false;
+      state.data = null;
+      state.error = null;
+    },
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(createReassessment.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createReassessment.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(createReassessment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Something went wrong';
+      });
+  },
+});
+
+// export default onboardingSlice.reducer;
+// export default onboardingdata.reducer;

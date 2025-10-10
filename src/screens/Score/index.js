@@ -1,4 +1,4 @@
-import React, { use } from 'react';
+import React, { use, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,23 +9,30 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hp, wp, Images, color } from '../../utilities';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { getOnboardingThunk } from '../../redux/slices';
+import GaugeMeter from '../../components/SpeedpMeter';
 
 // import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const Score = ({ navigation }) => {
+const Score = ({ navigation, route }) => {
   console.log(
     useSelector(state => state.onboarding),
     'onboarding state',
   );
-  const health_metrics = useSelector(
-    state => state.onboarding?.data?.data?.health_metrics,
+  const screen = route.params?.screen;
+  console.log(route.params, 'route params');
+
+  const health_metrics = useSelector(state =>
+    screen === 'Reassess'
+      ? state.reassessment?.data?.data?.health_metrics
+      : state.onboarding?.data?.data?.health_metrics,
   );
 
   const convertVitalsToArray = vitals => {
     const result = [];
 
-    if (vitals.blood_pressure) {
+    if (vitals?.blood_pressure) {
       result.push({
         label: 'Resting BP',
         value: vitals.blood_pressure.current,
@@ -33,7 +40,7 @@ const Score = ({ navigation }) => {
       });
     }
 
-    if (vitals.blood_sugar) {
+    if (vitals?.blood_sugar) {
       result.push({
         label: 'Blood Sugar (Fasting)',
         value: vitals.blood_sugar.fasting?.value,
@@ -46,15 +53,15 @@ const Score = ({ navigation }) => {
       });
     }
 
-    if (vitals.body_fat) {
+    if (vitals?.body_fat) {
       result.push({
         label: 'Body Fat',
-        value: `${vitals.body_fat.value}${vitals.body_fat.unit}`,
-        target: `${vitals.body_fat.target}${vitals.body_fat.unit}`,
+        value: `${vitals.body_fat?.value}${vitals.body_fat?.unit}`,
+        target: `${vitals.body_fat?.target}${vitals.body_fat?.unit}`,
       });
     }
 
-    if (vitals.cholesterol?.tg_hdl_ratio) {
+    if (vitals?.cholesterol?.tg_hdl_ratio) {
       result.push({
         label: 'Cholesterol (TG/HDL)',
         value: vitals.cholesterol.tg_hdl_ratio.value,
@@ -64,8 +71,53 @@ const Score = ({ navigation }) => {
 
     return result;
   };
+  const getVitalColor = (label, value, target) => {
+    switch (label) {
+      case 'Resting BP':
+        if (value < 100) return 'orange';
+        if (value <= 130) return 'green';
+        if (value <= 145) return 'orange';
+        return 'red';
 
-  console.log('score data', health_metrics);
+      case 'Blood Sugar (Fasting)':
+        if (value < 100) return 'red';
+        if (value <= 139) return 'green';
+        if (value <= 170) return 'orange';
+        return 'red';
+
+      case 'Blood Sugar (After Meal)':
+        if (value < 130) return 'red';
+        if (value <= 169) return 'green';
+        if (value <= 220) return 'orange';
+        return 'red';
+
+      case 'Cholesterol (TG/HDL)':
+        if (value < 2.8) return 'green';
+        if (value <= 4.0) return 'orange';
+        return 'red';
+
+      case 'Body Fat':
+        const diff = Math.abs(value - target);
+        const percentDiff = (diff / target) * 100;
+        if (percentDiff < 5) return 'green';
+        if (percentDiff <= 15) return 'orange';
+        return 'red';
+
+      default:
+        return 'gray'; // fallback
+    }
+  };
+  const { data, loading, error } = useSelector(state => state.onboardingdata);
+  const onBoardingData = useSelector(state => state?.onboardingdata?.data);
+  console.log('Onboarding Data:', data);
+  console.log('Loading State:', loading);
+  console.log('Error State:', error);
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(getOnboardingThunk());
+  }, []);
+
   return (
     <ScrollView style={styles.container}>
       <View style={{ backgroundColor: '#F9FAFB' }}>
@@ -79,18 +131,8 @@ const Score = ({ navigation }) => {
               padding: hp(1),
             }}
           >
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{}}>
-              <Image
-                source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(3.5),
-                  width: wp(4),
-                  marginLeft: hp(1.5),
-                  tintColor: '#000000',
-                }}
-                resizeMode="contain"
-              />
+            <TouchableOpacity>
+              <Text> </Text>
             </TouchableOpacity>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Image
@@ -126,8 +168,8 @@ const Score = ({ navigation }) => {
         </View>
 
         <View style={styles.scoreCard}>
-          <Image source={Images.SCORE_METER_1} style={styles.meter} />
-          <Text
+          <GaugeMeter value={Math.round(health_metrics?.health_score)} />
+          {/* <Text
             style={{
               fontSize: hp(2.5),
               color: 'red',
@@ -136,8 +178,8 @@ const Score = ({ navigation }) => {
               marginBottom: hp(1),
             }}
           >
-            {health_metrics.health_score}
-          </Text>
+            {Math.round(health_metrics?.health_score)}
+          </Text> */}
           {/* <Text style={styles.score}>78</Text> */}
           <Text style={styles.timeToTarget}>Estimated Time to Target</Text>
           <View style={{ flexDirection: 'row' }}>
@@ -149,7 +191,7 @@ const Score = ({ navigation }) => {
                 fontWeight: '500',
               }}
             >
-              {health_metrics?.estimated_time_to_target?.value}
+              {Math.round(health_metrics?.estimated_time_to_target?.value)}
             </Text>
             <Text style={styles.months}>
               {' '}
@@ -158,7 +200,12 @@ const Score = ({ navigation }) => {
           </View>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('OnBoarding')}
+            onPress={() =>
+              navigation.navigate('OnBoarding', {
+                screen: 'Reassess',
+                onBoardingData: onBoardingData ? onBoardingData : {},
+              })
+            }
             style={styles.reassessButton}
           >
             <Image
@@ -181,11 +228,8 @@ const Score = ({ navigation }) => {
         <View style={styles.row}>
           <InfoCard
             label="Metabolic Age"
-            value={health_metrics.metabolic_age.value}
-            subText={`+${
-              health_metrics.metabolic_age?.value -
-              health_metrics.metabolic_age?.target
-            }`}
+            value={health_metrics?.metabolic_age?.value}
+            subText={health_metrics?.metabolic_age?.gap}
           />
           <InfoCard
             label="Weight"
@@ -196,7 +240,7 @@ const Score = ({ navigation }) => {
         <View style={styles.row}>
           <InfoCard
             label="BMI"
-            value={health_metrics.bmi.value}
+            value={health_metrics?.bmi.value}
             subText={`Target: ${health_metrics?.bmi?.target}`}
           />
           <InfoCard
@@ -259,52 +303,6 @@ const Score = ({ navigation }) => {
         >
           <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
-        {/* <View
-        style={{
-          zIndex: 10000,
-          // backgroundColor: 'red',
-          // width: '100%',
-          // position: 'absolute',
-          flexDirection: 'row',
-          flex: 1,
-          justifyContent: 'space-between',
-          borderTopWidth: 1,
-          bottom: hp(3.5),
-          paddingTop: hp(1),
-          borderColor: '#E5E7EB',
-          paddingHorizontal: hp(3),
-        }}>
-        <View style={{alignItems: 'center'}}>
-          <Image
-            style={{height: hp(3), width: wp(5), tintColor: '#9CA3AF'}}
-            source={Images.HOME}></Image>
-          <Text style={styles.bottomText}>home</Text>
-        </View>
-        <View style={{alignItems: 'center'}}>
-          <Image
-            style={{height: hp(3), width: wp(5), tintColor: '#9CA3AF'}}
-            source={Images.EXPLORE}></Image>
-          <Text style={styles.bottomText}>Explore</Text>
-        </View>
-        <View style={{alignItems: 'center'}}>
-          <Image
-            style={{height: hp(3), width: wp(5), tintColor: '#9CA3AF'}}
-            source={Images.PREDICT}></Image>
-          <Text style={styles.bottomText}>Predict</Text>
-        </View>
-        <View style={{alignItems: 'center'}}>
-          <Image
-            style={{height: hp(3), width: wp(5), tintColor: '#9CA3AF'}}
-            source={Images.CHAT}></Image>
-          <Text style={styles.bottomText}>Chat</Text>
-        </View>
-        <View style={{alignItems: 'center'}}>
-          <Image
-            style={{height: hp(3), width: wp(5), tintColor: '#9CA3AF'}}
-            source={Images.PROFILE}></Image>
-          <Text style={styles.bottomText}>Profile</Text>
-        </View>
-      </View> */}
       </View>
     </ScrollView>
   );
@@ -318,42 +316,84 @@ const InfoCard = ({ label, value, subText }) => (
     {subText && <Text style={styles.infoSub}>{subText}</Text>}
   </View>
 );
+const getVitalColor = (label, value, target) => {
+  switch (label) {
+    case 'Resting BP':
+      if (value < 100) return 'orange';
+      if (value <= 130) return 'green';
+      if (value <= 145) return 'orange';
+      return 'red';
 
-const VitalCard = ({ label, value, target, colorCode, hint }) => (
-  <View style={styles.vitalCard}>
-    <View style={styles.vitalRow}>
-      <View
-        style={{
-          width: wp(25),
-          // backgroundColor: 'yellow',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text
-          style={[styles.vitalLabel, { marginTop: hint == '' ? hp(2) : hp(0) }]}
+    case 'Blood Sugar (Fasting)':
+      if (value < 100) return 'red';
+      if (value <= 139) return 'green';
+      if (value <= 170) return 'orange'; // ✅ handles 140–170
+      return 'red';
+
+    case 'Blood Sugar (After Meal)':
+      if (value < 130) return 'red';
+      if (value <= 169) return 'green';
+      if (value <= 220) return 'orange';
+      return 'red';
+
+    case 'Cholesterol (TG/HDL)':
+      if (value < 2.8) return 'green';
+      if (value <= 4.0) return 'orange';
+      return 'red';
+
+    case 'Body Fat':
+      const diff = Math.abs(value - target);
+      const percentDiff = (diff / target) * 100;
+      if (percentDiff < 5) return 'green';
+      if (percentDiff <= 15) return 'orange';
+      return 'red';
+
+    default:
+      return 'gray'; // fallback
+  }
+};
+
+const VitalCard = ({ label, value, target, colorCode, hint }) => {
+  const barColor = getVitalColor(label, value, target);
+  return (
+    <View style={styles.vitalCard}>
+      <View style={styles.vitalRow}>
+        <View
+          style={{
+            width: wp(25),
+            // backgroundColor: 'yellow',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          {label}
-        </Text>
-      </View>
-      <View
-        style={{
-          // backgroundColor: 'red',
-          width: wp(20),
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={styles.vitalValue}>{value}</Text>
-      </View>
-      <View style={{ flexDirection: 'row', width: hp(22) }}>
-        <View style={[styles.vitalBar, { backgroundColor: 'green' }]} />
+          <Text
+            style={[
+              styles.vitalLabel,
+              { marginTop: hint == '' ? hp(2) : hp(0) },
+            ]}
+          >
+            {label}
+          </Text>
+        </View>
+        <View
+          style={{
+            // backgroundColor: 'red',
+            width: wp(20),
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={styles.vitalValue}>{value}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', width: hp(22) }}>
+          <View style={[styles.vitalBar, { backgroundColor: barColor }]} />
 
-        <Text style={styles.vitalTarget}>{target}</Text>
+          <Text style={styles.vitalTarget}>{target}</Text>
+        </View>
       </View>
     </View>
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },

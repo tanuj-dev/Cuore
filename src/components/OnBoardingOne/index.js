@@ -17,7 +17,8 @@ const genderOptions = [
   { label: 'Other', value: 'other' },
 ];
 
-const OnBoarding2 = ({ onFormChange, initialData = {} }) => {
+const OnBoarding2 = ({ onFormChange, initialData }) => {
+  console.log('OnBoarding2 Initial Data:', initialData);
   const [gender, setGender] = useState('');
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [form, setForm] = useState({

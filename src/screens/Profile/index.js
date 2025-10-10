@@ -59,6 +59,11 @@ const profileOptions = [
     icon: Images.TERMS_AND_CONDITION,
     section: 'GENERAL',
   },
+  {
+    title: 'Logout',
+    icon: Images.TERMS_AND_CONDITION,
+    section: 'GENERAL',
+  },
 ];
 
 const Profile = ({ navigation }) => {
@@ -79,6 +84,7 @@ const Profile = ({ navigation }) => {
     'Delete Account': 'DeleteAccount',
     Support: 'Support',
     'Terms and Conditions': 'TermsAndConditions',
+    // Logout: 'Login', // Typically, logout wouldn't navigate to a screen
 
     // Add more mappings if needed
   };
@@ -96,7 +102,7 @@ const Profile = ({ navigation }) => {
               // Alert.alert(route);
               navigation.navigate(route);
             } else {
-              Alert.alert('Route not found');
+              handleLogout();
             }
           }}
           key={index}
@@ -164,14 +170,14 @@ const Profile = ({ navigation }) => {
           {Object.entries(groupedSections).map(([sectionTitle, items]) =>
             renderSection(sectionTitle, items),
           )}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={async () => {
               console.log('Logging out...');
-              handleLogout();
+           
             }}
           >
             <Text>login</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
     </ScrollView>

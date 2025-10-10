@@ -10,6 +10,8 @@ const Endpoints = {
   CREATEACCOUNT: '/api/v1/auth/create-account',
   NEWUSEROTP: '/api/v1/auth/verify-new-user-otp',
   SUBMITONBOARDING: '/api/v1/onboarding/submit-all',
+  REASSESSMENT: '/api/v1/onboarding/reassess',
+  GETONBOARDING: '/api/v1/onboarding/data',
 };
 
 export default Endpoints;

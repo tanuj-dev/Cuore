@@ -75,7 +75,8 @@ const CreateAccountScreen = () => {
       if (createAccountThunk.fulfilled.match(resultAction)) {
         Alert.alert(
           'Account Created',
-          'Your account has been created successfully. Please log in to continue.',
+          resultAction.payload?.message ||
+            'Account created successfully. Please verify OTP.',
           [
             {
               text: 'OK',
@@ -84,16 +85,16 @@ const CreateAccountScreen = () => {
                   requestId: resultAction?.payload.request_id,
                   testOtp: resultAction?.payload.test_otp_code,
                   CreateAccountScreen: true,
+                  phone: mobileNumber,
                 }),
             },
           ],
         );
 
         await EncryptedStorage.setItem(
-          'userid',
+          'request_id',
           JSON.stringify({
-            user_id: resultAction.user_id,
-            request_id: resultAction?.request_id,
+            request_id: resultAction?.payload.request_id,
           }),
         );
         console.log('[EncryptedStorage] Saved user_id and request_id');

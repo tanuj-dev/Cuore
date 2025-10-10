@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,12 @@ import {
   Alert,
   Platform,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
-import { useCallback } from 'react';
 import { ProgressBar } from 'react-native-paper';
+import { useDispatch, useSelector } from 'react-redux';
+import EncryptedStorage from 'react-native-encrypted-storage';
+
 import { Images, hp, wp } from '../../utilities';
 import OnBoarding2 from '../../components/OnBoardingOne';
 import OnBoardingThree from '../../components/OnBoardingThree';
@@ -20,16 +23,17 @@ import OnBoardingFive from '../../components/OnBoardingFive';
 import OnBoardingSix from '../../components/OnBoardingSix';
 import OnBoardingSeven from '../../components/OnBoardingSeven';
 import images from '../../utilities/Images';
-import { useDispatch } from 'react-redux';
-import { useSelector } from 'react-redux';
-import EncryptedStorage from 'react-native-encrypted-storage';
 import { submitOnboarding } from '../../redux/OnBoardng/onBoardingThunk';
+import { createReassessment } from '../../redux/OnBoardng/onBoardingThunk';
 
 const OnBoarding = ({ navigation, route }) => {
   const dispatch = useDispatch();
-  const { STEP } = route.params ?? {}; // fallback in case params are missing
-  const [step, setStep] = useState(1);
+  const { STEP, onBoardingData, screen } = route.params ?? {};
 
+  console.log('OnBoarding Screen Params:', route.params);
+
+  // Local state
+  const [step, setStep] = useState(1);
   const [onboarding2Data, setOnboarding2Data] = useState({});
   const [onboarding3Data, setOnboarding3Data] = useState({});
   const [onboarding4Data, setOnboarding4Data] = useState({});
@@ -37,7 +41,11 @@ const OnBoarding = ({ navigation, route }) => {
   const [onboarding6Data, setOnboarding6Data] = useState({});
   const [onboarding7Data, setOnboarding7Data] = useState({});
   const [showValidationModal, setShowValidationModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  const scrollRef = useRef();
+
+  // Validate required fields for each step
   const validateStepData = step => {
     switch (step) {
       case 2:
@@ -51,6 +59,7 @@ const OnBoarding = ({ navigation, route }) => {
 
       case 4:
         return onboarding4Data?.smoking && onboarding4Data?.alcohol;
+
       case 5:
         return (
           onboarding5Data?.min_exercise_per_week &&
@@ -61,6 +70,7 @@ const OnBoarding = ({ navigation, route }) => {
           onboarding5Data?.processed_food &&
           onboarding5Data?.high_fiber
         );
+
       case 6:
         return (
           onboarding6Data?.sleep_hours &&
@@ -82,6 +92,12 @@ const OnBoarding = ({ navigation, route }) => {
     }
   }, [STEP]);
 
+  // Scroll to top on step change
+  const scrollToTop = () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  };
+
+  // Handle next button press
   const handleNext = async () => {
     if (!validateStepData(step)) {
       setShowValidationModal(true);
@@ -92,167 +108,156 @@ const OnBoarding = ({ navigation, route }) => {
       setStep(prev => prev + 1);
       scrollToTop();
 
-      if (step === 2) console.log('Onboarding Step 2 Data:', onboarding2Data);
-      if (step === 3) console.log('Onboarding Step 3 Data:', onboarding3Data);
-      if (step === 4) console.log('Onboarding Step 4 Data:', onboarding4Data);
-      if (step === 5) console.log('Onboarding Step 5 Data:', onboarding5Data);
-      if (step === 6) console.log('Onboarding Step 6 Data:', onboarding6Data);
-    } else {
-      console.log('Onboarding Step 7 Data:', onboarding7Data);
+      if (step === 2) console.log('Step 2 Data:', onboarding2Data);
+      if (step === 3) console.log('Step 3 Data:', onboarding3Data);
+      if (step === 4) console.log('Step 4 Data:', onboarding4Data);
+      if (step === 5) console.log('Step 5 Data:', onboarding5Data);
+      if (step === 6) console.log('Step 6 Data:', onboarding6Data);
+      return;
+    }
 
-      const finalPayload = {
-        o2Data: onboarding2Data,
-        o3Data: onboarding3Data,
-        o4Data: onboarding4Data,
-        o5Data: onboarding5Data,
-        o6Data: onboarding6Data,
-        o7Data: onboarding7Data,
-      };
+    // Step 7 submission
 
-      console.log('Final Onboarding Payload:', finalPayload);
+    const finalPayload = {
+      o2Data: onboarding2Data,
+      o3Data: onboarding3Data,
+      o4Data: onboarding4Data,
+      o5Data: onboarding5Data,
+      o6Data: onboarding6Data,
+      o7Data: onboarding7Data,
+    };
 
-      try {
-        const res = await dispatch(submitOnboarding(finalPayload));
-        console.log('Dispatch Result:', res);
+    console.log('Final Onboarding Payload:', finalPayload);
 
-        if (res && res.payload.status === 'success') {
-          console.log('OnBoarding2 Response:', res);
-          await EncryptedStorage.setItem(
-            'onboardingData',
-            JSON.stringify(finalPayload),
-          );
-          await EncryptedStorage.setItem('onboardingCompleted', 'true');
-          console.log('Onboarding data saved successfully');
-          console.log(
-            'Retrieved Onboarding Data:',
-            JSON.parse(await EncryptedStorage.getItem('onboardingData')),
-          );
-          navigation.navigate('Score');
-        } else {
-          // navigation.navigate('Score');
-        }
-      } catch (error) {
-        Alert.alert(
-          'Submission Error',
-          'There was an error submitting your data. Please try again.',
+    try {
+      setLoading(true);
+      const res =
+        screen === 'Reassess'
+          ? await dispatch(createReassessment(finalPayload)).unwrap()
+          : await dispatch(submitOnboarding(finalPayload)).unwrap();
+      // console.log('Dispatch Result:', res);
+      setLoading(false);
+
+      if (res?.status === 'success') {
+        setLoading(false);
+        console.log(loading, 'loading');
+        await EncryptedStorage.setItem(
+          'onboardingData',
+          JSON.stringify(finalPayload),
         );
+        await EncryptedStorage.setItem('onboardingCompleted', 'true');
+        console.log('Onboarding data saved successfully');
 
-        console.error('Error saving onboarding data:', error);
+        navigation.navigate('Score', {
+          screen: screen === 'Reassess' ? 'Reassess' : 'Score',
+        });
+      } else if (res?.payload?.error) {
+        setLoading(false);
+        Alert.alert('Submission Error', res.payload.error);
       }
+    } catch (error) {
+      setLoading(false);
+      Alert.alert(
+        'Submission Error',
+        'There was an error submitting your data. Please try again.',
+      );
+      console.error('Error saving onboarding data:', error);
     }
   };
 
+  // Step 7 data handler
   const handleOnboarding7Change = useCallback(data => {
     setOnboarding7Data(data);
-    // console.log('OnBoarding7 Data:', data);
   }, []);
 
+  // Back button
   const handleBack = () => {
-    if (step > 1) {
-      setStep(prev => prev - 1);
-    }
-  };
-
-  const scrollRef = useRef();
-
-  const scrollToTop = () => {
-    scrollRef.current?.scrollTo({
-      y: 0,
-      animated: true,
-    });
+    if (step > 1) setStep(prev => prev - 1);
   };
 
   return (
     <>
       <ScrollView ref={scrollRef} style={styles.container}>
-        {/* Logo */}
-        {step == 1 ? (
+        {/* Header */}
+        {step === 1 ? (
           <Image source={Images.APP_LOGO} style={styles.logo} />
         ) : (
           <TouchableOpacity
             onPress={handleBack}
-            style={{ marginTop: Platform.OS == 'ios' && hp(3) }}
+            style={{ marginTop: Platform.OS === 'ios' && hp(3) }}
           >
             <Image
-              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+              source={Images.BACK_BUTTON}
               style={{ resizeMode: 'contain', height: hp(3.5), width: wp(4) }}
-              resizeMode="contain"
             />
           </TouchableOpacity>
         )}
 
-        {/* Main Banner */}
+        {/* Banner */}
         <View style={{ backgroundColor: 'white' }}>
           <Image source={Images[`ON_BOARD${step}`]} style={styles.banner} />
         </View>
 
-        {/* Headings */}
-        {step == 1 && (
-          <View>
+        {/* Titles */}
+        {step === 1 && (
+          <>
             <Text style={styles.title}>Welcome to Cuore!</Text>
             <Text style={styles.subtitle}>Your everyday health companion</Text>
-          </View>
+          </>
         )}
-        {step == 2 && (
-          <View>
-            <Text style={styles.title}>Basic Information</Text>
-          </View>
-        )}
-        {step == 3 && <Text style={styles.title}>Health History</Text>}
-        {step == 4 && <Text style={styles.title}>Lifestyle</Text>}
-        {step == 5 && (
+        {step === 2 && <Text style={styles.title}>Basic Information</Text>}
+        {step === 3 && <Text style={styles.title}>Health History</Text>}
+        {step === 4 && <Text style={styles.title}>Lifestyle</Text>}
+        {step === 5 && (
           <Text style={styles.title}>Exercise & Eating Preferences</Text>
         )}
-        {step == 6 && <Text style={styles.title}>Sleep & Stress</Text>}
-        {step == 7 && <Text style={styles.title}>Biomarkers</Text>}
+        {step === 6 && <Text style={styles.title}>Sleep & Stress</Text>}
+        {step === 7 && <Text style={styles.title}>Biomarkers</Text>}
 
-        {step == 1 && (
+        {/* Descriptions */}
+        {step === 1 && (
           <Text style={styles.helpText}>
             Help us guide you better—share your health and wellness history
           </Text>
         )}
-        {step == 2 && (
+        {step === 2 && (
           <Text style={styles.helpText}>Fill in your details below:</Text>
         )}
-
-        {step == 3 && (
+        {step === 3 && (
           <Text style={styles.helpText}>
             Please select details about your family’s health, history, or
             symptoms you’ve experienced.
           </Text>
         )}
-        {step == 4 && (
+        {step === 4 && (
           <Text style={styles.helpText}>
             Your lifestyle choices significantly impact your overall health.
           </Text>
         )}
-        {step == 5 && (
+        {step === 5 && (
           <Text style={styles.helpText}>
             Let’s explore your exercise & eating preference for tailored
             recommendations.
           </Text>
         )}
-        {step == 6 && (
+        {step === 6 && (
           <Text style={styles.helpText}>
             Sleep and stress play a major role in cardio-metabolic health, let’s
             understand how they impact you.
           </Text>
         )}
-        {step == 7 && (
+        {step === 7 && (
           <View style={styles.warningBox}>
-            <View
+            <Image
+              source={images.NOTICE}
               style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: hp(1),
+                height: hp(2),
+                width: hp(2),
+                resizeMode: 'contain',
                 marginTop: hp(3),
+                marginRight: hp(1),
               }}
-            >
-              <Image
-                style={{ resizeMode: 'contain', height: hp(2), width: hp(2) }}
-                source={images.NOTICE}
-              />
-            </View>
+            />
             <View style={{ paddingHorizontal: hp(2) }}>
               <Text
                 style={{
@@ -275,95 +280,125 @@ const OnBoarding = ({ navigation, route }) => {
         <View style={styles.stepRow}>
           <Text style={styles.stepText}>{`${step} of 7`}</Text>
         </View>
-
         <ProgressBar
           progress={step / 7}
           color="#0A5FD8"
           style={styles.progress}
         />
 
-        {/* Info Cards */}
-        {step == 1 && (
-          <View>
+        {/* Step Components */}
+        {step === 1 && (
+          <>
             <View style={styles.cardInfo}>
-              <Image source={Images.NOTICE} style={[styles.cardIcon]}></Image>
-              <Text style={[styles.cardText, { color: '4B5563' }]}>
+              <Image source={Images.NOTICE} style={styles.cardIcon} />
+              <Text style={[styles.cardText, { color: '#4B5563' }]}>
                 Please have a weighing scale and measuring tape ready.
               </Text>
             </View>
 
             <View style={[styles.cardInfo, { backgroundColor: '#FBFAE5' }]}>
-              <Image source={Images.WARNING} style={[styles.cardIcon]}></Image>
+              <Image source={Images.WARNING} style={styles.cardIcon} />
               <Text style={styles.cardText}>
                 This plan is tailored for you — using it for others can impact
-                your recommendations
+                your recommendations.
               </Text>
             </View>
 
-            {/* Disclaimer */}
             <Text style={styles.disclaimer}>
               <Text style={{ fontWeight: 'bold' }}>Disclaimer:</Text> This
               assessment is not a substitute for professional medical advice.
               Always consult your doctor before beginning any new therapy or
               treatment.
             </Text>
-          </View>
+          </>
         )}
 
-        {step == 2 && (
+        {step === 2 && (
           <OnBoarding2
-            initialData={onboarding2Data}
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding2Data
+                : onBoardingData?.data?.o2Data
+            }
             onFormChange={setOnboarding2Data}
-          ></OnBoarding2>
+          />
         )}
-        {step == 3 && (
+
+        {step === 3 && (
           <OnBoardingThree
-            initialData={onboarding3Data}
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding3Data
+                : onBoardingData?.data?.o3Data
+            }
             onFormChange={setOnboarding3Data}
-          ></OnBoardingThree>
+          />
         )}
-        {step == 4 && (
+
+        {step === 4 && (
           <OnBoardingFour
-            initialData={onboarding4Data}
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding4Data
+                : onBoardingData?.data?.o4Data
+            }
             onFormChange={setOnboarding4Data}
-          ></OnBoardingFour>
+          />
         )}
-        {step == 5 && (
+
+        {step === 5 && (
           <OnBoardingFive
-            initialData={onboarding5Data}
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding5Data
+                : onBoardingData?.data?.o5Data
+            }
             onFormChange={data => {
-              // ✅ Only update if data actually changed
-              setOnboarding5Data(prev => {
-                if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
-                return data;
-              });
+              setOnboarding5Data(prev =>
+                JSON.stringify(prev) === JSON.stringify(data) ? prev : data,
+              );
             }}
           />
         )}
-        {step == 6 && (
+
+        {step === 6 && (
           <OnBoardingSix
-            initialData={onboarding6Data}
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding6Data
+                : onBoardingData?.data?.o6Data
+            }
             onFormChange={data => {
-              setOnboarding6Data(prev => {
-                if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
-                return data;
-              });
+              setOnboarding6Data(prev =>
+                JSON.stringify(prev) === JSON.stringify(data) ? prev : data,
+              );
             }}
           />
         )}
-        {step == 7 && (
+
+        {step === 7 && (
           <OnBoardingSeven
-            initialData={onboarding7Data}
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding7Data
+                : onBoardingData?.data?.o7Data
+            }
             onFormChange={handleOnboarding7Change}
           />
         )}
 
-        {/* Start Button */}
+        {/* Button */}
         <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>
-            {step == 7 ? 'Submit' : step == 1 ? ' Start' : 'Next'}
-          </Text>
+          {step === 7 && loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>
+              {step === 7 ? 'Submit' : step === 1 ? 'Start' : 'Next'}
+            </Text>
+          )}
         </TouchableOpacity>
+
+        {/* Validation Modal */}
         <Modal
           visible={showValidationModal}
           transparent
@@ -374,7 +409,9 @@ const OnBoarding = ({ navigation, route }) => {
             <View style={styles.modalBox}>
               <Text style={styles.modalTitle}>Incomplete</Text>
               <Text style={styles.modalMessage}>
-                Please fill all the details before continuing.
+                {screen === 'Reassess'
+                  ? 'Please Select Gender.'
+                  : 'Please fill all the required details before continuing.'}
               </Text>
               <TouchableOpacity
                 style={styles.modalButton}
@@ -391,7 +428,6 @@ const OnBoarding = ({ navigation, route }) => {
 };
 
 export default OnBoarding;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -406,13 +442,15 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   banner: {
-    // elevation: 3, // borderBlockColor: 'red',
+    // elevation: 3,
+    // borderBlockColor: 'red',
     width: '100%',
     height: hp(20),
     resizeMode: 'contain',
     marginVertical: hp(1),
-    // borderWidth: 2, // ensure no border
-    bordexrColor: 'white', // just in case
+    // borderWidth: 2,
+    // ensure no border bordexrColor: 'white',
+    // just in case
     backgroundColor: 'transparent', // avoid dark background peeking
   },
   title: {
@@ -505,7 +543,11 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 20,
   },
-  warningText: { fontFamily: 'Roboto-Regular', color: '#333', fontSize: 14 },
+  warningText: {
+    fontFamily: 'Roboto-Regular',
+    color: '#333',
+    fontSize: 14,
+  },
   bottomText: {
     fontSize: 12,
     fontWeight: '400',
