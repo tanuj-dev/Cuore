@@ -25,10 +25,11 @@ import OnBoardingSeven from '../../components/OnBoardingSeven';
 import images from '../../utilities/Images';
 import { submitOnboarding } from '../../redux/OnBoardng/onBoardingThunk';
 import { createReassessment } from '../../redux/OnBoardng/onBoardingThunk';
+import { getOnboardingThunk } from '../../redux/slices';
 
 const OnBoarding = ({ navigation, route }) => {
   const dispatch = useDispatch();
-  const { STEP, onBoardingData, screen } = route.params ?? {};
+  const { STEP, screen } = route.params ?? {};
 
   console.log('OnBoarding Screen Params:', route.params);
 
@@ -174,6 +175,14 @@ const OnBoarding = ({ navigation, route }) => {
   const handleBack = () => {
     if (step > 1) setStep(prev => prev - 1);
   };
+
+  const onBoardingData = useSelector(
+    state => state?.onboardingdata?.data ?? {},
+  );
+
+  useEffect(() => {
+    dispatch(getOnboardingThunk());
+  }, []);
 
   return (
     <>

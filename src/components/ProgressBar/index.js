@@ -1,29 +1,33 @@
 import React from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import images from '../../utilities/Images';
-import {hp} from '../../utilities';
+import { hp } from '../../utilities';
 
-const ProgressBarWithImage = ({navigation}) => {
-  const progress = 0.54; // 54%
+const ProgressBarWithImage = ({ navigation, data }) => {
+  console.log('ProgressBar data:', data);
+  const progress = data?.periods?.value; // 54%
   const progressBarWidth = 300;
   const indicatorPosition = progress * progressBarWidth;
 
   return (
-    <TouchableOpacity onPress={()=>navigation.navigate('Score')} style={styles.container}>
+    <TouchableOpacity
+      onPress={() => navigation.navigate('Score')}
+      style={styles.container}
+    >
       <View style={styles.labelRow}>
         <Text style={styles.label}>Aug '24</Text>
         <Text style={styles.label}>Dec '24</Text>
-        <Text style={styles.label}>Jul '25</Text>
+        <Text style={styles.label}>{data?.periods?.[0]?.month}</Text>
       </View>
 
-      <View style={{alignItems: 'center'}}>
+      <View style={{ alignItems: 'center' }}>
         <View style={styles.progressContainer}>
           <LinearGradient
             colors={['#d5393c', '#f0b323', '#30c96d']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 0}}
-            style={[styles.progressBar, {width: progressBarWidth}]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.progressBar, { width: progressBarWidth }]}
           />
         </View>
         <TouchableOpacity
@@ -35,7 +39,8 @@ const ProgressBarWithImage = ({navigation}) => {
               // backgroundColor: 'red',
               // right: hp(10),
             }
-          }>
+          }
+        >
           <Image
             source={images.UNCLE} // Replace with actual image or local asset
             style={[styles.profileImage]}
@@ -47,11 +52,11 @@ const ProgressBarWithImage = ({navigation}) => {
           <View style={styles.centerIndicator}>
             <Image
               source={images.FLAG}
-              style={{width: 14, height: 14, marginRight: 4}}
+              style={{ width: 14, height: 14, marginRight: 4 }}
             />
-            <Text style={styles.percentText}>54%</Text>
+            <Text style={styles.percentText}>{data?.periods?.[0]?.value}</Text>
           </View>
-          <Text style={styles.percentText}>{'>75%'}</Text>
+          <Text style={styles.percentText}>{data?.goal}</Text>
         </View>
       </View>
     </TouchableOpacity>

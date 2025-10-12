@@ -4,6 +4,9 @@ import { updateProfile } from './Profile/profileThunk';
 import { createAccountThunk } from './Auth/authThunk';
 import { getOnboardingThunk } from './OnBoardng/onBoardingThunk';
 import { createReassessment } from './OnBoardng/onBoardingThunk';
+import { getHomeData } from './Home/homeThunk';
+import { setReminder } from './Home/setReminderThunk';
+import { updateReminderTime } from './Home/updateTime';
 
 export {
   sendOtp,
@@ -12,4 +15,7 @@ export {
   createAccountThunk,
   getOnboardingThunk,
   createReassessment,
+  getHomeData,
+  setReminder,
+  updateReminderTime,
 };

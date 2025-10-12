@@ -13,8 +13,14 @@ import Modal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Images } from '../../utilities';
+import { setReminder } from '../../redux/slices';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { getHomeData } from '../../redux/slices';
 
-const Reminder = ({ isVisible, setIsVisible }) => {
+const Reminder = ({ isVisible, setIsVisible, user_id }) => {
+  console.log('User ID in Reminder:', user_id, isVisible);
+  const dispatch = useDispatch();
   const [reminderText, setReminderText] = useState('');
   const [date, setDate] = useState(null);
   const [time, setTime] = useState(null); // null initially
@@ -52,6 +58,48 @@ const Reminder = ({ isVisible, setIsVisible }) => {
     const hours = date.getHours();
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
+  };
+
+  const handleAddEntry = async () => {
+    const reminderData = {
+      title: reminderText,
+      startDate: date ? date.toISOString() : new Date().toISOString(),
+      endDate: endRepeat || 'Never',
+      time: time ? formatTime(time) : '5:30 PM',
+      repeatFrequency: repeat || 'Daily',
+      isMedication: flagAsMedication,
+    };
+
+    // dispatch(
+    //   setReminder({
+    //     userId: '68e5196ce195226c6b1e4ee1',
+    //     reminderData: {
+    //       title: 'Metformin 500mg',
+    //       startDate: '2025-10-11T00:00:00.000Z',
+    //       endDate: 'Never',
+    //       time: '08:00',
+    //       repeatFrequency: 'Daily',
+    //       isMedication: true,
+    //     },
+    //   }),
+    // );
+
+    const userId = user_id;
+    console.log(userId, 'userId in handleAddEntry');
+    const res = await dispatch(
+      setReminder({
+        userId,
+        reminderData,
+      }),
+    );
+    if (res.status === 201 || 200) {
+      const homeData = dispatch(getHomeData(userId));
+      console.log('Home data after setting reminder:', homeData);
+      setIsVisible(false);
+    }
+    console.log('Set Reminder Response:', res);
+    // Close the modal
+    // setIsVisible(false);
   };
 
   return (
@@ -287,7 +335,7 @@ const Reminder = ({ isVisible, setIsVisible }) => {
 
           {/* Add Entry Button */}
           <TouchableOpacity
-            onPress={() => setIsVisible(false)}
+            onPress={() => handleAddEntry()}
             style={styles.addButton}
           >
             <Text style={styles.addButtonText}>Add Entry</Text>

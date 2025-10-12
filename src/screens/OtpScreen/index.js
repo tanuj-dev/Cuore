@@ -75,8 +75,14 @@ const OtpScreen = () => {
       ).unwrap();
       console.log('OTP verified:', result);
 
-      const { access_token, refresh_token, user_id, expires_in, new_user } =
-        result.data;
+      const {
+        access_token,
+        refresh_token,
+        user_id,
+        expires_in,
+        new_user,
+        onboardingStatus,
+      } = result?.data;
 
       const tokenPayload = {
         accessToken: access_token,
@@ -84,6 +90,7 @@ const OtpScreen = () => {
         userId: user_id,
         expiresIn: expires_in,
         newUser: new_user,
+        onboardingStatus: onboardingStatus,
       };
 
       // ✅ Save token securely
@@ -97,10 +104,17 @@ const OtpScreen = () => {
       const storedToken = await EncryptedStorage.getItem('auth_tokens');
       console.log('Retrieved token from storage:', JSON.parse(storedToken));
 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'OnBoarding' }],
-      });
+      if (onboardingStatus === 'complete') {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'OnBoarding' }],
+        });
+      }
     } catch (err) {
       console.log('OTP verification failed:', err.message);
     }

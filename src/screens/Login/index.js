@@ -46,16 +46,23 @@ const Login = ({ navigation }) => {
     } catch (err) {
       console.log('OTP failed:', err.message);
 
-      Alert.alert(
-        'Error',
-        err.message || 'Failed to send OTP. Please try again.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('NewAccount'),
-          },
-        ],
-      );
+      if (err.message === 'Unknown error') {
+        Alert.alert(
+          'Error',
+          'Network error. Please check your connection and try again.',
+        );
+      } else {
+        Alert.alert(
+          'Error',
+          err.message || 'Failed to send OTP. Please try again.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('NewAccount'),
+            },
+          ],
+        );
+      }
     } finally {
       setLoading(false);
     }

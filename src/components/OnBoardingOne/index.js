@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   ScrollView,
 } from 'react-native';
+import { useSelector } from 'react-redux';
 
 const genderOptions = [
   { label: 'Male', value: 'male' },
@@ -18,9 +19,12 @@ const genderOptions = [
 ];
 
 const OnBoarding2 = ({ onFormChange, initialData }) => {
+  const initialData = initialData || {};
   console.log('OnBoarding2 Initial Data:', initialData);
   const [gender, setGender] = useState('');
   const [showGenderModal, setShowGenderModal] = useState(false);
+  const [errors, setErrors] = useState({});
+
   const [form, setForm] = useState({
     age: '',
     height_cm: '',
@@ -46,16 +50,37 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
 
   const handleChange = (key, value) => {
     let newValue = value;
+    let errorMsg = '';
 
     if (numericKeys.includes(key)) {
-      // Remove any non-digit and non-dot characters
       const filtered = value.replace(/[^0-9.]/g, '');
-      // If filtered is empty, store null; else convert to number
       newValue = filtered === '' ? null : Number(filtered);
+
+      // Validation logic
+      if (key === 'age') {
+        errorMsg =
+          newValue < 18 || newValue > 88 ? 'Age must be between 18 and 88' : '';
+      }
+      if (key === 'waist_cm') {
+        errorMsg = newValue > 60 ? 'Waist must not exceed 60 inches' : '';
+      }
+      if (key === 'weight_kg') {
+        errorMsg =
+          newValue < 25 || newValue > 200
+            ? 'Weight must be between 25 and 200 kgs'
+            : '';
+      }
+      if (key === 'height_cm') {
+        errorMsg =
+          newValue < 120 || newValue > 250
+            ? 'Height must be between 120  and 250 cm'
+            : '';
+      }
     }
 
     const updatedForm = { ...form, [key]: newValue };
     setForm(updatedForm);
+    setErrors(prev => ({ ...prev, [key]: errorMsg }));
 
     onFormChange?.({ ...updatedForm, gender });
   };
@@ -82,7 +107,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
             onChangeText={text => handleChange('age', text)}
             style={styles.input}
           />
-
+          {errors.age ? <Text style={styles.error}>{errors.age}</Text> : null}
           <Text style={styles.label}>Gender</Text>
           <TouchableOpacity
             style={styles.input}
@@ -94,7 +119,6 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
                 : 'Choose gender'}
             </Text>
           </TouchableOpacity>
-
           <Text style={styles.label}>Height (cm)</Text>
           <TextInput
             placeholder="Your height in cm"
@@ -104,7 +128,9 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
             onChangeText={text => handleChange('height_cm', text)}
             style={styles.input}
           />
-
+          {errors.height_cm ? (
+            <Text style={styles.error}>{errors.height_cm}</Text>
+          ) : null}
           <Text style={styles.label}>Weight (kg)</Text>
           <TextInput
             placeholder="Morning, empty stomach weight in kgs"
@@ -114,7 +140,9 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
             onChangeText={text => handleChange('weight_kg', text)}
             style={styles.input}
           />
-
+          {errors.weight_kg ? (
+            <Text style={styles.error}>{errors.weight_kg}</Text>
+          ) : null}
           <Text style={styles.label}>Waist (in)</Text>
           <TextInput
             placeholder="Measured just above your belly button"
@@ -124,6 +152,9 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
             onChangeText={text => handleChange('waist_cm', text)}
             style={styles.input}
           />
+          {errors.waist_cm ? (
+            <Text style={styles.error}>{errors.waist_cm}</Text>
+          ) : null}
         </View>
 
         {/* Gender Modal */}
@@ -210,4 +241,9 @@ const styles = StyleSheet.create({
   modalItemText: { fontSize: 14, color: '#000' },
   modalCancel: { marginTop: 10, alignItems: 'center' },
   modalCancelText: { color: '#007bff', fontSize: 14 },
+  error: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 8,
+  },
 });

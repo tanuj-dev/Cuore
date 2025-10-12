@@ -6,6 +6,7 @@ import {
   onboardingSliceData,
   reassessmentSlice,
 } from './OnBoardng/slice';
+import { homeSlice } from './Home/slice';
 
 const store = configureStore({
   reducer: {
@@ -15,6 +16,7 @@ const store = configureStore({
     profile: profileReducer,
     onboardingdata: onboardingSliceData.reducer,
     reassessment: reassessmentSlice.reducer,
+    home: homeSlice.reducer,
   },
 });
 

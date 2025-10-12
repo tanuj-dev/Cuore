@@ -107,16 +107,6 @@ const Score = ({ navigation, route }) => {
         return 'gray'; // fallback
     }
   };
-  const { data, loading, error } = useSelector(state => state.onboardingdata);
-  const onBoardingData = useSelector(state => state?.onboardingdata?.data);
-  console.log('Onboarding Data:', data);
-  console.log('Loading State:', loading);
-  console.log('Error State:', error);
-
-  const dispatch = useDispatch();
-  useEffect(() => {
-    dispatch(getOnboardingThunk());
-  }, []);
 
   return (
     <ScrollView style={styles.container}>
@@ -203,7 +193,6 @@ const Score = ({ navigation, route }) => {
             onPress={() =>
               navigation.navigate('OnBoarding', {
                 screen: 'Reassess',
-                onBoardingData: onBoardingData ? onBoardingData : {},
               })
             }
             style={styles.reassessButton}

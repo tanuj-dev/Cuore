@@ -34,8 +34,12 @@ const Splash = () => {
             navigation.replace('Login');
             return;
           } else {
-            dispatch(setUserData(parsed));
-            navigation.replace('Home');
+            if (parsed.onboardingStatus !== 'complete') {
+              navigation.replace('Onboarding');
+            } else {
+              dispatch(setUserData(parsed));
+              navigation.replace('Home');
+            }
           }
         } else {
           navigation.replace('Login');
