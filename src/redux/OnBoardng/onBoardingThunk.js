@@ -58,3 +58,18 @@ export const createReassessment = createAsyncThunk(
     }
   },
 );
+export const getCuoreScoreThunk = createAsyncThunk(
+  'cuoreScore/fetch',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await getApiCall(
+        `/api/v1/users/${userId}/cuore-score-details`,
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to fetch cuore score',
+      );
+    }
+  },
+);

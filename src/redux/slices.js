@@ -7,7 +7,9 @@ import { createReassessment } from './OnBoardng/onBoardingThunk';
 import { getHomeData } from './Home/homeThunk';
 import { setReminder } from './Home/setReminderThunk';
 import { updateReminderTime } from './Home/updateTime';
-
+import { getCuoreScoreThunk } from './OnBoardng/onBoardingThunk';
+import { editWakeupThunk } from './Home/wakeupEdit';
+import { editReminderThunk } from './Home/editReminder';
 export {
   sendOtp,
   verifyOtp,
@@ -18,4 +20,7 @@ export {
   getHomeData,
   setReminder,
   updateReminderTime,
+  getCuoreScoreThunk,
+  editWakeupThunk,
+  editReminderThunk,
 };

@@ -5,6 +5,7 @@ import {
   onboardingSlice,
   onboardingSliceData,
   reassessmentSlice,
+  cuoreScoreSlice,
 } from './OnBoardng/slice';
 import { homeSlice } from './Home/slice';
 
@@ -17,6 +18,7 @@ const store = configureStore({
     onboardingdata: onboardingSliceData.reducer,
     reassessment: reassessmentSlice.reducer,
     home: homeSlice.reducer,
+    cuoreScore: cuoreScoreSlice.reducer,
   },
 });
 

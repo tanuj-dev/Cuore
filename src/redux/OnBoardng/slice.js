@@ -4,6 +4,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { submitOnboarding } from './onBoardingThunk';
 import { getOnboardingThunk } from './onBoardingThunk';
 import { createReassessment } from './onBoardingThunk';
+import { getCuoreScoreThunk } from './onBoardingThunk';
 
 export const onboardingSlice = createSlice({
   name: 'onboarding',
@@ -89,6 +90,34 @@ export const reassessmentSlice = createSlice({
       });
   },
 });
+
+export const cuoreScoreSlice = createSlice({
+  name: 'cuoreScore',
+  initialState: {
+    data: null,
+    loading: false,
+    error: null,
+  },
+  reducers: {},
+  extraReducers: builder => {
+    builder
+      .addCase(getCuoreScoreThunk.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getCuoreScoreThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(getCuoreScoreThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.data = null;
+      });
+  },
+});
+
+export default cuoreScoreSlice.reducer;
 
 // export default onboardingSlice.reducer;
 // export default onboardingdata.reducer;

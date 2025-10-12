@@ -82,7 +82,7 @@ const Explore = ({ navigation }) => {
   );
 
   return (
-    <ScrollView style={{ backgroundColor: 'white' }}>
+    <ScrollView nestedScrollEnabled={true} style={{ backgroundColor: 'white' }}>
       <View
         style={{
           padding: hp(1.5),

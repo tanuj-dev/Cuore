@@ -6,11 +6,12 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hp, wp, Images, color } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
-import { getOnboardingThunk } from '../../redux/slices';
+import { getCuoreScoreThunk, getOnboardingThunk } from '../../redux/slices';
 import GaugeMeter from '../../components/SpeedpMeter';
 
 // import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -22,12 +23,6 @@ const Score = ({ navigation, route }) => {
   );
   const screen = route.params?.screen;
   console.log(route.params, 'route params');
-
-  const health_metrics = useSelector(state =>
-    screen === 'Reassess'
-      ? state.reassessment?.data?.data?.health_metrics
-      : state.onboarding?.data?.data?.health_metrics,
-  );
 
   const convertVitalsToArray = vitals => {
     const result = [];
@@ -107,6 +102,38 @@ const Score = ({ navigation, route }) => {
         return 'gray'; // fallback
     }
   };
+
+  const dispatch = useDispatch();
+
+  const loading = useSelector(state => state.cuoreScore?.loading);
+  const user_Id = useSelector(state => state.auth?.userId);
+  console.log(user_Id, 'user_Id');
+
+  const health_metrics = useSelector(
+    state => state.cuoreScore?.data?.health_metrics,
+  );
+
+  useEffect(() => {
+    dispatch(getCuoreScoreThunk(user_Id));
+  }, []);
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#F9FAFB',
+        }}
+      >
+        <ActivityIndicator size="large" color="#1E64AC" />
+        <Text style={{ marginTop: 10, color: '#1E64AC', fontSize: 16 }}>
+          Loading your data...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>

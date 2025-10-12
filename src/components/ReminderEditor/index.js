@@ -9,23 +9,39 @@ import {
   Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useDispatch, useSelector } from 'react-redux';
+import { editWakeupThunk } from '../../redux/slices';
+import moment from 'moment';
 
 const ReminderEditor = ({ showModal, setShowModal }) => {
   const [reminderText, setReminderText] = useState('');
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const handleChange = () => {
-    console.log('Updated Reminder:', {
-      time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      reminderText,
-    });
-    setShowModal(false);
-  };
-
+  const dispatch = useDispatch();
   const onTimeSelected = (event, selectedTime) => {
     setShowTimePicker(false);
     if (selectedTime) setTime(selectedTime);
+  };
+
+  const userId = useSelector(state => state?.auth?.userId);
+
+  const handleChange = async () => {
+    const formattedTime = moment(time).format('hh:mm A'); // e.g., "07:15 AM"
+
+    const payload = {
+      newWakeUpTime: formattedTime,
+      // reminderText: reminderText.trim(),
+    };
+
+    try {
+      await dispatch(editWakeupThunk({ userId, payload })).unwrap();
+      console.log('✅ Wakeup updated successfully');
+    } catch (err) {
+      console.error('❌ Wakeup update failed:', err);
+    }
+
+    setShowModal(false);
   };
 
   return (
@@ -54,7 +70,7 @@ const ReminderEditor = ({ showModal, setShowModal }) => {
 
             {showTimePicker && (
               <DateTimePicker
-                value={time}
+                value={time.getTime() ? time : new Date()}
                 mode="time"
                 is24Hour={true}
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}

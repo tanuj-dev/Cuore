@@ -6,22 +6,18 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   ActivityIndicator,
-  TextInput,
   RefreshControl,
   FlatList,
 } from 'react-native';
-import { Images, hp, images, wp } from '../../utilities';
+import { Images, hp, wp } from '../../utilities';
 import ProgressBarWithImage from '../../components/ProgressBar';
-import Modal from 'react-native-modal';
 import Reminder from '../../components/Reminder';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
-import { updateProfile } from '../../redux/slices';
-import { useSelector } from 'react-redux';
 import { getHomeData } from '../../redux/slices';
 import ReminderEditor from '../../components/ReminderEditor';
+import moment from 'moment';
 
 const routeMap = {
   Breakfast: 'Nutrition',
@@ -31,28 +27,23 @@ const routeMap = {
 };
 
 const Today = ({ navigation, route }) => {
-  // const userId = route.params?.userId || null;
   const [isVisible, setIsVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('Feb 26');
   const [checked, setChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [time, setTime] = useState('');
-  const [reminderText, setReminderText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
   const dispatch = useDispatch();
-
   const dates = ['Feb 25', 'Feb 26', 'Feb 87'];
 
   const { data, loading, error } = useSelector(state => state.home);
   const homeData = data ? data : null;
-
   const userId = useSelector(state => state?.auth?.userId);
 
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await dispatch(getHomeData(userId)); // or fetchReminders(userId)
+      await dispatch(getHomeData(userId));
     } catch (err) {
       console.error('Refresh failed:', err);
     } finally {
@@ -71,10 +62,6 @@ const Today = ({ navigation, route }) => {
 
         console.log('🔐 Parsed Auth Tokens:', tokens);
         console.log('👤 Parsed User Info:', userInfo);
-
-        // Optional: destructure if needed
-        // const { access_token, refresh_token } = tokens || {};
-        // const { user_id, request_id } = userInfo || {};
       } catch (error) {
         console.error('❌ Failed to parse encrypted storage:', error);
       }
@@ -82,32 +69,42 @@ const Today = ({ navigation, route }) => {
 
     fetchStoredData();
   }, []);
+
   useEffect(() => {
     if (userId) {
-      console.log('Fetching home data for userId:', userId);
-      dispatch(getHomeData(userId))
-        .unwrap()
-        .then(() => console.log('Home data fetched successfully'))
-        .catch(err => console.error('Failed to fetch home data:', err));
+      dispatch(getHomeData(userId));
     }
   }, [dispatch, userId]);
+
+  // ✅ Show loader if fetching data
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#F9FAFB',
+        }}
+      >
+        <ActivityIndicator size="large" color="#1E64AC" />
+        <Text style={{ marginTop: 10, color: '#1E64AC', fontSize: 16 }}>
+          Loading your data...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.floatingText}>
-        {/* <StatusBar hidden={true} /> */}
-        {/* <Text style={styles.floatingTextLabel}>Floating Reminder</Text> */}
-        <TouchableOpacity
-          onPress={() => {
-            setIsVisible(true);
-            console.log(isVisible, 'isVisible');
-          }}
-        >
+        <TouchableOpacity onPress={() => setIsVisible(true)}>
           <Image source={Images.PLUS} style={styles.addIcon} />
         </TouchableOpacity>
       </View>
 
       <ScrollView
+        nestedScrollEnabled
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -120,6 +117,7 @@ const Today = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
 
+        {/* Dates Tabs */}
         <View style={styles.tabs}>
           {dates.map(date => (
             <TouchableOpacity key={date} onPress={() => setActiveTab(date)}>
@@ -133,6 +131,8 @@ const Today = ({ navigation, route }) => {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Alerts */}
         <View
           style={{
             alignItems: 'center',
@@ -147,10 +147,11 @@ const Today = ({ navigation, route }) => {
               tintColor: '#EF4444',
             }}
             source={Images.NOTICE}
-          ></Image>
+          />
           <Text style={styles.alert}>2 tasks missed</Text>
         </View>
 
+        {/* Progress Section */}
         <View style={styles.progressContainer}>
           <Text style={styles.progressTitle}>Your Progress</Text>
           <TouchableOpacity
@@ -176,19 +177,20 @@ const Today = ({ navigation, route }) => {
               Update Biomarkers
             </Text>
           </TouchableOpacity>
-
-          {/* Add progress bar visuals */}
         </View>
+
         <ProgressBarWithImage
           data={homeData?.progress}
           navigation={navigation}
-        ></ProgressBarWithImage>
+        />
+
         <View style={{ paddingHorizontal: hp(3) }}>
           <Text style={styles.quote}>
             {homeData?.motivationalMessage || '“Your health is your wealth.”'}
           </Text>
         </View>
 
+        {/* Alerts Horizontal Scroll */}
         <View style={styles.warnings}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {homeData?.alerts?.map(item => (
@@ -201,7 +203,7 @@ const Today = ({ navigation, route }) => {
                   padding: hp(2),
                   marginRight: hp(1),
                   backgroundColor: 'yellow',
-                  position: 'relative', // ✅ Needed for absolute child positioning
+                  position: 'relative',
                 }}
               >
                 <Image
@@ -214,19 +216,11 @@ const Today = ({ navigation, route }) => {
                   }}
                   source={Images.WARNING}
                 />
-
                 <Text style={{ color: item.textStyle, marginRight: hp(2) }}>
                   {item?.text}
                 </Text>
-
                 <TouchableOpacity
-                  // onPress={() => removeCard(item.id)}
-                  style={{
-                    position: 'absolute',
-                    right: hp(1),
-                    top: hp(1),
-                    // padding: hp(1),
-                  }}
+                  style={{ position: 'absolute', right: hp(1), top: hp(1) }}
                 >
                   <Image
                     style={{
@@ -243,6 +237,8 @@ const Today = ({ navigation, route }) => {
             ))}
           </ScrollView>
         </View>
+
+        {/* Daily Schedule */}
         <View style={{ backgroundColor: '#F9FAFB' }}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
@@ -252,15 +248,14 @@ const Today = ({ navigation, route }) => {
 
           <FlatList
             data={homeData?.dailySchedule || []}
-            keyExtractor={(item, index) => item?.title + index}
-            renderItem={({ item }) => (
-              <View style={styles.taskRow}>
+            keyExtractor={(item, index) => (item?.title || 'task') + index}
+            renderItem={({ item, index }) => (
+              <View key={item?.id || index} style={styles.taskRow}>
                 <View
                   style={{
-                    width: hp(8),
+                    width: hp(9),
                     borderRightWidth: 1,
                     height: hp(7),
-                    // marginRight: 2,
                     marginTop: hp(0.5),
                     borderColor: '#E5E7EB',
                   }}
@@ -283,12 +278,12 @@ const Today = ({ navigation, route }) => {
                       }}
                       source={Images?.NOTIFICATION}
                     />
-
-                    {item?.title === 'Wake Up' && (
+                    {item?.editable && (
                       <TouchableOpacity onPress={() => setShowModal(true)}>
                         <Image
                           style={{
                             height: hp(2),
+
                             resizeMode: 'contain',
                             marginLeft: -hp(4),
                           }}
@@ -334,7 +329,6 @@ const Today = ({ navigation, route }) => {
                   >
                     <View style={{ justifyContent: 'center' }}>
                       <Text style={styles.taskTitle}>{item?.title}</Text>
-
                       <Text style={styles.taskDescription}>
                         {item.description}
                       </Text>
@@ -350,6 +344,8 @@ const Today = ({ navigation, route }) => {
             )}
             showsVerticalScrollIndicator={false}
           />
+
+          {/* Check off all tasks */}
           <View
             style={{
               flexDirection: 'row',
@@ -390,6 +386,7 @@ const Today = ({ navigation, route }) => {
           </View>
         </View>
 
+        {/* Streak Section */}
         <View
           style={{
             alignItems: 'center',
@@ -432,11 +429,12 @@ const Today = ({ navigation, route }) => {
             log today’s tasks by 12:30 AM
           </Text>
         </View>
+
         <Reminder
           user_id={homeData?.user?.id}
           setIsVisible={setIsVisible}
           isVisible={isVisible}
-        ></Reminder>
+        />
         <ReminderEditor showModal={showModal} setShowModal={setShowModal} />
       </ScrollView>
     </View>
@@ -543,7 +541,7 @@ const styles = StyleSheet.create({
 
   time: {
     fontFamily: 'Roboto-Regular',
-    width: 60,
+    width: 62,
     fontWeight: '400',
     color: '#6B7280',
   },

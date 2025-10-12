@@ -12,6 +12,7 @@ const Endpoints = {
   SUBMITONBOARDING: '/api/v1/onboarding/submit-all',
   REASSESSMENT: '/api/v1/onboarding/reassess',
   GETONBOARDING: '/api/v1/onboarding/data',
+  EDIT_REMINDER: '/api/v1/users/userid/reminders/remindersid',
 };
 
 export default Endpoints;
