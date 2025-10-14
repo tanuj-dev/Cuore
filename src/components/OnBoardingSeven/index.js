@@ -10,6 +10,20 @@ import {
 } from 'react-native';
 import { Images, color, hp, wp } from '../../utilities';
 
+const validationLimits = {
+  o2_sat: { min: 70, max: 100 },
+  pulse: { min: 40, max: 200 },
+  bp_upper: { min: 40, max: 320 },
+  bp_lower: { min: 40, max: 260 },
+  bs_f: { min: 30, max: 2000 },
+  bs_am: { min: 30, max: 2000 },
+  A1C: { min: 4.0, max: 27.0 },
+  HDL: { min: 10, max: 90 },
+  LDL: { min: 60, max: 900 },
+  Trig: { min: 60, max: 900 },
+  HsCRP: { min: 0.09, max: 1.0 },
+};
+
 const OnBoardingSeven = ({ initialData, onFormChange }) => {
   const [formData, setFormData] = useState({
     o2_sat: '',
@@ -26,9 +40,9 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
     hscrp_unit: '',
   });
 
+  const [errors, setErrors] = useState({});
   const lastSentData = useRef(formData);
 
-  // ✅ Sync from parent
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
       setFormData(prev => {
@@ -41,7 +55,6 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
     }
   }, [initialData]);
 
-  // ✅ Notify parent only if data actually changed
   useEffect(() => {
     if (
       typeof onFormChange === 'function' &&
@@ -52,35 +65,31 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
     }
   }, [formData, onFormChange]);
 
-  // ✅ Handle numeric conversion
   const handleChange = (key, value) => {
-    const numericKeys = [
-      'o2_sat',
-      'pulse',
-      'bp_upper',
-      'bp_lower',
-      'bs_f',
-      'bs_am',
-      'A1C',
-      'HDL',
-      'LDL',
-      'Trig',
-      'HsCRP', // still numeric but separate from unit
-    ];
-
+    const numericKeys = Object.keys(validationLimits);
     let newValue = value;
 
-    // If numeric field → strip invalid chars and convert to number
     if (numericKeys.includes(key)) {
-      // Only digits and at most one dot
       const filtered = value.replace(/[^0-9.]/g, '');
-      newValue = filtered === '' ? '' : Number(filtered); // empty string stays empty
+      const match = filtered.match(/^\d*(\.\d{0,1})?/);
+      newValue = match ? match[0] : '';
+
+      const num = parseFloat(newValue);
+      const { min, max } = validationLimits[key];
+
+      if (newValue !== '' && (num < min || num > max)) {
+        setErrors(prev => ({
+          ...prev,
+          [key]: `Value must be between ${min} and ${max}`,
+        }));
+      } else {
+        setErrors(prev => ({ ...prev, [key]: null }));
+      }
     }
 
     setFormData(prev => ({ ...prev, [key]: newValue }));
   };
 
-  // ✅ Render helper
   const renderDoubleInputRow = (first, second) => (
     <View style={styles.row}>
       <View style={styles.inputGroup}>
@@ -92,6 +101,9 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           value={formData[first.key]?.toString() || ''}
           onChangeText={text => handleChange(first.key, text)}
         />
+        {errors[first.key] && (
+          <Text style={styles.errorText}>{errors[first.key]}</Text>
+        )}
       </View>
 
       <View style={styles.inputGroup}>
@@ -103,13 +115,15 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           value={formData[second.key]?.toString() || ''}
           onChangeText={text => handleChange(second.key, text)}
         />
+        {errors[second.key] && (
+          <Text style={styles.errorText}>{errors[second.key]}</Text>
+        )}
       </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      {/* Vital Signs */}
       <Text style={styles.sectionTitle}>Vital Signs (Resting values)</Text>
       {renderDoubleInputRow(
         { label: 'Oxygen Saturation (%)', key: 'o2_sat' },
@@ -120,7 +134,6 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
         { label: 'BP (Lower Reading)', key: 'bp_lower' },
       )}
 
-      {/* Blood Tests */}
       <Text style={styles.sectionTitle}>Blood Tests</Text>
       <View style={{ flexDirection: 'row', marginBottom: hp(2) }}>
         <Image
@@ -145,32 +158,25 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
         { label: 'Triglycerides (Annual)', key: 'Trig' },
       )}
 
-      {/* HsCRP */}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginBottom: hp(2),
-        }}
-      >
+      <View style={styles.row}>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>HsCRP (Annual)</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
-            value={formData.HsCRP?.toString() || ''}
+            value={formData?.HsCRP?.toString() || ''}
             onChangeText={text => handleChange('HsCRP', text)}
           />
+          {errors.HsCRP && <Text style={styles.errorText}>{errors.HsCRP}</Text>}
         </View>
 
-        {/* Unit Buttons */}
         <View style={styles.unitContainer}>
           {['mg/dl', 'mg/L'].map(unit => (
             <TouchableOpacity
               key={unit}
               style={[
                 styles.unitButton,
-                formData.hscrp_unit === unit && styles.unitButtonSelected,
+                formData?.hscrp_unit === unit && styles.unitButtonSelected,
               ]}
               onPress={() => handleChange('hscrp_unit', unit)}
             >
@@ -186,7 +192,6 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           ))}
         </View>
 
-        {/* Spacer */}
         <View style={[styles.inputGroup, { opacity: 0 }]}>
           <Text style={styles.label}>Hidden</Text>
           <TextInput style={styles.input} editable={false} />
@@ -248,7 +253,7 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'android' ? hp(3.8) : hp(2.9),
   },
   unitButton: {
-    padding: hp(0.5),
+    padding: hp(0.45),
     marginRight: 10,
     borderWidth: 1,
     borderColor: '#aaa',
@@ -264,6 +269,11 @@ const styles = StyleSheet.create({
   unitText: {
     fontSize: hp(1.5),
     color: '#000',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 4,
   },
 });
 

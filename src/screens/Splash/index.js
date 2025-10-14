@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
-import { setUserData } from '../../redux/Auth/slice'; // ✅ Redux Toolkit action
+import { setUserData } from '../../redux/Auth/slice';
 import { hp, wp, Images, Strings } from '../../utilities';
 
 const Splash = () => {
@@ -23,30 +22,41 @@ const Splash = () => {
       try {
         const tokenData = await EncryptedStorage.getItem('auth_tokens');
         console.log('Token data retrieved:', tokenData);
+
         if (tokenData) {
           const parsed = JSON.parse(tokenData);
           console.log('Parsed token data:', parsed);
 
-          // ✅ Optional: check token expiry
           const access_token = parsed.accessToken;
+
           if (!access_token) {
             await EncryptedStorage.removeItem('auth_tokens');
-            navigation.replace('Login');
+            setTimeout(() => {
+              navigation.replace('Login');
+            }, 1000);
             return;
-          } else {
-            if (parsed.onboardingStatus !== 'complete') {
+          }
+
+          if (parsed.onboardingStatus !== 'complete') {
+            setTimeout(() => {
               navigation.replace('Onboarding');
-            } else {
-              dispatch(setUserData(parsed));
+            }, 1000);
+          } else {
+            dispatch(setUserData(parsed));
+            setTimeout(() => {
               navigation.replace('Home');
-            }
+            }, 1000);
           }
         } else {
-          navigation.replace('Login');
+          setTimeout(() => {
+            navigation.replace('Login');
+          }, 1000);
         }
       } catch (err) {
         console.log('Error reading token:', err.message);
-        navigation.replace('Login');
+        setTimeout(() => {
+          navigation.replace('Login');
+        }, 1000);
       } finally {
         setCheckingAuth(false);
       }
@@ -65,6 +75,14 @@ const Splash = () => {
       <Text style={styles.subtitle}>
         Small Steps. Smart Guidance. Better Health
       </Text>
+
+      {checkingAuth && (
+        <ActivityIndicator
+          size="small"
+          color="#2563EB"
+          style={{ marginTop: hp(2) }}
+        />
+      )}
     </View>
   );
 };

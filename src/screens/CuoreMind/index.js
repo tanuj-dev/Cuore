@@ -7,50 +7,57 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import {color, hp, wp, Images} from '../../utilities';
+import { color, hp, wp, Images } from '../../utilities';
 import images from '../../utilities/Images';
 // import MindTab from '../../components/MindTab';
 // import {Ionicons} from '@expo/vector-icons';
 
-const Mind = ({navigation}) => {
+const Mind = ({ navigation }) => {
   return (
-    <View style={{flex: 1,}}>
-    <View style={{   backgroundColor: '#FFFFFF',}}>  <View
-        style={{
-          flexDirection: 'row',
-              marginTop:Platform.OS =='ios'&& hp(5),
-       
-          // paddingTop: hp(2),
-          elevation: 1,
-        }}>
-        <TouchableOpacity
-          style={{paddingHorizontal: hp(1)}}
-          onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-            style={{
-              resizeMode: 'contain',
-              height: hp(3.5),
-              width: wp(4),
-            }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-        <Text style={styles.title}>Sleep & Stress</Text>
-      </View></View>
+    <View style={{ flex: 1 }}>
+      <View style={{ backgroundColor: '#FFFFFF' }}>
+        {' '}
+        <View
+          style={{
+            flexDirection: 'row',
+            marginTop: Platform.OS == 'ios' && hp(5),
+
+            // paddingTop: hp(2),
+            elevation: 1,
+          }}
+        >
+          <TouchableOpacity
+            style={{ paddingHorizontal: hp(1) }}
+            onPress={() => navigation.goBack()}
+          >
+            <Image
+              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+              style={{
+                resizeMode: 'contain',
+                height: hp(3.5),
+                width: wp(4),
+              }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+          <Text style={styles.title}>Sleep & Stress</Text>
+        </View>
+      </View>
       <ScrollView style={styles.container}>
         <View style={styles.scoreContainer}>
           <View style={styles.scoreBox}>
             <Image
-              style={{width: wp(45), height: hp(10), resizeMode: 'cover'}}
-              source={images.SCORE_METER}></Image>
+              style={{ width: wp(45), height: hp(10), resizeMode: 'cover' }}
+              source={images.SCORE_METER}
+            ></Image>
             {/* <Text style={styles.scoreValue}>78</Text> */}
             <Text style={styles.scoreLabel}>Sleep Score</Text>
           </View>
           <View style={styles.scoreBox}>
             <Image
-              style={{width: wp(45), height: hp(10), resizeMode: 'cover'}}
-              source={images.SCORE_METER}></Image>
+              style={{ width: wp(45), height: hp(10), resizeMode: 'cover' }}
+              source={images.SCORE_METER}
+            ></Image>
             {/* <Text style={styles.scoreValue}>78</Text> */}
             <Text style={styles.scoreLabel}>Stress Score</Text>
           </View>
@@ -59,9 +66,14 @@ const Mind = ({navigation}) => {
         <TouchableOpacity
           onPress={() => {
             const STEP = 6;
-            navigation.navigate('OnBoarding', {STEP});
+            navigation.navigate('OnBoarding', {
+              STEP,
+              screen: 'Reassess',
+              navigateTo: 'Mind',
+            });
           }}
-          style={styles.reassessButton}>
+          style={styles.reassessButton}
+        >
           <Image
             source={Images.EDIT} // Replace with actual key in your `images` object
             style={{
@@ -88,7 +100,7 @@ const Mind = ({navigation}) => {
               // tintColor: 'white',
             }}
           />
-          <View style={{marginLeft: hp(2)}}>
+          <View style={{ marginLeft: hp(2) }}>
             <Text style={styles.reflectionTitle}>Mindful Reflections</Text>
             <Text style={styles.reflectionQuote}>
               Let go of what was. Surrender to what is. {'\n'}Have faith in what
@@ -97,7 +109,7 @@ const Mind = ({navigation}) => {
           </View>
         </View>
 
-        <View style={{flexDirection: 'row', backgroundColor: ''}}>
+        <View style={{ flexDirection: 'row', backgroundColor: '' }}>
           {/* <Image
             source={Images.SUN} // Replace with actual key in your `images` object
             style={{
@@ -125,7 +137,8 @@ const Mind = ({navigation}) => {
                   borderColor: '#3B82F6',
                   backgroundColor: '#D7DFE7',
                 },
-              ]}>
+              ]}
+            >
               <Text style={styles.cardTitle}>Body Scan</Text>
               <Text style={styles.cardDesc}>Relax & ground yourself</Text>
             </TouchableOpacity>
@@ -138,7 +151,8 @@ const Mind = ({navigation}) => {
                   borderColor: '#14B8A6',
                   backgroundColor: '#D7DFE7',
                 },
-              ]}>
+              ]}
+            >
               <Text style={styles.cardTitle}>Deep Breathing</Text>
               <Text style={styles.cardDesc}>Calm the mind, boost focus</Text>
             </TouchableOpacity>
@@ -151,7 +165,8 @@ const Mind = ({navigation}) => {
                   borderColor: '#3B82F6',
                   backgroundColor: '#D7DFE7',
                 },
-              ]}>
+              ]}
+            >
               <Text style={styles.cardTitle}>Body Scan</Text>
               <Text style={styles.cardDesc}>Relax & ground yourself</Text>
             </TouchableOpacity>
@@ -171,7 +186,8 @@ const Mind = ({navigation}) => {
                   borderColor: '#A855F7',
                   backgroundColor: '#F0FDFA',
                 },
-              ]}>
+              ]}
+            >
               <Text style={styles.cardTitle}>4-7-8 Breathing</Text>
               <Text style={styles.cardDesc}>Slow down, relax deeply</Text>
             </View>
@@ -183,7 +199,8 @@ const Mind = ({navigation}) => {
                   borderColor: '#06B6D4',
                   backgroundColor: '#ECFEFF',
                 },
-              ]}>
+              ]}
+            >
               <Text style={styles.cardTitle}>Yog Nidra</Text>
               <Text style={styles.cardDesc}>Enter deep, restful awareness</Text>
             </View>
@@ -191,7 +208,7 @@ const Mind = ({navigation}) => {
         </ScrollView>
 
         <Text style={styles.footerNote}>
-         Stick to one meditation for 21 days to unlock deeper benefits
+          Stick to one meditation for 21 days to unlock deeper benefits
         </Text>
       </ScrollView>
       {/* <MindTab></MindTab> */}

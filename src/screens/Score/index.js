@@ -22,6 +22,7 @@ const Score = ({ navigation, route }) => {
     'onboarding state',
   );
   const screen = route.params?.screen;
+  const navigateTo = route.params?.navigateTo;
   console.log(route.params, 'route params');
 
   const convertVitalsToArray = vitals => {
@@ -250,7 +251,7 @@ const Score = ({ navigation, route }) => {
           <InfoCard
             label="Weight"
             value={health_metrics?.weight?.current}
-            subText={`${health_metrics?.weight?.target} kg`}
+            subText={`${Math.round(health_metrics?.weight?.target)} kg`}
           />
         </View>
         <View style={styles.row}>
@@ -314,7 +315,21 @@ const Score = ({ navigation, route }) => {
         </View>
 
         <TouchableOpacity
-          onPress={() => navigation.navigate('Checkout')}
+          onPress={() => {
+            if (navigateTo == 'Home') {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Home' }],
+              });
+            } else if (navigateTo == 'Mind') {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Home' }],
+              });
+            } else {
+              navigation.navigate('Checkout');
+            }
+          }}
           style={styles.continueButton}
         >
           <Text style={styles.continueText}>Continue</Text>

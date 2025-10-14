@@ -7,16 +7,22 @@ import {
   Modal,
   StyleSheet,
   Platform,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useDispatch, useSelector } from 'react-redux';
 import { editWakeupThunk } from '../../redux/slices';
 import moment from 'moment';
+import { getHomeData, editReminderThunk } from '../../redux/slices';
 
-const ReminderEditor = ({ showModal, setShowModal }) => {
+const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
+  console.log('Editing reminder:', requestId);
   const [reminderText, setReminderText] = useState('');
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const dispatch = useDispatch();
   const onTimeSelected = (event, selectedTime) => {
@@ -33,11 +39,40 @@ const ReminderEditor = ({ showModal, setShowModal }) => {
       newWakeUpTime: formattedTime,
       // reminderText: reminderText.trim(),
     };
+    const payload2 = {
+      newWakeUpTime: formattedTime,
+      reminderText: reminderText.trim(),
+    };
 
     try {
-      await dispatch(editWakeupThunk({ userId, payload })).unwrap();
+      setLoading(true);
+      const reminderId = requestId?.id;
+      console.log(payload2, 'payload');
+      const res =
+        requestId?.title == 'Wake Up'
+          ? await dispatch(editWakeupThunk({ userId, payload })).unwrap()
+          : await dispatch(
+              editReminderThunk({ userId, reminderId, payload2 }),
+            ).unwrap();
+      console.log(res, 'res');
+      if (
+        requestId?.title == 'Wake Up'
+          ? res?.message ==
+            'Wake-up time updated successfully. Timeline adjusted.'
+          : res?.message == 'Reminder updated successfully.'
+      ) {
+        dispatch(getHomeData(userId));
+        setVisible(false);
+        setLoading(false);
+      } else {
+        setVisible(false);
+        Alert.alert('Error', 'Failed to update reminder. Please try again.');
+        setLoading(false);
+      }
+
       console.log('✅ Wakeup updated successfully');
     } catch (err) {
+      setLoading(false);
       console.error('❌ Wakeup update failed:', err);
     }
 
@@ -47,12 +82,19 @@ const ReminderEditor = ({ showModal, setShowModal }) => {
   return (
     <>
       <Modal
+        onBackdropPress={() => setShowModal(false)} // 👈 tap outside to close
+        onSwipeComplete={() => setShowModal(false)} // 👈 swipe down to close
         visible={showModal}
         transparent
         animationType="slide"
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
         onRequestClose={() => setShowModal(false)}
       >
-        <View style={styles.overlay}>
+        <TouchableOpacity
+          onPress={() => setShowModal(false)}
+          style={styles.overlay}
+        >
           <View style={styles.bottomSheet}>
             <Text style={styles.title}>Edit Reminder</Text>
 
@@ -61,7 +103,7 @@ const ReminderEditor = ({ showModal, setShowModal }) => {
               onPress={() => setShowTimePicker(true)}
             >
               <Text style={{ color: '#333' }}>
-                {time.toLocaleTimeString([], {
+                {time?.toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
@@ -81,15 +123,27 @@ const ReminderEditor = ({ showModal, setShowModal }) => {
             <TextInput
               placeholder="Reminder text"
               value={reminderText}
-              onChangeText={setReminderText}
+              onChangeText={text => {
+                if (text.length <= 20) {
+                  setReminderText(text);
+                  setError('');
+                } else {
+                  setError('Reminder must be 20 characters or less');
+                }
+              }}
               style={styles.input}
             />
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <TouchableOpacity style={styles.button} onPress={handleChange}>
-              <Text style={styles.buttonText}>Change</Text>
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>Change</Text>
+              )}
             </TouchableOpacity>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
     </>
   );
@@ -101,34 +155,56 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.5)', // darker for better focus
   },
   bottomSheet: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 10,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 16,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+    fontSize: 16,
+    color: '#374151',
   },
   button: {
-    backgroundColor: '#007bff',
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: '#2563EB',
+    paddingVertical: 14,
+    borderRadius: 10,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: '600',
+    fontSize: 16,
+  },
+  charLimitText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: -4,
+  },
+  errorText: {
+    // backgroundColor: 'red',
+    fontSize: 12,
+    color: '#EF4444',
+    // marginTop: 4,
+    marginBottom: 10,
   },
 });

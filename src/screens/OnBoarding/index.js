@@ -29,7 +29,7 @@ import { getOnboardingThunk } from '../../redux/slices';
 
 const OnBoarding = ({ navigation, route }) => {
   const dispatch = useDispatch();
-  const { STEP, screen } = route.params ?? {};
+  const { STEP, screen, navigateTo } = route.params ?? {};
 
   console.log('OnBoarding Screen Params:', route.params);
 
@@ -151,6 +151,7 @@ const OnBoarding = ({ navigation, route }) => {
 
         navigation.navigate('Score', {
           screen: screen === 'Reassess' ? 'Reassess' : 'Score',
+          navigateTo: navigateTo ?? 'Home',
         });
       } else if (res?.payload?.error) {
         setLoading(false);

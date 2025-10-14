@@ -60,7 +60,10 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
           newValue < 18 || newValue > 88 ? 'Age must be between 18 and 88' : '';
       }
       if (key === 'waist_cm') {
-        errorMsg = newValue > 60 ? 'Waist must not exceed 60 inches' : '';
+        errorMsg =
+          newValue > 25 || newValue < 75
+            ? 'Waist must not exceed 60 inches'
+            : '';
       }
       if (key === 'weight_kg') {
         errorMsg =
@@ -70,7 +73,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
       }
       if (key === 'height_cm') {
         errorMsg =
-          newValue < 120 || newValue > 250
+          newValue < 120 || newValue > 210
             ? 'Height must be between 120  and 250 cm'
             : '';
       }

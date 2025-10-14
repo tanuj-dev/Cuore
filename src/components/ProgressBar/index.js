@@ -54,7 +54,9 @@ const ProgressBarWithImage = ({ navigation, data }) => {
               source={images.FLAG}
               style={{ width: 14, height: 14, marginRight: 4 }}
             />
-            <Text style={styles.percentText}>{data?.periods?.[0]?.value}</Text>
+            <Text style={styles.percentText}>
+              {Math.round(data?.periods?.[0]?.value)}
+            </Text>
           </View>
           <Text style={styles.percentText}>{data?.goal}</Text>
         </View>

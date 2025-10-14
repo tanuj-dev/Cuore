@@ -32,6 +32,7 @@ const Today = ({ navigation, route }) => {
   const [checked, setChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [requestId, setRequestId] = useState(null);
 
   const dispatch = useDispatch();
   const dates = ['Feb 25', 'Feb 26', 'Feb 87'];
@@ -157,7 +158,11 @@ const Today = ({ navigation, route }) => {
           <TouchableOpacity
             onPress={() => {
               const STEP = 7;
-              navigation.navigate('OnBoarding', { STEP, screen: 'Reassess' });
+              navigation.navigate('OnBoarding', {
+                STEP,
+                screen: 'Reassess',
+                navigateTo: 'Home',
+              });
             }}
             style={{
               alignItems: 'center',
@@ -202,7 +207,7 @@ const Today = ({ navigation, route }) => {
                   borderRadius: hp(1),
                   padding: hp(2),
                   marginRight: hp(1),
-                  backgroundColor: 'yellow',
+                  backgroundColor: item?.type,
                   position: 'relative',
                 }}
               >
@@ -224,7 +229,7 @@ const Today = ({ navigation, route }) => {
                 >
                   <Image
                     style={{
-                      backgroundColor: '#F6F0F1',
+                      // backgroundColor: '#F6F0F1',
                       height: hp(1.2),
                       width: hp(2),
                       resizeMode: 'contain',
@@ -279,7 +284,13 @@ const Today = ({ navigation, route }) => {
                       source={Images?.NOTIFICATION}
                     />
                     {item?.editable && (
-                      <TouchableOpacity onPress={() => setShowModal(true)}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setRequestId(item);
+
+                          setShowModal(true);
+                        }}
+                      >
                         <Image
                           style={{
                             height: hp(2),
@@ -431,11 +442,19 @@ const Today = ({ navigation, route }) => {
         </View>
 
         <Reminder
+          existingReminders={
+            homeData?.dailySchedule?.filter(item => item?.editable == true) ||
+            []
+          }
           user_id={homeData?.user?.id}
           setIsVisible={setIsVisible}
           isVisible={isVisible}
         />
-        <ReminderEditor showModal={showModal} setShowModal={setShowModal} />
+        <ReminderEditor
+          requestId={requestId}
+          showModal={showModal}
+          setShowModal={setShowModal}
+        />
       </ScrollView>
     </View>
   );

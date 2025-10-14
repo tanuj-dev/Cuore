@@ -11,26 +11,24 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
-import Constants from '../../utilities/Constants';
 import { sendOtp } from '../../redux/slices';
 
 const Login = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [tab, setTab] = useState('User');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const dispatch = useDispatch();
 
   const handleSendOtp = async () => {
     if (!/^\d{10}$/.test(phoneNumber)) {
-      Alert.alert(
-        'Invalid Number',
-        'Please enter a valid 10-digit mobile number.',
-      );
+      setError('Please enter a valid 10-digit mobile number.');
       return;
     }
 
     setLoading(true);
+    setError('');
     console.log('Dispatching sendOtp with phone number:', phoneNumber);
 
     try {
@@ -78,11 +76,11 @@ const Login = ({ navigation }) => {
         <View style={styles.switchTabs}>
           <TouchableOpacity
             onPress={() => setTab('User')}
-            style={tab == 'User' ? styles.activeTab : styles.inactiveTab}
+            style={tab === 'User' ? styles.activeTab : styles.inactiveTab}
           >
             <Text
               style={
-                tab == 'User' ? styles.activeTabText : styles.inactiveTabText
+                tab === 'User' ? styles.activeTabText : styles.inactiveTabText
               }
             >
               User
@@ -90,11 +88,11 @@ const Login = ({ navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setTab('Caregiver')}
-            style={tab == 'Caregiver' ? styles.activeTab : styles.inactiveTab}
+            style={tab === 'Caregiver' ? styles.activeTab : styles.inactiveTab}
           >
             <Text
               style={
-                tab == 'Caregiver'
+                tab === 'Caregiver'
                   ? styles.activeTabText
                   : styles.inactiveTabText
               }
@@ -113,10 +111,21 @@ const Login = ({ navigation }) => {
             placeholder="9876543210"
             keyboardType="numeric"
             placeholderTextColor="#999"
-            onChangeText={text => setPhoneNumber(text)}
+            value={phoneNumber}
+            onChangeText={text => {
+              const cleaned = text.replace(/[^0-9]/g, '');
+              if (cleaned.length <= 10) {
+                setPhoneNumber(cleaned);
+                setError('');
+              } else {
+                setError('Mobile number must be 10 digits only');
+              }
+            }}
           />
         </View>
-        {tab == 'User' && (
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        {tab === 'User' && (
           <TouchableOpacity onPress={() => navigation.navigate('NewAccount')}>
             <Text style={styles.signupText}>
               New user? <Text style={styles.signupLink}>Sign up</Text>
@@ -126,7 +135,6 @@ const Login = ({ navigation }) => {
 
         <TouchableOpacity
           onPress={handleSendOtp}
-          // onPress={() => navigation.navigate('OnBoarding')}
           style={styles.verifyButton}
           disabled={loading}
         >
@@ -137,21 +145,11 @@ const Login = ({ navigation }) => {
           )}
         </TouchableOpacity>
       </View>
-      {/* <TouchableOpacity
-        onPress={() => navigation.navigate('OtpScreen')}
-        style={{
-          marginTop: hp(9),
-          backgroundColor: '#1E64AC',
-          padding: hp(1.5),
-          alignItems: 'center',
-          borderRadius: hp(0.5),
-          marginHorizontal: hp(2),
-        }}>
-        <Text style={styles.verifyText}>Get OTP</Text>
-      </TouchableOpacity> */}
     </View>
   );
 };
+
+export default Login;
 
 const styles = StyleSheet.create({
   container: {
@@ -232,6 +230,12 @@ const styles = StyleSheet.create({
     fontSize: hp(2),
     color: '#6B7280',
   },
+  errorText: {
+    fontSize: hp(1.6),
+    color: '#EF4444',
+    marginBottom: hp(1),
+    marginLeft: wp(2),
+  },
   signupText: {
     fontFamily: 'Roboto-Regular',
     textAlign: 'center',
@@ -257,5 +261,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
-export default Login;
