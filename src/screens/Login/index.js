@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import { sendOtp } from '../../redux/slices';
+import Toast from '../../components/Toast';
 
 const Login = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [tab, setTab] = useState('User');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState(null);
 
   const dispatch = useDispatch();
 
@@ -116,14 +118,24 @@ const Login = ({ navigation }) => {
               const cleaned = text.replace(/[^0-9]/g, '');
               if (cleaned.length <= 10) {
                 setPhoneNumber(cleaned);
-                setError('');
+                setToast(null);
               } else {
-                setError('Mobile number must be 10 digits only');
+                setToast({
+                  message: 'Mobile number must be 10 digits only',
+                  type: 'error',
+                });
               }
             }}
           />
         </View>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onHide={() => setToast(null)}
+          />
+        )}
+        {/* {error ? <Text style={styles.errorText}>{error}</Text> : null} */}
 
         {tab === 'User' && (
           <TouchableOpacity onPress={() => navigation.navigate('NewAccount')}>

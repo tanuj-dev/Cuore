@@ -207,7 +207,12 @@ const Today = ({ navigation, route }) => {
                   borderRadius: hp(1),
                   padding: hp(2),
                   marginRight: hp(1),
-                  backgroundColor: item?.type,
+                  backgroundColor:
+                    item?.type == 'red'
+                      ? '#FEE4E4'
+                      : item?.type == 'yellow'
+                      ? '#FFFFC5'
+                      : '#f4ba62ff',
                   position: 'relative',
                 }}
               >
@@ -216,12 +221,27 @@ const Today = ({ navigation, route }) => {
                     resizeMode: 'contain',
                     height: hp(2),
                     width: wp(4),
-                    tintColor: '#EAB308',
+                    tintColor:
+                      item?.type == 'red'
+                        ? '#FA003F'
+                        : item?.type == 'yellow'
+                        ? '#FFCE1B'
+                        : '#EAB308',
                     marginRight: hp(0.5),
                   }}
                   source={Images.WARNING}
                 />
-                <Text style={{ color: item.textStyle, marginRight: hp(2) }}>
+                <Text
+                  style={{
+                    color:
+                      item?.type == 'red'
+                        ? '#B91C1C'
+                        : item?.type == 'yellow'
+                        ? '#A16207'
+                        : '#A16207',
+                    marginRight: hp(2),
+                  }}
+                >
                   {item?.text}
                 </Text>
                 <TouchableOpacity

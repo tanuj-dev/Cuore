@@ -26,6 +26,7 @@ import images from '../../utilities/Images';
 import { submitOnboarding } from '../../redux/OnBoardng/onBoardingThunk';
 import { createReassessment } from '../../redux/OnBoardng/onBoardingThunk';
 import { getOnboardingThunk } from '../../redux/slices';
+import Toast from '../../components/Toast';
 
 const OnBoarding = ({ navigation, route }) => {
   const dispatch = useDispatch();
@@ -43,6 +44,7 @@ const OnBoarding = ({ navigation, route }) => {
   const [onboarding7Data, setOnboarding7Data] = useState({});
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const scrollRef = useRef();
 
@@ -136,12 +138,25 @@ const OnBoarding = ({ navigation, route }) => {
         screen === 'Reassess'
           ? await dispatch(createReassessment(finalPayload)).unwrap()
           : await dispatch(submitOnboarding(finalPayload)).unwrap();
-      // console.log('Dispatch Result:', res);
-      setLoading(false);
+      console.log('Dispatch Result:', res);
 
+      // setToast({message: 'Onboarding data submitted successfully!', type: 'error'});
+      setLoading(false);
+      if (res?.error) {
+        setToast({
+          message:
+            res?.error ||
+            'There was an error submitting your data. Please try again.',
+          type: 'error',
+        });
+      }
       if (res?.status === 'success') {
+        setToast({
+          message: 'Onboarding data submitted successfully!',
+          type: 'success',
+        });
+        // Alert.alert('Success', 'Onboarding data submitted successfully!');
         setLoading(false);
-        console.log(loading, 'loading');
         await EncryptedStorage.setItem(
           'onboardingData',
           JSON.stringify(finalPayload),
@@ -180,6 +195,12 @@ const OnBoarding = ({ navigation, route }) => {
   const onBoardingData = useSelector(
     state => state?.onboardingdata?.data ?? {},
   );
+
+  const handleValidationError = (fieldKey, message) => {
+    console.log(`Validation error in ${fieldKey}: ${message}`);
+
+    // You can show a toast, set a global error, or disable submission
+  };
 
   useEffect(() => {
     dispatch(getOnboardingThunk());
@@ -398,6 +419,7 @@ const OnBoarding = ({ navigation, route }) => {
         )}
 
         {/* Button */}
+
         <TouchableOpacity style={styles.button} onPress={handleNext}>
           {step === 7 && loading ? (
             <ActivityIndicator color="#fff" />
@@ -417,8 +439,8 @@ const OnBoarding = ({ navigation, route }) => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalBox}>
-              <Text style={styles.modalTitle}>Incomplete</Text>
-              <Text style={styles.modalMessage}>
+              <Text style={styles?.modalTitle}>Incomplete</Text>
+              <Text style={styles?.modalMessage}>
                 {screen === 'Reassess'
                   ? 'Please Select Gender.'
                   : 'Please fill all the required details before continuing.'}
@@ -432,6 +454,14 @@ const OnBoarding = ({ navigation, route }) => {
             </View>
           </View>
         </Modal>
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onHide={() => setToast(null)}
+            top={700}
+          />
+        )}
       </ScrollView>
     </>
   );

@@ -25,7 +25,19 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
   // ✅ Prefill if user revisits onboarding
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
-      setSelectedOptions(initialData.selectedOptions || []);
+      let options = [];
+
+      if (Array.isArray(initialData)) {
+        // Case 1: initialData is already an array
+        options = initialData.filter(item => item !== 'false');
+      } else {
+        // Case 2: initialData is an object with q1–q6 and other_conditions
+        options = Object.entries(initialData)
+          .filter(([key, value]) => key.startsWith('q') && value !== 'false')
+          .map(([_, value]) => value); // ✅ Only values
+      }
+
+      setSelectedOptions(options);
       setText(initialData.other_conditions || '');
     }
   }, [initialData]);

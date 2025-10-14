@@ -32,14 +32,14 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
 
   // Prefill data
   useEffect(() => {
-    if (Object.keys(initialData).length) {
+    if (Object.keys(initialData ? initialData : {})?.length) {
       setForm({
-        age: initialData.age ?? '',
-        height_cm: initialData.height_cm ?? '',
-        weight_kg: initialData.weight_kg ?? '',
-        waist_cm: initialData.waist_cm ?? '',
+        age: initialData?.age ?? '',
+        height_cm: initialData?.height_cm ?? '',
+        weight_kg: initialData?.weight_kg ?? '',
+        waist_cm: initialData?.waist_cm ?? '',
       });
-      setGender(initialData.gender ?? '');
+      setGender(initialData?.gender ?? '');
     }
   }, [initialData]);
 
@@ -61,7 +61,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
       }
       if (key === 'waist_cm') {
         errorMsg =
-          newValue > 25 || newValue < 75
+          newValue < 25 || newValue > 75
             ? 'Waist must not exceed 60 inches'
             : '';
       }

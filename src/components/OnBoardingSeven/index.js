@@ -70,24 +70,35 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
     let newValue = value;
 
     if (numericKeys.includes(key)) {
+      // Strip non-numeric characters except one dot
       const filtered = value.replace(/[^0-9.]/g, '');
       const match = filtered.match(/^\d*(\.\d{0,1})?/);
       newValue = match ? match[0] : '';
 
+      // Always update formData so user can type freely
+      setFormData(prev => ({ ...prev, [key]: newValue }));
+
+      // Allow clearing the field
+      if (newValue === '') {
+        setErrors(prev => ({ ...prev, [key]: null }));
+        return;
+      }
+
       const num = parseFloat(newValue);
       const { min, max } = validationLimits[key];
 
-      if (newValue !== '' && (num < min || num > max)) {
+      if (num >= min && num <= max) {
+        setErrors(prev => ({ ...prev, [key]: null }));
+      } else {
         setErrors(prev => ({
           ...prev,
           [key]: `Value must be between ${min} and ${max}`,
         }));
-      } else {
-        setErrors(prev => ({ ...prev, [key]: null }));
       }
+    } else {
+      // Non-numeric field (e.g. unit)
+      setFormData(prev => ({ ...prev, [key]: value }));
     }
-
-    setFormData(prev => ({ ...prev, [key]: newValue }));
   };
 
   const renderDoubleInputRow = (first, second) => (

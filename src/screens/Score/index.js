@@ -67,42 +67,6 @@ const Score = ({ navigation, route }) => {
 
     return result;
   };
-  const getVitalColor = (label, value, target) => {
-    switch (label) {
-      case 'Resting BP':
-        if (value < 100) return 'orange';
-        if (value <= 130) return 'green';
-        if (value <= 145) return 'orange';
-        return 'red';
-
-      case 'Blood Sugar (Fasting)':
-        if (value < 100) return 'red';
-        if (value <= 139) return 'green';
-        if (value <= 170) return 'orange';
-        return 'red';
-
-      case 'Blood Sugar (After Meal)':
-        if (value < 130) return 'red';
-        if (value <= 169) return 'green';
-        if (value <= 220) return 'orange';
-        return 'red';
-
-      case 'Cholesterol (TG/HDL)':
-        if (value < 2.8) return 'green';
-        if (value <= 4.0) return 'orange';
-        return 'red';
-
-      case 'Body Fat':
-        const diff = Math.abs(value - target);
-        const percentDiff = (diff / target) * 100;
-        if (percentDiff < 5) return 'green';
-        if (percentDiff <= 15) return 'orange';
-        return 'red';
-
-      default:
-        return 'gray'; // fallback
-    }
-  };
 
   const dispatch = useDispatch();
 
@@ -113,9 +77,15 @@ const Score = ({ navigation, route }) => {
   const health_metrics = useSelector(
     state => state.cuoreScore?.data?.health_metrics,
   );
+  const hasDiabetes = useSelector(
+    state => state.onboardingdata?.data?.data?.o3Data?.hasDiabetes,
+  );
+  console.log(health_metrics, 'health_metrics');
+  // console.log(hasDiabetes, 'hasDiabetes');
 
   useEffect(() => {
     dispatch(getCuoreScoreThunk(user_Id));
+    dispatch(getOnboardingThunk());
   }, []);
 
   if (loading) {
@@ -247,11 +217,13 @@ const Score = ({ navigation, route }) => {
             label="Metabolic Age"
             value={health_metrics?.metabolic_age?.value}
             subText={health_metrics?.metabolic_age?.gap}
+            png={Images.TREND}
           />
           <InfoCard
             label="Weight"
             value={health_metrics?.weight?.current}
-            subText={`${Math.round(health_metrics?.weight?.target)} kg`}
+            subText={`Target:${Math.round(health_metrics?.weight?.target)} kg`}
+            png={Images.WEIGHT}
           />
         </View>
         <View style={styles.row}>
@@ -259,11 +231,13 @@ const Score = ({ navigation, route }) => {
             label="BMI"
             value={health_metrics?.bmi.value}
             subText={`Target: ${health_metrics?.bmi?.target}`}
+            png={Images.WEIGHT}
           />
           <InfoCard
             label="Lifestyle"
             value={`${health_metrics?.lifestyle_score?.value?.toFixed(1)}%`}
             subText={`Target: >${health_metrics?.lifestyle_score.target}`}
+            png={Images.TREND}
           />
         </View>
 
@@ -297,6 +271,7 @@ const Score = ({ navigation, route }) => {
                 value={item.value}
                 target={item.target}
                 colorCode={'red'}
+                hasDiabetes={hasDiabetes}
               />
             </View>
           ))}
@@ -339,33 +314,77 @@ const Score = ({ navigation, route }) => {
   );
 };
 
-const InfoCard = ({ label, value, subText }) => (
+const InfoCard = ({ label, value, subText, png }) => (
   <View style={styles.infoCard}>
     <Text style={styles.infoLabel}>{label}</Text>
     <Text style={styles.infoValue}>{value}</Text>
 
-    {subText && <Text style={styles.infoSub}>{subText}</Text>}
+    {subText && (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: hp(0.5),
+        }}
+      >
+        <Image
+          source={png} // Replace with actual key in your `images` object
+          style={{
+            resizeMode: 'contain',
+            height: hp(3),
+            width: wp(4),
+            tintColor: '#FF8D10',
+            marginRight: hp(0.5),
+          }}
+        />
+        <Text style={styles.infoSub}>
+          {label == 'Metabolic Age'
+            ? subText?.toString().startsWith('-')
+              ? subText
+              : `+${subText}`
+            : subText}
+        </Text>
+      </View>
+    )}
   </View>
 );
-const getVitalColor = (label, value, target) => {
+const getVitalColor = (label, value, target, hasDiabetes) => {
   switch (label) {
-    case 'Resting BP':
-      if (value < 100) return 'orange';
-      if (value <= 130) return 'green';
-      if (value <= 145) return 'orange';
-      return 'red';
+    case 'Resting BP': {
+      const [systolic, diastolic] = value.split('/').map(Number);
+      const total = systolic + diastolic;
 
-    case 'Blood Sugar (Fasting)':
-      if (value < 100) return 'red';
-      if (value <= 139) return 'green';
-      if (value <= 170) return 'orange'; // ✅ handles 140–170
+      if (total < 180) return 'orange';
+      if (total <= 200) return 'green';
+      if (total <= 220) return 'orange';
       return 'red';
+    }
 
-    case 'Blood Sugar (After Meal)':
-      if (value < 130) return 'red';
-      if (value <= 169) return 'green';
-      if (value <= 220) return 'orange';
-      return 'red';
+    case 'Blood Sugar (Fasting)': {
+      if (hasDiabetes) {
+        if (value < 100) return 'red';
+        if (value <= 139) return 'green';
+        if (value <= 170) return 'orange';
+        return 'red';
+      } else {
+        if (value < 100) return 'green';
+        if (value <= 125) return 'orange'; // ✅ handles 140–170
+        return 'red';
+      }
+    }
+
+    case 'Blood Sugar (After Meal)': {
+      if (hasDiabetes) {
+        if (value < 130) return 'red';
+        if (value <= 169) return 'green';
+        if (value <= 220) return 'orange';
+        return 'red';
+      } else {
+        if (value < 140) return 'green';
+        if (value <= 200) return 'orange';
+        return 'red';
+      }
+    }
 
     case 'Cholesterol (TG/HDL)':
       if (value < 2.8) return 'green';
@@ -384,8 +403,8 @@ const getVitalColor = (label, value, target) => {
   }
 };
 
-const VitalCard = ({ label, value, target, colorCode, hint }) => {
-  const barColor = getVitalColor(label, value, target);
+const VitalCard = ({ label, value, target, colorCode, hint, hasDiabetes }) => {
+  const barColor = getVitalColor(label, value, target, hasDiabetes);
   return (
     <View style={styles.vitalCard}>
       <View style={styles.vitalRow}>

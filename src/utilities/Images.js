@@ -100,6 +100,8 @@ const images = {
   SELECT_PERSONA: require('../assets/images/selectpersona.png'),
   DELETE_ACCOUNT: require('../assets/images/deleteaccount.png'),
   MIKE: require('../assets/images/mike.png'),
+  TREND: require('../assets/images/trend.png'),
+  WEIGHT: require('../assets/images/weight.png'),
 };
 
 export default images;

@@ -82,12 +82,12 @@ const GaugeMeter = ({ value = 50, size = 250 }) => {
         <SvgText x={0} y={center + 10} fontSize="12" fill="black">
           0
         </SvgText>
-        <SvgText x={center - 40} y={center - 80} fontSize="12" fill="black">
+        {/* <SvgText x={center - 40} y={center - 80} fontSize="12" fill="black">
           25
         </SvgText>
         <SvgText x={center + 40} y={center - 80} fontSize="12" fill="black">
           75
-        </SvgText>
+        </SvgText> */}
         <SvgText x={size - 20} y={center + 10} fontSize="12" fill="black">
           100
         </SvgText>
