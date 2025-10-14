@@ -15,6 +15,7 @@ import {
   Keyboard,
   Alert,
 } from 'react-native';
+import Toast from '../../components/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
@@ -36,17 +37,50 @@ const CreateAccountScreen = () => {
   const [doctorCode, setDoctorCode] = useState('');
   const [corporateCode, setCorporateCode] = useState('');
   const [isChecked, setIsChecked] = useState(false);
+  const [toast, setToast] = useState(null);
 
   // 🔄 Optional: get loading from redux
   const { loading } = useSelector(state => state.auth || {});
 
   const handleCreateAccount = async () => {
-    // 🔹 Validations
-    if (!fullName.trim() || !mobileNumber.trim()) {
+    // 🔹 Basic validations
+    if (!fullName.trim() || !mobileNumber.trim() || !familyNumber.trim()) {
       Alert.alert('Missing Fields', 'Please fill all required fields.');
+      return;
+    } else if (fullName.trim().length < 3) {
+      setToast({
+        message: 'Full name must be at least 3 characters long',
+        type: 'error',
+      });
+      return;
+    } else if (familyNumber.trim().length < 10) {
+      setToast({
+        message: 'Family member number must be at least 10 digits long',
+        type: 'error',
+      });
       return;
     }
 
+    // 🔹 Mobile number must be exactly 10 digits
+    const isValidMobile = /^[0-9]{10}$/.test(mobileNumber);
+    if (!isValidMobile) {
+      setToast({
+        message: 'Mobile number must be exactly 10 digits long',
+        type: 'error',
+      });
+      return;
+    }
+
+    // 🔹 Terms and Conditions check
+    if (!isChecked) {
+      setToast({
+        message: 'Please agree to the Terms and Conditions.',
+        type: 'error',
+      });
+      return;
+    }
+
+    // 🔹 Terms and Conditions check
     if (!isChecked) {
       Alert.alert(
         'Terms Required',
@@ -54,6 +88,8 @@ const CreateAccountScreen = () => {
       );
       return;
     }
+
+    // ✅ Proceed with account creation logic
 
     // 🔹 Payload (match backend keys)
     const payload = {
@@ -172,9 +208,26 @@ const CreateAccountScreen = () => {
             placeholderTextColor="#6B7280"
             keyboardType="phone-pad"
             value={mobileNumber}
-            onChangeText={setMobileNumber}
+            onChangeText={text => {
+              const digitsOnly = text.replace(/[^0-9]/g, '');
+              if (digitsOnly.length <= 10) {
+                setMobileNumber(digitsOnly);
+              } else {
+                setToast({
+                  message: 'Mobile number must be 10 digits only',
+                  type: 'error',
+                });
+              }
+            }}
           />
-
+          {toast && (
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onHide={() => setToast(null)}
+              top={100}
+            />
+          )}
           {/* Family member's mobile */}
           <Text style={styles.label}>Family member's mobile number</Text>
           <TextInput
@@ -183,7 +236,17 @@ const CreateAccountScreen = () => {
             placeholderTextColor="#6B7280"
             keyboardType="phone-pad"
             value={familyNumber}
-            onChangeText={setFamilyNumber}
+            onChangeText={text => {
+              const digitsOnly = text.replace(/[^0-9]/g, '');
+              if (digitsOnly.length <= 10) {
+                setFamilyNumber(digitsOnly);
+              } else {
+                setToast({
+                  message: 'Mobile number must be 10 digits only',
+                  type: 'error',
+                });
+              }
+            }}
           />
 
           {/* Doctor's code */}

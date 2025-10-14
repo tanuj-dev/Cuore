@@ -12,16 +12,16 @@ import { Images, color, hp, wp } from '../../utilities';
 
 const validationLimits = {
   o2_sat: { min: 70, max: 100 },
-  pulse: { min: 40, max: 200 },
-  bp_upper: { min: 40, max: 320 },
+  pulse: { min: 40, max: 240 },
+  bp_upper: { min: 50, max: 320 },
   bp_lower: { min: 40, max: 260 },
   bs_f: { min: 30, max: 2000 },
-  bs_am: { min: 30, max: 2000 },
-  A1C: { min: 4.0, max: 27.0 },
-  HDL: { min: 10, max: 90 },
+  bs_am: { min: 50, max: 2000 },
+  A1C: { min: 4, max: 27 },
+  HDL: { min: 20, max: 100 },
   LDL: { min: 60, max: 900 },
   Trig: { min: 60, max: 900 },
-  HsCRP: { min: 0.09, max: 1.0 },
+  HsCRP: { min: 0.09, max: 10 },
 };
 
 const OnBoardingSeven = ({ initialData, onFormChange }) => {

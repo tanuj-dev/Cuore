@@ -24,8 +24,11 @@ const Login = ({ navigation }) => {
   const dispatch = useDispatch();
 
   const handleSendOtp = async () => {
-    if (!/^\d{10}$/.test(phoneNumber)) {
-      setError('Please enter a valid 10-digit mobile number.');
+    if (!/^\d{10}$/.test(phoneNumber) || phoneNumber.length !== 10) {
+      setToast({
+        message: 'Please enter a valid 10-digit mobile number',
+        type: 'error',
+      });
       return;
     }
 
