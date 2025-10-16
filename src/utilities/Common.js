@@ -109,9 +109,30 @@ const createInterceptors = instan => {
 };
 createInterceptors($http);
 
+const dailyRoutines = [
+  {
+    hour: 5,
+    minute: 25,
+    title: 'Wake Up',
+    body: 'Start your day with Morning Harmony',
+  },
+  {
+    hour: 7,
+    minute: 10,
+    title: 'Breakfast',
+    body: 'Healthy smoothie with oats and banana',
+  },
+  { hour: 8, minute: 25, title: 'Fitness', body: 'Cardio & strength training' },
+  { hour: 12, minute: 25, title: 'Lunch', body: 'Re-energize yourself' },
+  { hour: 13, minute: 55, title: 'Nap/Walk', body: 'Defeat the midday slump' },
+  { hour: 18, minute: 25, title: 'Dinner', body: 'Balanced and light' },
+  { hour: 21, minute: 25, title: 'Sleep', body: 'Restore & repair' },
+];
+
 export default {
   showImagePickerOptions,
   requestCameraPermission,
   requestStoragePermission,
   axiosInstance: $http,
+  dailyRoutines,
 };

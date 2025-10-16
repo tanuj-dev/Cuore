@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   ScrollView,
   TextInput,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { hp, wp } from '../../utilities';
 
 const options = [
@@ -22,27 +24,29 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);
   const [text, setText] = useState('');
 
-  // ✅ Prefill if user revisits onboarding
-  useEffect(() => {
-    if (initialData && Object.keys(initialData).length > 0) {
-      let options = [];
+  // ✅ Refill data every time screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (initialData && Object.keys(initialData).length > 0) {
+        let savedOptions = [];
 
-      if (Array.isArray(initialData)) {
-        // Case 1: initialData is already an array
-        options = initialData.filter(item => item !== 'false');
-      } else {
-        // Case 2: initialData is an object with q1–q6 and other_conditions
-        options = Object.entries(initialData)
-          .filter(([key, value]) => key.startsWith('q') && value !== 'false')
-          .map(([_, value]) => value); // ✅ Only values
+        if (initialData.selectedOptions) {
+          // Case 1: already array
+          savedOptions = initialData.selectedOptions;
+        } else {
+          // Case 2: object form (q1–q6)
+          savedOptions = Object.entries(initialData)
+            .filter(([key, value]) => key.startsWith('q') && value !== 'false')
+            .map(([_, value]) => value);
+        }
+
+        setSelectedOptions(savedOptions);
+        setText(initialData.other_conditions || '');
       }
+    }, [initialData]),
+  );
 
-      setSelectedOptions(options);
-      setText(initialData.other_conditions || '');
-    }
-  }, [initialData]);
-
-  // ✅ Send data to parent only when user updates something
+  // ✅ Update parent whenever something changes
   const updateParent = (
     updatedOptions = selectedOptions,
     updatedText = text,
@@ -53,6 +57,7 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
     });
   };
 
+  // ✅ Text input change handler
   const handleChangeText = input => {
     if (input.length <= 60) {
       setText(input);
@@ -60,11 +65,18 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
     }
   };
 
+  // ✅ Fixed toggle logic (preserve + toggle + prevent duplicates)
   const toggleOption = option => {
     setSelectedOptions(prev => {
-      const updated = prev.includes(option)
-        ? prev.filter(item => item !== option)
-        : [...prev, option];
+      const prevSet = new Set(prev);
+
+      if (prevSet.has(option)) {
+        prevSet.delete(option); // remove
+      } else {
+        prevSet.add(option); // add
+      }
+
+      const updated = Array.from(prevSet);
       updateParent(updated, text);
       return updated;
     });
@@ -102,7 +114,7 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
       <View style={styles.tagsWrapper}>
         <TextInput
           style={styles.input}
-          placeholder="Condition 1 / Condition 2 / …."
+          placeholder="Condition 1 / Condition 2 / …"
           multiline
           value={text}
           onChangeText={handleChangeText}
@@ -121,7 +133,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     flexGrow: 1,
   },
-
   card: {
     backgroundColor: 'white',
     padding: wp(4),
@@ -161,7 +172,6 @@ const styles = StyleSheet.create({
   },
   tagsWrapper: {
     marginTop: hp(2),
-    // height: hp(15),
     borderWidth: 0.3,
     borderRadius: hp(0.5),
     borderColor: '#D1D5DB',
@@ -171,29 +181,12 @@ const styles = StyleSheet.create({
   },
   input: {
     height: hp(8),
-    // borderWidth: 1,
     borderColor: '#ccc',
     padding: 10,
-    // minHeight: 100,
     borderRadius: 5,
   },
   wordCount: {
-    // marginTop: 5,
     textAlign: 'right',
     color: '#888',
-  },
-
-  button: {
-    backgroundColor: '#007bff',
-    paddingVertical: hp(1.8),
-    borderRadius: wp(2.5),
-    alignItems: 'center',
-    marginBottom: hp(3),
-  },
-  buttonText: {
-    fontFamily: 'Roboto-Regular',
-    color: '#fff',
-    fontSize: wp(4),
-    fontWeight: '600',
   },
 });

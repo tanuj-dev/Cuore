@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
 import Navigator from './src/navigation';
+import { initializeNotifee } from './src/notifications/NotificationService';
 
 const App = () => {
   useEffect(() => {
@@ -10,6 +11,11 @@ const App = () => {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    // Initialize Notifee for notifications
+    initializeNotifee();
   }, []);
 
   return (

@@ -18,6 +18,10 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 import { getHomeData } from '../../redux/slices';
 import ReminderEditor from '../../components/ReminderEditor';
 import moment from 'moment';
+import {
+  scheduleNotificationAfterSeconds,
+  showImmediateNotification,
+} from '../../notifications/NotificationScheduler';
 
 const routeMap = {
   Breakfast: 'Nutrition',
@@ -76,6 +80,15 @@ const Today = ({ navigation, route }) => {
       dispatch(getHomeData(userId));
     }
   }, [dispatch, userId]);
+
+  const handleTest = async () => {
+    await scheduleNotificationAfterSeconds(
+      'todayTest',
+      '🔥 Today Reminder',
+      'This notification appears in 5 seconds!',
+      5,
+    );
+  };
 
   // ✅ Show loader if fetching data
   if (loading) {
@@ -295,14 +308,22 @@ const Today = ({ navigation, route }) => {
                       marginTop: hp(1),
                     }}
                   >
-                    <Image
-                      style={{
-                        height: hp(2),
-                        resizeMode: 'contain',
-                        marginLeft: -hp(5),
+                    <TouchableOpacity
+                      onPress={() => {
+                        handleTest();
                       }}
-                      source={Images?.NOTIFICATION}
-                    />
+                    >
+                      <Image
+                        style={{
+                          // backgroundColor: 'red',
+                          height: hp(2),
+                          resizeMode: 'contain',
+                          marginLeft: -hp(5),
+                        }}
+                        source={Images?.NOTIFICATION}
+                      />
+                    </TouchableOpacity>
+
                     {item?.editable && (
                       <TouchableOpacity
                         onPress={() => {

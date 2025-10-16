@@ -30,9 +30,9 @@ import Toast from '../../components/Toast';
 
 const OnBoarding = ({ navigation, route }) => {
   const dispatch = useDispatch();
-  const { STEP, screen, navigateTo } = route.params ?? {};
+  const { STEP, screen, navigateTo } = route?.params ?? {};
 
-  console.log('OnBoarding Screen Params:', route.params);
+  console.log('OnBoarding Screen Params:', route?.params);
 
   // Local state
   const [step, setStep] = useState(1);
@@ -45,6 +45,15 @@ const OnBoarding = ({ navigation, route }) => {
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  console.log('OnBoarding Component State:', {
+    // step,
+    // onboarding2Data,
+    onboarding3Data,
+    //   onboarding4Data,
+    //   onboarding5Data,
+    //   onboarding6Data,
+    //   onboarding7Data,
+  });
 
   const scrollRef = useRef();
 

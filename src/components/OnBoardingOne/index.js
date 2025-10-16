@@ -62,7 +62,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
       if (key === 'waist_cm') {
         errorMsg =
           newValue < 25 || newValue > 75
-            ? 'Waist must not exceed 60 inches'
+            ? 'Waist must be between 25 and 75 inches'
             : '';
       }
       if (key === 'weight_kg') {

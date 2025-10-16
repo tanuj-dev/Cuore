@@ -33,7 +33,7 @@ const Login = ({ navigation }) => {
     }
 
     setLoading(true);
-    setError('');
+
     console.log('Dispatching sendOtp with phone number:', phoneNumber);
 
     try {

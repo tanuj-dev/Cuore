@@ -28,6 +28,7 @@ const Splash = () => {
           console.log('Parsed token data:', parsed);
 
           const access_token = parsed.accessToken;
+          console.log('Access Token:', access_token);
 
           if (!access_token) {
             await EncryptedStorage.removeItem('auth_tokens');
@@ -38,8 +39,9 @@ const Splash = () => {
           }
 
           if (parsed.onboardingStatus !== 'complete') {
+            console.log('Onboarding not complete, navigating to Onboarding');
             setTimeout(() => {
-              navigation.replace('Onboarding');
+              navigation.replace('OnBoarding');
             }, 1000);
           } else {
             dispatch(setUserData(parsed));
