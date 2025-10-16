@@ -17,9 +17,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { getHomeData } from '../../redux/slices';
 import ReminderEditor from '../../components/ReminderEditor';
+import Toast from '../../components/Toast';
 import moment from 'moment';
+import { getOnboardingThunk } from '../../redux/slices';
 import {
   scheduleNotificationAfterSeconds,
+  scheduleNotificationAtTime,
+  cancelNotification,
   showImmediateNotification,
 } from '../../notifications/NotificationScheduler';
 
@@ -37,6 +41,8 @@ const Today = ({ navigation, route }) => {
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [requestId, setRequestId] = useState(null);
+  const [alarmTime, setAlarmTime] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const dispatch = useDispatch();
   const dates = ['Feb 25', 'Feb 26', 'Feb 87'];
@@ -88,6 +94,59 @@ const Today = ({ navigation, route }) => {
       'This notification appears in 5 seconds!',
       5,
     );
+  };
+
+  useEffect(() => {
+    dispatch(getOnboardingThunk());
+  }, []);
+
+  const handleScheduleAtTime = async (time, title, body) => {
+    // Parse the time string (e.g., "8:00 AM") to get hours and minutes
+    const [timePart, period] = time.split(' ');
+    let [hours, minutes] = timePart.split(':').map(Number);
+
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    console.log(`Parsed time - Hours: ${hours}, Minutes: ${minutes}`);
+
+    // Create a Date object for today at the specified time
+    const now = new Date();
+    const scheduledTime = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      hours,
+      minutes,
+      0,
+      0,
+    );
+
+    // If the scheduled time has already passed today, set it for tomorrow
+    if (scheduledTime <= now) {
+      scheduledTime.setDate(scheduledTime.getDate() + 1);
+    }
+
+    console.log(
+      `Scheduling "${title}" at ${scheduledTime.toLocaleTimeString()}`,
+    );
+
+    await scheduleNotificationAtTime(
+      `reminder-${time.replace(/[: ]/g, '-')}`, // Unique ID
+      title,
+      body,
+      hours,
+      minutes,
+    );
+    setToast(`Alarm set for ${moment(scheduledTime).format('hh:mm A')}`);
+    setAlarmTime(true);
+  };
+  const handleCancel = async id => {
+    await cancelNotification(id);
+    setToast('Alarm cancelled');
+    setAlarmTime(false);
   };
 
   // ✅ Show loader if fetching data
@@ -283,6 +342,13 @@ const Today = ({ navigation, route }) => {
               Optimize Your Health with Smart Guidance
             </Text>
           </View>
+          {toast && (
+            <Toast
+              message={toast}
+              type="success"
+              onHide={() => setToast(null)}
+            />
+          )}
 
           <FlatList
             data={homeData?.dailySchedule || []}
@@ -310,11 +376,21 @@ const Today = ({ navigation, route }) => {
                   >
                     <TouchableOpacity
                       onPress={() => {
-                        handleTest();
+                        handleScheduleAtTime(
+                          item?.time,
+                          item?.title,
+                          item?.description,
+                        );
+                        // console.log(
+                        //   item,
+                        //   'Scheduling notification for this item',
+                        // );
+                        // handleTest();
                       }}
                     >
                       <Image
                         style={{
+                          // width: alarmTime ? hp(0) : hp(2),
                           // backgroundColor: 'red',
                           height: hp(2),
                           resizeMode: 'contain',
@@ -335,9 +411,9 @@ const Today = ({ navigation, route }) => {
                         <Image
                           style={{
                             height: hp(2),
-
+                            // backgroundColor: 'red',
                             resizeMode: 'contain',
-                            marginLeft: -hp(4),
+                            marginLeft: -hp(3),
                           }}
                           source={Images.EDIT}
                         />

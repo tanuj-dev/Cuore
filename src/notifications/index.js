@@ -263,6 +263,17 @@ export default function TodayScreen() {
   );
 }
 
+
+export async function cancelNotification(id) {
+  try {
+    await notifee.cancelNotification(id);
+    console.log(`❌ Cancelled notification with ID: ${id}`);
+  } catch (error) {
+    console.error('Failed to cancel notification:', error);
+  }
+}
+
+
 // // const styles = StyleSheet.create({
 //   container: { flex: 1, padding: 20, alignItems: 'center', justifyContent: 'center' },
 //   header: { fontSize: 20, fontWeight: '700', marginBottom: 20 },

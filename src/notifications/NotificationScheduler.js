@@ -74,3 +74,48 @@ export async function scheduleAll() {
     await scheduleNotificationAfterMinutes(id, title, body, 2); // ⏱ test mode (2 mins)
   }
 }
+
+export async function scheduleNotificationAtTime(
+  id,
+  title,
+  body,
+  hour,
+  minute,
+) {
+  // Create a date for today at the given time
+  const now = new Date();
+  const date = new Date();
+
+  console.log(now, 'and', date);
+
+  date.setHours(hour);
+  date.setMinutes(minute);
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+
+  // If the chosen time already passed, schedule for tomorrow
+  if (date <= now) {
+    date.setDate(date.getDate() + 1);
+    console.log('Time passed, scheduling for tomorrow');
+  }
+
+  const trigger = {
+    type: TriggerType.TIMESTAMP,
+    timestamp: date.getTime(),
+  };
+
+  await notifee.createTriggerNotification(
+    {
+      id,
+      title,
+      body,
+      android: {
+        channelId: 'health-schedule',
+        smallIcon: 'ic_launcher', // make sure this icon exists in android/app/src/main/res/
+      },
+    },
+    trigger,
+  );
+
+  console.log(`⏰ Scheduled "${title}" for ${date.toLocaleTimeString()}`);
+}
