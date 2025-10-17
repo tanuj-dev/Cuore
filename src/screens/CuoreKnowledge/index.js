@@ -18,10 +18,10 @@ import images from '../../utilities/Images';
 export const diabetesEducationData = [
   {
     id: 1,
-    title: 'Avoiding Complications',
+    title: 'What Is Diabetes?',
     image: Images.DM1,
     description:
-      'Diabetes and high blood pressure can silently damage kidneys, eyes, nerves, and heart—even without warning signs. Most complications are preventable with consistent habits.',
+      'Understand how your body processes sugar—and what happens when it doesn’t',
     points: [
       {
         heading: '1. Know your numbers',
@@ -404,6 +404,7 @@ export const bpArticles = [
       'Hypertension is preventable and treatable—control it early to protect your heart and brain.',
   },
 ];
+
 export const wellnessArticles = [
   {
     id: 1,
