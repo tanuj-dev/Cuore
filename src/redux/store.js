@@ -7,8 +7,9 @@ import {
   reassessmentSlice,
   cuoreScoreSlice,
 } from './OnBoardng/slice';
-import { homeSlice } from './Home/slice';
 
+import { homeSlice } from './Home/slice';
+import { nourishSlice, builderSlice } from './Explore/slice';
 const store = configureStore({
   reducer: {
     auth: authSlices.auth,
@@ -19,6 +20,8 @@ const store = configureStore({
     reassessment: reassessmentSlice.reducer,
     home: homeSlice.reducer,
     cuoreScore: cuoreScoreSlice.reducer,
+    nourish: nourishSlice.reducer,
+    builder: builderSlice.reducer,
   },
 });
 

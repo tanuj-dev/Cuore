@@ -41,7 +41,7 @@ const Splash = () => {
           if (parsed.onboardingStatus !== 'complete') {
             console.log('Onboarding not complete, navigating to Onboarding');
             setTimeout(() => {
-              navigation.replace('OnBoarding');
+              navigation.replace('Login');
             }, 1000);
           } else {
             dispatch(setUserData(parsed));

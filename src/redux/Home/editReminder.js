@@ -6,7 +6,7 @@ export const editReminderThunk = createAsyncThunk(
   async ({ userId, reminderId, payload2 }, { rejectWithValue }) => {
     console.log(payload2, 'payload in thunk');
     try {
-      const endpoint = `/api/v1/users/${userId}/reminders/${reminderId}`;
+      const endpoint = `/api/v1/timeline/${userId}/reminders/${reminderId}`;
       const response = await putApiCall(endpoint, payload2);
       return response.data;
     } catch (error) {

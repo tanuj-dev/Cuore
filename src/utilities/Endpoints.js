@@ -13,6 +13,8 @@ const Endpoints = {
   REASSESSMENT: '/api/v1/onboarding/reassess',
   GETONBOARDING: '/api/v1/onboarding/data',
   EDIT_REMINDER: '/api/v1/users/userid/reminders/remindersid',
+  GET_RECIPE: '/api/recipes',
+  GET_BUILDER_ITEMS: '/api/builder/items',
 };
 
 export default Endpoints;

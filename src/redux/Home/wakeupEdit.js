@@ -6,7 +6,7 @@ export const editWakeupThunk = createAsyncThunk(
   async ({ userId, payload }, { rejectWithValue }) => {
     try {
       const response = await putApiCall(
-        `/api/v1/users/${userId}/timeline/wakeup`,
+        `/api/v1/timeline/${userId}/timeline/wakeup`,
         payload,
       );
       return response.data;

@@ -26,6 +26,7 @@ import {
   cancelNotification,
   showImmediateNotification,
 } from '../../notifications/NotificationScheduler';
+import { getNourish, getBuilderItems } from '../../redux/slices';
 
 const routeMap = {
   Breakfast: 'Nutrition',
@@ -55,6 +56,15 @@ const Today = ({ navigation, route }) => {
     setRefreshing(true);
     try {
       await dispatch(getHomeData(userId));
+
+      const combos = [
+        { mealTime: 'Breakfast', cuisine: 'Indian' },
+        { mealTime: 'Breakfast', cuisine: 'Global' },
+        { mealTime: 'Lunch/Dinner', cuisine: 'Indian' },
+        { mealTime: 'Lunch/Dinner', cuisine: 'Global' },
+      ];
+
+      await Promise.all(combos.map(combo => dispatch(getBuilderItems(combo))));
     } catch (err) {
       console.error('Refresh failed:', err);
     } finally {
@@ -84,6 +94,17 @@ const Today = ({ navigation, route }) => {
   useEffect(() => {
     if (userId) {
       dispatch(getHomeData(userId));
+      const combos = [
+        { mealTime: 'Breakfast', cuisine: 'Indian' },
+        { mealTime: 'Breakfast', cuisine: 'Global' },
+        { mealTime: 'Lunch/Dinner', cuisine: 'Indian' },
+        { mealTime: 'Lunch/Dinner', cuisine: 'Global' },
+      ];
+
+      combos.forEach(combo => {
+        dispatch(getBuilderItems(combo));
+      });
+      // dispatch(getNourish('Breakfast'));
     }
   }, [dispatch, userId]);
 
@@ -179,7 +200,11 @@ const Today = ({ navigation, route }) => {
       <ScrollView
         nestedScrollEnabled
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            title="Pull to refresh..."
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
         }
         style={styles.container}
       >

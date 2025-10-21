@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import React from 'react';
 import { hp, wp, Images, color } from '../../utilities';
@@ -82,12 +83,13 @@ const Explore = ({ navigation }) => {
   );
 
   return (
-    <ScrollView nestedScrollEnabled={true} style={{ backgroundColor: 'white' }}>
+    <View style={{ flex: 1, backgroundColor: 'white' }}>
       <View
         style={{
           padding: hp(1.5),
           backgroundColor: 'white',
           paddingVertical: hp(1),
+          height: Platform.OS === 'ios' ? hp(15) : hp(10),
         }}
       >
         <View
@@ -95,7 +97,7 @@ const Explore = ({ navigation }) => {
             justifyContent: 'space-between',
             flexDirection: 'row',
 
-            marginTop: Platform.OS == 'ios' && hp(6),
+            marginTop: Platform.OS == 'ios' ? hp(6) : hp(3),
           }}
         >
           <Image source={Images.APP_LOGO} style={styles.logo} />
@@ -113,16 +115,18 @@ const Explore = ({ navigation }) => {
               styles.header,
               {
                 position: 'absolute',
+
                 left: 0,
                 right: 0,
                 zIndex: 10,
-                bottom: hp(3),
+                bottom: hp(1),
               },
             ]}
           >
             <TouchableOpacity
               onPress={() => navigation.navigate('Health')}
               style={{
+                // marginTop: hp(4),
                 flexDirection: 'row',
                 alignItems: 'center',
                 backgroundColor: '#FFFFFF',
@@ -162,19 +166,22 @@ const Explore = ({ navigation }) => {
             {/* Your other content here */}
           </View>
         </View>
-
-        <FlatList
-          data={modules}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          keyExtractor={(item, index) =>
-            item.id?.toString() ?? index.toString()
-          }
-          renderItem={renderItem}
-          contentContainerStyle={styles.grid}
-        />
+        <View style={{ flex: 9 }}>
+          <FlatList
+            showsVerticalScrollIndicator={false}
+            data={modules}
+            numColumns={2}
+            headerComponent={null}
+            columnWrapperStyle={styles.row}
+            keyExtractor={(item, index) =>
+              item.id?.toString() ?? index.toString()
+            }
+            renderItem={renderItem}
+            contentContainerStyle={styles.grid}
+          />
+        </View>
       </View>
-    </ScrollView>
+    </View>
   );
 };
 

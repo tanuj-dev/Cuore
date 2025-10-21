@@ -11,7 +11,7 @@ export const setReminder = createAsyncThunk(
       reminderData,
     );
     try {
-      const endpoint = `/api/v1/users/${userId}/reminders`;
+      const endpoint = `/api/v1/timeline/${userId}/reminders`;
       const response = await postApiCall(endpoint, reminderData);
       return response.data;
     } catch (error) {

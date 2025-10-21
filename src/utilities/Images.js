@@ -137,6 +137,8 @@ const images = {
   HTN_DM8: require('../assets/images/HTN-DM-8.png'),
   HTN_DM9: require('../assets/images/HTN-DM-9.png'),
 
+  ENPTY_CART: require('../assets/images/emptycart.png'),
+
   // DM7: require('../assets/images/dm7.png'),
 };
 

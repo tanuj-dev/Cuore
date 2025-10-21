@@ -5,7 +5,8 @@ export const getHomeData = createAsyncThunk(
   'onboarding/fetchHomeData',
   async (userId, { rejectWithValue }) => {
     try {
-      const response = await getApiCall(`/api/v1/users/${userId}/home`);
+      const response = await getApiCall(`/api/v1/timeline/${userId}/home`);
+
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || 'Something went wrong');

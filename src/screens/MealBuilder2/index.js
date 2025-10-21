@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,13 +9,13 @@ import {
   ImageBackground,
   Image,
 } from 'react-native';
-import {hp, wp, Images} from '../../utilities';
+import { hp, wp, Images } from '../../utilities';
 
 const sampleData = [
-  {id: '1', name: '1/2 bowl Rava Upma', calories: 150, tag: 'green'},
-  {id: '2', name: '1/2 bowl Oats with Milk', calories: 150, tag: 'green'},
-  {id: '3', name: '1/2 bowl Vegetable Dalia', calories: 150, tag: 'green'},
-  {id: '4', name: '1/2 bowl Vegetable Poha', calories: 150, tag: 'green'},
+  { id: '1', name: '1/2 bowl Rava Upma', calories: 150, tag: 'green' },
+  { id: '2', name: '1/2 bowl Oats with Milk', calories: 150, tag: 'green' },
+  { id: '3', name: '1/2 bowl Vegetable Dalia', calories: 150, tag: 'green' },
+  { id: '4', name: '1/2 bowl Vegetable Poha', calories: 150, tag: 'green' },
   {
     id: '5',
     name: '1/2 bowl Cornflakes with Milk',
@@ -29,14 +29,14 @@ const tagColors = {
   yellow: '#FFD600',
 };
 
-const MealBuilder2 = ({navigation}) => {
+const MealBuilder2 = ({ navigation }) => {
   const [selectedItems, setSelectedItems] = useState(
-    sampleData.map(item => ({...item, count: 1})),
+    sampleData.map(item => ({ ...item, count: 1 })),
   );
 
   const increment = id => {
     const updated = selectedItems.map(item =>
-      item.id === id ? {...item, count: item.count + 1} : item,
+      item.id === id ? { ...item, count: item.count + 1 } : item,
     );
     setSelectedItems(updated);
   };
@@ -44,7 +44,7 @@ const MealBuilder2 = ({navigation}) => {
   const decrement = id => {
     const updated = selectedItems.map(item =>
       item.id === id && item.count > 1
-        ? {...item, count: item.count - 1}
+        ? { ...item, count: item.count - 1 }
         : item,
     );
     setSelectedItems(updated);
@@ -63,10 +63,12 @@ const MealBuilder2 = ({navigation}) => {
     <ScrollView style={{}}>
       <ImageBackground
         style={styles.backgroundImage}
-        source={Images.BACKGROUND_IMAGE_NUTRITION}>
+        source={Images.BACKGROUND_IMAGE_NUTRITION}
+      >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={styles.headerContainer}>
+          style={styles.headerContainer}
+        >
           <Image style={styles.backButton} source={Images.BACK_BUTTON} />
         </TouchableOpacity>
 
@@ -81,21 +83,22 @@ const MealBuilder2 = ({navigation}) => {
             width: hp(20),
             alignItems: 'center',
             alignSelf: 'center',
-            marginTop: hp(3),
+            marginTop: hp(1),
             padding: hp(1),
             borderRadius: hp(1),
-          }}>
-          <Text style={{fontSize: 14, fontWeight: '500', color: '#FFFFFF'}}>
+          }}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '500', color: '#FFFFFF' }}>
             My Custom Meal
           </Text>
         </TouchableOpacity>
       </ImageBackground>
 
-      <View style={{flex: 1, backgroundColor: '#F9FAFB', padding: wp(4)}}>
+      <View style={{ flex: 1, backgroundColor: '#F9FAFB', padding: wp(4) }}>
         <FlatList
           data={selectedItems}
           keyExtractor={item => item.id}
-          renderItem={({item}) => (
+          renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => navigation.navigate('Recipe')}
               style={{
@@ -106,8 +109,9 @@ const MealBuilder2 = ({navigation}) => {
                 marginVertical: hp(0.5),
                 elevation: 1,
                 // elevation: 2,
-              }}>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View
                   style={{
                     height: hp(2),
@@ -119,14 +123,15 @@ const MealBuilder2 = ({navigation}) => {
                     // paddingVertical: hp(0.5),
                   }}
                 />
-                <View style={{flex: 1}}>
+                <View style={{ flex: 1 }}>
                   <Text
                     style={{
                       fontFamily: 'Roboto-Regular',
                       fontSize: 15,
                       fontWeight: '400',
                       color: '#000000',
-                    }}>
+                    }}
+                  >
                     {item.name}
                   </Text>
                   <Text
@@ -134,7 +139,8 @@ const MealBuilder2 = ({navigation}) => {
                       fontFamily: 'Roboto-Regular',
                       fontSize: 14,
                       color: '#6B7280',
-                    }}>
+                    }}
+                  >
                     {item.calories} cal
                   </Text>
                 </View>
@@ -155,14 +161,16 @@ const MealBuilder2 = ({navigation}) => {
             alignItems: 'center',
             borderRadius: hp(1),
             marginBottom: hp(20),
-          }}>
+          }}
+        >
           <Text
             style={{
               fontFamily: 'Roboto-Regular',
               fontSize: 16,
               fontWeight: '500',
               color: '#FFFFFF',
-            }}>
+            }}
+          >
             Clear Selection
           </Text>
         </TouchableOpacity>
@@ -179,7 +187,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   headerContainer: {
-    marginTop:Platform.OS =='ios'&& hp(5),
+    marginTop: Platform.OS == 'ios' && hp(5),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -191,7 +199,7 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignItems: 'center',
-    marginTop: hp(2),
+    marginTop: hp(1),
   },
   title: {
     fontSize: 18,

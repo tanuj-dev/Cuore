@@ -63,7 +63,7 @@ export const getCuoreScoreThunk = createAsyncThunk(
   async (userId, { rejectWithValue }) => {
     try {
       const response = await getApiCall(
-        `/api/v1/users/${userId}/cuore-score-details`,
+        `/api/v1/timeline/${userId}/cuore-score-details`,
       );
       return response.data;
     } catch (error) {

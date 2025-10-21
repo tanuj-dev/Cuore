@@ -7,12 +7,14 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hp, wp, Images, color } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
 import { getCuoreScoreThunk, getOnboardingThunk } from '../../redux/slices';
 import GaugeMeter from '../../components/SpeedpMeter';
+import Loader from '../../components/Loader';
 
 // import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -89,25 +91,57 @@ const Score = ({ navigation, route }) => {
   }, []);
 
   if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: '#F9FAFB',
-        }}
-      >
-        <ActivityIndicator size="large" color="#1E64AC" />
-        <Text style={{ marginTop: 10, color: '#1E64AC', fontSize: 16 }}>
-          Loading your data...
-        </Text>
-      </View>
-    );
+    return <Loader />;
   }
 
+  // if (health_metrics == undefined) {
+  //   return (
+  //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+  //       <Image
+  //         source={Images.ERROR_ICON}
+  //         style={{ height: hp(10), width: hp(10) }}
+  //       />
+  //       <Text style={{ fontSize: 16, color: '#DC2626', marginTop: hp(2) }}>
+  //         Something went wrong
+  //       </Text>
+  //       <Text
+  //         style={{
+  //           fontSize: 14,
+  //           color: '#6B7280',
+  //           textAlign: 'center',
+  //           marginTop: hp(1),
+  //           paddingHorizontal: wp(10),
+  //         }}
+  //       >
+  //         We couldn’t load your data. Please check your internet connection or
+  //         try again later.
+  //       </Text>
+  //       <TouchableOpacity
+  //         // onPress={dispatch(getCuoreScoreThunk(user_Id))}
+  //         style={{
+  //           marginTop: hp(3),
+  //           backgroundColor: '#1E64AC',
+  //           paddingHorizontal: wp(6),
+  //           paddingVertical: hp(1.5),
+  //           borderRadius: hp(1),
+  //         }}
+  //       >
+  //         <Text style={{ color: '#fff', fontWeight: '500' }}>Retry</Text>
+  //       </TouchableOpacity>
+  //     </View>
+  //   );
+  // }
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={loading}
+          onRefresh={() => dispatch(getCuoreScoreThunk(user_Id))}
+        />
+      }
+      style={styles.container}
+    >
       <View style={{ backgroundColor: '#F9FAFB' }}>
         <View style={{ backgroundColor: '#FFFFFF', elevation: 1 }}>
           <View
