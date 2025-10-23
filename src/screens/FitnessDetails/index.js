@@ -8,39 +8,44 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Video from 'react-native-video';
-import {hp, wp, color, Images} from '../../utilities';
-import {Space} from 'lucide-react-native';
+import { hp, wp, color, Images } from '../../utilities';
+import { Space } from 'lucide-react-native';
 // import {Ionicons} from '@expo/vector-icons';
 
-const FitnessDetails = ({navigation}) => {
+const FitnessDetails = ({ navigation }) => {
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
-      <View>  <View
-        style={{
-          flexDirection: 'row',
-            marginTop:Platform.OS =='ios'&& hp(5),
-          backgroundColor: '#FFFFFF',
-          paddingTop: hp(2),
-          elevation: 1,
-        }}>
-        <TouchableOpacity
-          style={{paddingHorizontal: hp(1)}}
-          onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-            style={{
-              resizeMode: 'contain',
-              height: hp(3.5),
-              width: wp(4),
-            }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-        <Text style={styles.title}>Cuore Fitness</Text>
-      </View></View>
-    
-      <View style={{padding: hp(1)}}>
+      <View>
+        {' '}
+        <View
+          style={{
+            flexDirection: 'row',
+            marginTop: Platform.OS == 'ios' && hp(5),
+            backgroundColor: '#FFFFFF',
+            paddingTop: hp(2),
+            elevation: 1,
+          }}
+        >
+          <TouchableOpacity
+            style={{ paddingHorizontal: hp(1) }}
+            onPress={() => navigation.goBack()}
+          >
+            <Image
+              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+              style={{
+                resizeMode: 'contain',
+                height: hp(3.5),
+                width: wp(4),
+              }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+          <Text style={styles.title}>Cuore Fitness</Text>
+        </View>
+      </View>
+
+      <View style={{ padding: hp(1) }}>
         {/* Video */}
         <View style={styles.videoContainer}>
           <Video
@@ -59,7 +64,8 @@ const FitnessDetails = ({navigation}) => {
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-            }}>
+            }}
+          >
             <Text style={styles.detailText}>Duration: 2 Min</Text>
             <Text style={styles.detailText}>Sets: 3</Text>
           </View>
@@ -141,11 +147,13 @@ const styles = StyleSheet.create({
     color: '#1e4d92',
   },
   videoContainer: {
+    // flex: 1,
     width: '100%',
     height: hp(25),
     borderRadius: wp(3),
     overflow: 'hidden',
     marginBottom: hp(2),
+    // backgroundColor: 'red',
   },
   video: {
     width: '100%',

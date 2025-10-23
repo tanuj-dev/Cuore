@@ -29,35 +29,14 @@ const tagColors = {
   yellow: '#FFD600',
 };
 
-const MealBuilder2 = ({ navigation }) => {
-  const [selectedItems, setSelectedItems] = useState(
-    sampleData.map(item => ({ ...item, count: 1 })),
-  );
+const MealBuilder2 = ({ navigation, route }) => {
+  console.log('Route params in MealBuilder2:', route.params);
 
-  const increment = id => {
-    const updated = selectedItems.map(item =>
-      item.id === id ? { ...item, count: item.count + 1 } : item,
-    );
-    setSelectedItems(updated);
-  };
+  // const { selectedItems?.adjustedItems } = route.params;
+  const data = route?.params?.selectedItems?.adjustedItems;
+  const selectedItems = route?.params?.selectedItems;
 
-  const decrement = id => {
-    const updated = selectedItems.map(item =>
-      item.id === id && item.count > 1
-        ? { ...item, count: item.count - 1 }
-        : item,
-    );
-    setSelectedItems(updated);
-  };
-
-  const totalSelected = selectedItems.length;
-  const totalCalories = selectedItems.reduce(
-    (sum, item) => sum + item.count * item.calories,
-    0,
-  );
-  const maxAllowed = 4;
-  const extraCalories =
-    totalSelected > maxAllowed ? totalCalories - maxAllowed * 150 : 0;
+  const [adjustedPortions, setAdjustedPortions] = useState(data || []);
 
   return (
     <ScrollView style={{}}>
@@ -96,63 +75,73 @@ const MealBuilder2 = ({ navigation }) => {
 
       <View style={{ flex: 1, backgroundColor: '#F9FAFB', padding: wp(4) }}>
         <FlatList
-          data={selectedItems}
+          data={data}
           keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Recipe')}
-              style={{
-                marginHorizontal: hp(1),
-                backgroundColor: '#FFFFFF',
-                padding: hp(3),
-                borderRadius: hp(1),
-                marginVertical: hp(0.5),
-                elevation: 1,
-                // elevation: 2,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View
-                  style={{
-                    height: hp(2),
-                    width: hp(2),
-                    borderRadius: hp(1),
-                    // margin: hp(1),
-                    backgroundColor: tagColors[item.tag],
-                    marginRight: wp(3),
-                    // paddingVertical: hp(0.5),
-                  }}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontFamily: 'Roboto-Regular',
-                      fontSize: 15,
-                      fontWeight: '400',
-                      color: '#000000',
-                    }}
-                  >
-                    {item.name}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: 'Roboto-Regular',
-                      fontSize: 14,
-                      color: '#6B7280',
-                    }}
-                  >
-                    {item.calories} cal
-                  </Text>
-                </View>
-              </View>
+          renderItem={({ item }) => {
+            const originalName = item?.name; // "1 tbsp Coconut Chutney"
+            const newServingSize = item?.newServingSizeString; // "1.75 tbsp"
+            const updatedName = originalName.replace(
+              /^\d+(\.\d+)?\s*\w+/,
+              newServingSize,
+            );
 
-              {/* increment decrement button */}
-            </TouchableOpacity>
-          )}
+            return (
+              <TouchableOpacity
+                // onPress={() => navigation.navigate('Recipe')}
+                style={{
+                  marginHorizontal: hp(1),
+                  backgroundColor: '#FFFFFF',
+                  padding: hp(3),
+                  borderRadius: hp(1),
+                  marginVertical: hp(0.5),
+                  elevation: 1,
+                  // elevation: 2,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View
+                    style={{
+                      height: hp(2),
+                      width: hp(2),
+                      borderRadius: hp(1),
+                      // margin: hp(1),
+                      backgroundColor: 'red',
+                      // backgroundColor: tagColors[item.tag],
+                      marginRight: wp(3),
+                      // paddingVertical: hp(0.5),
+                    }}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontFamily: 'Roboto-Regular',
+                        fontSize: 15,
+                        fontWeight: '400',
+                        color: '#000000',
+                      }}
+                    >
+                      {updatedName}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: 'Roboto-Regular',
+                        fontSize: 14,
+                        color: '#6B7280',
+                      }}
+                    >
+                      {item?.adjustedCalories} cal
+                    </Text>
+                  </View>
+                </View>
+
+                {/* increment decrement button */}
+              </TouchableOpacity>
+            );
+          }}
         />
 
         <TouchableOpacity
-          onPress={() => navigation.navigate('MealBuilder')}
+          onPress={() => navigation.navigate({ index: 0, name: 'MealBuilder' })}
           style={{
             backgroundColor: '#1E64AC',
             marginHorizontal: wp(20),
@@ -160,7 +149,7 @@ const MealBuilder2 = ({ navigation }) => {
             padding: hp(1.5),
             alignItems: 'center',
             borderRadius: hp(1),
-            marginBottom: hp(20),
+            // marginBottom: hp(20),
           }}
         >
           <Text
@@ -174,6 +163,21 @@ const MealBuilder2 = ({ navigation }) => {
             Clear Selection
           </Text>
         </TouchableOpacity>
+        <Text
+          style={{
+            marginTop: hp(2),
+            fontSize: 12,
+            color: '#6B7280',
+            width: wp(90),
+            alignSelf: 'center',
+            textAlign: 'center',
+            // fontFamily: 'Roboto-Regular',
+            // lineHeight: 16,
+            marginBottom: hp(10),
+          }}
+        >
+          Note: {selectedItems?.message}
+        </Text>
       </View>
     </ScrollView>
   );

@@ -44,8 +44,8 @@ const MealBuilder = ({ navigation }) => {
       return {
         BreakfastIndian: items['Breakfast_Indian']['grouped_items'] || {},
         BreakfastGlobal: items['Breakfast_Global']['grouped_items'] || {},
-        DinnerIndian: items['Lunch/Dinner_Indian']['grouped_items'] || {},
-        DinnerGlobal: items['Lunch/Dinner_Global']['grouped_items'] || {},
+        DinnerIndian: items['Lunch_Indian']['grouped_items'] || {},
+        DinnerGlobal: items['Lunch_Global']['grouped_items'] || {},
       };
     });
   const targetCalories = useSelector(
@@ -136,7 +136,8 @@ const MealBuilder = ({ navigation }) => {
         }}
       >
         {/* Header */}
-        <View
+        <TouchableOpacity
+          onPress={() => toggleExpand(category)}
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
@@ -171,7 +172,7 @@ const MealBuilder = ({ navigation }) => {
               source={images.RIGHT_ARROW}
             />
           </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
 
         {/* Expanded Items */}
         <Animated.View style={{ height: animatedHeight, overflow: 'hidden' }}>
@@ -258,10 +259,15 @@ const MealBuilder = ({ navigation }) => {
                           borderColor: isAlreadyAdded ? '#22C55E' : '#000000',
                         }}
                         onPress={() => {
+                          console.log('Selected Items before:', selectedItems);
+                          console.log(category, 'Category');
                           const newItem = {
                             dishname: subItem?.name,
                             calories: subItem?.calories,
                             id: subItem?._id,
+                            servingSize: subItem?.servingSize,
+                            adjustmentWeight: subItem?.adjustmentWeight,
+                            section: category,
                           };
 
                           if (isAlreadyAdded) {
@@ -270,10 +276,13 @@ const MealBuilder = ({ navigation }) => {
                               prev.filter(
                                 i =>
                                   !(
-                                    i.dishname === newItem.dishname &&
-                                    i.calories === newItem.calories &&
-                                    i.id === newItem.id
-                                  ),
+                                    i.dishname === newItem?.dishname &&
+                                    i.calories &&
+                                    i.id === newItem?.id &&
+                                    i.servingSize === newItem?.servingSize &&
+                                    i.adjustmentWeight ===
+                                      newItem?.adjustmentWeight
+                                  ) && i.section === newItem?.section,
                               ),
                             );
                             // console.log('Removed:', newItem);
@@ -315,8 +324,8 @@ const MealBuilder = ({ navigation }) => {
       const combos = [
         { mealTime: 'Breakfast', cuisine: 'Indian' },
         { mealTime: 'Breakfast', cuisine: 'Global' },
-        { mealTime: 'Lunch/Dinner', cuisine: 'Indian' },
-        { mealTime: 'Lunch/Dinner', cuisine: 'Global' },
+        { mealTime: 'Lunch', cuisine: 'Indian' },
+        { mealTime: 'Lunch', cuisine: 'Global' },
       ];
 
       await Promise.all(combos.map(combo => dispatch(getBuilderItems(combo))));
@@ -337,55 +346,70 @@ const MealBuilder = ({ navigation }) => {
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={styles.floatingText}>
-        {/* <Text style={styles.floatingTextLabel}>Floating Reminder</Text> */}
+      {selectedItems.length > 0 && (
         <TouchableOpacity
           onPress={() =>
             navigation.navigate('MealBuilder1', {
               dishes: selectedItems,
               targetCalories,
               sumofCalories,
+              activeTab,
+              activeCuisine,
             })
           }
+          style={styles.floatingText}
         >
-          <View style={{ position: 'relative' }}>
-            {/* 🔴 Badge */}
-            {selectedItems.length > 0 && (
-              <View
-                style={{
-                  position: 'absolute',
-                  top: -8,
-                  right: -12,
-                  backgroundColor: '#EF4444',
-                  borderRadius: hp(2),
-                  paddingHorizontal: 6,
-                  paddingVertical: 2,
-                  minWidth: 20,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: hp(3.5),
-                }}
-              >
-                <Text
-                  style={{
-                    color: '#fff',
-                    fontSize: 12,
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {selectedItems?.length}
-                </Text>
-              </View>
-            )}
+          {/* <Text style={styles.floatingTextLabel}>Floating Reminder</Text> */}
+          <View>
+            <View style={{ position: 'relative' }}>
+              {/* 🔴 Badge */}
 
-            {/* 🛒 Cart Icon */}
-            <Image
-              source={Images.CART}
-              style={[styles.cartImage, { tintColor: '#1E64AC' }]}
-            />
+              {/* 🛒 Cart Icon */}
+              <Image
+                source={Images.CART}
+                style={[styles.cartImage, { tintColor: 'white' }]}
+              />
+            </View>
           </View>
+          <View>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: '600',
+                color: '#FFFFFF',
+                marginLeft: hp(1),
+              }}
+            >
+              View Cart
+            </Text>
+            <Text
+              style={{
+                marginTop: hp(0.5),
+                fontSize: 14,
+                fontWeight: '500',
+                color: '#FFFFFF',
+                marginLeft: hp(1),
+              }}
+            >
+              {selectedItems?.length} View Cart
+            </Text>
+          </View>
+          <Image
+            source={Images.RIGHT_ARROW}
+            style={[
+              styles.cartImage,
+              {
+                tintColor: 'white',
+                marginLeft: hp(1.5),
+                height: hp(2.5),
+                // resizeMode: 'contain',
+                width: wp(2.5),
+              },
+            ]}
+          />
         </TouchableOpacity>
-      </View>
+      )}
+
       <ImageBackground
         style={styles.backgroundImage}
         source={Images.BACKGROUND_IMAGE_NUTRITION}
@@ -404,7 +428,10 @@ const MealBuilder = ({ navigation }) => {
         <View style={styles.progressRow}>
           <View>
             <Text style={styles.target}>Target</Text>
-            <Text style={styles.kcal}>{targetCalories} kcal</Text>
+            <Text style={styles.kcal}>
+              {targetCalories}
+              kcal
+            </Text>
           </View>
 
           <ProgressBar
@@ -416,7 +443,8 @@ const MealBuilder = ({ navigation }) => {
           <View>
             <Text style={styles.target}>Remaining</Text>
             <Text style={[styles.kcal, styles.remainingKcal]}>
-              {targetCalories - sumofCalories} kcal
+              {targetCalories - sumofCalories}
+              kcal
             </Text>
           </View>
         </View>
@@ -745,21 +773,30 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#000000',
   },
-  cartImage: { width: hp(4), height: hp(4), resizeMode: 'cover' },
+  cartImage: {
+    width: hp(4),
+    height: hp(4),
+    resizeMode: 'cover',
+    tintColor: 'white',
+  },
   floatingText: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#bb6a62ff',
     position: 'absolute',
-    top: hp(45), // adjust as needed
-    left: wp(85),
-    right: wp(5),
+    borderRadius: hp(5),
+    paddingHorizontal: hp(2),
+    right: wp(28),
+    bottom: hp(3),
     zIndex: 999, // ensure it's above everything else
-    // backgroundColor: 'red',
+    width: wp(45),
     padding: hp(1),
-    borderRadius: 8,
-    // shadowColor: '#000',
-    // shadowOpacity: 0.1,
-    // shadowOffset: {width: 0, height: 2},
-    // shadowRadius: 4,
-    // elevation: 5,
+    height: hp(6),
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 5,
   },
 });
 

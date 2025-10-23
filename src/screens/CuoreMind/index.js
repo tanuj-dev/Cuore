@@ -15,7 +15,7 @@ import images from '../../utilities/Images';
 const Mind = ({ navigation }) => {
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ backgroundColor: '#FFFFFF' }}>
+      <View style={{ backgroundColor: '#FFFFFF', paddingVertical: hp(2) }}>
         {' '}
         <View
           style={{
@@ -36,6 +36,8 @@ const Mind = ({ navigation }) => {
                 resizeMode: 'contain',
                 height: hp(3.5),
                 width: wp(4),
+                marginTop: hp(-1),
+                marginLeft: Platform.OS == 'ios' ? hp(1) : hp(0.2),
               }}
               resizeMode="contain"
             />
@@ -45,7 +47,16 @@ const Mind = ({ navigation }) => {
       </View>
       <ScrollView style={styles.container}>
         <View style={styles.scoreContainer}>
-          <View style={styles.scoreBox}>
+          <View
+            style={[
+              styles.scoreBox,
+              // {
+              //   backgroundColor: 'red',
+              //   borderRadius: wp(2),
+              //   padding: hp(1.5),
+              // },
+            ]}
+          >
             <Image
               style={{ width: wp(45), height: hp(10), resizeMode: 'cover' }}
               source={images.SCORE_METER}
@@ -225,7 +236,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Roboto-Regular',
     marginTop: hp(1),
-    marginLeft: hp(12),
+    marginLeft: hp(11),
     fontSize: 20,
     fontWeight: '400',
     marginBottom: hp(2),
@@ -250,6 +261,8 @@ const styles = StyleSheet.create({
   },
   scoreBox: {
     alignItems: 'center',
+    // paddingVertical: hp(3),
+    // marginTop: hp(30),
   },
   scoreValue: {
     fontFamily: 'Roboto-Regular',

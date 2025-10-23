@@ -128,11 +128,15 @@ const dailyRoutines = [
   { hour: 18, minute: 25, title: 'Dinner', body: 'Balanced and light' },
   { hour: 21, minute: 25, title: 'Sleep', body: 'Restore & repair' },
 ];
+// const handleLoginRedirect = () => {
+//   Navigation.navigate('Login');
+// };
 
 export default {
   showImagePickerOptions,
   requestCameraPermission,
   requestStoragePermission,
+
   axiosInstance: $http,
   dailyRoutines,
 };

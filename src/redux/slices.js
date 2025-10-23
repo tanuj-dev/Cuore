@@ -10,7 +10,12 @@ import { setReminder } from './Home/setReminderThunk';
 import { getCuoreScoreThunk } from './OnBoardng/onBoardingThunk';
 import { editWakeupThunk } from './Home/wakeupEdit';
 import { editReminderThunk } from './Home/editReminder';
-import { getNourish, getBuilderItems, getRecipe } from './Explore/exploreThunk';
+import {
+  getNourish,
+  getBuilderItems,
+  getRecipe,
+  adjustPortion,
+} from './Explore/exploreThunk';
 export {
   sendOtp,
   verifyOtp,
@@ -27,4 +32,5 @@ export {
   getNourish,
   getBuilderItems,
   getRecipe,
+  adjustPortion,
 };

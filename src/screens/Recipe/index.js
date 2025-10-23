@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,40 +8,62 @@ import {
   Image,
 } from 'react-native';
 import Tts from 'react-native-tts';
-import {hp, wp} from '../../utilities';
-import {Play, Pause, StopCircle, Images} from 'lucide-react-native'; // Optional icon lib
+import { hp, wp } from '../../utilities';
+import { Play, Pause, StopCircle, Images } from 'lucide-react-native'; // Optional icon lib
 // import {  } from 'react-native-svg';
 import images from '../../utilities/Images';
 
-const Recipe = ({navigation}) => {
+const Recipe = ({ navigation, route }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const { receipeData } = route?.params;
+  const { ingredients, instructions } = receipeData || {};
+  console.log('Received recipe data:', receipeData);
+  ``;
+  console.log('Recipe ingredients:', ingredients);
+  console.log('Recipe instructions:', instructions);
 
-  const recipeSteps = [
-    'Dry roast semolina until light golden and set aside.',
-    'Heat oil in a pan, add mustard seeds and urad dal.',
-    'Add curry leaves, green chilies, and ginger, sauté.',
-    'Add onions and cook until translucent.',
-    'Add carrots and peas, cook for 2 to 3 minutes.',
-    'Add water and salt, bring to boil.',
-    'Slowly add roasted semolina while stirring continuously.',
-    'Cook on low heat for 5 to 7 minutes until water is absorbed.',
-    'Garnish with coriander leaves and serve hot.',
-  ];
-  const ingredients = [
-    '1 cup semolina (rava/sooji)',
-    '1 onion, finely chopped',
-    '1 carrot, finely diced',
-    '1/2 cup green peas',
-    '2 green chilies, chopped',
-    '1 inch ginger, grated',
-    '2 tablespoons oil',
-    '1 teaspoon mustard seeds',
-    '1 teaspoon urad dal',
-    'Curry leaves',
-    '2.5 cups water',
-    'Salt to taste',
-    'Coriander leaves for garnish',
-  ];
+  // console.log('Received recipe data:', receipeData);
+
+  if (!receipeData || receipeData.message === 'Recipe not found.') {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: 24,
+          backgroundColor: '#F9FAFB',
+        }}
+      >
+        <Image
+          source={Images.EMPTY_STATE_ICON} // Replace with your own image or icon
+          style={{ width: 120, height: 120, marginBottom: 20 }}
+          resizeMode="contain"
+        />
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: '600',
+            color: '#195d9dff',
+            marginBottom: 8,
+          }}
+        >
+          No recipe found
+        </Text>
+        <Text
+          style={{
+            fontSize: 14,
+            color: '#6B7280',
+            textAlign: 'center',
+            lineHeight: 20,
+          }}
+        >
+          We couldn’t find a recipe for this particular dish. Please try another
+          one or check back later.
+        </Text>
+      </View>
+    );
+  }
 
   const onSpeak = () => {
     Tts.stop();
@@ -61,16 +83,17 @@ const Recipe = ({navigation}) => {
   };
 
   return (
-    <ScrollView style={{backgroundColor: '#F3F4F6'}}>
-      <View style={{flex: 1, backgroundColor: ''}}>
-        <View style={{backgroundColor: '#F3F4F6', padding: hp(2)}}>
+    <ScrollView style={{ backgroundColor: '#F3F4F6' }}>
+      <View style={{ flex: 1, backgroundColor: '' }}>
+        <View style={{ backgroundColor: '#F3F4F6', padding: hp(2) }}>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              marginTop:Platform.OS =='ios'&& hp(4),
+              marginTop: Platform.OS == 'ios' && hp(4),
               //   paddingHorizontal: hp(1),
-            }}>
+            }}
+          >
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Image
                 style={{
@@ -79,7 +102,8 @@ const Recipe = ({navigation}) => {
                   resizeMode: 'contain',
                   tintColor: '#000000',
                 }}
-                source={images.BACK_BUTTON}></Image>
+                source={images.BACK_BUTTON}
+              ></Image>
             </TouchableOpacity>
 
             <Image
@@ -89,7 +113,8 @@ const Recipe = ({navigation}) => {
                 resizeMode: 'contain',
                 tintColor: '#1E64AC',
               }}
-              source={images.SHARE_4}></Image>
+              source={images.SHARE_4}
+            ></Image>
           </View>
 
           {/* Controls */}
@@ -103,19 +128,50 @@ const Recipe = ({navigation}) => {
             <View>
               <Text style={styles.sectionTitle}>Ingredients:</Text>
 
-              {ingredients.map((item, index) => (
+              {ingredients?.map((item, index) => (
                 <Text key={index} style={styles.text}>
-                  • {item}
+                  • {item?.quantity} {item?.unit} {item?.name}
                 </Text>
               ))}
             </View>
-            <Text style={[styles.sectionTitle, {marginTop: hp(3)}]}>
+            <Text style={[styles.sectionTitle, { marginTop: hp(3) }]}>
               Instructions:
             </Text>
-            {recipeSteps.map((step, index) => (
-              <Text key={index} style={styles.text}>{`${
-                index + 1
-              }. ${step}`}</Text>
+            {instructions?.map((step, index) => (
+              <View key={index}>
+                {step?.heading == 'Instructions' ? null : (
+                  <Text
+                    style={{
+                      marginVertical: hp(1),
+                      fontWeight: 'bold',
+                      color: '#1E64AC',
+                    }}
+                  >
+                    {step?.heading}
+                  </Text>
+                )}
+
+                {step?.steps.map((subStep, subIndex) => (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      // alignItems: 'center',
+                      // justifyContent: 'center',
+                    }}
+                    key={subIndex + 100}
+                  >
+                    <Text key={subIndex + 8} style={styles.text}>
+                      {`${subIndex + 1} `}
+                    </Text>
+                    <Text
+                      key={subIndex + 3}
+                      style={[styles.text, { width: wp(80) }]}
+                    >
+                      {`${subStep}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             ))}
           </View>
         </View>
@@ -166,11 +222,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     // marginBottom: hp(5),
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: 'bold',
     marginBottom: hp(2),
     fontFamily: 'Roboto-Regular',
   },
   text: {
+    // width: '100%',
     fontSize: 14.5,
     marginBottom: hp(0.5),
     fontFamily: 'Roboto-Regular',

@@ -55,3 +55,18 @@ export const getBuilderItems = createAsyncThunk(
     }
   },
 );
+export const adjustPortion = createAsyncThunk(
+  'portion/adjust',
+  async ({ recommendedCalories, cartItems }, { rejectWithValue }) => {
+    try {
+      const response = await postApiCall(EndPoints.ADJUST_PORTION, {
+        recommendedCalories,
+        cartItems,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Adjust portion failed:', error);
+      return rejectWithValue(error.response?.data || 'Something went wrong');
+    }
+  },
+);

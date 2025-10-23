@@ -15,6 +15,7 @@ const Endpoints = {
   EDIT_REMINDER: '/api/v1/users/userid/reminders/remindersid',
   GET_RECIPE: '/api/recipes',
   GET_BUILDER_ITEMS: '/api/builder/items',
+  ADJUST_PORTION: '/api/builder/adjust-portions',
 };
 
 export default Endpoints;

@@ -8,8 +8,12 @@ import {
   ScrollView,
   ImageBackground,
   Image,
+  Alert,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
+import LimitExceededModal from '../../components/LimitExceedModa';
+import { useDispatch } from 'react-redux';
+import { adjustPortion } from '../../redux/slices';
 
 const tagColors = {
   green: '#00C853',
@@ -17,11 +21,19 @@ const tagColors = {
 };
 
 const MealBuilder1 = ({ navigation, route }) => {
-  const { dishes, targetCalories, sumofCalories } = route.params;
+  const dispatch = useDispatch();
+  const { dishes, targetCalories, sumofCalories, activeTab, activeCuisine } =
+    route.params;
+  console.log('Route Params:', route.params);
+
+  const TargetCalories = targetCalories;
 
   const [selectedItems, setSelectedItems] = useState(
     dishes.map(item => ({ ...item, count: 1 })),
   );
+  console.log('Selected Items:', selectedItems);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [adjustedPortions, setAdjustedPortions] = useState(null);
 
   const increment = id => {
     const updated = selectedItems.map(item =>
@@ -44,8 +56,39 @@ const MealBuilder1 = ({ navigation, route }) => {
     0,
   );
   const maxAllowed = 4;
-  const extraCalories =
-    totalSelected > maxAllowed ? totalCalories - maxAllowed * 150 : 0;
+
+  const handleAdjustPortions = async () => {
+    if (selectedItems.length > 4) {
+      setShowLimitModal(true);
+      return;
+    }
+
+    const cartItems = selectedItems.map(item => ({
+      _id: item._id,
+      name: item.dishname,
+      calories: item.calories,
+      servingSize: item.servingSize,
+      adjustmentWeight: item.adjustmentWeight ?? 1,
+      numOfServings: item.count,
+      section: item.section,
+      cuisine: activeCuisine,
+      mealTime: activeTab,
+    }));
+
+    try {
+      console.log(cartItems, 'Cart Items for Adjustment');
+      const response = await dispatch(
+        adjustPortion({ recommendedCalories: targetCalories, cartItems }),
+      ).unwrap();
+
+      console.log('Adjusted portion response:', response);
+      setAdjustedPortions(response);
+      navigation.navigate('MealBuilder2', { selectedItems: response });
+    } catch (error) {
+      console.warn('Adjustment failed:', error);
+      // optionally show error modal or toast
+    }
+  };
 
   return (
     <ScrollView style={{}}>
@@ -119,7 +162,7 @@ const MealBuilder1 = ({ navigation, route }) => {
           }}
         >
           <Image
-            source={Images.ENPTY_CART}
+            source={Images.EMPTY_CART}
             style={{
               resizeMode: 'stretch',
               // tintColor: '#6B7280',
@@ -236,7 +279,7 @@ const MealBuilder1 = ({ navigation, route }) => {
           )}
         />
 
-        {selectedItems.length > 0 && (
+        {selectedItems?.length > 0 && (
           <View
             style={{
               padding: hp(2),
@@ -250,19 +293,19 @@ const MealBuilder1 = ({ navigation, route }) => {
               Total Calories:{' '}
               <Text style={{ fontWeight: 'bold' }}>{totalCalories}</Text>
             </Text>
-            {totalCalories > targetCalories && (
+            {totalCalories > TargetCalories && (
               <Text
                 style={{ fontSize: 14, fontWeight: '400', color: '#DC2626' }}
               >
-                Extra: {totalCalories - targetCalories} calories
+                Extra: {totalCalories - TargetCalories} calories
               </Text>
             )}
           </View>
         )}
 
-        {selectedItems.length > 0 && (
+        {selectedItems?.length > 0 && (
           <TouchableOpacity
-            onPress={() => navigation.navigate('MealBuilder2')}
+            onPress={handleAdjustPortions}
             style={{
               backgroundColor: '#1E64AC',
               marginHorizontal: wp(20),
@@ -286,6 +329,10 @@ const MealBuilder1 = ({ navigation, route }) => {
           </TouchableOpacity>
         )}
       </View>
+      <LimitExceededModal
+        visible={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+      />
     </ScrollView>
   );
 };

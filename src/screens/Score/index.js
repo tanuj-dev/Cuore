@@ -293,22 +293,28 @@ const Score = ({ navigation, route }) => {
             backgroundColor: 'white',
           }}
         >
-          {convertVitalsToArray(health_metrics?.vitals).map((item, index) => (
-            <View
-              key={index}
-              style={{ marginVertical: index === 2 ? hp(2) : 0 }}
-            >
-              <VitalCard
-                data={item.health_metrics?.vitals}
-                label={item.label}
-                // hint={'ta'}
-                value={item.value}
-                target={item.target}
-                colorCode={'red'}
-                hasDiabetes={hasDiabetes}
-              />
-            </View>
-          ))}
+          {convertVitalsToArray(health_metrics?.vitals)
+            .filter(
+              item =>
+                item.value !== undefined &&
+                item.value !== null &&
+                item.value !== '',
+            )
+            .map((item, index) => (
+              <View
+                key={index}
+                style={{ marginVertical: index === 2 ? hp(2) : 0 }}
+              >
+                <VitalCard
+                  data={item.health_metrics?.vitals}
+                  label={item.label}
+                  value={item.value}
+                  target={item.target}
+                  colorCode={'red'}
+                  hasDiabetes={hasDiabetes}
+                />
+              </View>
+            ))}
 
           <View style={styles.focusRow}>
             <Text style={styles.focusLabel}>Main Focus</Text>
@@ -425,12 +431,22 @@ const getVitalColor = (label, value, target, hasDiabetes) => {
       if (value <= 4.0) return 'orange';
       return 'red';
 
-    case 'Body Fat':
-      const diff = Math.abs(value - target);
-      const percentDiff = (diff / target) * 100;
-      if (percentDiff < 5) return 'green';
-      if (percentDiff <= 15) return 'orange';
+    case 'Body Fat': {
+      const cleanValue = parseFloat(String(value).replace('%', ''));
+      const cleanTarget = parseFloat(String(target).replace('%', ''));
+
+      if (isNaN(cleanValue) || isNaN(cleanTarget)) {
+        console.warn('Invalid Body Fat values:', value, target);
+        return 'red';
+      }
+
+      const diff = Math.abs(cleanValue - cleanTarget);
+      console.log(diff, 'diff');
+
+      if (diff < 5) return 'green';
+      if (diff <= 15) return 'orange';
       return 'red';
+    }
 
     default:
       return 'gray'; // fallback

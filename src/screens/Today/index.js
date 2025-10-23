@@ -20,6 +20,7 @@ import ReminderEditor from '../../components/ReminderEditor';
 import Toast from '../../components/Toast';
 import moment from 'moment';
 import { getOnboardingThunk } from '../../redux/slices';
+import { logout } from '../../redux/Auth/slice';
 import {
   scheduleNotificationAfterSeconds,
   scheduleNotificationAtTime,
@@ -27,6 +28,8 @@ import {
   showImmediateNotification,
 } from '../../notifications/NotificationScheduler';
 import { getNourish, getBuilderItems } from '../../redux/slices';
+import SessionExpiredModal from '../../components/SessionExpired';
+import handleLoginRedirect from '../../utilities/Common';
 
 const routeMap = {
   Breakfast: 'Nutrition',
@@ -43,6 +46,7 @@ const Today = ({ navigation, route }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [requestId, setRequestId] = useState(null);
   const [alarmTime, setAlarmTime] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(true);
   const [toast, setToast] = useState(null);
 
   const dispatch = useDispatch();
@@ -50,7 +54,9 @@ const Today = ({ navigation, route }) => {
 
   const { data, loading, error } = useSelector(state => state.home);
   const homeData = data ? data : null;
-  const userId = useSelector(state => state?.auth?.userId);
+  const userId = useSelector(state => state.auth.userId);
+  const sessionExpiredMessage =
+    data?.message == 'Not authorized, invalid or expired token.';
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -60,8 +66,8 @@ const Today = ({ navigation, route }) => {
       const combos = [
         { mealTime: 'Breakfast', cuisine: 'Indian' },
         { mealTime: 'Breakfast', cuisine: 'Global' },
-        { mealTime: 'Lunch/Dinner', cuisine: 'Indian' },
-        { mealTime: 'Lunch/Dinner', cuisine: 'Global' },
+        { mealTime: 'Lunch', cuisine: 'Indian' },
+        { mealTime: 'Lunch', cuisine: 'Global' },
       ];
 
       await Promise.all(combos.map(combo => dispatch(getBuilderItems(combo))));
@@ -97,8 +103,8 @@ const Today = ({ navigation, route }) => {
       const combos = [
         { mealTime: 'Breakfast', cuisine: 'Indian' },
         { mealTime: 'Breakfast', cuisine: 'Global' },
-        { mealTime: 'Lunch/Dinner', cuisine: 'Indian' },
-        { mealTime: 'Lunch/Dinner', cuisine: 'Global' },
+        { mealTime: 'Lunch', cuisine: 'Indian' },
+        { mealTime: 'Lunch', cuisine: 'Global' },
       ];
 
       combos.forEach(combo => {
@@ -186,6 +192,24 @@ const Today = ({ navigation, route }) => {
           Loading your data...
         </Text>
       </View>
+    );
+  }
+
+  const handleLoginRedirect = async () => {
+    setSessionExpired(false);
+    console.log(await EncryptedStorage.getItem('auth_tokens'));
+    await EncryptedStorage.removeItem('auth_tokens');
+    // await EncryptedStorage.removeItem('userid');
+    dispatch(logout());
+    navigation.replace('Login'); // or navigate, depending on your flow
+  };
+
+  if (sessionExpiredMessage && sessionExpired) {
+    return (
+      <SessionExpiredModal
+        visible={sessionExpired}
+        onLogin={handleLoginRedirect}
+      />
     );
   }
 
@@ -635,6 +659,7 @@ const styles = StyleSheet.create({
     marginVertical: hp(1.3),
   },
   progressTitle: {
+    // marginLeft: hp(1),
     fontFamily: 'Roboto-Regular',
     fontWeight: '400',
     color: '#18202B',

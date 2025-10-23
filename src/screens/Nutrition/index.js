@@ -19,57 +19,8 @@ const Nutrition = ({ navigation }) => {
   const dispatch = useDispatch();
   const nourishData = useSelector(state => state.nourish.data);
   const loading = useSelector(state => state.nourish.loading);
+  const [receipeData, setRecipeData] = useState(null);
 
-  const mealOptions = [
-    {
-      title: 'Mung Dal Chilla',
-      details: ['2 Moong Dal Chilla', '1/2 Katori Curd'],
-      type: 'Veg',
-      calories: 390,
-    },
-    {
-      title: 'Dal paratha with curd',
-      details: ['1 1/2 Dal Paratha', '1/2 Katori Curd'],
-      type: 'Veg',
-      calories: 370,
-    },
-    {
-      title: 'Roti with paneer masala',
-      details: ['3 Roti/ 2 Palak or Methi Roti', '3 tbsp Paneer Masala'],
-      type: 'Veg',
-      calories: 400,
-    },
-    {
-      title: 'Appam with vegetable stew',
-      details: ['3 Appam', '3/4 Katori Vegetable Stew', '1/2 glass Buttermilk'],
-      type: 'Veg',
-      calories: 410,
-    },
-    {
-      title: 'Vegetable sandwich',
-      details: ['1 Vegetable Sandwich', '1/2 cup Yogurt'],
-      type: 'Veg',
-      calories: 380,
-    },
-    {
-      title: 'Oats with milk',
-      details: ['1 cup Oats with toned milk', '2 tbsp Nuts'],
-      type: 'Veg',
-      calories: 400,
-    },
-    {
-      title: 'Scrambled egg with toast',
-      details: ['2 Whole Wheat Bread', '2 Egg Scrambled'],
-      type: 'Non-Veg',
-      calories: 380,
-    },
-    {
-      title: 'Custom Plate (Choose Your Own Meal)',
-      details: [],
-      type: 'Custom',
-      calories: 400,
-    },
-  ];
   useEffect(() => {
     if (activeTab === 'Breakfast') {
       dispatch(getNourish('Breakfast'));
@@ -80,16 +31,20 @@ const Nutrition = ({ navigation }) => {
 
   const handlePress = async (item, navigation) => {
     try {
-      console.log('Fetching recipe for item:', item);
-      const response = await dispatch(
-        getRecipe(item?.recipeLink?._id),
-      ).unwrap();
-      console.log('Recipe data:', response.data);
+      console.log('Pressed item:', item);
 
       if (item.type === 'Custom') {
         navigation.navigate('MealBuilder');
       } else {
-        navigation.navigate('Recipe');
+        console.log('Fetching recipe for item:', item);
+        const response = await dispatch(
+          getRecipe(item?.recipeLink?._id),
+        ).unwrap();
+
+        setRecipeData(response);
+        console.log('Recipe data:', response);
+
+        navigation.navigate('Recipe', { receipeData: response });
       }
     } catch (error) {
       console.error('Failed to fetch recipe:', error);
@@ -98,9 +53,12 @@ const Nutrition = ({ navigation }) => {
 
   const renderMealCard = (item, index) => {
     const dietTag = item?.dietTag?.toUpperCase() || '';
+    console.log('Rendering meal card with dietTag:', item);
 
-    let tagColor = '#f59e0b'; // default
-    let tagLabel = Images.WARNING; // default
+    const customPlate = item?.custom_plate;
+
+    let tagColor = '#dc2626'; // default
+    let tagLabel = Images.EGG; // default
 
     if (dietTag.startsWith('V')) {
       tagColor = '#16a34a'; // green for vegetarian
@@ -109,6 +67,9 @@ const Nutrition = ({ navigation }) => {
       console.log('Rendering non-veg item:', dietTag);
       tagColor = '#dc2626'; // red for non-vegetarian
       tagLabel = Images.NON_VEG;
+    } else if (dietTag.startsWith('E')) {
+      tagColor = '#f59e0b'; // indigo for egg
+      tagLabel = Images.EGG;
     }
 
     // Use tagColor and tagLabel in your card rendering
@@ -157,7 +118,9 @@ const Nutrition = ({ navigation }) => {
               }}
               source={tagLabel}
             ></Image>
-            <Text style={styles.kcal}>{item?.calories} kcal</Text>
+            <Text style={styles.kcal}>
+              {item?.calories || item?.custom_plate} kcal
+            </Text>
           </View>
         </View>
       </TouchableOpacity>

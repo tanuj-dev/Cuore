@@ -29,7 +29,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
   const [time, setTime] = useState(null); // null initially
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [repeat, setRepeat] = useState('');
+  const [repeat, setRepeat] = useState('Every Day');
   const [encRepeat, setEncRepeat] = useState('');
   const [showPicker, setShowPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
@@ -274,6 +274,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
               {/* Conditionally show Picker */}
               {showPicker && (
                 <Picker
+                  itemStyle={{ color: '#1E64AC' }} // iOS only
                   selectedValue={repeat}
                   onValueChange={itemValue => {
                     setRepeat(itemValue);
@@ -281,9 +282,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
                   }}
                   style={styles.repeatpicker}
                 >
-                  <Picker.Item label="Daily" value="Daily" />
-                  <Picker.Item label="Weekly" value="Weekly" />
-                  <Picker.Item label="Monthly" value="Monthly" />
+                  <Picker.Item label="Never" value="Never" />
+                  <Picker.Item label="Every Day" value="Every Day" />
+                  <Picker.Item label="Every Week" value="Every Week" />
+                  <Picker.Item label="Every 2 Week" value="Every 2 Week" />
+                  <Picker.Item label="Every Month" value="Every Month" />
+                  <Picker.Item label="Every Year" value="Every Year" />
                 </Picker>
               )}
             </View>
@@ -320,10 +324,15 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
                     setShowEndPicker(false); // hide after selection
                   }}
                   style={styles.repeatpicker}
+                  itemStyle={{ color: '#1E64AC' }} // iOS only
                 >
-                  <Picker.Item label="Never" value="Never" />
-                  <Picker.Item label="After 1 Month" value="1 Month" />
-                  <Picker.Item label="After 6 Months" value="6 Months" />
+                  <Picker.Item
+                    style={{ color: 'red' }}
+                    label="Never"
+                    value="Never"
+                  />
+                  <Picker.Item label="On Date" value="On Date" />
+                  {/* <Picker.Item label="After 6 Months" value="6 Months" /> */}
                 </Picker>
               )}
             </View>
