@@ -12,7 +12,10 @@ import { hp, wp, color, Images } from '../../utilities';
 import { Space } from 'lucide-react-native';
 // import {Ionicons} from '@expo/vector-icons';
 
-const FitnessDetails = ({ navigation }) => {
+const FitnessDetails = ({ navigation, route }) => {
+  const { instruction } = route.params;
+  console.log('Instructions:', instruction);
+
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -66,15 +69,15 @@ const FitnessDetails = ({ navigation }) => {
               justifyContent: 'space-between',
             }}
           >
-            <Text style={styles.detailText}>Duration: 2 Min</Text>
-            <Text style={styles.detailText}>Sets: 3</Text>
+            <Text style={styles.detailText}>{instruction?.duration}</Text>
+            <Text style={styles.detailText}>Sets: {instruction?.sets}</Text>
           </View>
 
-          <Text style={styles.detailText}>Equipment: Yoga Mat</Text>
+          <Text style={styles.detailText}>{instruction?.equipment}</Text>
         </View>
 
         {/* Instructions */}
-        <View style={styles.instructionBox}>
+        <View style={[styles.instructionBox, {}]}>
           <Text style={styles.instructionsTitle}>Instructions:</Text>
           <Text style={styles.instructionsText}>1. Starting Position:</Text>
           <Text style={styles.bullet}>

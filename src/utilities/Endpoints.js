@@ -16,6 +16,7 @@ const Endpoints = {
   GET_RECIPE: '/api/recipes',
   GET_BUILDER_ITEMS: '/api/builder/items',
   ADJUST_PORTION: '/api/builder/adjust-portions',
+  GET_FITNESS: '/api/fitness/fitness-plan',
 };
 
 export default Endpoints;

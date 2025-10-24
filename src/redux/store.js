@@ -7,6 +7,7 @@ import {
   reassessmentSlice,
   cuoreScoreSlice,
 } from './OnBoardng/slice';
+import { fitnessSlice } from './Fitness/slice';
 
 import { homeSlice } from './Home/slice';
 import { nourishSlice, builderSlice } from './Explore/slice';
@@ -22,6 +23,7 @@ const store = configureStore({
     cuoreScore: cuoreScoreSlice.reducer,
     nourish: nourishSlice.reducer,
     builder: builderSlice.reducer,
+    fitness: fitnessSlice.reducer,
   },
 });
 

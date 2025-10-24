@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,45 +6,131 @@ import {
   ScrollView,
   FlatList,
   Platform,
-  Pressable,
   StyleSheet,
   Image,
+  Animated,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {hp, wp, color, Images} from '../../utilities'; // Ensure these are defined in your project
-import images from '../../utilities/Images';
+import { hp, wp, Images } from '../../utilities';
+import { useSelector } from 'react-redux';
 
-const days = ['Mon', 'Tue', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun'];
+const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-const mockWorkout = {
-  Mon: [
-    {title: 'Lateral Leg Swing', reps: '6-8', sets: '1', color: '#A68DFF'},
-    {title: 'Jumping Jack', reps: '10-12', sets: '2', color: '#FF6B81'},
-  ],
-  Tue: [],
-  Wed: [
-    {title: 'Hamstring Stretch', reps: '4-6', sets: '1', color: '#6699FF'},
-    {title: 'Tadasana', reps: '3-4', sets: '1', color: '#66CC99'},
-    {title: 'Side Leg Swing', reps: '6-8', sets: '1', color: '#A68DFF'},
-    {title: 'Jumping Jack', reps: '10-12', sets: '1', color: '#FF6B81'},
-    {title: 'Hamstring Stretch', reps: '4-6', sets: '1', color: '#6699FF'},
-  ],
-  Thurs: [],
-  Fri: [],
-  Sat: [],
-  Sun: [],
+const WorkoutCard = ({
+  item,
+  index,
+  navigation,
+  expandedIndex,
+  setExpandedIndex,
+}) => {
+  const animation = useRef(new Animated.Value(0)).current;
+  const isExpanded = expandedIndex === index;
+
+  useEffect(() => {
+    Animated.timing(animation, {
+      toValue: isExpanded ? 1 : 0,
+      duration: 400,
+      useNativeDriver: false,
+    }).start();
+  }, [isExpanded]);
+
+  const animatedHeight = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, hp(30)],
+  });
+
+  return (
+    <TouchableOpacity
+      onPress={() => setExpandedIndex(isExpanded ? null : index)}
+      style={[styles.card, { borderLeftColor: item?.color }]}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={styles.cardTitle}>{item?.title}</Text>
+      </View>
+      <Text style={styles.cardDetail}>
+        {` Reps: ${item?.reps}       Sets: ${item?.sets}`}
+      </Text>
+
+      <Animated.View style={{ height: animatedHeight, overflow: 'hidden' }}>
+        <View style={styles.expandedContent}>
+          <Image
+            style={{ resizeMode: 'cover', height: hp(20), width: wp(85) }}
+            source={{
+              uri: 'https://img.freepik.com/premium-vector/empty-gym-with-exercise-equipment_88100-207.jpg',
+            }}
+          />
+          <View
+            style={{
+              backgroundColor: '#EBEDEF',
+              alignItems: 'center',
+              padding: hp(1),
+              marginTop: hp(2),
+              borderRadius: hp(1),
+              elevation: 2,
+            }}
+          >
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('FitnessDetails', {
+                  instruction: item?.instructions,
+                })
+              }
+              style={{
+                flexDirection: 'row',
+                padding: hp(1),
+                backgroundColor: '#1E64AC',
+                alignSelf: 'center',
+                borderRadius: hp(1),
+                paddingHorizontal: hp(2),
+                alignItems: 'center',
+              }}
+            >
+              <Image
+                style={{
+                  resizeMode: 'contain',
+                  height: hp(2.5),
+                  width: wp(5),
+                  tintColor: '#17AD8D',
+                  marginRight: hp(1),
+                }}
+                source={Images.WATCH}
+              />
+              <Text
+                style={{
+                  fontFamily: 'Roboto-Regular',
+                  fontSize: 15,
+                  fontWeight: '400',
+                  color: '#FFFFFF',
+                }}
+              >
+                start
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
+  );
 };
 
-const Fitness = ({navigation}) => {
+const Fitness = ({ navigation }) => {
   const [selectedDay, setSelectedDay] = useState('Wed');
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [time, setTime] = useState(new Date());
-  const [expandedIndex, setExpandedIndex] = useState(null); // manage expanded card
+  const [expandedIndex, setExpandedIndex] = useState(null);
+
+  const data = useSelector(state => state.fitness.data);
+  const fitnessData = data?.schedule;
 
   const onChangeTime = (event, selectedTime) => {
     setShowTimePicker(false);
     if (selectedTime) setTime(selectedTime);
   };
+
+  useEffect(() => {
+    // Any additional logic when selectedDay changes can be added here
+    setTime(data?.preferredTime ? new Date(data.preferredTime) : new Date());
+  }, [data]);
 
   const formatTime = date => {
     const hours = date.getHours();
@@ -55,117 +141,45 @@ const Fitness = ({navigation}) => {
     return `${formattedHour}:${formattedMin} ${ampm}`;
   };
 
-  const renderWorkoutItem = ({item, index}) => {
-    const isExpanded = expandedIndex === index;
-
-    return (
-      <TouchableOpacity
-        onPress={() => setExpandedIndex(isExpanded ? null : index)}
-        style={[styles.card, {borderLeftColor: item.color}]}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          {/* <Image
-            style={{
-              resizeMode: 'contain',
-              height: hp(2.5),
-              width: wp(5),
-              //   tintColor: '#17AD8D',
-            }}
-            source={Images.DUMBLE}></Image> */}
-          <Text style={styles.cardTitle}>{item.title}</Text>
-        </View>
-        <Text style={styles.cardDetail}>
-          {` Reps: ${item.reps}       Sets: ${item.sets}`}
-        </Text>
-
-        {isExpanded && (
-          <View style={styles.expandedContent}>
-            <View>
-              <Image
-                style={{resizeMode: 'cover', height: hp(20), width: wp(85)}}
-                source={{
-                  uri: 'https://img.freepik.com/premium-vector/empty-gym-with-exercise-equipment_88100-207.jpg',
-                }}></Image>
-            </View>
-            <View>
-              <View
-                style={{
-                  backgroundColor: '#EBEDEF',
-                  alignItems: 'center',
-                  padding: hp(1),
-                  marginTop: hp(2),
-                  borderRadius: hp(1),
-                  elevation: 2,
-                }}>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('FitnessDetails')}
-                  style={{
-                    flexDirection: 'row',
-                    padding: hp(1),
-                    backgroundColor: '#1E64AC',
-                    alignSelf: 'center',
-                    borderRadius: hp(1),
-                    paddingHorizontal: hp(2),
-                    alignItems: 'center',
-                  }}>
-                  <Image
-                    style={{
-                      resizeMode: 'contain',
-                      height: hp(2.5),
-                      width: wp(5),
-                      tintColor: '#17AD8D',
-                      marginRight: hp(1),
-                    }}
-                    source={Images.WATCH}></Image>
-                  <Text
-                    style={{
-                      fontFamily: 'Roboto-Regular',
-                      fontFamily: 'Roboto-Regular',
-                      fontSize: 15,
-                      fontWeight: '400',
-                      color: '#FFFFFF',
-                    }}>
-                    start
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
-
   return (
     <ScrollView>
-      <View style={{flex: 1, backgroundColor: '#F6F5FF'}}>
-        <View style={{backgroundColor: '#FFFFFF',}}>
-            <View
+      <View style={{ flex: 1, backgroundColor: '#F6F5FF', height: '100%' }}>
+        <View style={{ backgroundColor: '#FFFFFF' }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: Platform.OS === 'ios' && hp(5),
+              paddingTop: hp(2),
+              elevation: 1,
+            }}
+          >
+            <TouchableOpacity
+              style={{ paddingHorizontal: hp(1) }}
+              onPress={() => navigation.goBack()}
+            >
+              <Image
+                source={Images.BACK_BUTTON}
+                style={{
+                  resizeMode: 'contain',
+                  height: hp(3.5),
+                  width: wp(4),
+                }}
+              />
+            </TouchableOpacity>
+            <Text style={styles.title}>Cuore Fitness</Text>
+          </View>
+        </View>
+
+        <View
           style={{
-            flexDirection: 'row',
-              marginTop:Platform.OS =='ios'&& hp(5),
-            paddingTop: hp(2),
-            elevation: 1,
-          }}>
-          <TouchableOpacity
-            style={{paddingHorizontal: hp(1)}}
-            onPress={() => navigation.goBack()}>
-            <Image
-              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-              style={{
-                resizeMode: 'contain',
-                height: hp(3.5),
-                width: wp(4),
-              }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-          <Text style={styles.title}>Cuore Fitness</Text>
-        </View>
-        </View>
-      
-        <View style={{padding: wp(4)}}>
+            padding: wp(4),
+            backgroundColor: '#F6F5FF',
+            flex: 1,
+            height: hp(100),
+          }}
+        >
           <View style={styles.timeCard}>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Image
                 style={{
                   resizeMode: 'contain',
@@ -173,7 +187,8 @@ const Fitness = ({navigation}) => {
                   width: wp(5),
                   tintColor: '#17AD8D',
                 }}
-                source={Images.WATCH}></Image>
+                source={Images.WATCH}
+              />
               <Text
                 style={{
                   fontFamily: 'Roboto-Regular',
@@ -181,7 +196,8 @@ const Fitness = ({navigation}) => {
                   fontSize: 18,
                   fontWeight: '400',
                   color: '#000000',
-                }}>
+                }}
+              >
                 Update Preferred Exercise Time
               </Text>
             </View>
@@ -193,14 +209,16 @@ const Fitness = ({navigation}) => {
                 fontWeight: '400',
                 color: '#4B5563',
                 marginTop: 4,
-              }}>
+              }}
+            >
               Ideal between 6:00 AM – 7:00 PM
             </Text>
 
             <TouchableOpacity
               style={styles.timeButton}
-              onPress={() => setShowTimePicker(true)}>
-              <Text style={{fontFamily: 'Roboto-Regular', fontSize: wp(4)}}>
+              onPress={() => setShowTimePicker(true)}
+            >
+              <Text style={{ fontFamily: 'Roboto-Regular', fontSize: wp(4) }}>
                 {formatTime(time)}
               </Text>
               <Image
@@ -210,7 +228,8 @@ const Fitness = ({navigation}) => {
                   width: wp(5),
                   tintColor: '#000000',
                 }}
-                source={Images.WATCH}></Image>
+                source={Images.WATCH}
+              />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.updateBtn}>
@@ -220,7 +239,8 @@ const Fitness = ({navigation}) => {
                   color: '#FFFFFF',
                   fontWeight: '400',
                   fontSize: 14,
-                }}>
+                }}
+              >
                 ✓ Update Time
               </Text>
             </TouchableOpacity>
@@ -237,29 +257,31 @@ const Fitness = ({navigation}) => {
           </View>
 
           <View style={styles.innerShadowContainer}>
-            {/* Your content goes here */}
             <ScrollView
               style={{
                 paddingHorizontal: hp(1),
                 paddingVertical: hp(0.5),
-              }}>
-              <View style={{flexDirection: 'row'}}>
+              }}
+            >
+              <View style={{ flexDirection: 'row', width: '60%' }}>
                 {days.map(day => (
                   <TouchableOpacity
                     key={day}
                     onPress={() => {
                       setSelectedDay(day);
-                      setExpandedIndex(null); // reset on day change
+                      setExpandedIndex(null);
                     }}
                     style={[
                       styles.dayBtn,
                       selectedDay === day && styles.selectedDayBtn,
-                    ]}>
+                    ]}
+                  >
                     <Text
                       style={[
                         styles.dayText,
                         selectedDay === day && styles.selectedDayText,
-                      ]}>
+                      ]}
+                    >
                       {`${day}   .   `}
                     </Text>
                   </TouchableOpacity>
@@ -269,12 +291,20 @@ const Fitness = ({navigation}) => {
           </View>
 
           <FlatList
-            data={mockWorkout[selectedDay]}
+            data={fitnessData[selectedDay]}
             keyExtractor={(item, index) => `${item.title}-${index}`}
-            renderItem={renderWorkoutItem}
-            contentContainerStyle={{paddingBottom: hp(5)}}
+            renderItem={({ item, index }) => (
+              <WorkoutCard
+                item={item}
+                index={index}
+                navigation={navigation}
+                expandedIndex={expandedIndex}
+                setExpandedIndex={setExpandedIndex}
+              />
+            )}
+            contentContainerStyle={{ paddingBottom: hp(5) }}
             ListEmptyComponent={
-              <Text style={{textAlign: 'center', marginTop: hp(2)}}>
+              <Text style={{ textAlign: 'center', marginTop: hp(2) }}>
                 No exercises scheduled for {selectedDay}.
               </Text>
             }
@@ -377,6 +407,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.8),
     // marginHorizontal: wp(1),
     borderRadius: 20,
+    width: 53,
     // backgroundColor: '#E0E0E0',
   },
   selectedDayBtn: {

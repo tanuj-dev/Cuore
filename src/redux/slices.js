@@ -16,6 +16,7 @@ import {
   getRecipe,
   adjustPortion,
 } from './Explore/exploreThunk';
+import { getFitness } from './Fitness/fitnessThunk';
 export {
   sendOtp,
   verifyOtp,
@@ -33,4 +34,5 @@ export {
   getBuilderItems,
   getRecipe,
   adjustPortion,
+  getFitness,
 };

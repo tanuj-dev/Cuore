@@ -30,6 +30,7 @@ import {
 import { getNourish, getBuilderItems } from '../../redux/slices';
 import SessionExpiredModal from '../../components/SessionExpired';
 import handleLoginRedirect from '../../utilities/Common';
+import { getFitness } from '../../redux/slices';
 
 const routeMap = {
   Breakfast: 'Nutrition',
@@ -100,6 +101,8 @@ const Today = ({ navigation, route }) => {
   useEffect(() => {
     if (userId) {
       dispatch(getHomeData(userId));
+      const res = dispatch(getFitness());
+      console.log('Fitness Data Response:', res);
       const combos = [
         { mealTime: 'Breakfast', cuisine: 'Indian' },
         { mealTime: 'Breakfast', cuisine: 'Global' },
