@@ -234,8 +234,10 @@ const Score = ({ navigation, route }) => {
               style={{
                 resizeMode: 'contain',
                 height: hp(2),
+                width: wp(6),
+                tintColor: '#FFFFFF',
 
-                marginLeft: hp(2),
+                // marginLeft: hp(2),
               }}
             />
 
@@ -288,9 +290,18 @@ const Score = ({ navigation, route }) => {
         <View
           style={{
             marginTop: hp(1),
-            marginHorizontal: hp(1.5),
-            elevation: 2,
+            // marginHorizontal: hp(1.5),
+            elevation: 0.5,
+            // padding: hp(2),
+            paddingVertical: hp(2),
+            margin: hp(1.5),
             backgroundColor: 'white',
+            marginTop: hp(2),
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            borderRadius: hp(1),
           }}
         >
           {convertVitalsToArray(health_metrics?.vitals)
@@ -329,26 +340,44 @@ const Score = ({ navigation, route }) => {
           </View>
         </View>
 
-        <TouchableOpacity
-          onPress={() => {
-            if (navigateTo == 'Home') {
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Home' }],
-              });
-            } else if (navigateTo == 'Mind') {
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Home' }],
-              });
-            } else {
-              navigation.navigate('Checkout');
-            }
+        <View
+          style={{
+            backgroundColor: 'white',
+            margin: hp(2),
+            marginBottom: hp(6),
+            // marginVertical: hp(1),
+            marginTop: hp(2),
+            borderRadius: hp(1),
+            paddingVertical: hp(1),
+            elevation: 1,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            // paddingBottom: hp(2),
           }}
-          style={styles.continueButton}
         >
-          <Text style={styles.continueText}>Continue</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              if (navigateTo == 'Home') {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Home' }],
+                });
+              } else if (navigateTo == 'Mind') {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Home' }],
+                });
+              } else {
+                navigation.navigate('Checkout');
+              }
+            }}
+            style={styles.continueButton}
+          >
+            <Text style={styles.continueText}>Continue</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   );
@@ -529,6 +558,10 @@ const styles = StyleSheet.create({
     borderRadius: hp(1),
     alignItems: 'center',
     marginVertical: hp(2),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   meter: { width: wp(70), height: wp(34), resizeMode: 'cover' },
   score: { fontSize: wp(10), fontWeight: 'bold', color: '#0047AB' },
@@ -561,9 +594,10 @@ const styles = StyleSheet.create({
   },
   reassessText: {
     fontFamily: 'Roboto-Regular',
-    color: '#fff',
-    fontWeight: '400',
-    marginRight: hp(6),
+    color: '#FFFFFF',
+    fontWeight: '800',
+    marginLeft: wp(3),
+    // marginRight: hp(6),
     fontSize: 15,
   },
   reassessNote: {
@@ -572,6 +606,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: hp(1),
     fontSize: 16,
+
     color: '#1E64AC',
     fontWeight: '400',
   },
@@ -591,6 +626,10 @@ const styles = StyleSheet.create({
     width: '48%',
     backgroundColor: '#FFFFFF',
     elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
     padding: wp(3),
     borderRadius: wp(2),
     // alignItems: 'center',
@@ -690,8 +729,8 @@ const styles = StyleSheet.create({
   },
 
   continueButton: {
-    marginTop: hp(4),
-    marginBottom: hp(6),
+    // marginTop: hp(4),
+    // marginBottom: hp(6),
     margin: wp(4),
     backgroundColor: '#1E64AC',
     paddingVertical: hp(1.5),
@@ -702,7 +741,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     color: '#fff',
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '800',
   },
   bottomText: {
     fontSize: 12,

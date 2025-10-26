@@ -8,25 +8,22 @@ import {
   Image,
   SafeAreaView,
 } from 'react-native';
-import React, {useState} from 'react';
-import {hp, wp, color, Images} from '../../utilities';
-import Header from '../../components/Header'
+import React, { useState } from 'react';
+import { hp, wp, color, Images } from '../../utilities';
+import Header from '../../components/Header';
 
-const Tobacco = ({navigation}) => {
+const Tobacco = ({ navigation }) => {
   const [yesterdayCount, setYesterdayCount] = useState('4');
   const [cigarettesPerDay, setCigarettesPerDay] = useState('20');
   const [yearsOfSmoking, setYearsOfSmoking] = useState('10');
 
   return (
     <>
-    <Header
-    
-    title={'Cuore Tobacco'}
-    navigation={navigation}
-    ></Header>
-      {/* <View
+      <View style={{ backgroundColor: 'white', flex: 1 }}>
+        <Header title={'Cuore Tobacco'} navigation={navigation}></Header>
+        {/* <View
         style={{
-          flexDirection: 'row',
+          flexDirection: 'row',x
           backgroundColor: '#FFFFFF',
           paddingTop: hp(2),
           elevation: 1,
@@ -46,194 +43,215 @@ const Tobacco = ({navigation}) => {
         </TouchableOpacity>
         <Text style={styles.title}></Text>
       </View> */}
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.box}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Image
-              style={{resizeMode: 'contain', width: wp(5), height: hp(3)}}
-              source={Images.WATCH}></Image>
-            <Text style={styles.daysText}>2 days tobacco-free</Text>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.box}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Image
+                style={{ resizeMode: 'contain', width: wp(5), height: hp(3) }}
+                source={Images.WATCH}
+              ></Image>
+              <Text style={styles.daysText}>2 days tobacco-free</Text>
+            </View>
+
+            <View style={styles.inputRow}>
+              <Text style={styles.label}>
+                Enter number of tobacco products or cigarettes used yesterday
+              </Text>
+              <TextInput
+                style={styles.inputSmall}
+                keyboardType="numeric"
+                value={yesterdayCount}
+                onChangeText={setYesterdayCount}
+              />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.levelText}>Level 1</Text>
+              <Image
+                style={{ resizeMode: 'contain', width: wp(9), height: hp(3.5) }}
+                source={Images.TROPHY}
+              ></Image>
+            </View>
           </View>
 
-          <View style={styles.inputRow}>
-            <Text style={styles.label}>
-              Enter number of tobacco products or cigarettes used yesterday
+          <View style={styles.quoteBox}>
+            <Text style={styles.quote}>
+              Your body starts healing the moment you stop smoking. Every breath
+              without smoke is a step toward renewal.
+            </Text>
+          </View>
+
+          <View
+            style={[styles.box, { backgroundColor: '#F5F5F5', elevation: 1 }]}
+          >
+            <Text
+              style={[
+                styles.sectionTitle,
+                {
+                  fontFamily: 'Roboto-Regular',
+                  fontSize: 20,
+                  fontWeight: '400',
+                  color: '#1E64AC',
+                },
+              ]}
+            >
+              Next Level Challenge
+            </Text>
+            <Text
+              style={[
+                styles.subText,
+                {
+                  fontFamily: 'Roboto-Regular',
+                  fontSize: 18,
+                  fontWeight: '400',
+                  color: '#000000',
+                  paddingVertical: hp(1),
+                },
+              ]}
+            >
+              It starts now—clear the path
+            </Text>
+            <Text
+              style={[
+                styles.detailText,
+                {
+                  fontFamily: 'Roboto-Regular',
+                  fontSize: 16,
+                  fontWeight: '400',
+                  color: '#000000',
+                },
+              ]}
+            >
+              Remove all tobacco, lighters, and reminders from your space
+            </Text>
+          </View>
+
+          <View style={styles.profileBox}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                {
+                  fontFamily: 'Roboto-Regular',
+                  fontSize: 18,
+                  fontWeight: '400',
+                  color: '#000000',
+                },
+              ]}
+            >
+              Your Smoking Profile
+            </Text>
+
+            <Text
+              style={[
+                styles.inputLabel,
+                {
+                  fontFamily: 'Roboto-Regular',
+                  marginBottom: hp(1),
+                  fontSize: 14,
+                  fontWeight: '400',
+                  color: '#374151',
+                },
+              ]}
+            >
+              Cigarettes per day
             </Text>
             <TextInput
-              style={styles.inputSmall}
+              style={styles.input}
               keyboardType="numeric"
-              value={yesterdayCount}
-              onChangeText={setYesterdayCount}
+              value={cigarettesPerDay}
+              onChangeText={setCigarettesPerDay}
+            />
+
+            <Text
+              style={[
+                styles.inputLabel,
+                { marginVertical: hp(2), color: '#374151' },
+              ]}
+            >
+              Years of smoking
+            </Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={yearsOfSmoking}
+              onChangeText={setYearsOfSmoking}
             />
           </View>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text style={styles.levelText}>Level 1</Text>
-            <Image
-              style={{resizeMode: 'contain', width: wp(9), height: hp(3.5)}}
-              source={Images.TROPHY}></Image>
+
+          <View style={styles.gridContainer}>
+            <View style={styles.gridBox}>
+              <Image
+                style={{
+                  resizeMode: 'contain',
+                  width: wp(5),
+                  height: hp(4),
+                  alignSelf: 'flex-start',
+                }}
+                source={Images.SOIL_WATCH}
+              ></Image>
+              <Text style={styles.gridLabel}>Years Lost</Text>
+              <Text style={styles.gridValueRed}>5 years</Text>
+            </View>
+
+            <View style={styles.gridBox}>
+              <Image
+                style={{
+                  resizeMode: 'contain',
+                  width: wp(5),
+                  height: hp(4),
+                  alignSelf: 'flex-start',
+                }}
+                source={Images.COIN}
+              ></Image>
+              <Text style={styles.gridLabel}>Money Spent</Text>
+              <Text style={styles.gridValue}>₹1,73,000</Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.quoteBox}>
-          <Text style={styles.quote}>
-            Your body starts healing the moment you stop smoking. Every breath
-            without smoke is a step toward renewal.
-          </Text>
-        </View>
-
-        <View style={[styles.box, {backgroundColor: '#F5F5F5', elevation: 1}]}>
           <Text
             style={[
               styles.sectionTitle,
               {
                 fontFamily: 'Roboto-Regular',
-                fontSize: 20,
-                fontWeight: '400',
+                fontSize: 18,
+                fontWeight: '500',
                 color: '#1E64AC',
               },
-            ]}>
-            Next Level Challenge
-          </Text>
-          <Text
-            style={[
-              styles.subText,
-              {
-                fontFamily: 'Roboto-Regular',
-                fontSize: 18,
-                fontWeight: '400',
-                color: '#000000',
-                paddingVertical: hp(1),
-              },
-            ]}>
-            It starts now—clear the path
-          </Text>
-          <Text
-            style={[
-              styles.detailText,
-              {
-                fontFamily: 'Roboto-Regular',
-                fontSize: 16,
-                fontWeight: '400',
-                color: '#000000',
-              },
-            ]}>
-            Remove all tobacco, lighters, and reminders from your space
-          </Text>
-        </View>
-
-        <View style={styles.profileBox}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              {
-                fontFamily: 'Roboto-Regular',
-                fontSize: 18,
-                fontWeight: '400',
-                color: '#000000',
-              },
-            ]}>
-            Your Smoking Profile
+            ]}
+          >
+            Benefits of Quitting Now
           </Text>
 
-          <Text
-            style={[
-              styles.inputLabel,
-              {
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '400',
-                color: '#000000',
-              },
-            ]}>
-            Cigarettes per day
-          </Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={cigarettesPerDay}
-            onChangeText={setCigarettesPerDay}
-          />
+          <View style={styles.gridContainer}>
+            <View style={styles.gridBox}>
+              <Image
+                style={{
+                  resizeMode: 'contain',
+                  width: wp(5),
+                  height: hp(4),
+                  alignSelf: 'flex-start',
+                }}
+                source={Images.HEART}
+              ></Image>
+              <Text style={styles.gridLabel}>Years Saved</Text>
+              <Text style={styles.gridValue}>5 years</Text>
+            </View>
 
-          <Text style={[styles.inputLabel, {marginVertical: hp(2)}]}>
-            Years of smoking
-          </Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={yearsOfSmoking}
-            onChangeText={setYearsOfSmoking}
-          />
-        </View>
-
-        <View style={styles.gridContainer}>
-          <View style={styles.gridBox}>
-            <Image
-              style={{
-                resizeMode: 'contain',
-                width: wp(5),
-                height: hp(4),
-                alignSelf: 'flex-start',
-              }}
-              source={Images.SOIL_WATCH}></Image>
-            <Text style={styles.gridLabel}>Years Lost</Text>
-            <Text style={styles.gridValueRed}>5 years</Text>
+            <View style={styles.gridBox}>
+              <Image
+                style={{
+                  resizeMode: 'contain',
+                  width: wp(5),
+                  height: hp(4),
+                  alignSelf: 'flex-start',
+                }}
+                source={Images.PIGIBACK}
+              ></Image>
+              <Text style={styles.gridLabel}>Money Saved</Text>
+              <Text style={styles.gridValue}>₹3,75,000</Text>
+            </View>
           </View>
-
-          <View style={styles.gridBox}>
-            <Image
-              style={{
-                resizeMode: 'contain',
-                width: wp(5),
-                height: hp(4),
-                alignSelf: 'flex-start',
-              }}
-              source={Images.COIN}></Image>
-            <Text style={styles.gridLabel}>Money Spent</Text>
-            <Text style={styles.gridValue}>₹1,73,000</Text>
-          </View>
-        </View>
-
-        <Text
-          style={[
-            styles.sectionTitle,
-            {
-              fontFamily: 'Roboto-Regular',
-              fontSize: 18,
-              fontWeight: '500',
-              color: '#1E64AC',
-            },
-          ]}>
-          Benefits of Quitting Now
-        </Text>
-
-        <View style={styles.gridContainer}>
-          <View style={styles.gridBox}>
-            <Image
-              style={{
-                resizeMode: 'contain',
-                width: wp(5),
-                height: hp(4),
-                alignSelf: 'flex-start',
-              }}
-              source={Images.HEART}></Image>
-            <Text style={styles.gridLabel}>Years Saved</Text>
-            <Text style={styles.gridValue}>5 years</Text>
-          </View>
-
-          <View style={styles.gridBox}>
-            <Image
-              style={{
-                resizeMode: 'contain',
-                width: wp(5),
-                height: hp(4),
-                alignSelf: 'flex-start',
-              }}
-              source={Images.PIGIBACK}></Image>
-            <Text style={styles.gridLabel}>Money Saved</Text>
-            <Text style={styles.gridValue}>₹3,75,000</Text>
-          </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </>
   );
 };

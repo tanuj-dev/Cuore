@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: hp(0.5),
+    borderRadius: hp(0.8),
     flexDirection: 'row',
     marginBottom: hp(2),
     padding: wp(2),

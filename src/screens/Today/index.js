@@ -30,7 +30,7 @@ import {
 import { getNourish, getBuilderItems } from '../../redux/slices';
 import SessionExpiredModal from '../../components/SessionExpired';
 import handleLoginRedirect from '../../utilities/Common';
-import { getFitness, getKnowledge } from '../../redux/slices';
+import { getFitness, getKnowledge, getMind } from '../../redux/slices';
 
 const routeMap = {
   Breakfast: 'Nutrition',
@@ -102,6 +102,7 @@ const Today = ({ navigation, route }) => {
     if (userId) {
       dispatch(getHomeData(userId));
       dispatch(getKnowledge(userId));
+      dispatch(getMind(userId));
       const res = dispatch(getFitness());
       console.log('Fitness Data Response:', res);
       const combos = [
@@ -237,7 +238,7 @@ const Today = ({ navigation, route }) => {
         style={styles.container}
       >
         <View style={styles.header}>
-          <Text style={styles.username}>M. Johnson</Text>
+          <Text style={styles.username}>Tanuj Prajapati</Text>
           <TouchableOpacity
             style={
               {
@@ -651,8 +652,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  username: { fontFamily: 'Roboto-Regular', fontSize: 17, fontWeight: '400' },
-  userIcon: { width: hp(3), height: hp(3.5), resizeMode: 'contain' },
+  username: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#4B5563',
+  },
+  userIcon: {
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    borderRadius: hp(5),
+    tintColor: '#1E64AC',
+    width: hp(3),
+    height: hp(3.5),
+    resizeMode: 'contain',
+  },
   tabs: {
     flexDirection: 'row',
     justifyContent: 'space-around',

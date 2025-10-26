@@ -6,13 +6,59 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { color, hp, wp, Images } from '../../utilities';
 import images from '../../utilities/Images';
+import GaugeMeter from '../../components/SpeedpMeter';
+import { useSelector, useDispatch } from 'react-redux';
+import { getMind } from '../../redux/slices';
 // import MindTab from '../../components/MindTab';
 // import {Ionicons} from '@expo/vector-icons';
 
 const Mind = ({ navigation }) => {
+  const [refreshing, setRefreshing] = React.useState(false);
+  const userId = useSelector(state => state.auth.userId);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    if (userId) {
+      dispatch(getMind(userId));
+    }
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, [dispatch, userId]);
+
+  const dispatch = useDispatch();
+  const { data, loading, error } = useSelector(state => state.mind);
+  console.log('Mind data from Redux:', data);
+
+  const morning = data?.data?.morningHarmony;
+  const evening = data?.data?.quietMind;
+
+  const colorSchemes = [
+    {
+      borderColor: '#3B82F6', // blue
+      backgroundColor: '#D8E0E8',
+    },
+    {
+      borderColor: '#14B8A6', // red
+      backgroundColor: '#D8E0E7', // light yellow
+    },
+    {
+      borderColor: '#A855F7', // green
+      backgroundColor: '#F0FDFA', // light green
+    },
+    {
+      borderColor: '#06B6D4', // yellow
+      backgroundColor: '#ECFEFF', // light yellow
+    },
+  ];
+
+  const randomScheme =
+    colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+
   return (
     <View style={{ flex: 1 }}>
       <View style={{ backgroundColor: '#FFFFFF', paddingVertical: hp(2) }}>
@@ -20,14 +66,16 @@ const Mind = ({ navigation }) => {
         <View
           style={{
             flexDirection: 'row',
-            marginTop: Platform.OS == 'ios' && hp(5),
+            marginTop: Platform.OS == 'ios' && hp(3),
+            paddingHorizontal: hp(1),
+            alignItems: 'center',
 
             // paddingTop: hp(2),
             elevation: 1,
           }}
         >
           <TouchableOpacity
-            style={{ paddingHorizontal: hp(1) }}
+            style={{ paddingHorizontal: hp(1), marginTop: hp(3) }}
             onPress={() => navigation.goBack()}
           >
             <Image
@@ -37,7 +85,7 @@ const Mind = ({ navigation }) => {
                 height: hp(3.5),
                 width: wp(4),
                 marginTop: hp(-1),
-                marginLeft: Platform.OS == 'ios' ? hp(1) : hp(0.2),
+                // marginLeft: Platform.OS == 'ios' ? hp(1) : hp(0.2),
               }}
               resizeMode="contain"
             />
@@ -45,7 +93,12 @@ const Mind = ({ navigation }) => {
           <Text style={styles.title}>Sleep & Stress</Text>
         </View>
       </View>
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.scoreContainer}>
           <View
             style={[
@@ -57,18 +110,20 @@ const Mind = ({ navigation }) => {
               // },
             ]}
           >
-            <Image
-              style={{ width: wp(45), height: hp(10), resizeMode: 'cover' }}
-              source={images.SCORE_METER}
-            ></Image>
+            <GaugeMeter
+              size={wp(32)}
+              value={data?.data?.sleepScore}
+              thickness={15}
+            />
             {/* <Text style={styles.scoreValue}>78</Text> */}
             <Text style={styles.scoreLabel}>Sleep Score</Text>
           </View>
           <View style={styles.scoreBox}>
-            <Image
-              style={{ width: wp(45), height: hp(10), resizeMode: 'cover' }}
-              source={images.SCORE_METER}
-            ></Image>
+            <GaugeMeter
+              size={wp(32)}
+              value={data?.data?.stressScore}
+              thickness={15}
+            />
             {/* <Text style={styles.scoreValue}>78</Text> */}
             <Text style={styles.scoreLabel}>Stress Score</Text>
           </View>
@@ -90,9 +145,9 @@ const Mind = ({ navigation }) => {
             style={{
               resizeMode: 'contain',
               width: wp(4),
-              height: hp(2),
-              marginLeft: hp(-1.8),
-              // tintColor: 'white',
+              height: hp(4),
+              // marginLeft: hp(-1.8),
+              tintColor: 'white',
             }}
           />
 
@@ -121,7 +176,7 @@ const Mind = ({ navigation }) => {
         </View>
 
         <View style={{ flexDirection: 'row', backgroundColor: '' }}>
-          {/* <Image
+          <Image
             source={Images.SUN} // Replace with actual key in your `images` object
             style={{
               //   marginLeft: hp(3),
@@ -131,91 +186,72 @@ const Mind = ({ navigation }) => {
               marginLeft: hp(-1.8),
               tintColor: 'white',
             }}
-          /> */}
+          />
           <Text style={[styles.sectionTitle, {}]}>
             {/* Morning Calm, Mental Clarity */}
             ☀️ Morning Calm, Mental Clarity
           </Text>
         </View>
-        <ScrollView horizontal={true}>
-          <View horizontal={true} style={styles.cardRow}>
-            <TouchableOpacity
-              // onPress={() => navigation.navigate('MindDetails')}
-              style={[
-                styles.activityCard,
-                {
-                  borderWidth: 1.5,
-                  borderColor: '#3B82F6',
-                  backgroundColor: '#D7DFE7',
-                },
-              ]}
-            >
-              <Text style={styles.cardTitle}>Body Scan</Text>
-              <Text style={styles.cardDesc}>Relax & ground yourself</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('MindDetails')}
-              style={[
-                styles.activityCard,
-                {
-                  borderWidth: 1.5,
-                  borderColor: '#14B8A6',
-                  backgroundColor: '#D7DFE7',
-                },
-              ]}
-            >
-              <Text style={styles.cardTitle}>Deep Breathing</Text>
-              <Text style={styles.cardDesc}>Calm the mind, boost focus</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              // onPress={() => navigation.navigate('MindDetails')}
-              style={[
-                styles.activityCard,
-                {
-                  borderWidth: 1.5,
-                  borderColor: '#3B82F6',
-                  backgroundColor: '#D7DFE7',
-                },
-              ]}
-            >
-              <Text style={styles.cardTitle}>Body Scan</Text>
-              <Text style={styles.cardDesc}>Relax & ground yourself</Text>
-            </TouchableOpacity>
-          </View>
+        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+            {morning.map((item, index) => {
+              const scheme = colorSchemes[index % colorSchemes.length];
+              return (
+                <View key={index} style={styles.cardRow}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate('MindDetails', {
+                        instructions: item?.instructions,
+                      })
+                    }
+                    style={[
+                      styles.activityCard,
+                      {
+                        borderWidth: 1.5,
+                        borderColor: scheme.borderColor,
+                        backgroundColor: scheme.backgroundColor,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.cardTitle}>{item?.title}</Text>
+                    <Text style={styles.cardDesc}>{item?.subtitle}</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </ScrollView>
         </ScrollView>
 
         {/* <Card  title={'Body Scan'} subtitle={'Relax & ground yourself'} ></Card> */}
 
         <Text style={styles.sectionTitle}>🌙 Quiet Mind, Restful Night</Text>
-        <ScrollView horizontal={true}>
-          <View style={styles.cardRow}>
-            <View
-              style={[
-                styles.activityCard,
-                {
-                  borderWidth: 1.5,
-                  borderColor: '#A855F7',
-                  backgroundColor: '#F0FDFA',
-                },
-              ]}
-            >
-              <Text style={styles.cardTitle}>4-7-8 Breathing</Text>
-              <Text style={styles.cardDesc}>Slow down, relax deeply</Text>
-            </View>
-            <View
-              style={[
-                styles.activityCard,
-                {
-                  borderWidth: 1.5,
-                  borderColor: '#06B6D4',
-                  backgroundColor: '#ECFEFF',
-                },
-              ]}
-            >
-              <Text style={styles.cardTitle}>Yog Nidra</Text>
-              <Text style={styles.cardDesc}>Enter deep, restful awareness</Text>
-            </View>
-          </View>
+        <ScrollView showsHorizontalScrollIndicator={false} horizontal={true}>
+          {evening.map((item, index) => {
+            const scheme = colorSchemes[index % colorSchemes.length];
+            return (
+              // console.log('Morning Item:', item),
+              <View key={index} horizontal={true} style={styles.cardRow}>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('MindDetails', {
+                      instructions: item?.instructions,
+                    })
+                  }
+                  style={[
+                    styles.activityCard,
+                    {
+                      borderWidth: 1.5,
+                      borderColor: scheme.borderColor,
+                      backgroundColor: scheme.backgroundColor,
+                    },
+                  ]}
+                >
+                  <Text style={styles.cardTitle}>{item?.title}</Text>
+                  <Text style={styles.cardDesc}>{item?.subtitle}</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
         </ScrollView>
 
         <Text style={styles.footerNote}>
@@ -235,7 +271,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Roboto-Regular',
-    marginTop: hp(1),
+    marginTop: hp(3),
     marginLeft: hp(11),
     fontSize: 20,
     fontWeight: '400',
@@ -281,7 +317,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#1E64AC',
-    padding: hp(1.2),
+    // padding: hp(1.2),
     borderRadius: wp(2),
     marginVertical: hp(2),
     width: wp(50),
@@ -289,7 +325,7 @@ const styles = StyleSheet.create({
   reassessText: {
     fontFamily: 'Roboto-Regular',
     color: '#FFFFFF',
-    fontWeight: '400',
+    fontWeight: '800',
     fontSize: 14,
     marginLeft: wp(1),
   },
@@ -325,6 +361,8 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   cardRow: {
+    // backgroundColor: 'red',
+    // width: wp(50),
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: hp(2),
@@ -334,8 +372,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#EAF5FF',
     padding: hp(1.5),
     height: hp(12),
+    width: wp(50),
     borderRadius: wp(2),
     marginHorizontal: wp(1),
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   cardTitle: {
     fontFamily: 'Roboto-Regular',
@@ -349,6 +393,7 @@ const styles = StyleSheet.create({
     marginTop: hp(1),
     fontWeight: '400',
     fontSize: 14,
+    marginTop: hp(2),
     color: '#4B5563',
   },
   footerNote: {

@@ -185,7 +185,10 @@ const Fitness = ({ navigation }) => {
   };
 
   return (
-    <ScrollView nestedScrollEnabled={true}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+      nestedScrollEnabled={true}
+    >
       {toast && (
         <ToastMessage
           top={hp(8)}

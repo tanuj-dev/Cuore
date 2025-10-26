@@ -83,3 +83,15 @@ export const getKnowledge = createAsyncThunk(
     }
   },
 );
+export const getMind = createAsyncThunk(
+  'mind/get',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await getApiCall(`/api/cuoremind/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get mind data failed:', error);
+      return rejectWithValue(error.response?.data || 'Something went wrong');
+    }
+  },
+);

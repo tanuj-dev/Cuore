@@ -30,7 +30,7 @@ const KnowledgeDetails = ({ navigation, route }) => {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: 'white' }}>
-      <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      <View style={{ flex: 1, backgroundColor: '#F9FAFB', height: hp(100) }}>
         <View
           style={{
             flexDirection: 'row',

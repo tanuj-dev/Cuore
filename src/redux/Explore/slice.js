@@ -3,6 +3,7 @@ import { getNourish, getRecipe } from './exploreThunk';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { getBuilderItems } from './exploreThunk';
 import { getKnowledge } from './exploreThunk';
+import { getMind } from './exploreThunk';
 
 export const nourishSlice = createSlice({
   name: 'nourishment',
@@ -88,6 +89,39 @@ export const knowledgeSlice = createSlice({
       .addCase(getKnowledge.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch knowledge data';
+      });
+  },
+});
+
+const initialStateMind = {
+  data: null,
+  loading: false,
+  error: null,
+};
+
+export const mindSlice = createSlice({
+  name: 'mind',
+  initialState: initialStateMind,
+  reducers: {
+    resetMindState: state => {
+      state.data = null;
+      state.loading = false;
+      state.error = null;
+    },
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(getMind.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getMind.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(getMind.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch mind data';
       });
   },
 });

@@ -16,6 +16,7 @@ import {
   getRecipe,
   adjustPortion,
   getKnowledge,
+  getMind,
 } from './Explore/exploreThunk';
 import { getFitness, updateFitnessTime } from './Fitness/fitnessThunk';
 export {
@@ -38,4 +39,5 @@ export {
   getFitness,
   getKnowledge,
   updateFitnessTime,
+  getMind,
 };

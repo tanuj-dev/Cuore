@@ -3,9 +3,9 @@ import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import Svg, { Path, Line, Circle, Text as SvgText } from 'react-native-svg';
 
-const GaugeMeter = ({ value = 50, size = 250 }) => {
+const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
   const radius = size / 2;
-  const strokeWidth = 20;
+  const strokeWidth = thickness;
   const center = radius;
   const needleLength = radius - strokeWidth;
 
@@ -55,9 +55,9 @@ const GaugeMeter = ({ value = 50, size = 250 }) => {
     <View style={styles.container}>
       <Svg width={size} height={radius + 40}>
         {/* Color Segments */}
-        {arcPath(180, 135, '#FC3A21')} {/* Red */}
-        {arcPath(135, 75, '#FF8D10')} {/* Orange */}
-        {arcPath(75, 0, '#15D270')} {/* Green */}
+        {arcPath(180, 98, '#FC3A21')} {/* Red */}
+        {arcPath(98, 55, '#FF8D10')} {/* Orange */}
+        {arcPath(55, 0, '#15D270')} {/* Green */}
         {/* Needle */}
         <Line
           x1={center}
@@ -75,6 +75,7 @@ const GaugeMeter = ({ value = 50, size = 250 }) => {
           fontSize="24"
           fill="#1E88E5"
           textAnchor="middle"
+          fontFamily="Roboto-Regular"
         >
           {Math.round(clampValue)}
         </SvgText>
@@ -99,7 +100,7 @@ const GaugeMeter = ({ value = 50, size = 250 }) => {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 20,
+    // marginVertical: 20,
   },
 });
 
