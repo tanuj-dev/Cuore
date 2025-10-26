@@ -8,9 +8,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  refreshControl,
+  RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { getKnowledge } from '../../redux/slices';
+// import { ScrollView } from 'react-native-gesture-handler';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 // import Icon from 'react-native-vector-icons/Ionicons';
 
 const articles = [
@@ -61,13 +67,22 @@ const articles = [
 const CuoreKnowledge = ({ navigation }) => {
   const [search, setSearch] = useState('');
 
+  const [refreshing, setRefreshing] = useState(false);
+  const dispatch = useDispatch();
+  const userId = useSelector(state => state.auth.userId);
   const knowledgeData = useSelector(state => state.knowledge.data?.data.cards);
   // const knowledgeData = data?.cards;
   console.log('Knowledge Data from Redux:', knowledgeData);
 
-  const filteredArticles = articles.filter(item =>
-    item.title.toLowerCase().includes(search.toLowerCase()),
-  );
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    if (userId) {
+      dispatch(getKnowledge(userId));
+    }
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, [dispatch, userId]);
 
   const renderItem = ({ item }) => (
     // console.log('Rendering item:', item),
@@ -92,47 +107,53 @@ const CuoreKnowledge = ({ navigation }) => {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#EFF6FF' }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          backgroundColor: '#FFFFFF',
-          paddingTop: hp(2),
-          elevation: 1,
-        }}
-      >
-        <TouchableOpacity
-          style={{ paddingHorizontal: hp(1) }}
-          onPress={() => navigation.goBack()}
+    <ScrollView
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+      style={{ flex: 1, backgroundColor: 'white' }}
+    >
+      <View style={{ flex: 1, backgroundColor: '#EFF6FF' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: '#FFFFFF',
+            paddingTop: hp(2),
+            elevation: 1,
+          }}
         >
-          <Image
-            source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-            style={{
-              marginTop: Platform.OS == 'ios' && hp(5),
-              resizeMode: 'contain',
-              height: hp(3.5),
-              width: wp(4),
-              marginLeft: Platform.OS == 'ios' ? hp(2) : hp(0.2),
-            }}
-          />
-        </TouchableOpacity>
-
-        {/* Header Icon */}
-        <View style={styles.headerIconContainer}>
-          <View
-            style={{ padding: hp(0.8), borderWidth: 3, borderRadius: hp(10) }}
+          <TouchableOpacity
+            style={{ paddingHorizontal: hp(1) }}
+            onPress={() => navigation.goBack()}
           >
-            <Image source={Images.DOCTOR_PROFILE} style={styles.headerIcon} />
+            <Image
+              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+              style={{
+                marginTop: Platform.OS == 'ios' && hp(5),
+                resizeMode: 'contain',
+                height: hp(3.5),
+                width: wp(4),
+                marginLeft: Platform.OS == 'ios' ? hp(2) : hp(0.2),
+              }}
+            />
+          </TouchableOpacity>
+
+          {/* Header Icon */}
+          <View style={styles.headerIconContainer}>
+            <View
+              style={{ padding: hp(0.8), borderWidth: 3, borderRadius: hp(10) }}
+            >
+              <Image source={Images.DOCTOR_PROFILE} style={styles.headerIcon} />
+            </View>
+            <Text style={styles.heading}>Recommended Articles</Text>
           </View>
-          <Text style={styles.heading}>Recommended Articles</Text>
+
+          {/* Heading */}
         </View>
 
-        {/* Heading */}
-      </View>
-
-      <View style={styles.container}>
-        {/* Search */}
-        {/* <View style={styles.searchContainer}>
+        <View style={styles.container}>
+          {/* Search */}
+          {/* <View style={styles.searchContainer}>
           <Image
             source={Images.SEARCH} // Replace with actual key in your `images` object
             style={{
@@ -154,19 +175,20 @@ const CuoreKnowledge = ({ navigation }) => {
           />
         </View> */}
 
-        {/* Info Text */}
-        {/* <Text style={styles.infoText}>Finish this set to unlock the next!</Text> */}
+          {/* Info Text */}
+          {/* <Text style={styles.infoText}>Finish this set to unlock the next!</Text> */}
 
-        {/* Article List */}
-        <FlatList
-          data={knowledgeData}
-          renderItem={renderItem}
-          keyExtractor={item => item._id}
-          contentContainerStyle={{ paddingBottom: hp(10) }}
-          showsVerticalScrollIndicator={false}
-        />
+          {/* Article List */}
+          <FlatList
+            data={knowledgeData}
+            renderItem={renderItem}
+            keyExtractor={item => item._id}
+            contentContainerStyle={{ paddingBottom: hp(10) }}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 

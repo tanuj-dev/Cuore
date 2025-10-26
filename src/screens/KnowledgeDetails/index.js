@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import RenderHTML from 'react-native-render-html';
 
 const KnowledgeDetails = ({ navigation, route }) => {
   const { details } = route.params || {};
@@ -61,20 +62,52 @@ const KnowledgeDetails = ({ navigation, route }) => {
         <View style={styles.container}>
           {/* <Text style={styles.title}>{article.title}</Text> */}
 
-          {details?.map((para, index) => (
-            <React.Fragment key={index}>
-              {(para?.children || []).map((child, cIndex) => (
-                <Text key={cIndex} style={styles.paragraph}>
-                  {child.text}
-                </Text>
-              ))}
-              {/* const children = details?.children || []; */}
-              {/* <Text key={index} style={styles.paragraph}>
-              {para}
-            </Text> */}
-            </React.Fragment>
-          ))}
-
+          <RenderHTML
+            // contentWidth={width}
+            source={{ html: details }}
+            baseStyle={styles.baseText}
+            tagsStyles={{
+              p: {
+                marginBottom: 10,
+                fontSize: 14,
+                color: '#4B5563',
+                lineHeight: 20,
+              },
+              ul: {
+                paddingLeft: 20,
+                marginBottom: 10,
+              },
+              ol: {
+                paddingLeft: 20,
+                marginBottom: 10,
+              },
+              li: {
+                marginBottom: 6,
+                fontSize: 14,
+                color: '#4B5563',
+              },
+              strong: {
+                fontWeight: 'bold',
+                color: '#111827',
+              },
+              em: {
+                fontStyle: 'italic',
+                color: '#6B7280',
+              },
+              h1: {
+                fontSize: 22,
+                fontWeight: '700',
+                marginBottom: 12,
+                color: '#ed7d31',
+              },
+              h3: {
+                fontSize: 16,
+                fontWeight: '600',
+                marginBottom: 8,
+                color: '#1F2937',
+              },
+            }}
+          />
           {/* <Text
           style={{
             fontFamily: 'Roboto-Regular',
@@ -125,7 +158,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     fontSize: 14,
     color: '#374151',
-    fontWeight: 'bold',
+    fontWeight: '400',
     marginBottom: hp(1.5),
     // display: 'fle6',
   },

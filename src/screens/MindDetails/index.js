@@ -144,10 +144,49 @@ const MindDetails = ({ navigation, route }) => {
           <View style={styles.descriptionBox}>
             <RenderHTML
               // contentWidth={width}
-              source={{
-                html: instructions || '<p>No instructions available.</p>',
+              source={{ html: instructions }}
+              baseStyle={styles.baseText}
+              tagsStyles={{
+                p: {
+                  marginBottom: 10,
+                  fontSize: 14,
+                  color: '#4B5563',
+                  lineHeight: 20,
+                },
+                ul: {
+                  paddingLeft: 20,
+                  marginBottom: 10,
+                },
+                ol: {
+                  paddingLeft: 20,
+                  marginBottom: 10,
+                },
+                li: {
+                  marginBottom: 6,
+                  fontSize: 14,
+                  color: '#4B5563',
+                },
+                strong: {
+                  fontWeight: 'bold',
+                  color: '#111827',
+                },
+                em: {
+                  fontStyle: 'italic',
+                  color: '#6B7280',
+                },
+                h1: {
+                  fontSize: 22,
+                  fontWeight: '700',
+                  marginBottom: 12,
+                  color: 'rgb(237, 125, 49)',
+                },
+                h3: {
+                  fontSize: 16,
+                  fontWeight: '600',
+                  marginBottom: 8,
+                  color: '#1F2937',
+                },
               }}
-              baseStyle={styles.descriptionText}
             />
           </View>
         </View>

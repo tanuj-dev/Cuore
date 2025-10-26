@@ -645,7 +645,7 @@ const Today = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
-    marginTop: Platform.OS == 'ios' && hp(5),
+    marginTop: Platform.OS == 'ios' ? hp(5) : hp(2),
     fontFamily: 'Roboto-Regular',
     padding: hp(1.5),
     flexDirection: 'row',
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
     color: '#4B5563',
   },
   userIcon: {
-    elevation: 1,
+    // elevation: 1,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
