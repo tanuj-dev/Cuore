@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { hp, wp, Images } from '../../utilities';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateFitnessTime } from '../../redux/slices';
+import ToastMessage from '../../components/Toast';
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -45,11 +47,34 @@ const WorkoutCard = ({
       style={[styles.card, { borderLeftColor: item?.color }]}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Image
+          style={{
+            resizeMode: 'contain',
+            height: hp(2),
+            width: wp(4),
+            tintColor: '#000000',
+          }}
+          source={Images.COIN}
+        />
         <Text style={styles.cardTitle}>{item?.title}</Text>
       </View>
-      <Text style={styles.cardDetail}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginTop: hp(0.7),
+        }}
+      >
+        <Text style={{ fontSize: 14, color: '#374151' }}>
+          Reps: {item?.reps}
+        </Text>
+        <Text style={{ fontSize: 14, color: '#374151' }}>
+          Sets: {item?.sets}
+        </Text>
+      </View>
+      {/* <Text style={styles.cardDetail}>
         {` Reps: ${item?.reps}       Sets: ${item?.sets}`}
-      </Text>
+      </Text> */}
 
       <Animated.View style={{ height: animatedHeight, overflow: 'hidden' }}>
         <View style={styles.expandedContent}>
@@ -93,7 +118,7 @@ const WorkoutCard = ({
                   tintColor: '#17AD8D',
                   marginRight: hp(1),
                 }}
-                source={Images.WATCH}
+                source={Images?.WATCH}
               />
               <Text
                 style={{
@@ -118,6 +143,9 @@ const Fitness = ({ navigation }) => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [time, setTime] = useState(new Date());
   const [expandedIndex, setExpandedIndex] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  const dispatch = useDispatch();
 
   const data = useSelector(state => state.fitness.data);
   const fitnessData = data?.schedule;
@@ -125,6 +153,21 @@ const Fitness = ({ navigation }) => {
   const onChangeTime = (event, selectedTime) => {
     setShowTimePicker(false);
     if (selectedTime) setTime(selectedTime);
+  };
+
+  const handleUpdateTime = async () => {
+    const formattedTime = formatTime(time);
+    const formData = {
+      preferred_ex_time: formattedTime,
+    };
+    const res = await dispatch(updateFitnessTime(formData));
+    console.log('Update Time Response:', res);
+
+    if (res?.payload?.status) {
+      setToast('Preferred exercise time updated successfully!');
+    } else {
+      setToast('Failed to update preferred exercise time. Please try again.');
+    }
   };
 
   useEffect(() => {
@@ -142,7 +185,15 @@ const Fitness = ({ navigation }) => {
   };
 
   return (
-    <ScrollView>
+    <ScrollView nestedScrollEnabled={true}>
+      {toast && (
+        <ToastMessage
+          top={hp(8)}
+          message={toast}
+          type="success"
+          onHide={() => setToast(null)}
+        />
+      )}
       <View style={{ flex: 1, backgroundColor: '#F6F5FF', height: '100%' }}>
         <View style={{ backgroundColor: '#FFFFFF' }}>
           <View
@@ -150,6 +201,8 @@ const Fitness = ({ navigation }) => {
               flexDirection: 'row',
               marginTop: Platform.OS === 'ios' && hp(5),
               paddingTop: hp(2),
+              alignItems: 'center',
+              // justifyContent: 'center',
               elevation: 1,
             }}
           >
@@ -160,6 +213,7 @@ const Fitness = ({ navigation }) => {
               <Image
                 source={Images.BACK_BUTTON}
                 style={{
+                  marginLeft: wp(1),
                   resizeMode: 'contain',
                   height: hp(3.5),
                   width: wp(4),
@@ -226,13 +280,16 @@ const Fitness = ({ navigation }) => {
                   resizeMode: 'contain',
                   height: hp(2),
                   width: wp(5),
-                  tintColor: '#000000',
+                  tintColor: '#8F8F8F',
                 }}
                 source={Images.WATCH}
               />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.updateBtn}>
+            <TouchableOpacity
+              onPress={handleUpdateTime}
+              style={styles.updateBtn}
+            >
               <Text
                 style={{
                   fontFamily: 'Roboto-Regular',
@@ -257,14 +314,14 @@ const Fitness = ({ navigation }) => {
           </View>
 
           <View style={styles.innerShadowContainer}>
-            <ScrollView
+            <View
               style={{
                 paddingHorizontal: hp(1),
                 paddingVertical: hp(0.5),
               }}
             >
-              <View style={{ flexDirection: 'row', width: '60%' }}>
-                {days.map(day => (
+              <View style={{ flexDirection: 'row' }}>
+                {days.map((day, index) => (
                   <TouchableOpacity
                     key={day}
                     onPress={() => {
@@ -282,12 +339,13 @@ const Fitness = ({ navigation }) => {
                         selectedDay === day && styles.selectedDayText,
                       ]}
                     >
-                      {`${day}   .   `}
+                      {day}
+                      {index !== days.length - 1 && '   .   '}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-            </ScrollView>
+            </View>
           </View>
 
           <FlatList
@@ -325,7 +383,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Roboto-Regular',
     marginTop: hp(1),
-    marginLeft: hp(13),
+    marginLeft: hp(12),
     fontSize: 20,
     fontWeight: '400',
     marginBottom: hp(2),
@@ -369,6 +427,13 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderRadius: 10,
     backgroundColor: '#FAFAFA',
+
+    // Floating effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1, // Android
   },
   cardTitle: {
     fontFamily: 'Roboto-Regular',
@@ -430,7 +495,7 @@ const styles = StyleSheet.create({
   innerShadowContainer: {
     position: 'relative',
     backgroundColor: '#fff',
-    // overflow: 'hidden', // important to keep shadows inside
+    overflow: 'hidden', // important to keep shadows inside
   },
   shadowTop: {
     // position: 'absolute',

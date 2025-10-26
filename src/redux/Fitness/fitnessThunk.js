@@ -14,3 +14,18 @@ export const getFitness = createAsyncThunk(
     }
   },
 );
+export const updateFitnessTime = createAsyncThunk(
+  'fitness/updateTime',
+  async (time, { rejectWithValue }) => {
+    try {
+      const response = await putApiCall(
+        EndPoints.UPDATE_FITNESS_TIME,
+        time, // expected format: '07:30 AM' or ISO string
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Update fitness time failed:', error);
+      return rejectWithValue(error.response?.data || 'Something went wrong');
+    }
+  },
+);

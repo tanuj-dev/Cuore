@@ -56,6 +56,7 @@ const Recipe = ({ navigation, route }) => {
             color: '#6B7280',
             textAlign: 'center',
             lineHeight: 20,
+            fontFamily: 'Roboto-Regular',
           }}
         >
           We couldn’t find a recipe for this particular dish. Please try another
@@ -145,6 +146,7 @@ const Recipe = ({ navigation, route }) => {
                       marginVertical: hp(1),
                       fontWeight: 'bold',
                       color: '#1E64AC',
+                      fontFamily: 'Roboto-Regular',
                     }}
                   >
                     {step?.heading}
@@ -198,10 +200,11 @@ const styles = StyleSheet.create({
   measurements: {
     textAlign: 'center',
     fontSize: 14,
+    fontWeight: '800',
     fontFamily: 'Roboto-Regular',
     color: '#4B5563',
     // marginBottom: hp(2),
-    fontWeight: '400',
+    // fontWeight: '400',
   },
   card: {
     padding: wp(4),
@@ -222,7 +225,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     // marginBottom: hp(5),
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: hp(2),
     fontFamily: 'Roboto-Regular',
   },
@@ -232,7 +235,7 @@ const styles = StyleSheet.create({
     marginBottom: hp(0.5),
     fontFamily: 'Roboto-Regular',
     color: '#1E64AC',
-    fontWeight: '400',
+    fontWeight: '500',
   },
   controls: {
     marginTop: hp(3),

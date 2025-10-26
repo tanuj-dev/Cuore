@@ -17,6 +17,7 @@ const Endpoints = {
   GET_BUILDER_ITEMS: '/api/builder/items',
   ADJUST_PORTION: '/api/builder/adjust-portions',
   GET_FITNESS: '/api/fitness/fitness-plan',
+  UPDATE_FITNESS_TIME: '/api/fitness/update-ex-time',
 };
 
 export default Endpoints;

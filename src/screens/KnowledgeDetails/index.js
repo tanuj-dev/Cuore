@@ -8,8 +8,12 @@ import {
   Image,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const KnowledgeDetails = ({ navigation }) => {
+const KnowledgeDetails = ({ navigation, route }) => {
+  const { details } = route.params || {};
+
+  console.log('Knowledge Details:', details);
   const [selectedOption, setSelectedOption] = useState(null);
 
   // 🔽 Local dynamic data
@@ -18,12 +22,6 @@ const KnowledgeDetails = ({ navigation }) => {
     content: [
       'Coronary artery disease is highly prevalent in Indians, despite low cholesterol and traditional risk factors. Over 50% of coronary artery disease-related deaths in India occur before the age of 50.',
     ],
-    quiz: {
-      question:
-        'What percentage of coronary artery disease-related deaths occur before age 50?',
-      options: ['30%', '40%', '50%', '60%'],
-      correctAnswer: '50%',
-    },
   };
 
   const handleOptionSelect = option => {
@@ -31,75 +29,53 @@ const KnowledgeDetails = ({ navigation }) => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          backgroundColor: '#FFFFFF',
-          paddingVertical: Platform.OS === 'ios' ? hp(4) : hp(3),
-          elevation: 2,
-          alignItems: 'center',
-        }}
-      >
-        <TouchableOpacity
+    <ScrollView style={{ flex: 1, backgroundColor: 'white' }}>
+      <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+        <View
           style={{
-            marginTop: Platform.OS === 'ios' ? hp(4) : hp(0),
-            paddingHorizontal: hp(2),
+            flexDirection: 'row',
+            backgroundColor: '#FFFFFF',
+            paddingVertical: Platform.OS === 'ios' ? hp(3) : hp(3),
+            elevation: 2,
+            alignItems: 'center',
           }}
-          onPress={() => navigation.goBack()}
         >
-          <Image
-            source={Images.BACK_BUTTON}
+          <TouchableOpacity
             style={{
-              resizeMode: 'contain',
-              marginLeft: Platform.OS === 'ios' ? hp(0) : hp(0.2),
-              height: hp(3),
-              width: wp(4),
+              marginTop: Platform.OS === 'ios' ? hp(4) : hp(0),
+              paddingHorizontal: hp(2),
             }}
-          />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.container}>
-        <Text style={styles.title}>{article.title}</Text>
+            onPress={() => navigation.goBack()}
+          >
+            <Image
+              source={Images.BACK_BUTTON}
+              style={{
+                resizeMode: 'contain',
+                marginLeft: Platform.OS === 'ios' ? hp(0) : hp(0.2),
+                height: hp(3),
+                width: wp(4),
+              }}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.container}>
+          {/* <Text style={styles.title}>{article.title}</Text> */}
 
-        {article.content.map((para, index) => (
-          <Text key={index} style={styles.paragraph}>
-            {para}
-          </Text>
-        ))}
+          {details?.map((para, index) => (
+            <React.Fragment key={index}>
+              {(para?.children || []).map((child, cIndex) => (
+                <Text key={cIndex} style={styles.paragraph}>
+                  {child.text}
+                </Text>
+              ))}
+              {/* const children = details?.children || []; */}
+              {/* <Text key={index} style={styles.paragraph}>
+              {para}
+            </Text> */}
+            </React.Fragment>
+          ))}
 
-        {article.quiz && (
-          <View style={styles.quizContainer}>
-            <Text style={styles.quizTitle}>Quick Quiz</Text>
-            <Text style={styles.quizQuestion}>{article.quiz.question}</Text>
-
-            {article.quiz.options.map((option, index) => {
-              const isCorrect = option === article.quiz.correctAnswer;
-              const isSelected = selectedOption === option;
-              const showResult = selectedOption !== null;
-
-              let optionStyle = styles.option;
-              if (showResult && isCorrect) optionStyle = styles.correctOption;
-              else if (showResult && isSelected && !isCorrect)
-                optionStyle = styles.incorrectOption;
-              else if (isSelected) optionStyle = styles.selectedOption;
-
-              return (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => handleOptionSelect(option)}
-                  style={optionStyle}
-                >
-                  <Text style={styles.optionText}>
-                    {option}
-                    {showResult && isCorrect ? '  ✓ (Correct Answer!)' : ''}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-        <Text
+          {/* <Text
           style={{
             fontFamily: 'Roboto-Regular',
             fontWeight: '400',
@@ -124,9 +100,10 @@ const KnowledgeDetails = ({ navigation }) => {
           Cardiovascular diseases and their risk factors are rapidly increasing,
           especially in urban areas, but rural populations are also seeing a
           worrying rise.
-        </Text>
+        </Text> */}
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -148,8 +125,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     fontSize: 14,
     color: '#374151',
-    fontWeight: '400',
+    fontWeight: 'bold',
     marginBottom: hp(1.5),
+    // display: 'fle6',
   },
   quizContainer: {
     backgroundColor: '#EFF6FF',

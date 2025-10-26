@@ -30,7 +30,7 @@ import {
 import { getNourish, getBuilderItems } from '../../redux/slices';
 import SessionExpiredModal from '../../components/SessionExpired';
 import handleLoginRedirect from '../../utilities/Common';
-import { getFitness } from '../../redux/slices';
+import { getFitness, getKnowledge } from '../../redux/slices';
 
 const routeMap = {
   Breakfast: 'Nutrition',
@@ -101,6 +101,7 @@ const Today = ({ navigation, route }) => {
   useEffect(() => {
     if (userId) {
       dispatch(getHomeData(userId));
+      dispatch(getKnowledge(userId));
       const res = dispatch(getFitness());
       console.log('Fitness Data Response:', res);
       const combos = [
@@ -237,7 +238,18 @@ const Today = ({ navigation, route }) => {
       >
         <View style={styles.header}>
           <Text style={styles.username}>M. Johnson</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Health')}>
+          <TouchableOpacity
+            style={
+              {
+                // shadowColor: '#000',
+                // shadowOpacity: 0.1,
+                // shadowOffset: { width: 0, height: 2 },
+                // shadowRadius: 4,
+                // elevation: 1,
+              }
+            }
+            onPress={() => navigation.navigate('Health')}
+          >
             <Image source={Images.DOCTOR_PROFILE} style={styles.userIcon} />
           </TouchableOpacity>
         </View>
@@ -664,7 +676,7 @@ const styles = StyleSheet.create({
   progressTitle: {
     // marginLeft: hp(1),
     fontFamily: 'Roboto-Regular',
-    fontWeight: '400',
+    fontWeight: '800',
     color: '#18202B',
     alignSelf: 'center',
     textAlign: 'center',
@@ -783,13 +795,13 @@ const styles = StyleSheet.create({
     right: wp(5),
     zIndex: 999, // ensure it's above everything else
     // backgroundColor: 'red',
-    padding: hp(1),
-    borderRadius: 8,
+    // padding: hp(1),
+    // borderRadius: 8,
     // shadowColor: '#000',
     // shadowOpacity: 0.1,
-    // shadowOffset: {width: 0, height: 2},
+    // shadowOffset: { width: 0, height: 2 },
     // shadowRadius: 4,
-    // elevation: 5,
+    // elevation: 1,
   },
   floatingTextLabel: {
     fontSize: 14,

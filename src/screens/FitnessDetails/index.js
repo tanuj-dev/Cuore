@@ -13,7 +13,7 @@ import { Space } from 'lucide-react-native';
 // import {Ionicons} from '@expo/vector-icons';
 
 const FitnessDetails = ({ navigation, route }) => {
-  const { instruction } = route.params;
+  const { instruction } = route?.params;
   console.log('Instructions:', instruction);
 
   return (
@@ -38,6 +38,8 @@ const FitnessDetails = ({ navigation, route }) => {
               source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
               style={{
                 resizeMode: 'contain',
+                marginTop: hp(0.5),
+                marginLeft: wp(1),
                 height: hp(3.5),
                 width: wp(4),
               }}
@@ -53,7 +55,7 @@ const FitnessDetails = ({ navigation, route }) => {
         <View style={styles.videoContainer}>
           <Video
             source={{
-              uri: 'https://www.shutterstock.com/shutterstock/videos/1054650107/preview/stock-footage-humor-in-sports-fat-african-american-lazy-guy-resting-on-couch-while-his-clumsy-funny-friend-doing.webm',
+              uri: 'https://www.shutterstock.com/shutterstock/videos/1054650107/preview/stock-footage-humor-in-sports-fat-african-american-lazy-guy-resting-on-couch-while-his-clumsy-funny-friend-doing.mp4',
             }}
             style={styles.video}
             controls
@@ -182,6 +184,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: wp(4),
     borderRadius: wp(2),
+    // Floating effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1, // Android
   },
   instructionsTitle: {
     fontFamily: 'Roboto-Regular',

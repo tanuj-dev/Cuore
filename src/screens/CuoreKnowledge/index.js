@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
+import { useSelector } from 'react-redux';
 // import Icon from 'react-native-vector-icons/Ionicons';
 
 const articles = [
@@ -60,19 +61,32 @@ const articles = [
 const CuoreKnowledge = ({ navigation }) => {
   const [search, setSearch] = useState('');
 
+  const knowledgeData = useSelector(state => state.knowledge.data?.data.cards);
+  // const knowledgeData = data?.cards;
+  console.log('Knowledge Data from Redux:', knowledgeData);
+
   const filteredArticles = articles.filter(item =>
     item.title.toLowerCase().includes(search.toLowerCase()),
   );
 
   const renderItem = ({ item }) => (
+    // console.log('Rendering item:', item),
     <TouchableOpacity
-      onPress={() => navigation.navigate('KnowledgeDetails')}
+      onPress={() =>
+        navigation.navigate('KnowledgeDetails', {
+          details: item?.details || null,
+        })
+      }
       style={styles.card}
     >
-      <Image source={item.image} style={styles.image} />
+      <Image source={Images.KNOWLEDGE_5} style={styles.image} />
       <View style={styles.textContainer}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.description}>{item.description}</Text>
+        <Text numberOfLines={2} style={styles.title}>
+          {item.title}
+        </Text>
+        <Text numberOfLines={2} style={styles.description}>
+          {item.subtitle}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -145,9 +159,9 @@ const CuoreKnowledge = ({ navigation }) => {
 
         {/* Article List */}
         <FlatList
-          data={filteredArticles}
+          data={knowledgeData}
           renderItem={renderItem}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item._id}
           contentContainerStyle={{ paddingBottom: hp(10) }}
           showsVerticalScrollIndicator={false}
         />
@@ -225,6 +239,11 @@ const styles = StyleSheet.create({
     padding: wp(2),
     // paddingVertical: hp(),
     elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    // elevation: 1, // Android
   },
   image: {
     width: wp(18),
@@ -244,7 +263,8 @@ const styles = StyleSheet.create({
   },
   description: {
     fontFamily: 'Roboto-Regular',
-    fontSize: 13,
+    fontSize: 14,
+    marginTop: hp(1),
     color: '#6B7280',
     marginTop: hp(0.5),
     fontWeight: '400',

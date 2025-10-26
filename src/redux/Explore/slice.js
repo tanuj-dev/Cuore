@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { getNourish, getRecipe } from './exploreThunk';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { getBuilderItems } from './exploreThunk';
+import { getKnowledge } from './exploreThunk';
 
 export const nourishSlice = createSlice({
   name: 'nourishment',
@@ -55,6 +56,38 @@ export const builderSlice = createSlice({
         const key = `${mealTime}_${cuisine}`;
         state.loadingByCombo[key] = false;
         state.errorByCombo[key] = action.payload;
+      });
+  },
+});
+const initialState = {
+  data: null,
+  loading: false,
+  error: null,
+};
+
+export const knowledgeSlice = createSlice({
+  name: 'knowledge',
+  initialState,
+  reducers: {
+    resetKnowledgeState: state => {
+      state.data = null;
+      state.loading = false;
+      state.error = null;
+    },
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(getKnowledge.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getKnowledge.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(getKnowledge.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch knowledge data';
       });
   },
 });

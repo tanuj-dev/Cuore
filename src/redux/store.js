@@ -10,7 +10,7 @@ import {
 import { fitnessSlice } from './Fitness/slice';
 
 import { homeSlice } from './Home/slice';
-import { nourishSlice, builderSlice } from './Explore/slice';
+import { nourishSlice, builderSlice, knowledgeSlice } from './Explore/slice';
 const store = configureStore({
   reducer: {
     auth: authSlices.auth,
@@ -24,6 +24,7 @@ const store = configureStore({
     nourish: nourishSlice.reducer,
     builder: builderSlice.reducer,
     fitness: fitnessSlice.reducer,
+    knowledge: knowledgeSlice.reducer,
   },
 });
 

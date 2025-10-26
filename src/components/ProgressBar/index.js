@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import images from '../../utilities/Images';
-import { hp } from '../../utilities';
+import { hp, wp } from '../../utilities';
 
 const ProgressBarWithImage = ({ navigation, data }) => {
   console.log('ProgressBar data:', data);
@@ -32,18 +32,29 @@ const ProgressBarWithImage = ({ navigation, data }) => {
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate('Score')}
-          style={
-            {
-              // zIndex: 10000,
-              // position: 'absolute',
-              // backgroundColor: 'red',
-              // right: hp(10),
-            }
-          }
+          style={{
+            position: 'absolute',
+            bottom: hp(2.5), // distance from bottom
+            // right: wp(5), // distance from right
+            zIndex: 1000,
+            elevation: 5, // Android shadow
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            backgroundColor: '#FFFFFF',
+            borderRadius: hp(5), // make it circular
+            padding: hp(0.5),
+          }}
         >
           <Image
-            source={images.UNCLE} // Replace with actual image or local asset
-            style={[styles.profileImage]}
+            source={images.UNCLE}
+            style={{
+              height: hp(3),
+              width: hp(3),
+              borderRadius: hp(3),
+              resizeMode: 'cover',
+            }}
           />
         </TouchableOpacity>
 
@@ -73,14 +84,14 @@ const styles = StyleSheet.create({
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 8,
+    paddingBottom: 15,
     paddingHorizontal: hp(2),
   },
   label: {
     fontFamily: 'Roboto-Regular',
     color: '#4B5563',
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '600',
   },
   progressContainer: {
     position: 'relative',
@@ -109,7 +120,7 @@ const styles = StyleSheet.create({
   percentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 15,
     // alignItems: 'flex-start',
   },
   percentText: {
@@ -117,7 +128,7 @@ const styles = StyleSheet.create({
     // marginRight: 50,
     fontSize: 14,
     color: '#4B5563',
-    fontWeight: '400',
+    fontWeight: '600',
   },
   centerIndicator: {
     marginHorizontal: hp(12),

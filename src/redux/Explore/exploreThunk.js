@@ -70,3 +70,16 @@ export const adjustPortion = createAsyncThunk(
     }
   },
 );
+
+export const getKnowledge = createAsyncThunk(
+  'knowledge/get',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await getApiCall(`/api/knowledge/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get knowledge failed:', error);
+      return rejectWithValue(error.response?.data || 'Something went wrong');
+    }
+  },
+);
