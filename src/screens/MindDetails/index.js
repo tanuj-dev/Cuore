@@ -7,39 +7,56 @@ import {
   Image,
   Platform,
   ScrollView,
-  RefreshControl,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Sound from 'react-native-sound';
 import { hp, wp, color, Images } from '../../utilities';
 import RenderHTML from 'react-native-render-html';
-import { Scroll } from 'lucide-react-native';
+import { useWindowDimensions } from 'react-native';
 
 const MindDetails = ({ navigation, route }) => {
-  const { instructions } = route.params;
-  console.log('Mind Details Instructions:', instructions);
-  const [value, setValue] = useState(50);
+  const { instructions, audio } = route.params;
+  const { width } = useWindowDimensions();
+
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
 
+  // Load sound and get duration
   useEffect(() => {
     Sound.setCategory('Playback');
-    const breathingSound = new Sound(
-      // require('../../assets/audio/JB.mp3'),
-      Sound.MAIN_BUNDLE,
-      error => {
-        if (error) {
-          console.log('Failed to load sound', error);
-          return;
-        }
-        setSound(breathingSound);
-      },
-    );
+
+    const breathingSound = new Sound(audio, Sound.MAIN_BUNDLE, error => {
+      if (error) {
+        console.log('Failed to load sound', error);
+        return;
+      }
+      setSound(breathingSound);
+      setAudioDuration(breathingSound.getDuration());
+    });
 
     return () => {
       breathingSound.release();
     };
-  }, []);
+  }, [audio]);
+
+  // Track current time
+  useEffect(() => {
+    let interval = null;
+
+    if (sound && isPlaying) {
+      interval = setInterval(() => {
+        sound.getCurrentTime(seconds => {
+          setCurrentTime(seconds);
+        });
+      }, 500);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [sound, isPlaying]);
 
   const handlePlayPause = () => {
     if (!sound) return;
@@ -58,6 +75,12 @@ const MindDetails = ({ navigation, route }) => {
     }
   };
 
+  const formatTime = seconds => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: 'white' }}>
       <View style={styles.container}>
@@ -67,7 +90,7 @@ const MindDetails = ({ navigation, route }) => {
             style={{
               flexDirection: 'row',
               paddingHorizontal: hp(1),
-              marginTop: Platform.OS === 'ios' && hp(3),
+              marginTop: Platform.OS === 'ios' ? hp(3) : 0,
               paddingTop: hp(2),
             }}
           >
@@ -89,23 +112,12 @@ const MindDetails = ({ navigation, route }) => {
         </View>
 
         <View style={{ padding: hp(1.5) }}>
-          {/* Video Box */}
+          {/* Audio Box */}
           <View style={styles.videoBox}>
             <View style={styles.videoControls}>
               <TouchableOpacity onPress={handlePlayPause}>
                 <Image
                   source={isPlaying ? Images.PAUSE : Images.PLAY}
-                  style={{
-                    resizeMode: 'contain',
-                    height: hp(3),
-                    width: wp(5),
-                    tintColor: '#000000',
-                  }}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Image
-                  source={Images.START}
                   style={{
                     resizeMode: 'contain',
                     height: hp(3),
@@ -120,10 +132,10 @@ const MindDetails = ({ navigation, route }) => {
               <Slider
                 style={{ width: '100%', height: 20 }}
                 minimumValue={0}
-                maximumValue={100}
+                maximumValue={audioDuration}
                 step={1}
-                value={value}
-                onValueChange={setValue}
+                value={currentTime}
+                onValueChange={setCurrentTime}
                 minimumTrackTintColor="black"
                 maximumTrackTintColor="white"
                 thumbTintColor="black"
@@ -134,8 +146,8 @@ const MindDetails = ({ navigation, route }) => {
                   justifyContent: 'space-between',
                 }}
               >
-                <Text>1:23</Text>
-                <Text>4:56</Text>
+                <Text>{formatTime(currentTime)}</Text>
+                <Text>{formatTime(audioDuration)}</Text>
               </View>
             </View>
           </View>
@@ -143,9 +155,9 @@ const MindDetails = ({ navigation, route }) => {
           {/* Description */}
           <View style={styles.descriptionBox}>
             <RenderHTML
-              // contentWidth={width}
+              contentWidth={width}
               source={{ html: instructions }}
-              baseStyle={styles.baseText}
+              baseStyle={styles.descriptionText}
               tagsStyles={{
                 p: {
                   marginBottom: 10,
@@ -246,19 +258,5 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     marginBottom: hp(1.5),
     fontWeight: '400',
-  },
-  stepTitle: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
-    fontWeight: '400',
-    marginBottom: hp(1),
-    color: '#4B5563',
-  },
-  stepText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#4B5563',
-    marginBottom: hp(1),
   },
 });
