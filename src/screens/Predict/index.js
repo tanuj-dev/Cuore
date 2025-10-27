@@ -119,7 +119,7 @@ const Predict = ({ navigation }) => {
       >
         <View
           style={{
-            marginTop: Platform.OS == 'ios' && hp(6),
+            marginTop: Platform.OS == 'ios' ? hp(6) : hp(3),
 
             flexDirection: 'row',
             alignItems: 'center',
@@ -258,6 +258,7 @@ const Predict = ({ navigation }) => {
                       width: wp(4),
                       height: hp(2.2),
                       marginRight: hp(1),
+                      tintColor: 'white',
                     }}
                     source={Images.EDIT}
                   ></Image>
