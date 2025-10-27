@@ -217,18 +217,19 @@ const Today = ({ navigation, route }) => {
         onLogin={handleLoginRedirect}
       />
     );
-  } else if (!data) {
-    return (
-      <ApiErrorFallback
-        message="No data available at the moment."
-        onRetry={() => {
-          if (userId) {
-            dispatch(getHomeData(userId));
-          }
-        }}
-      />
-    );
   }
+  //  else if (!data) {
+  //   return (
+  //     <ApiErrorFallback
+  //       message="No data available at the moment."
+  //       onRetry={as() => {
+  //         if (userId) {
+  //           dispatch(getHomeData(userId));
+  //         }
+  //       }}
+  //     />
+  //   );
+  // }
 
   return (
     <View style={{ flex: 1 }}>
@@ -467,11 +468,9 @@ const Today = ({ navigation, route }) => {
                     >
                       <Image
                         style={{
-                          // width: alarmTime ? hp(0) : hp(2),
-                          // backgroundColor: 'red',
                           height: hp(2),
                           resizeMode: 'contain',
-                          marginLeft: -hp(5),
+                          marginLeft: -hp(6),
                         }}
                         source={Images?.NOTIFICATION}
                       />
@@ -488,9 +487,10 @@ const Today = ({ navigation, route }) => {
                         <Image
                           style={{
                             height: hp(2),
+                            width: hp(2),
                             // backgroundColor: 'red',
                             resizeMode: 'contain',
-                            marginLeft: -hp(3),
+                            // marginLeft: -hp(3),
                           }}
                           source={Images.EDIT}
                         />

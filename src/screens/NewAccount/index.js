@@ -44,18 +44,12 @@ const CreateAccountScreen = () => {
 
   const handleCreateAccount = async () => {
     // 🔹 Basic validations
-    if (!fullName.trim() || !mobileNumber.trim() || !familyNumber.trim()) {
+    if (!fullName.trim() || !mobileNumber.trim()) {
       Alert.alert('Missing Fields', 'Please fill all required fields.');
       return;
     } else if (fullName.trim().length < 3) {
       setToast({
         message: 'Full name must be at least 3 characters long',
-        type: 'error',
-      });
-      return;
-    } else if (familyNumber.trim().length < 10) {
-      setToast({
-        message: 'Family member number must be at least 10 digits long',
         type: 'error',
       });
       return;

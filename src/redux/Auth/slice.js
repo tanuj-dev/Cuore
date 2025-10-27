@@ -16,6 +16,17 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    setUserData: (state, action) => {
+      const { accessToken, refreshToken, userId, expiresIn, newUser } =
+        action.payload;
+      state.accessToken = accessToken;
+      state.refreshToken = refreshToken;
+      state.userId = userId;
+      state.expiresIn = expiresIn;
+      state.newUser = newUser;
+      state.error = null;
+    },
+
     logout: state => {
       Object.assign(state, initialState);
     },
@@ -79,23 +90,10 @@ const userDataInitialState = {
   user: null, // will hold user info after login/signup
 };
 
-export const userDataSlice = createSlice({
-  name: 'userData',
-  initialState: userDataInitialState,
-  reducers: {
-    setUserData: (state, action) => {
-      state.user = action.payload;
-    },
-    clearUserData: state => {
-      state.user = null;
-    },
-  },
-});
+export const { logout, setUserData } = authSlice.actions;
+export const { resetCreateAccount } = createAccountSlice.actions;
 
-export const { setUserData, clearUserData } = userDataSlice.actions;
 // export default userDataSlice.reducer;
-
-export const { logout } = authSlice.actions;
 
 export default {
   auth: authSlice.reducer,
