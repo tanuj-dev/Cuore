@@ -30,7 +30,12 @@ import {
 import { getNourish, getBuilderItems } from '../../redux/slices';
 import SessionExpiredModal from '../../components/SessionExpired';
 import handleLoginRedirect from '../../utilities/Common';
-import { getFitness, getKnowledge, getMind } from '../../redux/slices';
+import {
+  getFitness,
+  getKnowledge,
+  getMind,
+  getTobacco,
+} from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
 
 const routeMap = {
@@ -64,6 +69,8 @@ const Today = ({ navigation, route }) => {
     setRefreshing(true);
     try {
       await dispatch(getHomeData(userId));
+      await dispatch(getMind(userId));
+      await dispatch(getTobacco(userId));
 
       const combos = [
         { mealTime: 'Breakfast', cuisine: 'Indian' },
@@ -71,8 +78,6 @@ const Today = ({ navigation, route }) => {
         { mealTime: 'Lunch', cuisine: 'Indian' },
         { mealTime: 'Lunch', cuisine: 'Global' },
       ];
-
-      await Promise.all(combos.map(combo => dispatch(getBuilderItems(combo))));
     } catch (err) {
       console.error('Refresh failed:', err);
     } finally {
@@ -104,6 +109,7 @@ const Today = ({ navigation, route }) => {
       dispatch(getHomeData(userId));
       dispatch(getKnowledge(userId));
       dispatch(getMind(userId));
+      dispatch(getTobacco(userId));
       const res = dispatch(getFitness());
       console.log('Fitness Data Response:', res);
       const combos = [

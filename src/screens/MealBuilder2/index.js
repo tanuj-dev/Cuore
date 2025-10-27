@@ -11,19 +11,6 @@ import {
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 
-const sampleData = [
-  { id: '1', name: '1/2 bowl Rava Upma', calories: 150, tag: 'green' },
-  { id: '2', name: '1/2 bowl Oats with Milk', calories: 150, tag: 'green' },
-  { id: '3', name: '1/2 bowl Vegetable Dalia', calories: 150, tag: 'green' },
-  { id: '4', name: '1/2 bowl Vegetable Poha', calories: 150, tag: 'green' },
-  {
-    id: '5',
-    name: '1/2 bowl Cornflakes with Milk',
-    calories: 150,
-    tag: 'yellow',
-  },
-];
-
 const tagColors = {
   green: '#00C853',
   yellow: '#FFD600',
@@ -55,7 +42,7 @@ const MealBuilder2 = ({ navigation, route }) => {
           <Text style={styles.title}>Cuore MealBuilder</Text>
         </View>
 
-        <TouchableOpacity
+        <View
           onPress={() => navigation.navigate('Recipe')}
           style={{
             backgroundColor: '#326FAA',
@@ -70,7 +57,7 @@ const MealBuilder2 = ({ navigation, route }) => {
           <Text style={{ fontSize: 14, fontWeight: '500', color: '#FFFFFF' }}>
             My Custom Meal
           </Text>
-        </TouchableOpacity>
+        </View>
       </ImageBackground>
 
       <View style={{ flex: 1, backgroundColor: '#F9FAFB', padding: wp(4) }}>
@@ -95,10 +82,19 @@ const MealBuilder2 = ({ navigation, route }) => {
                   borderRadius: hp(1),
                   marginVertical: hp(0.5),
                   elevation: 1,
+                  shadowColor: '#000',
+                  shadowOpacity: 0.1,
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowRadius: 2,
                   // elevation: 2,
                 }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
                   <View
                     style={{
                       height: hp(2),
@@ -111,26 +107,44 @@ const MealBuilder2 = ({ navigation, route }) => {
                       // paddingVertical: hp(0.5),
                     }}
                   />
-                  <View style={{ flex: 1 }}>
-                    <Text
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <View>
+                      <Text
+                        style={{
+                          fontFamily: 'Roboto-Regular',
+                          fontSize: 15,
+                          fontWeight: '400',
+                          color: '#000000',
+                        }}
+                      >
+                        {updatedName}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: 'Roboto-Regular',
+                          fontSize: 14,
+                          color: '#6B7280',
+                        }}
+                      >
+                        {item?.adjustedCalories} cal
+                      </Text>
+                    </View>
+                    <Image
                       style={{
-                        fontFamily: 'Roboto-Regular',
-                        fontSize: 15,
-                        fontWeight: '400',
-                        color: '#000000',
+                        height: hp(2),
+                        width: wp(4),
+                        resizeMode: 'contain',
+                        // position: 'absolute',
+                        // left: hp(37),
                       }}
-                    >
-                      {updatedName}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: 'Roboto-Regular',
-                        fontSize: 14,
-                        color: '#6B7280',
-                      }}
-                    >
-                      {item?.adjustedCalories} cal
-                    </Text>
+                      source={Images.RIGHT_ARROW}
+                    ></Image>
                   </View>
                 </View>
 

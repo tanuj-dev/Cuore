@@ -12,10 +12,9 @@ import { hp, wp, Images } from '../../utilities';
 const Header = ({ title, navigation }) => {
   return (
     <View>
-      {' '}
       <View
         style={{
-          paddingVertical: Platform.OS === 'ios' ? hp(2) : hp(3),
+          paddingVertical: Platform.OS === 'ios' ? hp(2) : hp(1),
           flexDirection: 'row',
           marginTop: Platform.OS == 'ios' && hp(5),
           alignItems: 'center',
@@ -24,7 +23,10 @@ const Header = ({ title, navigation }) => {
         }}
       >
         <TouchableOpacity
-          style={{ paddingHorizontal: hp(1) }}
+          style={{
+            paddingHorizontal: hp(1),
+            marginTop: Platform.OS == 'android' && hp(1),
+          }}
           onPress={() => navigation.goBack()}
         >
           <Image
@@ -47,7 +49,7 @@ const Header = ({ title, navigation }) => {
 const styles = StyleSheet.create({
   title: {
     fontFamily: 'Roboto-Regular',
-    marginTop: hp(1),
+    marginTop: Platform.OS == 'ios' ? hp(1) : hp(3),
     marginLeft: hp(10),
     fontSize: 20,
     fontWeight: '400',

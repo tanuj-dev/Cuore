@@ -16,6 +16,7 @@ import {
   builderSlice,
   knowledgeSlice,
   mindSlice,
+  tobaccoSlice,
 } from './Explore/slice';
 const store = configureStore({
   reducer: {
@@ -32,6 +33,7 @@ const store = configureStore({
     fitness: fitnessSlice.reducer,
     knowledge: knowledgeSlice.reducer,
     mind: mindSlice.reducer,
+    tobacco: tobaccoSlice.reducer,
   },
 });
 

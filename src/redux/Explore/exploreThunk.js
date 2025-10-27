@@ -95,3 +95,49 @@ export const getMind = createAsyncThunk(
     }
   },
 );
+
+export const getTobacco = createAsyncThunk(
+  'tobacco/getTobacco',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await getApiCall(`/api/tobacco/${userId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to fetch tobacco data',
+      );
+    }
+  },
+);
+
+export const updateTobaccoProfile = createAsyncThunk(
+  'tobacco/updateTobaccoProfile',
+  async ({ userId, payload }, { rejectWithValue }) => {
+    try {
+      const response = await putApiCall(
+        `/api/tobacco/${userId}/profile`,
+        payload,
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to update tobacco profile',
+      );
+    }
+  },
+);
+export const logTobaccoUsage = createAsyncThunk(
+  'tobacco/logTobaccoUsage',
+  async ({ userId, count }, { rejectWithValue }) => {
+    try {
+      const response = await postApiCall(`/api/tobacco/${userId}/log`, {
+        count,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to log tobacco usage',
+      );
+    }
+  },
+);

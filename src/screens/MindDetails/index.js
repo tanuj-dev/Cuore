@@ -88,7 +88,10 @@ const MindDetails = ({ navigation, route }) => {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: 'white' }}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      style={{ flex: 1, backgroundColor: 'white' }}
+    >
       <View style={styles.container}>
         {/* Header */}
         <View style={{ elevation: 1, backgroundColor: '#FFFFFF' }}>

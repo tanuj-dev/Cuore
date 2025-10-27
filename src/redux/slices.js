@@ -18,6 +18,9 @@ import {
   adjustPortion,
   getKnowledge,
   getMind,
+  getTobacco,
+  updateTobaccoProfile,
+  logTobaccoUsage,
 } from './Explore/exploreThunk';
 import { getFitness, updateFitnessTime } from './Fitness/fitnessThunk';
 export {
@@ -41,4 +44,7 @@ export {
   getKnowledge,
   updateFitnessTime,
   getMind,
+  getTobacco,
+  updateTobaccoProfile,
+  logTobaccoUsage,
 };

@@ -7,50 +7,103 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import React, { useState } from 'react';
 import { hp, wp, color, Images } from '../../utilities';
 import Header from '../../components/Header';
+import ToastMessage from '../../components/Toast';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  getTobacco,
+  updateTobaccoProfile,
+  logTobaccoUsage,
+} from '../../redux/slices';
 
 const Tobacco = ({ navigation }) => {
-  const [yesterdayCount, setYesterdayCount] = useState('4');
-  const [cigarettesPerDay, setCigarettesPerDay] = useState('20');
-  const [yearsOfSmoking, setYearsOfSmoking] = useState('10');
+  const [yesterdayCount, setYesterdayCount] = useState(0);
+  const [cigarettesPerDay, setCigarettesPerDay] = useState(0);
+  const [yearsOfSmoking, setYearsOfSmoking] = useState(0);
+  const [toast, setToast] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const data = useSelector(state => state.tobacco.data?.data);
+  const dailyChalanges = useSelector(
+    state => state.tobacco.data?.data.allChallenges,
+  );
+  const userId = useSelector(state => state.auth.userId);
+  const profileData = data?.profile;
+  const stats = data?.stats;
+  console.log('Tobacco Profile Data from Redux:', profileData);
+
+  const dispatch = useDispatch();
+  const handleSubmit = async () => {
+    setLoading(true);
+    const payload = {
+      cigarettesPerDay: cigarettesPerDay,
+      yearsOfSmoking: yearsOfSmoking,
+    };
+    const res = await dispatch(
+      updateTobaccoProfile({ userId, payload }),
+    ).unwrap();
+    if (res.status === 'success') {
+      setCigarettesPerDay('');
+      setYearsOfSmoking('');
+      setToast('Profile updated successfully');
+      dispatch(getTobacco(userId));
+      setLoading(false);
+    } else {
+      setLoading(false);
+    }
+  };
+
+  const handleLogUsage = async () => {
+    setLoading(true);
+    const count = yesterdayCount;
+    const res = await dispatch(logTobaccoUsage({ userId, count })).unwrap();
+    if (res.status === 'success') {
+      setToast('Tobacco usage logged successfully');
+      dispatch(getTobacco(userId));
+      setLoading(false);
+    } else {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    if (userId) {
+      dispatch(getTobacco(userId));
+    }
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, [dispatch, userId]);
+
+  // const nudge = dailyChalanges?.find(challenge => challenge.isCurrent)?.nudge;
 
   return (
     <>
       <View style={{ backgroundColor: 'white', flex: 1 }}>
         <Header title={'Cuore Tobacco'} navigation={navigation}></Header>
-        {/* <View
-        style={{
-          flexDirection: 'row',x
-          backgroundColor: '#FFFFFF',
-          paddingTop: hp(2),
-          elevation: 1,
-        }}>
-        <TouchableOpacity
-          style={{paddingHorizontal: hp(1)}}
-          onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-            style={{
-              resizeMode: 'contain',
-              height: hp(3.5),
-              width: wp(4),
-            }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-        <Text style={styles.title}></Text>
-      </View> */}
-        <ScrollView contentContainerStyle={styles.container}>
+
+        <ScrollView
+          contentContainerStyle={styles.container}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           <View style={styles.box}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Image
                 style={{ resizeMode: 'contain', width: wp(5), height: hp(3) }}
                 source={Images.WATCH}
               ></Image>
-              <Text style={styles.daysText}>2 days tobacco-free</Text>
+              <Text style={styles.daysText}>
+                {profileData?.tobaccoFreeDays} days tobacco-free
+              </Text>
             </View>
 
             <View style={styles.inputRow}>
@@ -64,8 +117,31 @@ const Tobacco = ({ navigation }) => {
                 onChangeText={setYesterdayCount}
               />
             </View>
+            <TouchableOpacity
+              style={{
+                alignSelf: 'flex-end',
+                padding: hp(1),
+                backgroundColor: '#1E64AC',
+                borderRadius: wp(2),
+                position: 'absolute',
+                top: hp(17.5),
+                right: wp(4),
+                // marginTop: hp(6),
+              }}
+              onPress={handleLogUsage}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#1E64AC" />
+              ) : (
+                <Text style={[styles.reassessText, { color: 'white' }]}>
+                  Submit
+                </Text>
+              )}
+            </TouchableOpacity>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.levelText}>Level 1</Text>
+              <Text style={styles.levelText}>
+                Level {profileData?.currentLevel}
+              </Text>
               <Image
                 style={{ resizeMode: 'contain', width: wp(9), height: hp(3.5) }}
                 source={Images.TROPHY}
@@ -74,10 +150,7 @@ const Tobacco = ({ navigation }) => {
           </View>
 
           <View style={styles.quoteBox}>
-            <Text style={styles.quote}>
-              Your body starts healing the moment you stop smoking. Every breath
-              without smoke is a step toward renewal.
-            </Text>
+            <Text style={styles.quote}>{data?.encouragement}</Text>
           </View>
 
           <View
@@ -108,7 +181,9 @@ const Tobacco = ({ navigation }) => {
                 },
               ]}
             >
-              It starts now—clear the path
+              {dailyChalanges
+                ? dailyChalanges[data?.currentLevel]?.challengeText
+                : null}
             </Text>
             <Text
               style={[
@@ -121,7 +196,9 @@ const Tobacco = ({ navigation }) => {
                 },
               ]}
             >
-              Remove all tobacco, lighters, and reminders from your space
+              {dailyChalanges
+                ? dailyChalanges[data?.currentLevel]?.challengeText2
+                : null}
             </Text>
           </View>
 
@@ -155,6 +232,8 @@ const Tobacco = ({ navigation }) => {
               Cigarettes per day
             </Text>
             <TextInput
+              placeholderTextColor={'#6B7280'}
+              placeholder="Enter the count"
               style={styles.input}
               keyboardType="numeric"
               value={cigarettesPerDay}
@@ -170,11 +249,33 @@ const Tobacco = ({ navigation }) => {
               Years of smoking
             </Text>
             <TextInput
+              placeholder="Num of years"
+              placeholderTextColor={'#6B7280'}
               style={styles.input}
               keyboardType="numeric"
               value={yearsOfSmoking}
               onChangeText={setYearsOfSmoking}
             />
+
+            <TouchableOpacity
+              onPress={handleSubmit}
+              style={styles.reassessButton}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.reassessText}>Submit</Text>
+              )}
+            </TouchableOpacity>
+
+            {toast && (
+              <ToastMessage
+                message={toast}
+                type="success"
+                onHide={() => setToast(null)}
+                top={50}
+              />
+            )}
           </View>
 
           <View style={styles.gridContainer}>
@@ -189,7 +290,7 @@ const Tobacco = ({ navigation }) => {
                 source={Images.SOIL_WATCH}
               ></Image>
               <Text style={styles.gridLabel}>Years Lost</Text>
-              <Text style={styles.gridValueRed}>5 years</Text>
+              <Text style={styles.gridValueRed}>{stats?.yearsLost}</Text>
             </View>
 
             <View style={styles.gridBox}>
@@ -203,7 +304,7 @@ const Tobacco = ({ navigation }) => {
                 source={Images.COIN}
               ></Image>
               <Text style={styles.gridLabel}>Money Spent</Text>
-              <Text style={styles.gridValue}>₹1,73,000</Text>
+              <Text style={styles.gridValue}>{stats?.moneySpent}</Text>
             </View>
           </View>
 
@@ -233,7 +334,7 @@ const Tobacco = ({ navigation }) => {
                 source={Images.HEART}
               ></Image>
               <Text style={styles.gridLabel}>Years Saved</Text>
-              <Text style={styles.gridValue}>5 years</Text>
+              <Text style={styles.gridValue}>{stats?.yearsSaved}</Text>
             </View>
 
             <View style={styles.gridBox}>
@@ -247,7 +348,7 @@ const Tobacco = ({ navigation }) => {
                 source={Images.PIGIBACK}
               ></Image>
               <Text style={styles.gridLabel}>Money Saved</Text>
-              <Text style={styles.gridValue}>₹3,75,000</Text>
+              <Text style={styles.gridValue}>{stats?.moneySaved}</Text>
             </View>
           </View>
         </ScrollView>
@@ -288,7 +389,9 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   inputRow: {
+    // backgroundColor:'red'
     paddingVertical: hp(4),
+    // width: wp(80),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -308,7 +411,7 @@ const styles = StyleSheet.create({
     borderRadius: wp(2),
     paddingHorizontal: wp(3),
     paddingVertical: hp(1),
-    width: wp(15),
+    width: wp(17),
     textAlign: 'center',
     fontWeight: '600',
     color: '#000',
@@ -413,6 +516,25 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '400',
     color: '#DC2626',
+  },
+  reassessButton: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1E64AC',
+    // padding: hp(1.2),
+    borderRadius: wp(2),
+    marginVertical: hp(2),
+    width: '100%',
+    paddingVertical: hp(1.2),
+  },
+  reassessText: {
+    fontFamily: 'Roboto-Regular',
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
+    // marginLeft: wp(1),
   },
 });
 

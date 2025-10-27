@@ -4,6 +4,8 @@ import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { getBuilderItems } from './exploreThunk';
 import { getKnowledge } from './exploreThunk';
 import { getMind } from './exploreThunk';
+import { getTobacco } from './exploreThunk';
+import { updateTobaccoProfile } from './exploreThunk';
 
 export const nourishSlice = createSlice({
   name: 'nourishment',
@@ -122,6 +124,34 @@ export const mindSlice = createSlice({
       .addCase(getMind.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch mind data';
+      });
+  },
+});
+
+export const tobaccoSlice = createSlice({
+  name: 'tobacco',
+  initialState: {
+    data: null,
+    loading: false,
+    error: null,
+    updateStatus: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  },
+  reducers: {},
+  extraReducers: builder => {
+    builder
+      .addCase(getTobacco.fulfilled, (state, action) => {
+        state.data = action.payload;
+      })
+      .addCase(updateTobaccoProfile.pending, state => {
+        state.updateStatus = 'loading';
+      })
+      .addCase(updateTobaccoProfile.fulfilled, (state, action) => {
+        state.updateStatus = 'succeeded';
+        state.data = action.payload;
+      })
+      .addCase(updateTobaccoProfile.rejected, (state, action) => {
+        state.updateStatus = 'failed';
+        state.error = action.payload;
       });
   },
 });

@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { color, hp, wp, Images } from '../../utilities';
 import images from '../../utilities/Images';
@@ -63,21 +64,23 @@ const Mind = ({ navigation }) => {
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ backgroundColor: '#FFFFFF', paddingVertical: hp(2) }}>
-        {' '}
+      <View
+        style={{
+          backgroundColor: '#FFFFFF',
+          paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(1),
+          elevation: 2,
+        }}
+      >
         <View
           style={{
             flexDirection: 'row',
             marginTop: Platform.OS == 'ios' && hp(3),
             paddingHorizontal: hp(1),
             alignItems: 'center',
-
-            // paddingTop: hp(2),
-            elevation: 1,
           }}
         >
           <TouchableOpacity
-            style={{ paddingHorizontal: hp(1), marginTop: hp(3) }}
+            style={{ paddingHorizontal: hp(1), marginTop: hp(3.5) }}
             onPress={() => navigation.goBack()}
           >
             <Image
@@ -96,6 +99,7 @@ const Mind = ({ navigation }) => {
         </View>
       </View>
       <ScrollView
+        showsVerticalScrollIndicator={false}
         style={styles.container}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -274,7 +278,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Roboto-Regular',
-    marginTop: hp(3),
+    marginTop: hp(3.5),
     marginLeft: hp(11),
     fontSize: 20,
     fontWeight: '400',
