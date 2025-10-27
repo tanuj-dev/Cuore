@@ -15,6 +15,7 @@ import { hp, wp, Images } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateFitnessTime } from '../../redux/slices';
 import ToastMessage from '../../components/Toast';
+import ApiError from '../../components/ApiError';
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -184,6 +185,17 @@ const Fitness = ({ navigation }) => {
     return `${formattedHour}:${formattedMin} ${ampm}`;
   };
 
+  if (!fitnessData) {
+    return (
+      <ApiError
+        message="No fitness data available at the moment."
+        onRetry={() => {
+          // Retry logic can be added here
+        }}
+      />
+    );
+  }
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: '#FFFFFF' }}
@@ -352,7 +364,7 @@ const Fitness = ({ navigation }) => {
           </View>
 
           <FlatList
-            data={fitnessData[selectedDay]}
+            data={fitnessData?.[selectedDay]}
             keyExtractor={(item, index) => `${item.title}-${index}`}
             renderItem={({ item, index }) => (
               <WorkoutCard

@@ -125,7 +125,7 @@ const Profile = ({ navigation }) => {
     await EncryptedStorage.removeItem('auth_tokens');
     // await EncryptedStorage.removeItem('userid');
     dispatch(logout());
-    dispatch(resetCreateAccount());
+    // dispatch(resetCreateAccount());
     navigation.replace('Login'); // or navigate, depending on your flow
   };
 

@@ -11,6 +11,7 @@ import {
 import { Images, hp, wp } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
 import { getNourish, getRecipe } from '../../redux/slices';
+import ApiErrorFallback from '../../components/ApiError';
 
 const Nutrition = ({ navigation }) => {
   // const [selectedTab, setSelectedTab] = useState('Breakfast');
@@ -127,18 +128,14 @@ const Nutrition = ({ navigation }) => {
     );
   };
 
-  if (loading || !nourishData) {
+  if (!nourishData) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: '#fff',
+      <ApiErrorFallback
+        message="No nutrition data available at the moment."
+        onRetry={() => {
+          // Retry logic can be added here
         }}
-      >
-        <Text>Loading...</Text>
-      </View>
+      />
     );
   }
 

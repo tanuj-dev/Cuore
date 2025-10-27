@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -22,19 +22,25 @@ const MindDetails = ({ navigation, route }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioDuration, setAudioDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [isSeeking, setIsSeeking] = useState(false);
 
   // Load sound and get duration
   useEffect(() => {
     Sound.setCategory('Playback');
 
-    const breathingSound = new Sound(audio, Sound.MAIN_BUNDLE, error => {
-      if (error) {
-        console.log('Failed to load sound', error);
-        return;
-      }
-      setSound(breathingSound);
-      setAudioDuration(breathingSound.getDuration());
-    });
+    const breathingSound = new Sound(
+      audio ??
+        'https://cdn.sanity.io/files/r1a9xgjr/production/db0a7782780399497ee5626a1651e0de584cfe9a.mp3',
+      Sound.MAIN_BUNDLE,
+      error => {
+        if (error) {
+          console.log('Failed to load sound', error);
+          return;
+        }
+        setSound(breathingSound);
+        setAudioDuration(breathingSound.getDuration());
+      },
+    );
 
     return () => {
       breathingSound.release();
@@ -45,7 +51,7 @@ const MindDetails = ({ navigation, route }) => {
   useEffect(() => {
     let interval = null;
 
-    if (sound && isPlaying) {
+    if (sound && isPlaying && !isSeeking) {
       interval = setInterval(() => {
         sound.getCurrentTime(seconds => {
           setCurrentTime(seconds);
@@ -56,7 +62,7 @@ const MindDetails = ({ navigation, route }) => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [sound, isPlaying]);
+  }, [sound, isPlaying, isSeeking]);
 
   const handlePlayPause = () => {
     if (!sound) return;
@@ -135,7 +141,14 @@ const MindDetails = ({ navigation, route }) => {
                 maximumValue={audioDuration}
                 step={1}
                 value={currentTime}
-                onValueChange={setCurrentTime}
+                onValueChange={() => setIsSeeking(true)}
+                onSlidingComplete={value => {
+                  if (sound) {
+                    sound.setCurrentTime(value);
+                    setCurrentTime(value);
+                  }
+                  setIsSeeking(false);
+                }}
                 minimumTrackTintColor="black"
                 maximumTrackTintColor="white"
                 thumbTintColor="black"

@@ -13,6 +13,7 @@ import images from '../../utilities/Images';
 import GaugeMeter from '../../components/SpeedpMeter';
 import { useSelector, useDispatch } from 'react-redux';
 import { getMind } from '../../redux/slices';
+import ApiErrorFallback from '../../components/ApiError';
 // import MindTab from '../../components/MindTab';
 // import {Ionicons} from '@expo/vector-icons';
 
@@ -56,8 +57,9 @@ const Mind = ({ navigation }) => {
     },
   ];
 
-  const randomScheme =
-    colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+  if (!morning && !evening) {
+    return <ApiErrorFallback message="No data available" onRetry={onRefresh} />;
+  }
 
   return (
     <View style={{ flex: 1 }}>
@@ -194,7 +196,7 @@ const Mind = ({ navigation }) => {
         </View>
         <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
           <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-            {morning.map((item, index) => {
+            {morning?.map((item, index) => {
               const scheme = colorSchemes[index % colorSchemes.length];
               return (
                 <View key={index} style={styles.cardRow}>
@@ -227,7 +229,7 @@ const Mind = ({ navigation }) => {
 
         <Text style={styles.sectionTitle}>🌙 Quiet Mind, Restful Night</Text>
         <ScrollView showsHorizontalScrollIndicator={false} horizontal={true}>
-          {evening.map((item, index) => {
+          {evening?.map((item, index) => {
             const scheme = colorSchemes[index % colorSchemes.length];
             return (
               // console.log('Morning Item:', item),

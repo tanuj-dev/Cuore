@@ -1,4 +1,4 @@
-import {createStackNavigator} from '@react-navigation/stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import Explore from '../screens/Explore';
 import CuoreKnowledge from '../screens/CuoreKnowledge';
 import KnowledgeDetails from '../screens/KnowledgeDetails';
@@ -14,12 +14,13 @@ import MealBuilder1 from '../screens/MealBuilder1';
 import MealBuilder2 from '../screens/MealBuilder2';
 import Health from '../screens/Health';
 import HealthRecords from '../screens/HealthRecords';
+import OnBoarding from '../screens/OnBoarding';
 
 const Stack = createStackNavigator();
 
 export function ExploreStack() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ExploreMain" component={Explore} />
       <Stack.Screen name="Tobacco" component={Tobacco} />
       <Stack.Screen name="Mind" component={Mind} />
@@ -35,6 +36,7 @@ export function ExploreStack() {
       <Stack.Screen name="MealBuilder2" component={MealBuilder2} />
       <Stack.Screen name="Health" component={Health} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
+      <Stack.Screen name="OnBoarding" component={OnBoarding} />
     </Stack.Navigator>
   );
 }

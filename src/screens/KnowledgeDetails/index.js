@@ -31,84 +31,95 @@ const KnowledgeDetails = ({ navigation, route }) => {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: 'white' }}>
-      <View style={{ flex: 1, backgroundColor: '#F9FAFB', height: hp(100) }}>
+      <View
+        style={{
+          backgroundColor: '#F9FAFB',
+        }}
+      >
         <View
           style={{
-            flexDirection: 'row',
-            backgroundColor: '#FFFFFF',
-            paddingVertical: Platform.OS === 'ios' ? hp(3) : hp(3),
-            elevation: 2,
-            alignItems: 'center',
+            flex: 1,
+
+            height: hp(100),
+            marginBottom: hp(5),
           }}
         >
-          <TouchableOpacity
+          <View
             style={{
-              marginTop: Platform.OS === 'ios' ? hp(4) : hp(0),
-              paddingHorizontal: hp(2),
+              flexDirection: 'row',
+              backgroundColor: '#FFFFFF',
+              paddingVertical: Platform.OS === 'ios' ? hp(3) : hp(3),
+              elevation: 2,
+              alignItems: 'center',
             }}
-            onPress={() => navigation.goBack()}
           >
-            <Image
-              source={Images.BACK_BUTTON}
+            <TouchableOpacity
               style={{
-                resizeMode: 'contain',
-                marginLeft: Platform.OS === 'ios' ? hp(0) : hp(0.2),
-                height: hp(3),
-                width: wp(4),
+                marginTop: Platform.OS === 'ios' ? hp(4) : hp(0),
+                paddingHorizontal: hp(2),
+              }}
+              onPress={() => navigation.goBack()}
+            >
+              <Image
+                source={Images.BACK_BUTTON}
+                style={{
+                  resizeMode: 'contain',
+                  marginLeft: Platform.OS === 'ios' ? hp(0) : hp(0.2),
+                  height: hp(3),
+                  width: wp(4),
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.container}>
+            {/* <Text style={styles.title}>{article.title}</Text> */}
+
+            <RenderHTML
+              // contentWidth={width}
+              source={{ html: details }}
+              tagsStyles={{
+                p: {
+                  marginBottom: 10,
+                  fontSize: 14,
+                  color: '#4B5563',
+                  lineHeight: 20,
+                },
+                ul: {
+                  paddingLeft: 20,
+                  marginBottom: 10,
+                },
+                ol: {
+                  paddingLeft: 20,
+                  marginBottom: 10,
+                },
+                li: {
+                  marginBottom: 6,
+                  fontSize: 14,
+                  color: '#4B5563',
+                },
+                strong: {
+                  fontWeight: 'bold',
+                  color: '#111827',
+                },
+                em: {
+                  fontStyle: 'italic',
+                  color: '#6B7280',
+                },
+                h1: {
+                  fontSize: 22,
+                  fontWeight: '700',
+                  marginBottom: 12,
+                  color: '#ed7d31',
+                },
+                h3: {
+                  fontSize: 16,
+                  fontWeight: '600',
+                  marginBottom: 8,
+                  color: '#1F2937',
+                },
               }}
             />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.container}>
-          {/* <Text style={styles.title}>{article.title}</Text> */}
-
-          <RenderHTML
-            // contentWidth={width}
-            source={{ html: details }}
-            baseStyle={styles.baseText}
-            tagsStyles={{
-              p: {
-                marginBottom: 10,
-                fontSize: 14,
-                color: '#4B5563',
-                lineHeight: 20,
-              },
-              ul: {
-                paddingLeft: 20,
-                marginBottom: 10,
-              },
-              ol: {
-                paddingLeft: 20,
-                marginBottom: 10,
-              },
-              li: {
-                marginBottom: 6,
-                fontSize: 14,
-                color: '#4B5563',
-              },
-              strong: {
-                fontWeight: 'bold',
-                color: '#111827',
-              },
-              em: {
-                fontStyle: 'italic',
-                color: '#6B7280',
-              },
-              h1: {
-                fontSize: 22,
-                fontWeight: '700',
-                marginBottom: 12,
-                color: '#ed7d31',
-              },
-              h3: {
-                fontSize: 16,
-                fontWeight: '600',
-                marginBottom: 8,
-                color: '#1F2937',
-              },
-            }}
-          />
-          {/* <Text
+            {/* <Text
           style={{
             fontFamily: 'Roboto-Regular',
             fontWeight: '400',
@@ -134,6 +145,7 @@ const KnowledgeDetails = ({ navigation, route }) => {
           especially in urban areas, but rural populations are also seeing a
           worrying rise.
         </Text> */}
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -144,6 +156,7 @@ const styles = StyleSheet.create({
   container: {
     padding: wp(5),
     // backgroundColor: '#F9FAFB',
+
     flex: 1,
   },
   title: {

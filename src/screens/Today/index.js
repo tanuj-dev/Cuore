@@ -31,6 +31,7 @@ import { getNourish, getBuilderItems } from '../../redux/slices';
 import SessionExpiredModal from '../../components/SessionExpired';
 import handleLoginRedirect from '../../utilities/Common';
 import { getFitness, getKnowledge, getMind } from '../../redux/slices';
+import ApiErrorFallback from '../../components/ApiError';
 
 const routeMap = {
   Breakfast: 'Nutrition',
@@ -214,6 +215,17 @@ const Today = ({ navigation, route }) => {
       <SessionExpiredModal
         visible={sessionExpired}
         onLogin={handleLoginRedirect}
+      />
+    );
+  } else if (!data) {
+    return (
+      <ApiErrorFallback
+        message="No data available at the moment."
+        onRetry={() => {
+          if (userId) {
+            dispatch(getHomeData(userId));
+          }
+        }}
       />
     );
   }

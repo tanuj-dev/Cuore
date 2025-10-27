@@ -15,54 +15,9 @@ import {
 import { hp, wp, Images } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
 import { getKnowledge } from '../../redux/slices';
-// import { ScrollView } from 'react-native-gesture-handler';
+import ApiError from '../../components/ApiError';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 // import Icon from 'react-native-vector-icons/Ionicons';
-
-const articles = [
-  {
-    id: '1',
-    title: 'Portion Control for Health',
-    description:
-      'Portion control is a key aspect of healthy eating, particularly in the context of the Indian diet...',
-    image: Images.KNOWLEDGE_1,
-  },
-  {
-    id: '2',
-    title: 'Managing Emotional Eating',
-    description:
-      'Stress eating, also known as emotional eating, is a common response to feelings of anxiety...',
-    image: Images.KNOWLEDGE_2,
-  },
-  {
-    id: '3',
-    title: 'Diabetes: Prevention, Early Detection, and Control',
-    description:
-      'Diabetes is a chronic condition that often develops gradually, with early signs easy to miss...',
-    image: Images.KNOWLEDGE_3,
-  },
-  {
-    id: '4',
-    title: 'Creating Identity Based Habits',
-    description:
-      'Identity-based habits focus on who you want to become rather than just achieving specific goals...',
-    image: Images.KNOWLEDGE_4,
-  },
-  {
-    id: '5',
-    title: 'Overcoming Tobacco Cravings',
-    description:
-      'Quitting tobacco can be challenging, but with the right strategies, you can manage cravings...',
-    image: Images.KNOWLEDGE_5,
-  },
-  {
-    id: '6',
-    title: 'The Cardiovascular Disease Paradox',
-    description:
-      'Despite traditionally lower cholesterol levels, India faces an alarming rise in coronary artery...',
-    image: Images.KNOWLEDGE_6,
-  },
-];
 
 const CuoreKnowledge = ({ navigation }) => {
   const [search, setSearch] = useState('');
@@ -105,6 +60,19 @@ const CuoreKnowledge = ({ navigation }) => {
       </View>
     </TouchableOpacity>
   );
+
+  if (!knowledgeData) {
+    return (
+      <ApiError
+        message="No articles available at the moment."
+        onRetry={() => {
+          if (userId) {
+            dispatch(getKnowledge(userId));
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <ScrollView

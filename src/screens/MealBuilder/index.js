@@ -19,6 +19,7 @@ import { hp, wp, Images } from '../../utilities';
 import images from '../../utilities/Images';
 import { useDispatch, useSelector } from 'react-redux';
 import { getBuilderItems } from '../../redux/slices';
+import ApiErrorFallback from '../../components/ApiError';
 
 const tagColors = {
   Include: '#22C55E',
@@ -35,22 +36,22 @@ const MealBuilder = ({ navigation }) => {
 
   const dispatch = useDispatch();
 
-  const animationMap = useRef({}).current;
+  const animationMap = useRef({})?.current;
 
   // 🔧 Select Redux data
   const { BreakfastIndian, BreakfastGlobal, DinnerIndian, DinnerGlobal } =
     useSelector(state => {
       const items = state.builder.itemsByCombo || {};
       return {
-        BreakfastIndian: items['Breakfast_Indian']['grouped_items'] || {},
-        BreakfastGlobal: items['Breakfast_Global']['grouped_items'] || {},
-        DinnerIndian: items['Lunch_Indian']['grouped_items'] || {},
-        DinnerGlobal: items['Lunch_Global']['grouped_items'] || {},
+        BreakfastIndian: items['Breakfast_Indian']?.['grouped_items'] || {},
+        BreakfastGlobal: items['Breakfast_Global']?.['grouped_items'] || {},
+        DinnerIndian: items['Lunch_Indian']?.['grouped_items'] || {},
+        DinnerGlobal: items['Lunch_Global']?.['grouped_items'] || {},
       };
     });
   const targetCalories = useSelector(
     state =>
-      state.builder.itemsByCombo?.Breakfast_Indian.recommended_calories || 0,
+      state?.builder?.itemsByCombo?.Breakfast_Indian?.recommended_calories || 0,
   );
   const sumofCalories = selectedItems.reduce(
     (sum, item) => sum + item.calories,
@@ -336,13 +337,14 @@ const MealBuilder = ({ navigation }) => {
     }
   };
 
-  // if (refreshing) {
-  //   return (
-  //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-  //       <Text>Loading...</Text>
-  //     </View>
-  //   );
-  // }
+  if (!sectionedData || sectionedData.length === 0) {
+    return (
+      <ApiErrorFallback
+        message="Failed to load meal data"
+        onRetry={onRefresh}
+      />
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
