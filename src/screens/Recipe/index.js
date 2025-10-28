@@ -91,11 +91,14 @@ const Recipe = ({ navigation, route }) => {
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              marginTop: Platform.OS == 'ios' && hp(4),
+              marginTop: Platform.OS == 'ios' ? hp(4) : hp(1.5),
               //   paddingHorizontal: hp(1),
             }}
           >
-            <TouchableOpacity onPress={() => navigation.goBack()}>
+            <TouchableOpacity
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              onPress={() => navigation.goBack()}
+            >
               <Image
                 style={{
                   height: hp(3),

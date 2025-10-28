@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,51 +9,18 @@ import {
   Linking,
 } from 'react-native';
 // import { Ionicons } from '@expo/vector-icons';
-import {hp, wp, Images} from '../../utilities'; // your responsive helpers
+import { hp, wp, Images } from '../../utilities'; // your responsive helpers
+import Profile from '../Profile';
+import ProfileHeader from '../../components/ProfileHeader';
 
-const Support = ({navigation}) => {
+const Support = ({ navigation }) => {
   return (
     <View>
-     <View style={{
-          backgroundColor: '#FFFFFF',
-          elevation: 1,
-      }}>
- <View
-        style={{
-       
-        
-          alignItems: 'center',
-          padding: hp(2),
-          flexDirection: 'row',
-           marginTop:Platform.OS =='ios'&& hp(5),
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON}
-            style={{
-              height: hp(3),
-              width: wp(4),
-              resizeMode: 'contain',
-              tintColor: '#000000',
-            }}
-          />
-        </TouchableOpacity>
-
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontSize: 20,
-            fontWeight: '400',
-            color: '#000000',
- marginLeft: hp(2),          }}>
-        Support
-        </Text>
-      </View>
-      </View>
+      <ProfileHeader navigation={navigation} title="Support" />
 
       <View style={styles.container}>
         <Text style={styles.heading}>Call our support team</Text>
-        <View style={{alignItems: 'center', marginTop: hp(4)}}>
+        <View style={{ alignItems: 'center', marginTop: hp(4) }}>
           <Image
             source={Images.PHONE}
             style={{
@@ -63,7 +30,9 @@ const Support = ({navigation}) => {
               // tintColor: '#000000',
             }}
           />
-          <Text style={[styles.heading, {marginTop: hp(1)}]}>support Line</Text>
+          <Text style={[styles.heading, { marginTop: hp(1) }]}>
+            support Line
+          </Text>
           <TouchableOpacity
             onPress={async () => {
               const url = `tel:${1 - 800 - 123 - 4567}`;
@@ -77,7 +46,8 @@ const Support = ({navigation}) => {
                 );
               }
             }}
-            style={styles.continueBtn}>
+            style={styles.continueBtn}
+          >
             <Text style={styles.continueText}>Call 1-800-123-4567</Text>
           </TouchableOpacity>
         </View>
@@ -87,25 +57,28 @@ const Support = ({navigation}) => {
             backgroundColor: '#F9FAFB',
             padding: hp(2),
             borderRadius: hp(1),
-          }}>
+          }}
+        >
           <Text
             style={{
               fontFamily: 'Roboto-Regular',
               fontWeight: '400',
               fontSize: 14,
               color: '#000000',
-            }}>
+            }}
+          >
             Support Hours
           </Text>
 
-          <View style={{marginTop: hp(1)}}>
+          <View style={{ marginTop: hp(1) }}>
             <Text
               style={{
                 fontFamily: 'Roboto-Regular',
                 fontWeight: '400',
                 fontSize: 14,
                 color: '#4B5563',
-              }}>
+              }}
+            >
               Monday - Saturday
             </Text>
             <Text
@@ -114,7 +87,8 @@ const Support = ({navigation}) => {
                 fontWeight: '400',
                 fontSize: 14,
                 color: '#4B5563',
-              }}>
+              }}
+            >
               9:00 AM - 6:00 PM
             </Text>
           </View>

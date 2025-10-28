@@ -66,6 +66,7 @@ const Checkout = ({ navigation }) => {
         >
           <TouchableOpacity
             style={{
+              hitSlop: { top: 20, bottom: 20, left: 20, right: 20 },
               marginTop: Platform.OS == 'ios' && hp(7),
               marginBottom: hp(2),
             }}

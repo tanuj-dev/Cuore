@@ -153,6 +153,7 @@ const CreateAccountScreen = () => {
         >
           {/* 🔙 Back Button */}
           <Pressable
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             style={styles.backArrow}
             onPress={() => navigation.goBack()}
           >

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,10 @@ import {
   Image,
 } from 'react-native';
 // import {Ionicons} from '@expo/vector-icons';
-import {hp, wp, Images} from '../../utilities'; // height/width percentage helpers
+import { hp, wp, Images } from '../../utilities'; // height/width percentage helpers
+import ProfileHeader from '../../components/ProfileHeader';
 
-const TermsAndConditions = ({navigation}) => {
+const TermsAndConditions = ({ navigation }) => {
   const [accepted, setAccepted] = useState(false);
 
   const handleAccept = () => {
@@ -26,43 +27,10 @@ const TermsAndConditions = ({navigation}) => {
   return (
     <View style={styles.container}>
       {/* Header */}
-     <View style={{
-          backgroundColor: '#FFFFFF',
-          elevation: 1,
-      }}>
- <View
-        style={{
-       
-        
-          alignItems: 'center',
-          padding: hp(2),
-          flexDirection: 'row',
-           marginTop:Platform.OS =='ios'&& hp(5),
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON}
-            style={{
-              height: hp(3),
-              width: wp(4),
-              resizeMode: 'contain',
-              tintColor: '#000000',
-            }}
-          />
-        </TouchableOpacity>
-
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontSize: 20,
-            fontWeight: '400',
-            color: '#000000',
-            marginLeft: hp(2),
-          }}>
-        Terms and Condition
-        </Text>
-      </View>
-      </View>
+      <ProfileHeader
+        title="Terms & Conditions"
+        onBackPress={() => navigation.goBack()}
+      />
 
       {/* Content */}
       <View
@@ -74,7 +42,8 @@ const TermsAndConditions = ({navigation}) => {
           elevation: 1,
           marginTop: hp(2),
           borderRadius: hp(2),
-        }}>
+        }}
+      >
         <ScrollView style={styles.content}>
           <Text style={styles.paragraph}>
             Welcome to Cuore. These Terms & Conditions govern your access to and
@@ -174,7 +143,8 @@ const TermsAndConditions = ({navigation}) => {
           {/* Checkbox */}
           <TouchableOpacity
             style={styles.checkboxWrapper}
-            onPress={() => setAccepted(!accepted)}>
+            onPress={() => setAccepted(!accepted)}
+          >
             <Text style={styles.checkboxText}>
               ✅ I accept the Terms & Conditions and Privacy Policy.
             </Text>

@@ -97,6 +97,7 @@ const MealBuilder1 = ({ navigation, route }) => {
         source={Images.BACKGROUND_IMAGE_NUTRITION}
       >
         <TouchableOpacity
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           onPress={() => navigation.goBack()}
           style={styles.headerContainer}
         >
@@ -351,6 +352,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButton: {
+    marginTop: Platform.OS == 'ios' ? hp(0) : hp(1),
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,11 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {hp, wp, Images} from '../../utilities'; // Your responsive helpers
+import { Ionicons } from '@expo/vector-icons';
+import { hp, wp, Images } from '../../utilities'; // Your responsive helpers
+import ProfileHeader from '../../components/ProfileHeader';
 
-const EditCaregiver = ({navigation}) => {
+const EditCaregiver = ({ navigation }) => {
   const [userName, setUserName] = useState('John Mace');
   const [userMobile, setUserMobile] = useState('981121234');
   const [confirmMobile, setConfirmMobile] = useState('981121234');
@@ -20,7 +21,7 @@ const EditCaregiver = ({navigation}) => {
   const [editMobile, setEditMobile] = useState(false);
   const [editConfirm, setEditConfirm] = useState(false);
 
-  const handleSave = ({navigation}) => {
+  const handleSave = ({ navigation }) => {
     if (userMobile !== confirmMobile) {
       Alert.alert('Error', 'Mobile numbers do not match');
       return;
@@ -57,44 +58,8 @@ const EditCaregiver = ({navigation}) => {
 
   return (
     <View>
-      <View style={{
-          backgroundColor: '#FFFFFF',
-          elevation: 1,
-      }}>
- <View
-        style={{
-       
-        
-          alignItems: 'center',
-          padding: hp(2),
-          flexDirection: 'row',
-           marginTop:Platform.OS =='ios'&& hp(5),
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON}
-            style={{
-              height: hp(3),
-              width: wp(4),
-              resizeMode: 'contain',
-              tintColor: '#000000',
-            }}
-          />
-        </TouchableOpacity>
+      <ProfileHeader navigation={navigation} title="Edit Caregiver" />
 
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontSize: 20,
-            fontWeight: '400',
-            color: '#000000',
-           marginLeft: hp(2),
-          }}>
-          Add/Edit Caregiver
-        </Text>
-      </View>
-      </View>
-     
       <View style={styles.container}>
         {renderInputField(
           'Caregiver Name',
@@ -128,7 +93,8 @@ const EditCaregiver = ({navigation}) => {
 
               handleCancel();
             }}
-            style={styles.cancelBtn}>
+            style={styles.cancelBtn}
+          >
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
         </View>

@@ -130,7 +130,10 @@ const Doctor = ({ navigation }) => {
               flexDirection: 'row',
             }}
           >
-            <TouchableOpacity onPress={() => navigation.goBack()}>
+            <TouchableOpacity
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              onPress={() => navigation.goBack()}
+            >
               <Image
                 source={Images.BACK_BUTTON}
                 style={{

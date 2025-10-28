@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,51 +10,16 @@ import {
   TextInput,
 } from 'react-native';
 // import { Ionicons } from '@expo/vector-icons';
-import {hp, wp, Images} from '../../utilities'; // your responsive helpers
+import { hp, wp, Images } from '../../utilities'; // your responsive helpers
+import ProfileHeader from '../../components/ProfileHeader';
 
-const DeleteAccount = ({navigation}) => {
+const DeleteAccount = ({ navigation }) => {
   return (
     <View>
-      <View style={{
-          backgroundColor: '#FFFFFF',
-          elevation: 1,
-      }}>
- <View
-        style={{
-       
-        
-          alignItems: 'center',
-          padding: hp(2),
-          flexDirection: 'row',
-           marginTop:Platform.OS =='ios'&& hp(5),
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON}
-            style={{
-              height: hp(3),
-              width: wp(4),
-              resizeMode: 'contain',
-              tintColor: '#000000',
-            }}
-          />
-        </TouchableOpacity>
-
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontSize: 20,
-            fontWeight: '400',
-            color: '#000000',
-            marginLeft: hp(2),
-          }}>
-        Delete Account
-        </Text>
-      </View>
-      </View>
+      <ProfileHeader navigation={navigation} title="Delete Account" />
 
       <View style={styles.container}>
-        <View style={{flexDirection: 'row'}}>
+        <View style={{ flexDirection: 'row' }}>
           <Image
             source={Images.WARNING}
             style={{
@@ -64,7 +29,9 @@ const DeleteAccount = ({navigation}) => {
               tintColor: '#EF4444',
             }}
           />
-          <Text style={[styles.heading, {marginLeft: hp(2), color: '#EF4444'}]}>
+          <Text
+            style={[styles.heading, { marginLeft: hp(2), color: '#EF4444' }]}
+          >
             Warning
           </Text>
         </View>
@@ -74,11 +41,12 @@ const DeleteAccount = ({navigation}) => {
             fontSize: 14,
             fontWeight: '400',
             color: '#4B5563',
-          }}>
+          }}
+        >
           Deleting your account will permanently remove all your data,
           including:
         </Text>
-        <View style={{marginTop: hp(1)}}>
+        <View style={{ marginTop: hp(1) }}>
           <Text
             style={{
               fontFamily: 'Roboto-Regular',
@@ -86,14 +54,16 @@ const DeleteAccount = ({navigation}) => {
               fontWeight: '400',
               color: '#4B5563',
               marginVertical: hp(1.8),
-            }}>{`•  ${'Personal information'}`}</Text>
+            }}
+          >{`•  ${'Personal information'}`}</Text>
           <Text
             style={{
               fontFamily: 'Roboto-Regular',
               fontSize: 14,
               fontWeight: '400',
               color: '#4B5563',
-            }}>{`•   ${'Health records'}`}</Text>
+            }}
+          >{`•   ${'Health records'}`}</Text>
           <Text
             style={{
               fontFamily: 'Roboto-Regular',
@@ -101,24 +71,27 @@ const DeleteAccount = ({navigation}) => {
               fontWeight: '400',
               color: '#4B5563',
               marginVertical: hp(1.8),
-            }}>{`•   ${'Activity history'}`}</Text>
+            }}
+          >{`•   ${'Activity history'}`}</Text>
           <Text
             style={{
               fontFamily: 'Roboto-Regular',
               fontSize: 14,
               fontWeight: '400',
               color: '#4B5563',
-            }}>{`•   ${'Saved preferences'}`}</Text>
+            }}
+          >{`•   ${'Saved preferences'}`}</Text>
         </View>
       </View>
       <View style={styles.container}>
-        <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+        <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
           Type "DELETE" to confirm
         </Text>
         <TextInput
           placeholder="Type DELETE"
           placeholderTextColor={'#6B7280'}
-          style={styles.input}></TextInput>
+          style={styles.input}
+        ></TextInput>
 
         <TouchableOpacity style={styles.continueBtn}>
           <Text style={styles.continueText}>Delete Account</Text>
@@ -131,7 +104,8 @@ const DeleteAccount = ({navigation}) => {
             fontWeight: '400',
             color: '#4B5563',
             alignSelf: 'center',
-          }}>
+          }}
+        >
           This action cannot be undone
         </Text>
       </View>
@@ -176,8 +150,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '400',
   },
-  input: {paddingVertical:hp(1.5),
- paddingLeft: hp(1),
+  input: {
+    paddingVertical: hp(1.5),
+    paddingLeft: hp(1),
     fontFamily: 'Roboto-Regular',
     borderWidth: 1,
     marginTop: hp(1.5),

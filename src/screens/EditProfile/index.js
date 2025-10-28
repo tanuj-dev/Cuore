@@ -252,10 +252,13 @@ const EditProfile = ({ navigation }) => {
                 alignItems: 'center',
                 padding: hp(2),
                 flexDirection: 'row',
-                marginTop: Platform.OS == 'ios' && hp(5),
+                marginTop: Platform.OS == 'ios' ? hp(5) : hp(1.5),
               }}
             >
-              <TouchableOpacity onPress={() => navigation.goBack()}>
+              <TouchableOpacity
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                onPress={() => navigation.goBack()}
+              >
                 <Image
                   source={Images.BACK_BUTTON}
                   style={{

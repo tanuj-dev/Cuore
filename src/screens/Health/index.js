@@ -265,7 +265,11 @@ const Health = ({ navigation }) => {
               alignItems: 'center',
             }}
           >
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{}}>
+            <TouchableOpacity
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              onPress={() => navigation.goBack()}
+              style={{}}
+            >
               <Image
                 source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
                 style={{

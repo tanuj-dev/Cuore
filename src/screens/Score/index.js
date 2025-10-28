@@ -359,6 +359,25 @@ const Score = ({ navigation, route }) => {
         >
           <TouchableOpacity
             onPress={() => {
+              // navigation.reset({
+              //   index: 0,
+              //   routes: [
+              //     {
+              //       name: 'Home',
+              //       state: {
+              //         index: 2, // Explore tab index
+              //         routes: [
+              //           { name: 'Today' },
+              //           { name: 'Explore' },
+              //           { name: 'Predict' },
+              //           { name: 'Chat' },
+              //           { name: 'Profile' },
+              //         ],
+              //       },
+              //     },
+              //   ],
+              // });
+
               if (navigateTo == 'Home') {
                 navigation.reset({
                   index: 0,

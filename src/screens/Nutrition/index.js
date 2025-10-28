@@ -152,10 +152,13 @@ const Nutrition = ({ navigation }) => {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginTop: Platform.OS == 'ios' && hp(4),
+            marginTop: Platform.OS == 'ios' ? hp(4) : hp(1.5),
           }}
         >
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            onPress={() => navigation.goBack()}
+          >
             <Image
               style={{ resizeMode: 'contain', height: hp(3), width: wp(4) }}
               source={Images.BACK_BUTTON}

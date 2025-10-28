@@ -143,7 +143,7 @@ const Profile = ({ navigation }) => {
         >
           <View
             style={{
-              marginTop: Platform.OS == 'ios' && hp(5),
+              marginTop: Platform.OS == 'ios' ? hp(5) : hp(1.5),
               justifyContent: 'center',
             }}
           >

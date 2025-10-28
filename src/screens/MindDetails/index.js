@@ -104,6 +104,7 @@ const MindDetails = ({ navigation, route }) => {
             }}
           >
             <TouchableOpacity
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
               style={{ paddingHorizontal: hp(1), marginTop: hp(3) }}
               onPress={() => navigation.goBack()}
             >

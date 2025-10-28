@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,10 @@ import {
   Image,
 } from 'react-native';
 // import { Ionicons } from '@expo/vector-icons';
-import {hp, wp, Images} from '../../utilities'; // your responsive helpers
+import { hp, wp, Images } from '../../utilities'; // your responsive helpers
+import ProfileHeader from '../../components/ProfileHeader';
 
-const SelectPersona = ({navigation}) => {
+const SelectPersona = ({ navigation }) => {
   const [selectedRole, setSelectedRole] = useState(null);
 
   const roles = [
@@ -38,43 +39,7 @@ const SelectPersona = ({navigation}) => {
 
   return (
     <View>
-      <View style={{
-          backgroundColor: '#FFFFFF',
-          elevation: 1,
-      }}>
- <View
-        style={{
-       
-        
-          alignItems: 'center',
-          padding: hp(2),
-          flexDirection: 'row',
-           marginTop:Platform.OS =='ios'&& hp(5),
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON}
-            style={{
-              height: hp(3),
-              width: wp(4),
-              resizeMode: 'contain',
-              tintColor: '#000000',
-            }}
-          />
-        </TouchableOpacity>
-
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontSize: 20,
-            fontWeight: '400',
-            color: '#000000',
-          marginLeft: hp(2),
-          }}>
-         Select Persona
-        </Text>
-      </View>
-      </View>
+      <ProfileHeader navigation={navigation} title="Select Persona" />
 
       <View style={styles.container}>
         <Text style={styles.heading}>Choose Your Role</Text>
@@ -86,7 +51,8 @@ const SelectPersona = ({navigation}) => {
               styles.roleCard,
               selectedRole === role.id && styles.selectedCard,
             ]}
-            onPress={() => setSelectedRole(role.id)}>
+            onPress={() => setSelectedRole(role.id)}
+          >
             <View style={styles.radioWrapper}>
               <View
                 style={{
@@ -96,14 +62,16 @@ const SelectPersona = ({navigation}) => {
                   borderRadius: hp(2),
                   alignItems: 'center',
                   justifyContent: 'center',
-                }}>
+                }}
+              >
                 <View
                   style={{
                     height: hp(1.5),
                     width: wp(3),
                     borderRadius: hp(4),
                     backgroundColor: selectedRole === role.id ? '#1E64AC' : '',
-                  }}></View>
+                  }}
+                ></View>
               </View>
               <View style={styles.roleText}>
                 <Text style={styles.roleTitle}>{role.title}</Text>
@@ -152,7 +120,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  roleText: {fontFamily: 'Roboto-Regular', marginLeft: wp(3), flex: 1},
+  roleText: { fontFamily: 'Roboto-Regular', marginLeft: wp(3), flex: 1 },
   roleTitle: {
     fontFamily: 'Roboto-Regular',
     fontSize: 14,

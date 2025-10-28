@@ -30,81 +30,191 @@ const healthGraphs = [
   {
     title: 'Cuore Score',
     data: {
-      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep'],
-      datasets: [{ data: [60, 68, 72, 76, 80], color: () => '#1E64AC' }],
+      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov', 'Dec', 'Jan'],
+      datasets: [
+        {
+          actualData: [60, 68, 72, 76, 80],
+          predictedData: [82, 84, 86],
+          color: '#1E64AC',
+        },
+      ],
     },
   },
   {
     title: 'Blood Pressure & Heart Rate',
     data: {
-      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep'],
+      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov', 'Dec', 'Jan'],
       datasets: [
-        { data: [140, 135, 132, 128, 125], color: () => '#ff4d4d' }, // Systolic
-        { data: [90, 88, 85, 80, 78], color: () => '#00b8a9' }, // Diastolic
-        { data: [75, 72, 70, 68, 65], color: () => '#40c4ff' }, // Heart Rate
+        {
+          actualData: [140, 135, 132, 128, 125],
+          predictedData: [122, 120, 118],
+          color: '#ff4d4d',
+        },
+        {
+          actualData: [90, 88, 85, 80, 78],
+          predictedData: [76, 74, 72],
+          color: '#00b8a9',
+        },
+        {
+          actualData: [75, 72, 70, 68, 65],
+          predictedData: [63, 62, 60],
+          color: '#40c4ff',
+        },
       ],
     },
   },
   {
     title: 'Blood Sugar',
     data: {
-      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep'],
+      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov', 'Dec', 'Jan'],
       datasets: [
-        { data: [110, 105, 102, 99, 95], color: () => '#f39c12' }, // Fasting
-        { data: [160, 150, 145, 138, 130], color: () => '#d35400' }, // After Meal
+        {
+          actualData: [110, 105, 102, 99, 95],
+          predictedData: [92, 90, 88],
+          color: '#f39c12',
+        },
+        {
+          actualData: [160, 150, 145, 138, 130],
+          predictedData: [125, 120, 115],
+          color: '#d35400',
+        },
       ],
     },
   },
   {
     title: 'A1C',
     data: {
-      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep'],
+      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov', 'Dec', 'Jan'],
       datasets: [
-        { data: [7.5, 7.2, 6.8, 6.5, 6.2], color: () => '#9b59b6' }, // A1C
+        {
+          actualData: [7.5, 7.2, 6.8, 6.5, 6.2],
+          predictedData: [6.0, 5.8, 5.6],
+          color: '#9b59b6',
+        },
       ],
     },
   },
   {
     title: 'Weight',
     data: {
-      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep'],
-      datasets: [{ data: [85, 83, 81, 80, 78], color: () => '#34495e' }],
+      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov', 'Dec', 'Jan'],
+      datasets: [
+        {
+          actualData: [85, 83, 81, 80, 78],
+          predictedData: [77, 76, 75],
+          color: '#34495e',
+        },
+      ],
     },
   },
   {
     title: 'BMI & Body Fat',
     data: {
-      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep'],
+      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov', 'Dec', 'Jan'],
       datasets: [
-        { data: [26.2, 25.7, 25.2, 24.9, 24.5], color: () => '#2ecc71' }, // BMI
-        { data: [22, 21.5, 20.8, 20, 19.5], color: () => '#1abc9c' }, // Body Fat %
+        {
+          actualData: [26.2, 25.7, 25.2, 24.9, 24.5],
+          predictedData: [24.2, 24.0, 23.8],
+          color: '#2ecc71',
+        },
+        {
+          actualData: [22, 21.5, 20.8, 20, 19.5],
+          predictedData: [19.0, 18.8, 18.5],
+          color: '#1abc9c',
+        },
       ],
     },
   },
   {
     title: 'Cholesterol',
     data: {
-      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep'],
+      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov', 'Dec', 'Jan'],
       datasets: [
-        { data: [45, 48, 50, 52, 55], color: () => '#3498db' }, // HDL
-        { data: [130, 125, 120, 115, 110], color: () => '#e74c3c' }, // LDL
-        { data: [160, 155, 150, 140, 135], color: () => '#e67e22' }, // Triglyceride
+        {
+          actualData: [45, 48, 50, 52, 55],
+          predictedData: [57, 58, 60],
+          color: '#3498db',
+        },
+        {
+          actualData: [130, 125, 120, 115, 110],
+          predictedData: [108, 106, 104],
+          color: '#e74c3c',
+        },
+        {
+          actualData: [160, 155, 150, 140, 135],
+          predictedData: [130, 125, 120],
+          color: '#e67e22',
+        },
       ],
     },
   },
   {
     title: 'Lifestyle Metrics',
     data: {
-      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep'],
+      labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov', 'Dec', 'Jan'],
       datasets: [
-        { data: [60, 65, 70, 75, 80], color: () => '#f1c40f' }, // Nutrition
-        { data: [40, 50, 60, 70, 80], color: () => '#2ecc71' }, // Fitness
-        { data: [70, 65, 60, 55, 50], color: () => '#e74c3c' }, // Stress (lower is better)
-        { data: [6, 6.5, 7, 7.5, 8], color: () => '#2980b9' }, // Sleep hours
+        {
+          actualData: [60, 65, 70, 75, 80],
+          predictedData: [82, 84, 86],
+          color: '#f1c40f',
+        },
+        {
+          actualData: [40, 50, 60, 70, 80],
+          predictedData: [82, 84, 86],
+          color: '#2ecc71',
+        },
+        {
+          actualData: [70, 65, 60, 55, 50],
+          predictedData: [48, 46, 44],
+          color: '#e74c3c',
+        },
+        {
+          actualData: [6, 6.5, 7, 7.5, 8],
+          predictedData: [8.2, 8.4, 8.5],
+          color: '#2980b9',
+        },
       ],
     },
   },
 ];
+
+const convertToChartData = graph => {
+  const { labels, datasets } = graph.data;
+  const predictionStart = labels.length - 3;
+
+  const chartDatasets = datasets.flatMap(
+    ({ actualData, predictedData, color }) => {
+      const actual = [...actualData];
+      const predicted = [...predictedData];
+
+      const actualPadded = [...actual, ...Array(predicted.length).fill(null)];
+      const predictedPadded = Array(actual.length).fill(null).concat(predicted);
+
+      return [
+        {
+          data: actualPadded,
+          color: () => color,
+        },
+        {
+          data: predictedPadded,
+          color: () => `rgba(${hexToRgb(color)}, 0.3)`,
+        },
+      ];
+    },
+  );
+
+  return {
+    labels,
+    datasets: chartDatasets,
+  };
+};
+const hexToRgb = hex => {
+  const bigint = parseInt(hex.replace('#', ''), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `${r}, ${g}, ${b}`;
+};
 
 const Predict = ({ navigation }) => {
   const [showCuoreData, setShowCuoreData] = useState(false);
@@ -194,57 +304,97 @@ const Predict = ({ navigation }) => {
               )}
 
               <View style={styles.cardHeader}>
-                <Text style={styles.title}>{item.title}</Text>
-                {/* <View style={styles.switchContainer}>
-                <TouchableOpacity
-                  onPress={() => setShowBPData(!showBPData)}
-                  style={{
-                    borderWidth: 0.5,
-                    borderColor: '#9CA3AF',
-                    height: hp(2),
-                    width: wp(4),
-                    borderRadius: hp(0.3),
-                    marginRight: hp(1),
-                  }}>
-                  {showBPData && (
-                    <Image
-                      style={{
-                        resizeMode: 'cover',
-                        height: hp(2),
-                        width: wp(4),
-                        borderRadius: hp(0.3),
-                      }}
-                      source={Images.RIGHT_1}></Image>
-                  )}
-                </TouchableOpacity>
-                <Text style={{fontFamily: 'Roboto-Regular'}}>Show Data</Text>
-              </View> */}
+                <Text style={[styles.title]}>
+                  {item.title == 'Blood Pressure & Heart Rate'
+                    ? 'BP & HR'
+                    : item.title}
+                </Text>
+                <View style={styles.switchContainer}>
+                  <TouchableOpacity
+                    onPress={() => setShowBPData(!showBPData)}
+                    style={{
+                      borderWidth: 0.5,
+                      borderColor: '#9CA3AF',
+                      height: hp(2),
+                      width: wp(4),
+                      borderRadius: hp(0.3),
+                      marginRight: hp(1),
+                    }}
+                  >
+                    {showBPData && (
+                      <Image
+                        style={{
+                          resizeMode: 'cover',
+                          height: hp(2),
+                          width: wp(4),
+                          borderRadius: hp(0.3),
+                        }}
+                        source={Images.RIGHT_1}
+                      ></Image>
+                    )}
+                  </TouchableOpacity>
+                  <Text style={{ fontFamily: 'Roboto-Regular' }}>
+                    Show Data
+                  </Text>
+                </View>
                 <TouchableOpacity
                   onPress={() => {
                     if (item.title == 'Cuore Score') {
                       const STEP = 1;
-                      navigation.navigate('OnBoarding', { STEP });
+                      navigation.navigate('OnBoarding', {
+                        STEP,
+                        screen: 'Reassess',
+                        navigateTo: 'Home',
+                      });
                     } else if (item.title == 'Blood Pressure & Heart Rate') {
                       const STEP = 7;
-                      navigation.navigate('OnBoarding', { STEP });
+                      navigation.navigate('OnBoarding', {
+                        STEP,
+                        screen: 'Reassess',
+                        navigateTo: 'Home',
+                      });
                     } else if (item.title == 'Weight') {
                       const STEP = 2;
-                      navigation.navigate('OnBoarding', { STEP });
+                      navigation.navigate('OnBoarding', {
+                        STEP,
+                        screen: 'Reassess',
+                        navigateTo: 'Home',
+                      });
                     } else if (item.title == 'Blood Sugar') {
                       const STEP = 7;
-                      navigation.navigate('OnBoarding', { STEP });
+                      navigation.navigate('OnBoarding', {
+                        STEP,
+                        screen: 'Reassess',
+                        navigateTo: 'Home',
+                      });
                     } else if (item.title == 'A1C') {
                       const STEP = 7;
-                      navigation.navigate('OnBoarding', { STEP });
+                      navigation.navigate('OnBoarding', {
+                        STEP,
+                        screen: 'Reassess',
+                        navigateTo: 'Home',
+                      });
                     } else if (item.title == 'BMI & Body Fat') {
                       const STEP = 2;
-                      navigation.navigate('OnBoarding', { STEP });
+                      navigation.navigate('OnBoarding', {
+                        STEP,
+                        screen: 'Reassess',
+                        navigateTo: 'Home',
+                      });
                     } else if (item.title == 'Cholesterol') {
                       const STEP = 7;
-                      navigation.navigate('OnBoarding', { STEP });
+                      navigation.navigate('OnBoarding', {
+                        STEP,
+                        screen: 'Reassess',
+                        navigateTo: 'Home',
+                      });
                     } else if (item.title == 'Lifestyle Metrics') {
                       const STEP = 5;
-                      navigation.navigate('OnBoarding', { STEP });
+                      navigation.navigate('OnBoarding', {
+                        STEP,
+                        screen: 'Reassess',
+                        navigateTo: 'Home',
+                      });
                     }
                   }}
                   style={[
@@ -268,7 +418,7 @@ const Predict = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
               <LineChart
-                data={item.data}
+                data={convertToChartData(item)}
                 width={wp(87)}
                 height={hp(25)}
                 chartConfig={chartConfig}
@@ -284,7 +434,7 @@ const Predict = ({ navigation }) => {
                       fontSize: 10,
                     }}
                   >
-                    {indexData}
+                    {showBPData ? indexData : ''}
                   </Text>
                 )}
                 withShadow={false} // 🚫 disables the blue area fill

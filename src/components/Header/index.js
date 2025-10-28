@@ -24,6 +24,7 @@ const Header = ({ title, navigation }) => {
       >
         <TouchableOpacity
           style={{
+            hitSlop: { top: 20, bottom: 20, left: 20, right: 20 },
             paddingHorizontal: hp(1),
             marginTop: Platform.OS == 'android' && hp(1),
           }}
@@ -35,7 +36,7 @@ const Header = ({ title, navigation }) => {
               resizeMode: 'contain',
               height: hp(3.5),
               width: wp(4),
-              marginLeft: Platform.OS == 'ios' ? hp(2) : hp(0.2),
+              marginLeft: Platform.OS == 'ios' ? hp(2) : hp(1),
             }}
             resizeMode="contain"
           />

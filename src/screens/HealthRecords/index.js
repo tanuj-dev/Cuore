@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,11 @@ import {
   ScrollView,
 } from 'react-native';
 import FilePickerManager from 'react-native-file-picker';
-import {hp, wp, Images, color} from '../../utilities';
+import { hp, wp, Images, color } from '../../utilities';
 import images from '../../utilities/Images';
+import ProfileHeader from '../../components/ProfileHeader';
 
-const HealthRecords = ({navigation}) => {
+const HealthRecords = ({ navigation }) => {
   const [recordName, setRecordName] = useState('');
   const [recordDate, setRecordDate] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -109,48 +110,13 @@ const HealthRecords = ({navigation}) => {
 
   return (
     <ScrollView>
-      <View style={{flex: 1}}>
-         <View style={{
-          backgroundColor: '#FFFFFF',
-          elevation: 1,
-      }}>
- <View
-        style={{
-       
-        
-          alignItems: 'center',
-          padding: hp(2),
-          flexDirection: 'row',
-           marginTop:Platform.OS =='ios'&& hp(5),
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            source={Images.BACK_BUTTON}
-            style={{
-              height: hp(3),
-              width: wp(4),
-              resizeMode: 'contain',
-              tintColor: '#000000',
-            }}
-          />
-        </TouchableOpacity>
-
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontSize: 20,
-            fontWeight: '400',
-            color: '#000000',
-       marginLeft: hp(2),
-          }}>
-         Health Records
-        </Text>
-      </View>
-      </View>
+      <View style={{ flex: 1 }}>
+        <ProfileHeader navigation={navigation} title="Health Records" />
         <View style={styles.container}>
           <Text style={styles.header}>Upload Records</Text>
           <View
-            style={{padding: hp(1), backgroundColor: '#FFFFFF', elevation: 2}}>
+            style={{ padding: hp(1), backgroundColor: '#FFFFFF', elevation: 2 }}
+          >
             <Text style={styles.upperInputText}>Record Name</Text>
             <TextInput
               placeholderTextColor={'#6B7280'}
@@ -179,7 +145,9 @@ const HealthRecords = ({navigation}) => {
                   // tintColor: '#000000',
                 }}
               />
-              <Text style={{fontSize: 14, fontWeight: '400', color: '#6B7280'}}>
+              <Text
+                style={{ fontSize: 14, fontWeight: '400', color: '#6B7280' }}
+              >
                 Upload Record
               </Text>
               <Text style={styles.fileText}>
@@ -194,7 +162,8 @@ const HealthRecords = ({navigation}) => {
                   fontWeight: '400',
                   color: '#374151',
                   marginTop: hp(1),
-                }}>
+                }}
+              >
                 Make sure the uploaded health record belongs to you
               </Text>
             </TouchableOpacity>
@@ -204,9 +173,11 @@ const HealthRecords = ({navigation}) => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 marginVertical: hp(1),
-              }}>
+              }}
+            >
               <TouchableOpacity
-                onPress={() => setIsPrescription(!isPrescription)}>
+                onPress={() => setIsPrescription(!isPrescription)}
+              >
                 <View
                   style={{
                     borderWidth: 1,
@@ -215,7 +186,8 @@ const HealthRecords = ({navigation}) => {
                     height: hp(3),
                     width: wp(6),
                     borderRadius: hp(0.9),
-                  }}></View>
+                  }}
+                ></View>
               </TouchableOpacity>
               <View style={styles.checkboxRow}>
                 <Text
@@ -224,14 +196,15 @@ const HealthRecords = ({navigation}) => {
                     fontSize: 14,
                     color: '#4B5563',
                     fontWeight: '400',
-                  }}>
+                  }}
+                >
                   Mark as Prescription or Doctor’s Note
                 </Text>
               </View>
             </View>
 
             <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-              <Text style={{color: 'white', fontWeight: '600'}}>Submit</Text>
+              <Text style={{ color: 'white', fontWeight: '600' }}>Submit</Text>
             </TouchableOpacity>
           </View>
 
@@ -244,7 +217,8 @@ const HealthRecords = ({navigation}) => {
               fontSize: 18,
               fontStyle: 'normal',
               fontWeight: '400',
-            }}>
+            }}
+          >
             View Records
           </Text>
           <View style={styles.tabs}>
@@ -252,11 +226,13 @@ const HealthRecords = ({navigation}) => {
               <TouchableOpacity
                 key={tab}
                 style={[styles.tab, selectedTab === tab && styles.activeTab]}
-                onPress={() => setSelectedTab(tab)}>
+                onPress={() => setSelectedTab(tab)}
+              >
                 <Text
                   style={
                     selectedTab === tab ? styles.activeText : styles.tabText
-                  }>
+                  }
+                >
                   {tab}
                 </Text>
               </TouchableOpacity>
@@ -267,13 +243,13 @@ const HealthRecords = ({navigation}) => {
           <FlatList
             data={records}
             keyExtractor={item => item.id.toString()}
-            renderItem={({item}) => (
+            renderItem={({ item }) => (
               <View style={styles.recordItem}>
-                <View style={{flex: 1}}>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.recordTitle}>{item.name}</Text>
                   <Text style={styles.recordDate}>{item.date}</Text>
                 </View>
-                <View style={{flexDirection: 'row'}}>
+                <View style={{ flexDirection: 'row' }}>
                   <TouchableOpacity
 
                   // onPress={() => handleDelete(item.id)}
@@ -284,7 +260,8 @@ const HealthRecords = ({navigation}) => {
                         height: hp(3),
                         resizeMode: 'contain',
                       }}
-                      source={Images.EDIT}></Image>
+                      source={Images.EDIT}
+                    ></Image>
                   </TouchableOpacity>
                   <TouchableOpacity
                   // onPress={
@@ -298,7 +275,8 @@ const HealthRecords = ({navigation}) => {
                         resizeMode: 'contain',
                         marginLeft: hp(3),
                       }}
-                      source={Images.EYE}></Image>
+                      source={Images.EYE}
+                    ></Image>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => handleDelete(item.id)}>
                     <Image
@@ -307,7 +285,8 @@ const HealthRecords = ({navigation}) => {
                         height: hp(3),
                         resizeMode: 'contain',
                       }}
-                      source={Images.DELETE}></Image>
+                      source={Images.DELETE}
+                    ></Image>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -384,7 +363,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     alignItems: 'center',
   },
-  activeTab: {fontFamily: 'Roboto-Regular', backgroundColor: '#1E64AC'},
+  activeTab: { fontFamily: 'Roboto-Regular', backgroundColor: '#1E64AC' },
   tabText: {
     fontFamily: 'Roboto-Regular',
     color: '#FFFFFF',

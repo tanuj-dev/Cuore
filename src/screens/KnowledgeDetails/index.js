@@ -54,6 +54,7 @@ const KnowledgeDetails = ({ navigation, route }) => {
             }}
           >
             <TouchableOpacity
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
               style={{
                 marginTop: Platform.OS === 'ios' ? hp(4) : hp(0),
                 paddingHorizontal: hp(2),

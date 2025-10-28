@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,9 @@ import {
   Image,
   ImageBackground,
 } from 'react-native';
-import {Images, hp, wp} from '../../utilities';
+import { Images, hp, wp } from '../../utilities';
 
-const CalorieIgnite = ({navigation}) => {
+const CalorieIgnite = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState('Breakfast');
 
   const mealOptions = [
@@ -77,13 +77,15 @@ const CalorieIgnite = ({navigation}) => {
       <TouchableOpacity
         // onPress={() => navigation.goBack()}
         key={index}
-        style={[styles.card, {borderLeftColor: '#17AD8D'}]}>
+        style={[styles.card, { borderLeftColor: '#17AD8D' }]}
+      >
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
             position: 'absolute',
-          }}>
+          }}
+        >
           <Text style={styles.kcal}>⚡{item.calories} kcal</Text>
         </View>
 
@@ -114,18 +116,22 @@ const CalorieIgnite = ({navigation}) => {
       {/* 🔵 Header */}
 
       <ImageBackground
-        style={{height: hp(25), padding: hp(2)}}
-        source={Images.BACKGROUND_IMAGE_NUTRITION}>
+        style={{ height: hp(25), padding: hp(2) }}
+        source={Images.BACKGROUND_IMAGE_NUTRITION}
+      >
         <View
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginTop:Platform.OS =='ios'&& hp(5),
-          }}>
+            marginTop: Platform.OS == 'ios' && hp(5),
+          }}
+        >
           <TouchableOpacity
-            style={{paddingHorizontal: hp(1)}}
-            onPress={() => navigation.goBack()}>
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            style={{ paddingHorizontal: hp(1) }}
+            onPress={() => navigation.goBack()}
+          >
             <Image
               source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
               style={{
@@ -138,8 +144,9 @@ const CalorieIgnite = ({navigation}) => {
           </TouchableOpacity>
 
           <Image
-            style={{height: hp(2), width: wp(4), resizeMode: 'contain'}}
-            source={Images.SHARE_4}></Image>
+            style={{ height: hp(2), width: wp(4), resizeMode: 'contain' }}
+            source={Images.SHARE_4}
+          ></Image>
         </View>
 
         <View
@@ -147,7 +154,8 @@ const CalorieIgnite = ({navigation}) => {
             // flexDirection: 'row',
             alignItems: 'center',
             marginTop: hp(2),
-          }}>
+          }}
+        >
           <View
             style={{
               flexDirection: 'row',
@@ -155,7 +163,8 @@ const CalorieIgnite = ({navigation}) => {
               backgroundColor: '#1E64AC',
               paddingHorizontal: hp(2),
               borderRadius: hp(3),
-            }}>
+            }}
+          >
             <Image
               style={{
                 height: hp(5),
@@ -164,7 +173,8 @@ const CalorieIgnite = ({navigation}) => {
                 marginHorizontal: hp(1),
                 // backgroundColor: 'red',
               }}
-              source={Images.WHITE_FIRE}></Image>
+              source={Images.WHITE_FIRE}
+            ></Image>
 
             <Text
               style={{
@@ -172,7 +182,8 @@ const CalorieIgnite = ({navigation}) => {
                 fontSize: 14,
                 fontWeight: '400',
                 color: '#FFFFFF',
-              }}>
+              }}
+            >
               Calorie Ignite
             </Text>
           </View>
@@ -187,7 +198,8 @@ const CalorieIgnite = ({navigation}) => {
             // alignSelf: 'center',
             textAlign: 'center',
             marginTop: hp(1.5),
-          }}>
+          }}
+        >
           Daily variety leads to better results— try a new option each day.
         </Text>
       </ImageBackground>
@@ -201,7 +213,7 @@ const CalorieIgnite = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff'},
+  container: { flex: 1, backgroundColor: '#fff' },
   headerImage: {
     width: '100%',
     height: hp(30),
@@ -278,7 +290,7 @@ const styles = StyleSheet.create({
     // flexDirection: 'row',
     // justifyContent: 'space-between',
   },
-  tag: {fontFamily: 'Roboto-Regular', fontSize: wp(3.2), fontWeight: '500'},
+  tag: { fontFamily: 'Roboto-Regular', fontSize: wp(3.2), fontWeight: '500' },
   kcal: {
     fontFamily: 'Roboto-Regular',
     marginLeft: hp(0),

@@ -91,17 +91,18 @@ const CuoreKnowledge = ({ navigation }) => {
           }}
         >
           <TouchableOpacity
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             style={{ paddingHorizontal: hp(1) }}
             onPress={() => navigation.goBack()}
           >
             <Image
               source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
               style={{
-                marginTop: Platform.OS == 'ios' && hp(5),
+                marginTop: Platform.OS == 'ios' ? hp(5) : hp(1),
                 resizeMode: 'contain',
                 height: hp(3.5),
                 width: wp(4),
-                marginLeft: Platform.OS == 'ios' ? hp(2) : hp(0.2),
+                marginLeft: Platform.OS == 'ios' ? hp(2) : hp(1),
               }}
             />
           </TouchableOpacity>
