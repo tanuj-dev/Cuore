@@ -521,7 +521,7 @@ const Today = ({ navigation, route }) => {
                   </View>
                 </View>
 
-                {/* check blat dot */}
+                {/* check black dot */}
                 <View
                   style={{
                     marginTop: hp(1),
@@ -562,7 +562,7 @@ const Today = ({ navigation, route }) => {
                       }
                     }
                   }}
-                  style={[styles.taskCard, { borderLeftColor: item.color }]}
+                  style={[styles.taskCard, { borderLeftColor: item?.color }]}
                 >
                   <View style={styles.taskHeader}>
                     <Text style={styles.taskIcon}>{item?.icon}</Text>
@@ -816,6 +816,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     flexDirection: 'row',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    // marginLeft: hp(2),
   },
   taskHeader: { flexDirection: 'row', alignItems: 'center' },
   taskIcon: {
