@@ -61,7 +61,7 @@ const profileOptions = [
   },
   {
     title: 'Logout',
-    icon: Images.TERMS_AND_CONDITION,
+    icon: Images.EXIT,
     section: 'GENERAL',
   },
 ];
@@ -110,11 +110,27 @@ const Profile = ({ navigation }) => {
         >
           <Image
             source={item.icon}
-            style={styles.itemIcon}
+            style={[
+              styles.itemIcon,
+              { tintColor: item.title === 'Logout' ? '#FF3D00' : '#000000' },
+            ]}
             resizeMode="contain"
           />
-          <Text style={styles.itemText}>{item.title}</Text>
-          <Image source={Images.RIGHT_ARROW} style={styles.arrowIcon} />
+          <Text
+            style={[
+              styles.itemText,
+              { color: item.title === 'Logout' ? '#FF3D00' : '#000000' },
+            ]}
+          >
+            {item?.title}
+          </Text>
+          <Image
+            source={Images.RIGHT_ARROW}
+            style={[
+              styles.arrowIcon,
+              { tintColor: item.title === 'Logout' ? '#FF3D00' : '#000000' },
+            ]}
+          />
         </TouchableOpacity>
       ))}
     </View>
@@ -265,7 +281,7 @@ const styles = StyleSheet.create({
     width: wp(4),
     height: wp(4),
     resizeMode: 'contain',
-    // tintColor: 'black',
+    tintColor: 'black',
   },
 });
 

@@ -45,6 +45,7 @@ const ProgressBarWithImage = ({ navigation, data }) => {
             backgroundColor: '#FFFFFF',
             borderRadius: hp(5), // make it circular
             padding: hp(0.5),
+            left: 3 * Math.round(data?.periods?.[0]?.value), // center the image on the indicator
           }}
         >
           <Image
@@ -58,18 +59,51 @@ const ProgressBarWithImage = ({ navigation, data }) => {
           />
         </TouchableOpacity>
 
+        {/* <TouchableOpacity
+          onPress={() => navigation.navigate('Score')}
+          style={{
+            flexDirection: 'row',
+            position: 'absolute',
+            bottom: hp(2.5), // distance from bottom
+            alignItems: 'center',
+            zIndex: 1000,
+            // backgroundColor: 'red',
+            // marginRight: 20,
+            height: hp(4),
+            width: hp(6),
+            borderRadius: hp(5), // make it circular
+            padding: hp(0.5),
+            left: 3 * Math.round(data?.periods?.[0]?.value) - 7, // center the image on the indicator
+            top: hp(2),
+          }}
+        >
+          <Image
+            source={images.FLAG}
+            style={{
+              width: 14,
+              height: 14,
+              marginRight: 4,
+              resizeMode: 'contain',
+            }}
+          />
+          <Text style={styles.percentText}>
+            {Math.round(data?.periods?.[0]?.value)}
+          </Text>
+        </TouchableOpacity> */}
+
         <View style={styles.percentRow}>
-          <Text style={styles.percentText}>45%</Text>
+          <Text style={styles.percentText}>0%</Text>
           <View style={styles.centerIndicator}>
             <Image
               source={images.FLAG}
               style={{ width: 14, height: 14, marginRight: 4 }}
             />
             <Text style={styles.percentText}>
-              {Math.round(data?.periods?.[0]?.value)}
+              {Math.round(data?.periods?.[0]?.value)}%
             </Text>
           </View>
-          <Text style={styles.percentText}>{data?.goal}</Text>
+          {/* <Text style={styles.percentText}>{data?.goal}</Text> */}
+          <Text style={styles.percentText}>100%</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -121,6 +155,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 15,
+    width: wp(80),
     // alignItems: 'flex-start',
   },
   percentText: {

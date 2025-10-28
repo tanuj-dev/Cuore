@@ -60,27 +60,25 @@ const Tobacco = ({ navigation }) => {
   };
 
   const handleLogUsage = async () => {
+    console.log('handleLogUsage triggered');
     setLoading(true);
     const count = yesterdayCount;
     const res = await dispatch(logTobaccoUsage({ userId, count })).unwrap();
+    console.log('logTobaccoUsage response:', res);
     if (res.status === 'success') {
       setToast('Tobacco usage logged successfully');
       dispatch(getTobacco(userId));
-      setLoading(false);
-    } else {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = () => {
     setRefreshing(true);
     if (userId) {
       dispatch(getTobacco(userId));
     }
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 2000);
-  }, [dispatch, userId]);
+    setRefreshing(false);
+  };
 
   // const nudge = dailyChalanges?.find(challenge => challenge.isCurrent)?.nudge;
 
@@ -128,10 +126,10 @@ const Tobacco = ({ navigation }) => {
                 right: wp(4),
                 // marginTop: hp(6),
               }}
-              onPress={handleLogUsage}
+              onPress={() => handleLogUsage()}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#1E64AC" />
+                <ActivityIndicator size="small" color="white" />
               ) : (
                 <Text style={[styles.reassessText, { color: 'white' }]}>
                   Submit

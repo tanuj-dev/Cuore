@@ -139,6 +139,7 @@ const images = {
 
   EMPTY_CART: require('../assets/images/emptycart.png'),
   EGG: require('../assets/images/egg.png'),
+  EXIT: require('../assets/images/exit.png'),
 
   // DM7: require('../assets/images/dm7.png'),
 };

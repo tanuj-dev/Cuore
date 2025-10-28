@@ -128,17 +128,6 @@ const Nutrition = ({ navigation }) => {
     );
   };
 
-  if (!nourishData) {
-    return (
-      <ApiErrorFallback
-        message="No nutrition data available at the moment."
-        onRetry={() => {
-          // Retry logic can be added here
-        }}
-      />
-    );
-  }
-
   return (
     <ScrollView style={styles.container}>
       {/* 🔵 Header */}

@@ -237,6 +237,22 @@ const Today = ({ navigation, route }) => {
   //   );
   // }
 
+  const titleToRouteMap = {
+    'Wake Up': 'OnBoarding',
+    Breakfast: 'Nutrition',
+    Fitness: 'Fitness',
+    Lunch: 'Nutrition',
+    'Short Nap or Walk': 'Mind',
+    Dinner: 'Nutrition',
+    Sleep: 'Mind',
+    'Check Fasting Sugar': 'OnBqoarding',
+    'Refresh & Refuel': 'RefrestRefuel',
+    Medication: 'MidMorningBoost',
+    'Check BP': 'OnBoarding',
+    'Quiet Mind Restful Night': 'Mind',
+  };
+  const titlesWithPayload = ['Fitness', 'Breakfast', 'Dinner'];
+
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.floatingText}>
@@ -382,7 +398,7 @@ const Today = ({ navigation, route }) => {
                         ? '#FA003F'
                         : item?.type == 'yellow'
                         ? '#FFCE1B'
-                        : '#EAB308',
+                        : '#A16207',
                     marginRight: hp(0.5),
                   }}
                   source={Images.WARNING}
@@ -505,6 +521,7 @@ const Today = ({ navigation, route }) => {
                   </View>
                 </View>
 
+                {/* check blat dot */}
                 <View
                   style={{
                     marginTop: hp(1),
@@ -530,6 +547,21 @@ const Today = ({ navigation, route }) => {
                 </View>
 
                 <TouchableOpacity
+                  onPress={() => {
+                    const route = titleToRouteMap[item.title];
+                    if (route) {
+                      if (titlesWithPayload.includes(item.title)) {
+                        navigation.navigate(route, {
+                          time: item.time,
+                          title: item.title,
+                          type: item.type,
+                          fromSchedule: true,
+                        });
+                      } else {
+                        navigation.navigate(route);
+                      }
+                    }
+                  }}
                   style={[styles.taskCard, { borderLeftColor: item.color }]}
                 >
                   <View style={styles.taskHeader}>
@@ -567,20 +599,13 @@ const Today = ({ navigation, route }) => {
           >
             <TouchableOpacity
               onPress={() => setChecked(!checked)}
-              style={{
-                height: hp(3),
-                width: wp(6),
-                borderWidth: 1,
-                borderRadius: hp(0.5),
-                marginRight: hp(1),
-                borderColor: '#9CA3AF',
-                backgroundColor: checked ? '#1E64AC' : 'transparent',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              style={[
+                styles.checkAll,
+                { backgroundColor: checked ? '#1E64AC' : 'transparent' },
+              ]}
             >
               {checked && (
-                <Text style={{ color: 'white', fontSize: 12 }}>✔</Text>
+                <Text style={{ color: '#FFFFFF', fontSize: 12 }}>✔</Text>
               )}
             </TouchableOpacity>
 
@@ -843,6 +868,17 @@ const styles = StyleSheet.create({
     color: '#1E64AC',
     fontWeight: '600',
     textAlign: 'center',
+  },
+  checkAll: {
+    height: hp(3),
+    width: wp(6),
+    borderWidth: 1,
+    borderRadius: hp(0.5),
+    marginRight: hp(1),
+    borderColor: '#9CA3AF',
+
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

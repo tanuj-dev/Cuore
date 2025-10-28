@@ -1,7 +1,6 @@
 import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
 import React from 'react';
 import { hp, wp, Images } from '../../utilities';
-import { Image } from 'react-native';
 
 const ProfileHeader = ({ navigation, title }) => {
   return (
