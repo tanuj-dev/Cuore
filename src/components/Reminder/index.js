@@ -18,7 +18,7 @@ import { Images } from '../../utilities';
 import { setReminder } from '../../redux/slices';
 import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
-import { getHomeData } from '../../redux/slices';
+import { getHomeData, deleteReminderThunk } from '../../redux/slices';
 import ReminderEditor from '../ReminderEditor';
 
 const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
@@ -151,7 +151,16 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
                     />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() => {}}
+                    onPress={() => {
+                      dispatch(
+                        deleteReminderThunk({
+                          userId: user_id,
+                          reminderId: item.id,
+                        }),
+                      );
+                      dispatch(getHomeData(user_id));
+                      setIsVisible(false);
+                    }}
                     style={styles.iconButton}
                   >
                     <Image

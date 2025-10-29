@@ -189,7 +189,7 @@ const healthGraphs = [
   },
 ];
 
-const convertToChartData = graph => {
+const convertToChartData = ({ graph, history }) => {
   const { labels = [], datasets = [] } = graph.data || {};
   if (!labels.length || !datasets.length) {
     return {
@@ -199,35 +199,35 @@ const convertToChartData = graph => {
   }
 
   const chartDatasets = datasets.flatMap(
-    ({ actualData, predictedData, color }) => {
+    ({ actualData, predictedData, color, label }) => {
       const actual = Array.isArray(actualData) ? actualData : [];
       const predicted = Array.isArray(predictedData) ? predictedData : [];
 
-      // 🔒 If both arrays are empty, inject fallback zeros to prevent chart crash
-      const fallbackLength = labels.length;
-      const safeActual = actual.length ? actual : Array(fallbackLength).fill(0);
-      const safePredicted = predicted.length
-        ? predicted
-        : Array(fallbackLength).fill(0);
+      // Skip if both are empty
+      if (actual.length === 0 && predicted.length === 0) return [];
 
-      const actualPadded = [
-        ...safeActual,
-        ...Array(safePredicted.length).fill(null),
-      ];
-      const predictedPadded = Array(safeActual.length)
-        .fill(null)
-        .concat(safePredicted);
+      const actualPadded = [...actual, ...Array(predicted.length).fill(null)];
+      const predictedPadded = Array(actual.length).fill(null).concat(predicted);
 
-      return [
-        {
-          data: actualPadded,
-          color: () => color,
-        },
-        {
-          data: predictedPadded,
-          color: () => `rgba(${hexToRgb(color)}, 0.3)`,
-        },
-      ];
+      const actualDataset = {
+        data: actualPadded,
+        color: () => color,
+        label: label ? `${label} (Actual)` : 'Actual',
+      };
+
+      const predictedDataset = {
+        data: predictedPadded,
+        color: () => `rgba(${hexToRgb(color)}, 0.3)`,
+        label: label ? `${label} (Predicted)` : 'Predicted',
+      };
+
+      if (history === 'Predict') {
+        return [actualDataset, predictedDataset];
+      } else if (history === 'History') {
+        return [actualDataset];
+      } else {
+        return [actualDataset]; // default fallback
+      }
     },
   );
 
@@ -235,7 +235,13 @@ const convertToChartData = graph => {
     labels,
     datasets: chartDatasets.length
       ? chartDatasets
-      : [{ data: Array(labels.length).fill(0), color: () => '#ccc' }],
+      : [
+          {
+            data: Array(labels.length).fill(0),
+            color: () => '#ccc',
+            label: 'No Data',
+          },
+        ],
   };
 };
 
@@ -251,6 +257,7 @@ const Predict = ({ navigation }) => {
   const [showRowData, setShowRowData] = useState('');
   const [activeTab, setActiveTab] = useState('Predict');
   const [refreshing, setRefreshing] = useState(false);
+  const [history, setHistory] = useState('');
 
   const dispatch = useDispatch();
 
@@ -324,7 +331,10 @@ const Predict = ({ navigation }) => {
               ) && (
                 <View style={styles.tabContainer}>
                   <TouchableOpacity
-                    onPress={() => setActiveTab('Predict')}
+                    onPress={() => {
+                      setHistory('Predict');
+                      setActiveTab('Predict');
+                    }}
                     style={[
                       styles.tab,
                       activeTab === 'Predict' && styles.activeTab,
@@ -342,7 +352,10 @@ const Predict = ({ navigation }) => {
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    onPress={() => setActiveTab('history')}
+                    onPress={() => {
+                      setHistory('history');
+                      setActiveTab('history');
+                    }}
                     style={[
                       styles.tab,
                       activeTab === 'history' && styles.activeTab,
@@ -489,7 +502,7 @@ const Predict = ({ navigation }) => {
               ) : ( */}
               <LineChart
                 key={item?.title}
-                data={convertToChartData(item)}
+                data={convertToChartData({ graph: item, history })}
                 width={wp(87)}
                 height={hp(25)}
                 chartConfig={chartConfig}
@@ -516,56 +529,55 @@ const Predict = ({ navigation }) => {
                 withInnerLines={false}
               />
               // {/* )} */}
+              {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}> */}
               <View
                 style={{
+                  width: '100%',
+                  alignItems: 'flex-start',
+                  justifyContent: 'flex-start',
                   flexDirection: 'row',
-                  justifyContent: 'space-around',
-                  marginTop: 10,
-                  // backgroundColor: 'red',
-                  marginHorizontal: hp(1),
+                  gap: hp(2),
+                  marginVertical: hp(1),
                 }}
               >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
+                {item?.data?.datasets.map((ds, idx) => {
+                  console.log('describe', ds);
+                  return (
+                    <View
+                      key={`legend-${idx}`}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginBottom: hp(1),
+                      }}
+                    >
+                      <View
+                        style={{
+                          height: hp(1.5),
+                          width: hp(1.5),
+                          marginRight: hp(1),
+                          borderRadius: hp(5),
+                          backgroundColor:
+                            typeof ds.color === 'function'
+                              ? ds.color()
+                              : ds.color,
+                        }}
+                      />
+                      <Text style={styles.hintText}>{ds.label}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <View>
+                <Text
+                  style={[
+                    styles.hintText,
+                    { textAlign: 'center', color: '#1E64AC' },
+                  ]}
                 >
-                  <View
-                    style={{
-                      height: hp(2),
-                      width: hp(2),
-                      marginRight: hp(1),
-                      borderRadius: hp(5),
-                      backgroundColor: '#FF7272',
-                    }}
-                  ></View>
-                  <Text style={styles.hintText}>BP Systolic</Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <View
-                    style={{
-                      height: hp(2),
-                      width: hp(2),
-                      marginHorizontal: hp(1),
-                      borderRadius: hp(5),
-                      backgroundColor: '#68D5CD',
-                    }}
-                  ></View>
-                  <Text style={styles.hintText}>BP Diastolic</Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <View
-                    style={{
-                      height: hp(2),
-                      width: hp(2),
-                      marginHorizontal: hp(1),
-                      borderRadius: hp(5),
-                      backgroundColor: '#4DBAD2',
-                    }}
-                  ></View>
-                  <Text style={styles.hintText}>Heart Rate</Text>
-                </View>
+                  ⚠️ note that the predicted values are represented by lighter
+                  lines.
+                </Text>
               </View>
             </View>
           );

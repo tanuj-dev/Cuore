@@ -10,7 +10,7 @@ import { setReminder } from './Home/setReminderThunk';
 // import { updateReminderTime } from './Home/updateTime';
 import { getCuoreScoreThunk } from './OnBoardng/onBoardingThunk';
 import { editWakeupThunk } from './Home/wakeupEdit';
-import { editReminderThunk } from './Home/editReminder';
+import { editReminderThunk, deleteReminderThunk } from './Home/editReminder';
 import {
   getNourish,
   getBuilderItems,
@@ -49,4 +49,5 @@ export {
   updateTobaccoProfile,
   logTobaccoUsage,
   getPredict,
+  deleteReminderThunk,
 };

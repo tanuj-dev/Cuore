@@ -1,5 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { putApiCall } from '../../utilities/Services';
+import {
+  deleteApiCall,
+  postApiCall,
+  putApiCall,
+} from '../../utilities/Services';
 
 export const editReminderThunk = createAsyncThunk(
   'reminders/edit',
@@ -8,6 +12,20 @@ export const editReminderThunk = createAsyncThunk(
     try {
       const endpoint = `/api/v1/timeline/${userId}/reminders/${reminderId}`;
       const response = await putApiCall(endpoint, payload2);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to update reminder',
+      );
+    }
+  },
+);
+export const deleteReminderThunk = createAsyncThunk(
+  'reminders/delete',
+  async ({ userId, reminderId }, { rejectWithValue }) => {
+    try {
+      const endpoint = `/api/v1/timeline/${userId}/reminders/${reminderId}`;
+      const response = await deleteApiCall(endpoint);
       return response.data;
     } catch (error) {
       return rejectWithValue(

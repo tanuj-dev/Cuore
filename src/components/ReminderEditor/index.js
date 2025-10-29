@@ -14,7 +14,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useDispatch, useSelector } from 'react-redux';
 import { editWakeupThunk } from '../../redux/slices';
 import moment from 'moment';
-import { getHomeData, editReminderThunk } from '../../redux/slices';
+import {
+  getHomeData,
+  editReminderThunk,
+  deleteReminderThunk,
+} from '../../redux/slices';
 
 const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
   console.log('Editing reminder:', requestId);
@@ -31,6 +35,7 @@ const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
   };
 
   const userId = useSelector(state => state?.auth?.userId);
+  console.log('User ID in ReminderEditor:', userId);
 
   const handleChange = async () => {
     const formattedTime = moment(time).format('hh:mm A'); // e.g., "07:15 AM"
@@ -40,8 +45,8 @@ const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
       // reminderText: reminderText.trim(),
     };
     const payload2 = {
-      newWakeUpTime: formattedTime,
-      reminderText: reminderText.trim(),
+      time: formattedTime,
+      title: reminderText.trim(),
     };
 
     try {
@@ -115,7 +120,7 @@ const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
                 value={time.getTime() ? time : new Date()}
                 mode="time"
                 is24Hour={true}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                display={Platform.OS === 'ios' ? 'default' : 'default'}
                 onChange={onTimeSelected}
               />
             )}

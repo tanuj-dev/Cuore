@@ -27,10 +27,7 @@ const TermsAndConditions = ({ navigation }) => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <ProfileHeader
-        title="Terms & Conditions"
-        onBackPress={() => navigation.goBack()}
-      />
+      <ProfileHeader title="Terms & Conditions" navigation={navigation} />
 
       {/* Content */}
       <View

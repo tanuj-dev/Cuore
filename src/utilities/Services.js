@@ -72,3 +72,18 @@ export async function putApiCall(endPoint, params) {
     return error.response;
   }
 }
+
+// 🔸 DELETE API
+
+export async function deleteApiCall(endPoint) {
+  try {
+    const headers = await setupHeaders(true, endPoint);
+    const response = await Common.axiosInstance.delete(endPoint, {
+      headers,
+    });
+    return response;
+  } catch (error) {
+    console.log('DELETE API ERROR:', error);
+    return error.response;
+  }
+}
