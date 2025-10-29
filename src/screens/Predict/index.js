@@ -257,7 +257,7 @@ const Predict = ({ navigation }) => {
   const [showRowData, setShowRowData] = useState('');
   const [activeTab, setActiveTab] = useState('Predict');
   const [refreshing, setRefreshing] = useState(false);
-  const [history, setHistory] = useState('');
+  const [history, setHistory] = useState('Predict');
 
   const dispatch = useDispatch();
 

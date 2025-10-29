@@ -69,7 +69,7 @@ function BottomTabNavigator() {
   // Gesture navigation devices have a bottom inset > 0.
   // 3-button navigation phones usually have bottom inset == 0.
   const extraMarginBottom =
-    Platform.OS === 'android' && insets.bottom === (0 || 48) ? 30 : 0;
+    Platform.OS === 'android' && insets.bottom === (0 || 48) ? 44 : 0;
 
   return (
     <Tab.Navigator

@@ -1,14 +1,30 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Animated,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import images from '../../utilities/Images';
 import { hp, wp } from '../../utilities';
 
 const ProgressBarWithImage = ({ navigation, data }) => {
-  console.log('ProgressBar data:', data);
-  const progress = data?.periods?.value; // 54%
+  const progress = data?.periods?.[0]?.value || 0;
   const progressBarWidth = 300;
-  const indicatorPosition = progress * progressBarWidth;
+  const animatedLeft = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const targetLeft = (progress / 100) * progressBarWidth;
+
+    Animated.timing(animatedLeft, {
+      toValue: targetLeft,
+      duration: 3000,
+      useNativeDriver: false,
+    }).start();
+  }, [progress]);
 
   return (
     <TouchableOpacity
@@ -30,66 +46,35 @@ const ProgressBarWithImage = ({ navigation, data }) => {
             style={[styles.progressBar, { width: progressBarWidth }]}
           />
         </View>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Score')}
+
+        <Animated.View
           style={{
             position: 'absolute',
-            bottom: hp(2.5), // distance from bottom
-            // right: wp(5), // distance from right
+            bottom: hp(2.5),
             zIndex: 1000,
-            elevation: 5, // Android shadow
+            elevation: 5,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
             shadowRadius: 4,
             backgroundColor: '#FFFFFF',
-            borderRadius: hp(5), // make it circular
+            borderRadius: hp(5),
             padding: hp(0.5),
-            left: 3 * Math.round(data?.periods?.[0]?.value), // center the image on the indicator
+            left: animatedLeft,
           }}
         >
-          <Image
-            source={images.UNCLE}
-            style={{
-              height: hp(3),
-              width: hp(3),
-              borderRadius: hp(3),
-              resizeMode: 'cover',
-            }}
-          />
-        </TouchableOpacity>
-
-        {/* <TouchableOpacity
-          onPress={() => navigation.navigate('Score')}
-          style={{
-            flexDirection: 'row',
-            position: 'absolute',
-            bottom: hp(2.5), // distance from bottom
-            alignItems: 'center',
-            zIndex: 1000,
-            // backgroundColor: 'red',
-            // marginRight: 20,
-            height: hp(4),
-            width: hp(6),
-            borderRadius: hp(5), // make it circular
-            padding: hp(0.5),
-            left: 3 * Math.round(data?.periods?.[0]?.value) - 7, // center the image on the indicator
-            top: hp(2),
-          }}
-        >
-          <Image
-            source={images.FLAG}
-            style={{
-              width: 14,
-              height: 14,
-              marginRight: 4,
-              resizeMode: 'contain',
-            }}
-          />
-          <Text style={styles.percentText}>
-            {Math.round(data?.periods?.[0]?.value)}
-          </Text>
-        </TouchableOpacity> */}
+          <TouchableOpacity onPress={() => navigation.navigate('Score')}>
+            <Image
+              source={images.UNCLE}
+              style={{
+                height: hp(3),
+                width: hp(3),
+                borderRadius: hp(3),
+                resizeMode: 'cover',
+              }}
+            />
+          </TouchableOpacity>
+        </Animated.View>
 
         <View style={styles.percentRow}>
           <Text style={styles.percentText}>0%</Text>
@@ -98,11 +83,8 @@ const ProgressBarWithImage = ({ navigation, data }) => {
               source={images.FLAG}
               style={{ width: 14, height: 14, marginRight: 4 }}
             />
-            <Text style={styles.percentText}>
-              {Math.round(data?.periods?.[0]?.value)}%
-            </Text>
+            <Text style={styles.percentText}>{Math.round(progress)}%</Text>
           </View>
-          {/* <Text style={styles.percentText}>{data?.goal}</Text> */}
           <Text style={styles.percentText}>100%</Text>
         </View>
       </View>
@@ -138,29 +120,14 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
   },
-  profileImage: {
-    right: -13,
-    resizeMode: 'contain',
-    position: 'absolute',
-    margin: 0,
-    width: hp(3.5),
-    height: hp(3.5),
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'white',
-    bottom: -9,
-    zIndex: 100,
-  },
   percentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 15,
     width: wp(80),
-    // alignItems: 'flex-start',
   },
   percentText: {
     fontFamily: 'Roboto-Regular',
-    // marginRight: 50,
     fontSize: 14,
     color: '#4B5563',
     fontWeight: '600',

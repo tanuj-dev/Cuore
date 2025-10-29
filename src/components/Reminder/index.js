@@ -40,8 +40,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
 
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false); // hide picker
+
     if (selectedDate) {
-      setDate(selectedDate);
+      // Normalize to midday to avoid timezone rollback
+      const normalizedDate = new Date(selectedDate);
+      normalizedDate.setHours(12, 0, 0, 0); // avoids midnight timezone issues
+      setDate(normalizedDate);
     }
   };
 
@@ -241,6 +245,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
             </View>
             {showDatePicker && (
               <DateTimePicker
+                dateFormat="longdate"
                 style={{ flex: 1, marginBottom: 10 }}
                 value={date || new Date()}
                 mode="date"
