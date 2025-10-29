@@ -21,12 +21,19 @@ const chartConfig = {
   backgroundGradientFrom: '#fff',
   backgroundGradientTo: '#fff',
   decimalPlaces: 0,
+
   color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
   labelColor: () => '#999',
   propsForDots: {
     r: '3',
     strokeWidth: '4',
+
     // stroke: 'white',
+  },
+  propsForBackgroundLines: {
+    strokeDasharray: '',
+    stroke: '#E5E7EB',
+    strokeWidth: 1,
   },
 };
 
