@@ -35,6 +35,7 @@ import {
   getKnowledge,
   getMind,
   getTobacco,
+  getPredict,
 } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
 
@@ -107,6 +108,7 @@ const Today = ({ navigation, route }) => {
   useEffect(() => {
     if (userId) {
       dispatch(getHomeData(userId));
+      dispatch(getPredict(userId));
       dispatch(getKnowledge(userId));
       dispatch(getMind(userId));
       dispatch(getTobacco(userId));

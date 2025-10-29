@@ -18,6 +18,7 @@ import {
   mindSlice,
   tobaccoSlice,
 } from './Explore/slice';
+import { predictSlice } from './Predict/slice';
 const store = configureStore({
   reducer: {
     auth: authSlices.auth,
@@ -34,6 +35,7 @@ const store = configureStore({
     knowledge: knowledgeSlice.reducer,
     mind: mindSlice.reducer,
     tobacco: tobaccoSlice.reducer,
+    predict: predictSlice.reducer,
   },
 });
 

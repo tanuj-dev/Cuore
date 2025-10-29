@@ -90,10 +90,6 @@ const Score = ({ navigation, route }) => {
     dispatch(getOnboardingThunk());
   }, []);
 
-  if (loading) {
-    return <Loader />;
-  }
-
   // if (health_metrics == undefined) {
   //   return (
   //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -144,6 +140,7 @@ const Score = ({ navigation, route }) => {
     >
       <View style={{ backgroundColor: '#F9FAFB' }}>
         <View style={{ backgroundColor: '#FFFFFF', elevation: 1 }}>
+          {loading && <Loader />}
           <View
             style={{
               flexDirection: 'row',

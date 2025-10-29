@@ -17,6 +17,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { getKnowledge } from '../../redux/slices';
 import ApiError from '../../components/ApiError';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import Loader from '../../components/Loader';
 // import Icon from 'react-native-vector-icons/Ionicons';
 
 const CuoreKnowledge = ({ navigation }) => {
@@ -90,6 +91,8 @@ const CuoreKnowledge = ({ navigation }) => {
             elevation: 1,
           }}
         >
+          {refreshing && <Loader />}
+
           <TouchableOpacity
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             style={{ paddingHorizontal: hp(1) }}

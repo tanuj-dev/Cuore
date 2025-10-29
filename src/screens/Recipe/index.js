@@ -130,6 +130,28 @@ const Recipe = ({ navigation, route }) => {
           {/* Instructions */}
           <View style={styles.card}>
             <View>
+              <Text
+                style={{
+                  alignSelf: 'center',
+                  fontSize: 18,
+                  fontWeight: '400',
+                  fontFamily: 'Roboto-Regular',
+                }}
+              >
+                {receipeData?.name}
+              </Text>
+              <View
+                style={{
+                  marginVertical: hp(4),
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Text style={styles.text}>Prep time : 5 mins</Text>
+                <Text style={styles.text}>
+                  Cook time : {receipeData?.prepTime}
+                </Text>
+              </View>
               <Text style={styles.sectionTitle}>Ingredients:</Text>
 
               {ingredients?.map((item, index) => (
@@ -228,7 +250,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     // marginBottom: hp(5),
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '500',
     marginBottom: hp(2),
     fontFamily: 'Roboto-Regular',
   },
@@ -238,7 +260,7 @@ const styles = StyleSheet.create({
     marginBottom: hp(0.5),
     fontFamily: 'Roboto-Regular',
     color: '#1E64AC',
-    fontWeight: '500',
+    fontWeight: '400',
   },
   controls: {
     marginTop: hp(3),

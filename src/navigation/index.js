@@ -203,6 +203,7 @@ function PredictStack() {
       <Stack.Screen name="Predict" component={Predict} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
       <Stack.Screen name="Health" component={Health} />
+      <Stack.Screen name="OnBoarding" component={OnBoarding} />
     </Stack.Navigator>
   );
 }

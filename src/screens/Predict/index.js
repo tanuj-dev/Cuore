@@ -8,9 +8,13 @@ import {
   Switch,
   Image,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { wp, hp, Images } from '../../utilities';
+import { useDispatch, useSelector } from 'react-redux';
+import { getPredict } from '../../redux/slices';
+import Loader from '../../components/Loader';
 
 const chartConfig = {
   // transparent: false,
@@ -33,8 +37,8 @@ const healthGraphs = [
       labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov', 'Dec', 'Jan'],
       datasets: [
         {
-          actualData: [60, 68, 72, 76, 80],
-          predictedData: [82, 84, 86],
+          actualData: [10, 30, 40, 55, 65],
+          predictedData: [122, 80, 122],
           color: '#1E64AC',
         },
       ],
@@ -179,16 +183,33 @@ const healthGraphs = [
 ];
 
 const convertToChartData = graph => {
-  const { labels, datasets } = graph.data;
-  const predictionStart = labels.length - 3;
+  const { labels = [], datasets = [] } = graph.data || {};
+  if (!labels.length || !datasets.length) {
+    return {
+      labels: [],
+      datasets: [],
+    };
+  }
 
   const chartDatasets = datasets.flatMap(
     ({ actualData, predictedData, color }) => {
-      const actual = [...actualData];
-      const predicted = [...predictedData];
+      const actual = Array.isArray(actualData) ? actualData : [];
+      const predicted = Array.isArray(predictedData) ? predictedData : [];
 
-      const actualPadded = [...actual, ...Array(predicted.length).fill(null)];
-      const predictedPadded = Array(actual.length).fill(null).concat(predicted);
+      // 🔒 If both arrays are empty, inject fallback zeros to prevent chart crash
+      const fallbackLength = labels.length;
+      const safeActual = actual.length ? actual : Array(fallbackLength).fill(0);
+      const safePredicted = predicted.length
+        ? predicted
+        : Array(fallbackLength).fill(0);
+
+      const actualPadded = [
+        ...safeActual,
+        ...Array(safePredicted.length).fill(null),
+      ];
+      const predictedPadded = Array(safeActual.length)
+        .fill(null)
+        .concat(safePredicted);
 
       return [
         {
@@ -205,9 +226,12 @@ const convertToChartData = graph => {
 
   return {
     labels,
-    datasets: chartDatasets,
+    datasets: chartDatasets.length
+      ? chartDatasets
+      : [{ data: Array(labels.length).fill(0), color: () => '#ccc' }],
   };
 };
+
 const hexToRgb = hex => {
   const bigint = parseInt(hex.replace('#', ''), 16);
   const r = (bigint >> 16) & 255;
@@ -217,16 +241,42 @@ const hexToRgb = hex => {
 };
 
 const Predict = ({ navigation }) => {
-  const [showCuoreData, setShowCuoreData] = useState(false);
-  const [showBPData, setShowBPData] = useState(false);
-  const [showBodyData, setShowBodyData] = useState(false);
+  const [showRowData, setShowRowData] = useState('');
   const [activeTab, setActiveTab] = useState('Predict');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const dispatch = useDispatch();
+
+  const userId = useSelector(state => state.auth?.userId);
+  const predictData = useSelector(state => state?.predict?.data?.data);
+  const loading = useSelector(state => state?.predict?.loading);
+  console.log('predictData', predictData);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    dispatch(getPredict(userId));
+    setRefreshing(false);
+  }, [dispatch, userId]);
+
+  // if (loading) {
+  //   return <Loader />;
+  // }
 
   return (
-    <ScrollView style={{ backgroundColor: 'white' }}>
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          title="Pull to refresh..."
+          refreshing={loading}
+          onRefresh={onRefresh}
+        />
+      }
+      style={{ backgroundColor: '#FFFFFF' }}
+    >
       <View
         style={{ padding: hp(1.5), backgroundColor: '#FFFFFF', elevation: 1 }}
       >
+        {loading && <Loader />}
         <View
           style={{
             marginTop: Platform.OS == 'ios' ? hp(6) : hp(3),
@@ -258,11 +308,12 @@ const Predict = ({ navigation }) => {
           </Text>
         </View>
 
-        {healthGraphs.map((item, index) => {
+        {predictData?.map((item, index) => {
+          console.log('Predict Item:', item);
           return (
-            <View key={`module-${item.title}-${index}`} style={styles.card}>
+            <View key={`module-${item?.title}-${index}`} style={styles.card}>
               {['Blood Pressure & Heart Rate', 'Blood Sugar'].includes(
-                item.title,
+                item?.title,
               ) && (
                 <View style={styles.tabContainer}>
                   <TouchableOpacity
@@ -302,16 +353,21 @@ const Predict = ({ navigation }) => {
                   </TouchableOpacity>
                 </View>
               )}
-
               <View style={styles.cardHeader}>
                 <Text style={[styles.title]}>
-                  {item.title == 'Blood Pressure & Heart Rate'
+                  {item?.title == 'Blood Pressure & Heart Rate'
                     ? 'BP & HR'
-                    : item.title}
+                    : item?.title}
                 </Text>
                 <View style={styles.switchContainer}>
                   <TouchableOpacity
-                    onPress={() => setShowBPData(!showBPData)}
+                    onPress={() => {
+                      if (showRowData === item?.title) {
+                        setShowRowData('');
+                      } else {
+                        setShowRowData(item?.title);
+                      }
+                    }}
                     style={{
                       borderWidth: 0.5,
                       borderColor: '#9CA3AF',
@@ -321,7 +377,7 @@ const Predict = ({ navigation }) => {
                       marginRight: hp(1),
                     }}
                   >
-                    {showBPData && (
+                    {showRowData === item?.title && (
                       <Image
                         style={{
                           resizeMode: 'cover',
@@ -339,56 +395,56 @@ const Predict = ({ navigation }) => {
                 </View>
                 <TouchableOpacity
                   onPress={() => {
-                    if (item.title == 'Cuore Score') {
+                    if (item?.title == 'Cuore Score') {
                       const STEP = 1;
                       navigation.navigate('OnBoarding', {
                         STEP,
                         screen: 'Reassess',
                         navigateTo: 'Home',
                       });
-                    } else if (item.title == 'Blood Pressure & Heart Rate') {
+                    } else if (item?.title == 'Blood Pressure & Heart Rate') {
                       const STEP = 7;
                       navigation.navigate('OnBoarding', {
                         STEP,
                         screen: 'Reassess',
                         navigateTo: 'Home',
                       });
-                    } else if (item.title == 'Weight') {
+                    } else if (item?.title == 'Weight') {
                       const STEP = 2;
                       navigation.navigate('OnBoarding', {
                         STEP,
                         screen: 'Reassess',
                         navigateTo: 'Home',
                       });
-                    } else if (item.title == 'Blood Sugar') {
+                    } else if (item?.title == 'Blood Sugar') {
                       const STEP = 7;
                       navigation.navigate('OnBoarding', {
                         STEP,
                         screen: 'Reassess',
                         navigateTo: 'Home',
                       });
-                    } else if (item.title == 'A1C') {
+                    } else if (item?.title == 'A1C') {
                       const STEP = 7;
                       navigation.navigate('OnBoarding', {
                         STEP,
                         screen: 'Reassess',
                         navigateTo: 'Home',
                       });
-                    } else if (item.title == 'BMI & Body Fat') {
+                    } else if (item?.title == 'BMI & Body Fat') {
                       const STEP = 2;
                       navigation.navigate('OnBoarding', {
                         STEP,
                         screen: 'Reassess',
                         navigateTo: 'Home',
                       });
-                    } else if (item.title == 'Cholesterol') {
+                    } else if (item?.title == 'Cholesterol') {
                       const STEP = 7;
                       navigation.navigate('OnBoarding', {
                         STEP,
                         screen: 'Reassess',
                         navigateTo: 'Home',
                       });
-                    } else if (item.title == 'Lifestyle Metrics') {
+                    } else if (item?.title == 'Lifestyle Metrics') {
                       const STEP = 5;
                       navigation.navigate('OnBoarding', {
                         STEP,
@@ -417,29 +473,42 @@ const Predict = ({ navigation }) => {
                   </Text>
                 </TouchableOpacity>
               </View>
+              {/* {item.datasets.every(ds =>
+                ds.actualData.every(val => val === null),
+              ) ? (
+                <Text style={{ textAlign: 'center', marginTop: 20 }}>
+                  No data available
+                </Text>
+              ) : ( */}
               <LineChart
+                key={item?.title}
                 data={convertToChartData(item)}
                 width={wp(87)}
                 height={hp(25)}
                 chartConfig={chartConfig}
                 withDots
-                renderDotContent={({ x, y, index, indexData }) => (
-                  <Text
-                    key={`chart-${index}-dot-${index}-${indexData}`}
-                    style={{
-                      position: 'absolute',
-                      left: x - 10,
-                      top: y - 15,
-                      color: '#000',
-                      fontSize: 10,
-                    }}
-                  >
-                    {showBPData ? indexData : ''}
-                  </Text>
-                )}
-                withShadow={false} // 🚫 disables the blue area fill
+                renderDotContent={
+                  item.title === showRowData
+                    ? ({ x, y, index, indexData }) => (
+                        <Text
+                          key={`chart-${index}-dot-${index}-${indexData}`}
+                          style={{
+                            position: 'absolute',
+                            left: x - 10,
+                            top: y - 15,
+                            color: '#000',
+                            fontSize: 10,
+                          }}
+                        >
+                          {Math.round(indexData)}
+                        </Text>
+                      )
+                    : undefined
+                }
+                withShadow={false}
                 withInnerLines={false}
               />
+              // {/* )} */}
               <View
                 style={{
                   flexDirection: 'row',

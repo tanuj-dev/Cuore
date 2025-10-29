@@ -23,6 +23,7 @@ import {
   logTobaccoUsage,
 } from './Explore/exploreThunk';
 import { getFitness, updateFitnessTime } from './Fitness/fitnessThunk';
+import { getPredict } from './Predict/predictThunk';
 export {
   sendOtp,
   verifyOtp,
@@ -47,4 +48,5 @@ export {
   getTobacco,
   updateTobaccoProfile,
   logTobaccoUsage,
+  getPredict,
 };
