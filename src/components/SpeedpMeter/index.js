@@ -1,6 +1,5 @@
-// components/GaugeMeter.js
-import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, Animated } from 'react-native';
 import Svg, { Path, Line, Circle, Text as SvgText } from 'react-native-svg';
 
 const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
@@ -9,12 +8,16 @@ const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
   const center = radius;
   const needleLength = radius - strokeWidth;
 
-  const clampValue = Math.max(0, Math.min(value, 100));
-  const angle = (clampValue / 100) * 180;
-  const theta = (Math.PI * (180 - angle)) / 180;
+  const animatedAngle = useRef(new Animated.Value(180)).current;
+  const [needleCoords, setNeedleCoords] = useState({ x: center, y: center });
 
-  const needleX = center + needleLength * Math.cos(theta);
-  const needleY = center - needleLength * Math.sin(theta);
+  const polarToCartesian = (cx, cy, r, angleDeg) => {
+    const angleRad = (Math.PI * angleDeg) / 180;
+    return {
+      x: cx + r * Math.cos(angleRad),
+      y: cy - r * Math.sin(angleRad),
+    };
+  };
 
   const arcPath = (startAngle, endAngle, color) => {
     const start = polarToCartesian(
@@ -43,13 +46,26 @@ const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
     );
   };
 
-  const polarToCartesian = (cx, cy, r, angleDeg) => {
-    const angleRad = (Math.PI * angleDeg) / 180;
-    return {
-      x: cx + r * Math.cos(angleRad),
-      y: cy - r * Math.sin(angleRad),
+  useEffect(() => {
+    const targetAngle = 180 - (Math.max(0, Math.min(value, 100)) / 100) * 180;
+
+    Animated.timing(animatedAngle, {
+      toValue: targetAngle,
+      duration: 3000,
+      useNativeDriver: false,
+    }).start();
+
+    const listenerId = animatedAngle.addListener(({ value: angle }) => {
+      const angleRad = (Math.PI * angle) / 180;
+      const x = center + needleLength * Math.cos(angleRad);
+      const y = center - needleLength * Math.sin(angleRad);
+      setNeedleCoords({ x, y });
+    });
+
+    return () => {
+      animatedAngle.removeListener(listenerId);
     };
-  };
+  }, [value]);
 
   return (
     <View style={styles.container}>
@@ -62,8 +78,8 @@ const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
         <Line
           x1={center}
           y1={center}
-          x2={needleX}
-          y2={needleY}
+          x2={needleCoords.x}
+          y2={needleCoords.y}
           stroke="#1E88E5"
           strokeWidth="5"
         />
@@ -77,18 +93,12 @@ const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
           textAnchor="middle"
           fontFamily="Roboto-Regular"
         >
-          {Math.round(clampValue)}
+          {Math.round(value)}
         </SvgText>
         {/* Labels */}
         <SvgText x={0} y={center + 10} fontSize="12" fill="black">
           0
         </SvgText>
-        {/* <SvgText x={center - 40} y={center - 80} fontSize="12" fill="black">
-          25
-        </SvgText>
-        <SvgText x={center + 40} y={center - 80} fontSize="12" fill="black">
-          75
-        </SvgText> */}
         <SvgText x={size - 20} y={center + 10} fontSize="12" fill="black">
           100
         </SvgText>
@@ -100,7 +110,6 @@ const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    // marginVertical: 20,
   },
 });
 
