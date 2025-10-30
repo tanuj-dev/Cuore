@@ -222,9 +222,20 @@ const convertToChartData = ({ graph, history }) => {
       };
 
       if (history === 'Predict') {
+        console.log(label, 'lable');
         return [actualDataset, predictedDataset];
       } else if (history === 'History') {
-        return [actualDataset];
+        if (
+          label == 'BP Upper' ||
+          label == 'BP Lower' ||
+          label == 'Heart Rate' ||
+          label == 'Fasting' ||
+          label == 'After Meal'
+        ) {
+          return [actualDataset];
+        } else {
+          return [actualDataset, predictedDataset];
+        }
       } else {
         return [actualDataset]; // default fallback
       }
@@ -262,8 +273,8 @@ const Predict = ({ navigation }) => {
   const dispatch = useDispatch();
 
   const userId = useSelector(state => state.auth?.userId);
-  const predictData = useSelector(state => state?.predict?.data?.data);
-  const loading = useSelector(state => state?.predict?.loading);
+  const predictData = useSelector(state => state?.predictData?.data?.data);
+  const loading = useSelector(state => state?.predictData?.loading);
   console.log('predictData', predictData);
 
   const onRefresh = React.useCallback(() => {
@@ -568,17 +579,19 @@ const Predict = ({ navigation }) => {
                   );
                 })}
               </View>
-              <View>
-                <Text
-                  style={[
-                    styles.hintText,
-                    { textAlign: 'center', color: '#1E64AC' },
-                  ]}
-                >
-                  ⚠️ note that the predicted values are represented by lighter
-                  lines.
-                </Text>
-              </View>
+              {item.title === 'Cuore Score' && (
+                <View>
+                  <Text
+                    style={[
+                      styles.hintText,
+                      { textAlign: 'center', color: '#1E64AC' },
+                    ]}
+                  >
+                    ⚠️ note that the predicted values are represented by lighter
+                    lines.
+                  </Text>
+                </View>
+              )}
             </View>
           );
         })}

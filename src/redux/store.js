@@ -35,7 +35,7 @@ const store = configureStore({
     knowledge: knowledgeSlice.reducer,
     mind: mindSlice.reducer,
     tobacco: tobaccoSlice.reducer,
-    predict: predictSlice.reducer,
+    predictData: predictSlice.reducer,
   },
 });
 

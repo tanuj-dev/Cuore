@@ -7,10 +7,10 @@ import {
 
 export const editReminderThunk = createAsyncThunk(
   'reminders/edit',
-  async ({ userId, reminderId, payload2 }, { rejectWithValue }) => {
+  async ({ sourceId, payload2 }, { rejectWithValue }) => {
     console.log(payload2, 'payload in thunk');
     try {
-      const endpoint = `/api/v1/timeline/${userId}/reminders/${reminderId}`;
+      const endpoint = `/api/reminders/${sourceId}`;
       const response = await putApiCall(endpoint, payload2);
       return response.data;
     } catch (error) {
@@ -22,14 +22,14 @@ export const editReminderThunk = createAsyncThunk(
 );
 export const deleteReminderThunk = createAsyncThunk(
   'reminders/delete',
-  async ({ userId, reminderId }, { rejectWithValue }) => {
+  async ({ sourceId }, { rejectWithValue }) => {
     try {
-      const endpoint = `/api/v1/timeline/${userId}/reminders/${reminderId}`;
+      const endpoint = `/api/reminders/${sourceId}`;
       const response = await deleteApiCall(endpoint);
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || 'Failed to update reminder',
+        error.response?.data || 'Failed to delete reminder',
       );
     }
   },

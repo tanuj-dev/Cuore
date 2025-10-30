@@ -72,23 +72,25 @@ const Score = ({ navigation, route }) => {
 
   const dispatch = useDispatch();
 
-  const loading = useSelector(state => state.cuoreScore?.loading);
   const user_Id = useSelector(state => state.auth?.userId);
-  console.log(user_Id, 'user_Id');
-
+  const loading = useSelector(state => state.cuoreScore?.loading);
   const health_metrics = useSelector(
     state => state.cuoreScore?.data?.health_metrics,
   );
   const hasDiabetes = useSelector(
     state => state.onboardingdata?.data?.data?.o3Data?.hasDiabetes,
   );
-  console.log(health_metrics, 'health_metrics');
-  // console.log(hasDiabetes, 'hasDiabetes');
 
   useEffect(() => {
-    dispatch(getCuoreScoreThunk(user_Id));
-    dispatch(getOnboardingThunk());
-  }, []);
+    if (user_Id) {
+      dispatch(getCuoreScoreThunk(user_Id));
+      dispatch(getOnboardingThunk());
+    }
+  }, [dispatch, user_Id]); // ✅ Added dependencies
+
+  console.log(user_Id, 'user_Id');
+  console.log(health_metrics, 'health_metrics');
+  // console.log(hasDiabetes, 'hasDiabetes');
 
   // if (health_metrics == undefined) {
   //   return (
@@ -127,6 +129,9 @@ const Score = ({ navigation, route }) => {
   //     </View>
   //   );
   // }
+  if (loading) {
+    <Loader />;
+  }
 
   return (
     <ScrollView
@@ -140,7 +145,6 @@ const Score = ({ navigation, route }) => {
     >
       <View style={{ backgroundColor: '#F9FAFB' }}>
         <View style={{ backgroundColor: '#FFFFFF', elevation: 1 }}>
-          {loading && <Loader />}
           <View
             style={{
               flexDirection: 'row',

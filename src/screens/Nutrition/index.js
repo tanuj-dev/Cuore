@@ -34,7 +34,7 @@ const Nutrition = ({ navigation }) => {
     try {
       console.log('Pressed item:', item);
 
-      if (item.type === 'Custom') {
+      if (item.type === 'custom_plate') {
         navigation.navigate('MealBuilder');
       } else {
         console.log('Fetching recipe for item:', item);
@@ -53,7 +53,7 @@ const Nutrition = ({ navigation }) => {
   };
 
   const renderMealCard = (item, index) => {
-    const dietTag = item?.dietTag?.toUpperCase() || '';
+    const dietTag = item?.dietTag?.toUpperCase() || item?.type?.toUpperCase();
     console.log('Rendering meal card with dietTag:', item);
 
     const customPlate = item?.custom_plate;
@@ -71,6 +71,9 @@ const Nutrition = ({ navigation }) => {
     } else if (dietTag.startsWith('E')) {
       tagColor = '#f59e0b'; // indigo for egg
       tagLabel = Images.EGG;
+    } else if (dietTag.startsWith('C')) {
+      tagColor = '#dc2626'; // red for custom
+      tagLabel = Images.WARNING;
     }
 
     // Use tagColor and tagLabel in your card rendering
@@ -87,7 +90,7 @@ const Nutrition = ({ navigation }) => {
         ]}
       >
         <View>
-          <Text style={styles.mealTitle}>{item?.name}</Text>
+          <Text style={styles.mealTitle}>{item?.name || item?.title}</Text>
 
           <View style={{}}>
             {item?.components?.map((line, idx) => (
@@ -111,7 +114,7 @@ const Nutrition = ({ navigation }) => {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image
               style={{
-                tintColor: tagLabel === Images.WARNING && '#f59e0b',
+                tintColor: tagLabel === Images.WARNING && '#dc2626',
                 height: tagLabel === Images.WARNING ? hp(2) : hp(2.5),
                 width: tagLabel === Images.WARNING ? wp(10) : wp(15),
                 marginLeft: hp(-1),

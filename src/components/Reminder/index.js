@@ -156,12 +156,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      dispatch(
+                      const res = dispatch(
                         deleteReminderThunk({
-                          userId: user_id,
-                          reminderId: item.id,
+                          sourceId: item?.sourceId,
                         }),
                       );
+                      console.log('Delete Reminder Response:', res);
                       dispatch(getHomeData(user_id));
                       setIsVisible(false);
                     }}

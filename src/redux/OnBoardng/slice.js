@@ -117,7 +117,7 @@ export const cuoreScoreSlice = createSlice({
   },
 });
 
-export default cuoreScoreSlice.reducer;
+// export default cuoreScoreSlice.reducer;
 
 // export default onboardingSlice.reducer;
 // export default onboardingdata.reducer;

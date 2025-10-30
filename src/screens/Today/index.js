@@ -36,8 +36,10 @@ import {
   getMind,
   getTobacco,
   getPredict,
+  getCuoreScoreThunk,
 } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
+import { black } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 
 const routeMap = {
   Breakfast: 'Nutrition',
@@ -112,6 +114,7 @@ const Today = ({ navigation, route }) => {
       dispatch(getKnowledge(userId));
       dispatch(getMind(userId));
       dispatch(getTobacco(userId));
+      dispatch(getCuoreScoreThunk(userId));
       const res = dispatch(getFitness());
       console.log('Fitness Data Response:', res);
       const combos = [
@@ -244,11 +247,11 @@ const Today = ({ navigation, route }) => {
     Breakfast: 'Nutrition',
     Fitness: 'Fitness',
     Lunch: 'Nutrition',
-    'Short Nap or Walk': 'Mind',
+    'Short Nap or Walk': 'Fitness',
     Dinner: 'Nutrition',
-    Sleep: 'Mind',
-    'Check Fasting Sugar': 'OnBqoarding',
-    'Refresh & Refuel': 'RefrestRefuel',
+    Sleep: 'CalorieIgnite',
+    'Check Fasting Sugar': 'OnBoarding',
+    'Refresh & Refuel': 'RefreshRefuel',
     Medication: 'MidMorningBoost',
     'Check BP': 'OnBoarding',
     'Quiet Mind Restful Night': 'Mind',
@@ -524,28 +527,8 @@ const Today = ({ navigation, route }) => {
                 </View>
 
                 {/* check black dot */}
-                <View
-                  style={{
-                    marginTop: hp(1),
-                    marginHorizontal: hp(1.5),
-                    borderWidth: 0.5,
-                    height: hp(2),
-                    width: hp(2),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: hp(2),
-                    borderColor: '#101010',
-                  }}
-                >
-                  <View
-                    style={{
-                      borderWidth: 1,
-                      height: hp(1.2),
-                      width: hp(1.2),
-                      borderRadius: hp(2),
-                      backgroundColor: '#000000',
-                    }}
-                  />
+                <View style={styles.blackDot}>
+                  <View style={styles.blackDotInner} />
                 </View>
 
                 <TouchableOpacity
@@ -886,6 +869,24 @@ const styles = StyleSheet.create({
 
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  blackDot: {
+    marginTop: hp(1),
+    marginHorizontal: hp(1.5),
+    borderWidth: 0.5,
+    height: hp(2),
+    width: hp(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: hp(2),
+    borderColor: '#101010',
+  },
+  blackDotInner: {
+    borderWidth: 1,
+    height: hp(1.2),
+    width: hp(1.2),
+    borderRadius: hp(2),
+    backgroundColor: '#000000',
   },
 });
 

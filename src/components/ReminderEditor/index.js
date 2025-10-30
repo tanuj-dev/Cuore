@@ -51,13 +51,13 @@ const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
 
     try {
       setLoading(true);
-      const reminderId = requestId?.id;
+      const reminderId = requestId?.sourceId;
       console.log(payload2, 'payload');
       const res =
         requestId?.title == 'Wake Up'
           ? await dispatch(editWakeupThunk({ userId, payload })).unwrap()
           : await dispatch(
-              editReminderThunk({ userId, reminderId, payload2 }),
+              editReminderThunk({ sourceId: reminderId, payload2 }),
             ).unwrap();
       console.log(res, 'res');
       if (
