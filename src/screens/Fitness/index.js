@@ -44,7 +44,15 @@ const WorkoutCard = ({
 
   return (
     <TouchableOpacity
-      onPress={() => setExpandedIndex(isExpanded ? null : index)}
+      // onPress={() =>
+
+      //   setExpandedIndex(isExpanded ? null : index)}
+      onPress={() =>
+        navigation.navigate('FitnessDetails', {
+          instruction: item?.instructions,
+          data: item,
+        })
+      }
       style={[styles.card, { borderLeftColor: item?.color }]}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -77,7 +85,7 @@ const WorkoutCard = ({
         {` Reps: ${item?.reps}       Sets: ${item?.sets}`}
       </Text> */}
 
-      <Animated.View style={{ height: animatedHeight, overflow: 'hidden' }}>
+      {/* <Animated.View style={{ height: animatedHeight, overflow: 'hidden' }}>
         <View style={styles.expandedContent}>
           <Image
             style={{ resizeMode: 'cover', height: hp(20), width: wp(85) }}
@@ -134,7 +142,7 @@ const WorkoutCard = ({
             </TouchableOpacity>
           </View>
         </View>
-      </Animated.View>
+      </Animated.View> */}
     </TouchableOpacity>
   );
 };
@@ -356,7 +364,6 @@ const Fitness = ({ navigation }) => {
                       ]}
                     >
                       {day}
-                      {index !== days.length - 1 && '   .   '}
                     </Text>
                   </TouchableOpacity>
                 ))}

@@ -7,10 +7,10 @@ import {
 
 export const editReminderThunk = createAsyncThunk(
   'reminders/edit',
-  async ({ sourceId, payload2 }, { rejectWithValue }) => {
+  async ({ sourceId, userId, payload2 }, { rejectWithValue }) => {
     console.log(payload2, 'payload in thunk');
     try {
-      const endpoint = `/api/reminders/${sourceId}`;
+      const endpoint = `/api/v1/timeline/${userId}/reminders/${sourceId}`;
       const response = await putApiCall(endpoint, payload2);
       return response.data;
     } catch (error) {
@@ -22,9 +22,9 @@ export const editReminderThunk = createAsyncThunk(
 );
 export const deleteReminderThunk = createAsyncThunk(
   'reminders/delete',
-  async ({ sourceId }, { rejectWithValue }) => {
+  async ({ sourceId, userId }, { rejectWithValue }) => {
     try {
-      const endpoint = `/api/reminders/${sourceId}`;
+      const endpoint = `/api/v1/timeline/${userId}/reminders/${sourceId}`;
       const response = await deleteApiCall(endpoint);
       return response.data;
     } catch (error) {
@@ -34,6 +34,7 @@ export const deleteReminderThunk = createAsyncThunk(
     }
   },
 );
+// https://cuore-backend-1.onrender.com/api/v1/timeline/userid/reminders/reminderid
 
 // body for this
 // // {

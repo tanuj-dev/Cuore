@@ -8,8 +8,11 @@ import {
   ScrollView,
   ImageBackground,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
+import { getRecipe } from '../../redux/slices';
+import { useDispatch } from 'react-redux';
 
 const tagColors = {
   green: '#00C853',
@@ -19,11 +22,27 @@ const tagColors = {
 const MealBuilder2 = ({ navigation, route }) => {
   console.log('Route params in MealBuilder2:', route.params);
 
+  const [loading, setLoading] = useState(false);
+
+  const dispatch = useDispatch();
   // const { selectedItems?.adjustedItems } = route.params;
   const data = route?.params?.selectedItems?.adjustedItems;
   const selectedItems = route?.params?.selectedItems;
 
   const [adjustedPortions, setAdjustedPortions] = useState(data || []);
+
+  const handleRecipePress = async recipeId => {
+    try {
+      setLoading(true);
+      const res = await dispatch(getRecipe(recipeId)).unwrap();
+      setLoading(false);
+      navigation.navigate('Recipe', { recipeData: res });
+    } catch (error) {
+      setLoading(false);
+      console.error('Failed to fetch recipe:', error);
+      // Optionally show a toast or alert here
+    }
+  };
 
   return (
     <ScrollView style={{}}>
@@ -75,7 +94,7 @@ const MealBuilder2 = ({ navigation, route }) => {
 
             return (
               <TouchableOpacity
-                // onPress={() => navigation.navigate('Recipe')}
+                onPress={() => handleRecipePress(item.recipeLink)}
                 style={{
                   marginHorizontal: hp(1),
                   backgroundColor: '#FFFFFF',
@@ -167,16 +186,20 @@ const MealBuilder2 = ({ navigation, route }) => {
             // marginBottom: hp(20),
           }}
         >
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 16,
-              fontWeight: '500',
-              color: '#FFFFFF',
-            }}
-          >
-            Clear Selection
-          </Text>
+          {loading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text
+              style={{
+                fontFamily: 'Roboto-Regular',
+                fontSize: 16,
+                fontWeight: '500',
+                color: '#FFFFFF',
+              }}
+            >
+              Clear Selection
+            </Text>
+          )}
         </TouchableOpacity>
         <Text
           style={{

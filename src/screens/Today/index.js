@@ -556,7 +556,11 @@ const Today = ({ navigation, route }) => {
                     style={{ justifyContent: 'center', flexDirection: 'row' }}
                   >
                     <View style={{ justifyContent: 'center' }}>
-                      <Text style={styles.taskTitle}>{item?.title}</Text>
+                      <Text style={styles.taskTitle}>
+                        {item?.title?.length > 20
+                          ? item.title.slice(0, 20) + '...'
+                          : item.title}
+                      </Text>
                       <Text style={styles.taskDescription}>
                         {item.description}
                       </Text>

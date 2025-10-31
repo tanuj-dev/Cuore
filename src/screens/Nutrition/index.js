@@ -7,19 +7,25 @@ import {
   ScrollView,
   Image,
   ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
 import { getNourish, getRecipe } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
+import Toast from '../../components/Toast';
+import { Activity } from 'lucide-react-native';
 
 const Nutrition = ({ navigation }) => {
   // const [selectedTab, setSelectedTab] = useState('Breakfast');
   const [activeTab, setActiveTab] = useState('Breakfast');
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [toastType, setToastType] = useState('success');
 
   const dispatch = useDispatch();
   const nourishData = useSelector(state => state.nourish.data);
-  const loading = useSelector(state => state.nourish.loading);
+
   const [receipeData, setRecipeData] = useState(null);
 
   useEffect(() => {
@@ -37,15 +43,28 @@ const Nutrition = ({ navigation }) => {
       if (item.type === 'custom_plate') {
         navigation.navigate('MealBuilder');
       } else {
-        console.log('Fetching recipe for item:', item);
+        setLoading(true);
+
         const response = await dispatch(
           getRecipe(item?.recipeLink?._id),
         ).unwrap();
+        console.log('Fetched recipe response:', response);
 
-        setRecipeData(response);
-        console.log('Recipe data:', response);
-
-        navigation.navigate('Recipe', { receipeData: response });
+        if (response.ingredients?.length > 0) {
+          setToast('recipe fetched successfully');
+          setToastType('success');
+          setLoading(false);
+          setRecipeData(response);
+          navigation.navigate('Recipe', { receipeData: response });
+        } else {
+          setLoading(false);
+          setToastType('error');
+          setToast('Recipe data is unavailable for this meal.');
+          console.error(
+            'Failed to fetch recipe, status code:',
+            response.status,
+          );
+        }
       }
     } catch (error) {
       console.error('Failed to fetch recipe:', error);
@@ -54,7 +73,7 @@ const Nutrition = ({ navigation }) => {
 
   const renderMealCard = (item, index) => {
     const dietTag = item?.dietTag?.toUpperCase() || item?.type?.toUpperCase();
-    console.log('Rendering meal card with dietTag:', item);
+    // console.log('Rendering meal card with dietTag:', item);
 
     const customPlate = item?.custom_plate;
 
@@ -139,6 +158,14 @@ const Nutrition = ({ navigation }) => {
         style={{ padding: hp(2) }}
         source={Images.BACKGROUND_IMAGE_NUTRITION}
       >
+        {toast && (
+          <Toast
+            message={toast}
+            type={toastType}
+            onHide={() => setToast(null)}
+            top={hp(10)}
+          />
+        )}
         <View
           style={{
             flexDirection: 'row',
@@ -239,20 +266,18 @@ const Nutrition = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
         </View>
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            paddingHorizontal: hp(5),
-            fontSize: 15,
-            fontWeight: '400',
-            color: '#000000',
-            // alignSelf: 'center',
-            textAlign: 'center',
-            marginTop: hp(1.5),
-          }}
-        >
-          Daily variety leads to better results— try a new option each day.
-        </Text>
+
+        {loading ? (
+          <ActivityIndicator
+            style={{ marginTop: hp(2) }}
+            size="small"
+            color="#1E64AC"
+          />
+        ) : (
+          <Text style={styles.headerTitle}>
+            Daily variety leads to better results— try a new option each day.
+          </Text>
+        )}
       </ImageBackground>
 
       {/* Meal Cards */}
@@ -278,11 +303,15 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.5),
-    color: '#1f2937',
-    marginBottom: hp(1),
-    fontWeight: '500',
+    paddingHorizontal: hp(5),
+    fontSize: 15,
+    fontWeight: '400',
+    color: '#000000',
+    // alignSelf: 'center',
+    textAlign: 'center',
+    marginTop: hp(1.5),
   },
+
   toggleContainer: {
     flexDirection: 'row',
     // backgroundColor: '#9CA3AF',

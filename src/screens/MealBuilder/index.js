@@ -179,6 +179,7 @@ const MealBuilder = ({ navigation }) => {
         <Animated.View style={{ height: animatedHeight, overflow: 'hidden' }}>
           {isActive &&
             items.map((subItem, index) => {
+              console.log('SubItem:', subItem);
               const isAlreadyAdded = selectedItems.some(
                 i =>
                   i.dishname === subItem?.name &&
@@ -216,7 +217,7 @@ const MealBuilder = ({ navigation }) => {
                           height: hp(2),
                           width: wp(4),
                           borderRadius: hp(2),
-                          backgroundColor: tagColors[subItem.tag] || '#22C55E',
+                          backgroundColor: subItem?.healthColor,
                         }}
                       />
                       <View
@@ -269,6 +270,7 @@ const MealBuilder = ({ navigation }) => {
                             servingSize: subItem?.servingSize,
                             adjustmentWeight: subItem?.adjustmentWeight,
                             section: category,
+                            recepieId: subItem?.recipeLink,
                           };
 
                           if (isAlreadyAdded) {
@@ -283,7 +285,9 @@ const MealBuilder = ({ navigation }) => {
                                     i.servingSize === newItem?.servingSize &&
                                     i.adjustmentWeight ===
                                       newItem?.adjustmentWeight
-                                  ) && i.section === newItem?.section,
+                                  ) &&
+                                  i.section === newItem?.section &&
+                                  i.recepieId === newItem?.recepieId,
                               ),
                             );
                             // console.log('Removed:', newItem);

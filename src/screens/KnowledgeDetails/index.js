@@ -34,6 +34,7 @@ const KnowledgeDetails = ({ navigation, route }) => {
       <View
         style={{
           backgroundColor: '#F9FAFB',
+          marginBottom: hp(10),
         }}
       >
         <View
@@ -76,11 +77,12 @@ const KnowledgeDetails = ({ navigation, route }) => {
             {/* <Text style={styles.title}>{article.title}</Text> */}
 
             <RenderHTML
+              style={{ marginBottom: hp(2) }}
               // contentWidth={width}
               source={{ html: details }}
               tagsStyles={{
                 p: {
-                  marginBottom: 10,
+                  // marginBottom: 20,
                   fontSize: 14,
                   color: '#4B5563',
                   lineHeight: 20,
@@ -156,7 +158,8 @@ const KnowledgeDetails = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     padding: wp(5),
-    // backgroundColor: '#F9FAFB',
+    // backgroundColor: 'red',
+    marginBottom: hp(10),
 
     flex: 1,
   },

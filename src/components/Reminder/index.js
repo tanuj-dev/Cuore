@@ -42,10 +42,17 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
     setShowDatePicker(false); // hide picker
 
     if (selectedDate) {
-      // Normalize to midday to avoid timezone rollback
-      const normalizedDate = new Date(selectedDate);
-      normalizedDate.setHours(12, 0, 0, 0); // avoids midnight timezone issues
-      setDate(normalizedDate);
+      // ✅ Construct date explicitly in local time (IST-safe)
+      const localDate = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+        12,
+        0,
+        0,
+        0, // midday to avoid UTC rollback
+      );
+      setDate(localDate);
     }
   };
 
@@ -158,6 +165,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
                     onPress={() => {
                       const res = dispatch(
                         deleteReminderThunk({
+                          userId: user_id,
                           sourceId: item?.sourceId,
                         }),
                       );
@@ -379,6 +387,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
         </KeyboardAvoidingView>
       </View>
       <ReminderEditor
+        userId={user_id}
         setIsVisible={setIsVisible}
         requestId={requestId}
         showModal={showModal}

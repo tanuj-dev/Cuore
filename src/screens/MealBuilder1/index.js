@@ -9,6 +9,7 @@ import {
   ImageBackground,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 import LimitExceededModal from '../../components/LimitExceedModa';
@@ -24,10 +25,9 @@ const MealBuilder1 = ({ navigation, route }) => {
   const dispatch = useDispatch();
   const { dishes, targetCalories, sumofCalories, activeTab, activeCuisine } =
     route.params;
-  console.log('Route Params:', route.params);
 
   const TargetCalories = targetCalories;
-
+  const [loading, setLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState(
     dishes.map(item => ({ ...item, count: 1 })),
   );
@@ -73,17 +73,28 @@ const MealBuilder1 = ({ navigation, route }) => {
       section: item.section,
       cuisine: activeCuisine,
       mealTime: activeTab,
+      recipeLink: item.id,
     }));
 
     try {
+      setLoading(true);
       console.log(cartItems, 'Cart Items for Adjustment');
       const response = await dispatch(
         adjustPortion({ recommendedCalories: targetCalories, cartItems }),
       ).unwrap();
+      if (response?.adjustedItems?.length > 0) {
+        setLoading(false);
 
-      console.log('Adjusted portion response:', response);
-      setAdjustedPortions(response);
-      navigation.navigate('MealBuilder2', { selectedItems: response });
+        console.log('Adjusted portion response:', response);
+        setAdjustedPortions(response);
+        navigation.navigate('MealBuilder2', { selectedItems: response });
+      } else {
+        setLoading(false);
+        Alert.alert(
+          'Adjustment Error',
+          'Could not adjust portions. Please try again.',
+        );
+      }
     } catch (error) {
       console.warn('Adjustment failed:', error);
       // optionally show error modal or toast
@@ -317,16 +328,20 @@ const MealBuilder1 = ({ navigation, route }) => {
               // marginBtom: hp(20),
             }}
           >
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '500',
-                color: '#FFFFFF',
-              }}
-            >
-              Adjust Portions
-            </Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text
+                style={{
+                  fontFamily: 'Roboto-Regular',
+                  fontSize: 14,
+                  fontWeight: '500',
+                  color: '#FFFFFF',
+                }}
+              >
+                Adjust Portions
+              </Text>
+            )}
           </TouchableOpacity>
         )}
       </View>

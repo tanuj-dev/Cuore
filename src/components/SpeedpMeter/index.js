@@ -51,7 +51,7 @@ const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
 
     Animated.timing(animatedAngle, {
       toValue: targetAngle,
-      duration: 3000,
+      duration: 2000,
       useNativeDriver: false,
     }).start();
 

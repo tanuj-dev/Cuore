@@ -13,8 +13,9 @@ import { Space } from 'lucide-react-native';
 // import {Ionicons} from '@expo/vector-icons';
 
 const FitnessDetails = ({ navigation, route }) => {
-  const { instruction } = route?.params;
+  const { instruction, data } = route?.params;
   console.log('Instructions:', instruction);
+  console.log('Data:', data);
 
   return (
     <ScrollView style={styles.container}>
@@ -47,7 +48,17 @@ const FitnessDetails = ({ navigation, route }) => {
               resizeMode="contain"
             />
           </TouchableOpacity>
-          <Text style={styles.title}>Cuore Fitness</Text>
+          <Text
+            style={[
+              styles.title,
+              {
+                color: data?.title ? '#1E64AC' : '#000000',
+                alignSelf: 'center',
+              },
+            ]}
+          >
+            {data?.title ? data.title : 'Cuore Fitness'}
+          </Text>
         </View>
       </View>
 
@@ -133,8 +144,8 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Roboto-Regular',
     marginTop: hp(1),
-    marginLeft: hp(12),
-    fontSize: 20,
+    marginLeft: hp(2),
+    fontSize: 18,
     fontWeight: '400',
     marginBottom: hp(2),
     alignSelf: 'center',
