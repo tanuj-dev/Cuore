@@ -133,7 +133,7 @@ const Nutrition = ({ navigation }) => {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image
               style={{
-                tintColor: tagLabel === Images.WARNING && '#dc2626',
+                // tintColor: tagLabel === Images.WARNING,
                 height: tagLabel === Images.WARNING ? hp(2) : hp(2.5),
                 width: tagLabel === Images.WARNING ? wp(10) : wp(15),
                 marginLeft: hp(-1),
@@ -163,7 +163,7 @@ const Nutrition = ({ navigation }) => {
             message={toast}
             type={toastType}
             onHide={() => setToast(null)}
-            top={hp(10)}
+            top={hp(80)}
           />
         )}
         <View
@@ -352,6 +352,10 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
     elevation: 2,
     borderLeftColor: '#17AD8D',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
   },
   mealTitle: {
     fontFamily: 'Roboto-Regular',

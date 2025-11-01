@@ -217,7 +217,7 @@ const MealBuilder = ({ navigation }) => {
                           height: hp(2),
                           width: wp(4),
                           borderRadius: hp(2),
-                          backgroundColor: subItem?.healthColor,
+                          backgroundColor: subItem?.healthColor ?? 'grey',
                         }}
                       />
                       <View

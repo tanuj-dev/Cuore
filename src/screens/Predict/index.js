@@ -191,6 +191,7 @@ const healthGraphs = [
 
 const convertToChartData = ({ graph, history }) => {
   const { labels = [], datasets = [] } = graph.data || {};
+
   if (!labels.length || !datasets.length) {
     return {
       labels: [],
@@ -200,11 +201,9 @@ const convertToChartData = ({ graph, history }) => {
 
   const chartDatasets = datasets.flatMap(
     ({ actualData, predictedData, color, label }) => {
-      const actual = Array.isArray(actualData) ? actualData : [];
+      const actual =
+        Array.isArray(actualData) && actualData.length > 0 ? actualData : [0];
       const predicted = Array.isArray(predictedData) ? predictedData : [];
-
-      // Skip if both are empty
-      if (actual.length === 0 && predicted.length === 0) return [];
 
       const actualPadded = [...actual, ...Array(predicted.length).fill(null)];
       const predictedPadded = Array(actual.length).fill(null).concat(predicted);
@@ -222,20 +221,9 @@ const convertToChartData = ({ graph, history }) => {
       };
 
       if (history === 'Predict') {
-        console.log(label, 'lable');
         return [actualDataset, predictedDataset];
       } else if (history === 'History') {
-        if (
-          label == 'BP Upper' ||
-          label == 'BP Lower' ||
-          label == 'Heart Rate' ||
-          label == 'Fasting' ||
-          label == 'After Meal'
-        ) {
-          return [actualDataset];
-        } else {
-          return [actualDataset, predictedDataset];
-        }
+        return [actualDataset];
       } else {
         return [actualDataset]; // default fallback
       }
@@ -274,13 +262,18 @@ const Predict = ({ navigation }) => {
 
   const userId = useSelector(state => state.auth?.userId);
   const predictData = useSelector(state => state?.predictData?.data?.data);
-  const loading = useSelector(state => state?.predictData?.loading);
+  const loading = useSelector(state => state?.predict?.loading);
   console.log('predictData', predictData);
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    dispatch(getPredict(userId));
-    setRefreshing(false);
+    try {
+      await dispatch(getPredict(userId)).unwrap();
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    } finally {
+      setRefreshing(false);
+    }
   }, [dispatch, userId]);
 
   // if (loading) {
@@ -292,7 +285,7 @@ const Predict = ({ navigation }) => {
       refreshControl={
         <RefreshControl
           title="Pull to refresh..."
-          refreshing={loading}
+          refreshing={loading || refreshing}
           onRefresh={onRefresh}
         />
       }
@@ -552,7 +545,9 @@ const Predict = ({ navigation }) => {
                 }}
               >
                 {item?.data?.datasets.map((ds, idx) => {
-                  console.log('describe', ds);
+                  const datasetCount = item?.data?.datasets?.length || 0;
+                  console.log('Dataset Count:', datasetCount);
+
                   return (
                     <View
                       key={`legend-${idx}`}
@@ -570,11 +565,17 @@ const Predict = ({ navigation }) => {
                           borderRadius: hp(5),
                           backgroundColor:
                             typeof ds.color === 'function'
-                              ? ds.color()
-                              : ds.color,
+                              ? datasetCount > 1
+                                ? ds.color()
+                                : ''
+                              : datasetCount > 1
+                              ? ds.color
+                              : '',
                         }}
                       />
-                      <Text style={styles.hintText}>{ds.label}</Text>
+                      {datasetCount > 1 && (
+                        <Text style={styles.hintText}>{ds.label}</Text>
+                      )}
                     </View>
                   );
                 })}

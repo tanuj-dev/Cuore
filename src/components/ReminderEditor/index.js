@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -21,8 +21,9 @@ import {
 } from '../../redux/slices';
 
 const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
-  console.log('Editing reminder:', requestId);
+  // console.log('Editing reminder:', requestId);
   const [reminderText, setReminderText] = useState('');
+  // console.log('Initial reminder text:', reminderText);
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,7 +36,7 @@ const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
   };
 
   const userId = useSelector(state => state?.auth?.userId);
-  console.log('User ID in ReminderEditor:', userId);
+  // console.log('User ID in ReminderEditor:', userId);
 
   const handleChange = async () => {
     const formattedTime = moment(time).format('hh:mm A'); // e.g., "07:15 AM"
@@ -83,6 +84,11 @@ const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
 
     setShowModal(false);
   };
+  useEffect(() => {
+    if (requestId) {
+      setReminderText(requestId?.title || '');
+    }
+  }, [requestId]);
 
   return (
     <>
@@ -97,7 +103,10 @@ const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
         onRequestClose={() => setShowModal(false)}
       >
         <TouchableOpacity
-          onPress={() => setShowModal(false)}
+          onPress={() => {
+            setReminderText('');
+            setShowModal(false);
+          }}
           style={styles.overlay}
         >
           <View style={styles.bottomSheet}>

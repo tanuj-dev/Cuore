@@ -13,76 +13,51 @@ import RenderHTML from 'react-native-render-html';
 
 const KnowledgeDetails = ({ navigation, route }) => {
   const { details } = route.params || {};
-
-  console.log('Knowledge Details:', details);
   const [selectedOption, setSelectedOption] = useState(null);
-
-  // 🔽 Local dynamic data
-  const article = {
-    title: 'The Cardiovascular Disease Paradox',
-    content: [
-      'Coronary artery disease is highly prevalent in Indians, despite low cholesterol and traditional risk factors. Over 50% of coronary artery disease-related deaths in India occur before the age of 50.',
-    ],
-  };
 
   const handleOptionSelect = option => {
     setSelectedOption(option);
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: 'white' }}>
-      <View
-        style={{
-          backgroundColor: '#F9FAFB',
-          marginBottom: hp(10),
-        }}
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: hp() }}
       >
-        <View
-          style={{
-            flex: 1,
-
-            height: hp(100),
-            marginBottom: hp(5),
-          }}
-        >
+        <View style={{ backgroundColor: '#F9FAFB' }}>
+          {/* Header */}
           <View
             style={{
               flexDirection: 'row',
               backgroundColor: '#FFFFFF',
-              paddingVertical: Platform.OS === 'ios' ? hp(3) : hp(3),
+              paddingVertical: hp(1.5),
               elevation: 2,
               alignItems: 'center',
             }}
           >
             <TouchableOpacity
               hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              style={{
-                marginTop: Platform.OS === 'ios' ? hp(4) : hp(0),
-                paddingHorizontal: hp(2),
-              }}
+              style={{ paddingHorizontal: hp(2) }}
               onPress={() => navigation.goBack()}
             >
               <Image
                 source={Images.BACK_BUTTON}
                 style={{
                   resizeMode: 'contain',
-                  marginLeft: Platform.OS === 'ios' ? hp(0) : hp(0.2),
                   height: hp(3),
                   width: wp(4),
                 }}
               />
             </TouchableOpacity>
           </View>
-          <View style={styles.container}>
-            {/* <Text style={styles.title}>{article.title}</Text> */}
 
+          {/* Content */}
+          <View style={styles.container}>
             <RenderHTML
-              style={{ marginBottom: hp(2) }}
-              // contentWidth={width}
               source={{ html: details }}
               tagsStyles={{
                 p: {
-                  // marginBottom: 20,
                   fontSize: 14,
                   color: '#4B5563',
                   lineHeight: 20,
@@ -122,46 +97,16 @@ const KnowledgeDetails = ({ navigation, route }) => {
                 },
               }}
             />
-            {/* <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontWeight: '400',
-            fontsq: 14,
-            color: '#374151',
-            marginTop: hp(2),
-          }}
-        >
-          Cardiovascular diseases and their risk factors are rapidly increasing,
-          especially in urban areas, but rural populations are also seeing a
-          worrying rise.
-        </Text>
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontWeight: '400',
-            fontsq: 14,
-            color: '#374151',
-            marginTop: hp(2),
-          }}
-        >
-          Cardiovascular diseases and their risk factors are rapidly increasing,
-          especially in urban areas, but rural populations are also seeing a
-          worrying rise.
-        </Text> */}
           </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     padding: wp(5),
-    // backgroundColor: 'red',
-    marginBottom: hp(10),
-
-    flex: 1,
   },
   title: {
     fontFamily: 'Roboto-Regular',
@@ -177,7 +122,6 @@ const styles = StyleSheet.create({
     color: '#374151',
     fontWeight: '400',
     marginBottom: hp(1.5),
-    // display: 'fle6',
   },
   quizContainer: {
     backgroundColor: '#EFF6FF',
@@ -230,7 +174,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ef4444',
   },
-  optionText: { fontFamily: 'Roboto-Regular', fontSize: wp(3.6) },
+  optionText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: wp(3.6),
+  },
 });
 
 export default KnowledgeDetails;

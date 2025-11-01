@@ -10,6 +10,7 @@ import {
   Image,
   KeyboardAvoidingView,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -20,9 +21,10 @@ import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import { getHomeData, deleteReminderThunk } from '../../redux/slices';
 import ReminderEditor from '../ReminderEditor';
+import Toast from '../../components/Toast';
 
 const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
-  console.log('User ID in Reminder:', user_id, isVisible, existingReminders);
+  // console.log('User ID in Reminder:', user_id, isVisible, existingReminders);
   const dispatch = useDispatch();
   const [reminderText, setReminderText] = useState('');
   const [date, setDate] = useState(null);
@@ -37,6 +39,8 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
   const [flagAsMedication, setFlagAsMedication] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [requestId, setRequestId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false); // hide picker
@@ -81,7 +85,9 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
     };
 
     const userId = user_id;
-    console.log(userId, 'userId in handleAddEntry');
+    // console.log(userId, 'userId in handleAddEntry');
+
+    setLoading(true);
     const res = await dispatch(
       setReminder({
         userId,
@@ -89,14 +95,21 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
       }),
     );
     if (res.status === 201 || 200) {
-      const homeData = dispatch(getHomeData(userId));
-      console.log('Home data after setting reminder:', homeData);
+      setToastMessage('Reminder set successfully!');
+      setLoading(false);
       setIsVisible(false);
+
+      const homeData = dispatch(getHomeData(userId));
+      // console.log('Home data after setting reminder:', homeData);
+    } else {
+      setToastMessage('Failed to set reminder.');
+      setLoading(false);
     }
-    console.log('Set Reminder Response:', res);
+    // console.log('Set Reminder Response:', res);
     // Close the modal
     // setIsVisible(false);
   };
+  // console.log(isVisible, 'isVisible in Reminder component');
 
   return (
     <Modal
@@ -109,6 +122,10 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
       onBackdropPress={() => setIsVisible(false)}
       style={styles.modal}
     >
+      {toastMessage ? (
+        <Toast message={toastMessage} onHide={() => setToastMessage('')} />
+      ) : null}
+
       <View style={styles.container}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -381,7 +398,11 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
               onPress={() => handleAddEntry()}
               style={styles.addButton}
             >
-              <Text style={styles.addButtonText}>Add Entry</Text>
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.addButtonText}>Add Entry</Text>
+              )}
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>

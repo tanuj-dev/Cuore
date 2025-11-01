@@ -558,7 +558,7 @@ const Today = ({ navigation, route }) => {
                     <View style={{ justifyContent: 'center' }}>
                       <Text style={styles.taskTitle}>
                         {item?.title?.length > 20
-                          ? item.title.slice(0, 20) + '...'
+                          ? item.title.slice(0, 35) + '...'
                           : item.title}
                       </Text>
                       <Text style={styles.taskDescription}>
@@ -800,7 +800,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: hp(7.5),
     borderLeftWidth: 2,
-    paddingLeft: 12,
+    // paddingLeft: 12,
     backgroundColor: 'white',
     borderRadius: 8,
     padding: 10,
@@ -824,13 +824,14 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontSize: 15,
     color: '#9CA3AF',
+    width: wp(43),
   },
   taskDescription: {
     marginTop: 4,
     fontSize: 12,
     color: '#9CA3AF',
     fontFamily: 'Roboto-Regular',
-    width: wp(43),
+    width: wp(40),
     // backgroundColor: 'red',
   },
   checkIcon: {
@@ -838,6 +839,9 @@ const styles = StyleSheet.create({
     width: hp(2),
     height: hp(3),
     marginTop: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
     // position: 'absolute',
     // right: 10,
     // bottom: hp(3),
