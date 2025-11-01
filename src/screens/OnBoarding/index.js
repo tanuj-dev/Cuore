@@ -215,6 +215,13 @@ const OnBoarding = ({ navigation, route }) => {
     dispatch(getOnboardingThunk());
   }, []);
 
+  const handleFormChange = incomingData => {
+    setOnboarding3Data(prev => ({
+      ...prev,
+      ...incomingData,
+    }));
+  };
+
   return (
     <>
       <ScrollView ref={scrollRef} style={styles.container}>
@@ -371,10 +378,9 @@ const OnBoarding = ({ navigation, route }) => {
                 ? onboarding3Data
                 : onBoardingData?.data?.o3Data
             }
-            onFormChange={setOnboarding3Data}
+            onFormChange={handleFormChange}
           />
         )}
-
         {step === 4 && (
           <OnBoardingFour
             initialData={
@@ -451,7 +457,7 @@ const OnBoarding = ({ navigation, route }) => {
               <Text style={styles?.modalTitle}>Incomplete</Text>
               <Text style={styles?.modalMessage}>
                 {screen === 'Reassess'
-                  ? 'Please Select Gender.'
+                  ? 'Please confirm your Gender.'
                   : 'Please fill all the required details before continuing.'}
               </Text>
               <TouchableOpacity

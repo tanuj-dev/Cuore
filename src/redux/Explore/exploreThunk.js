@@ -27,7 +27,7 @@ export const getRecipe = createAsyncThunk(
   'recipe/getById',
   async (recipeId, { rejectWithValue }) => {
     try {
-      const url = `${EndPoints.GET_RECIPE}/${recipeId}`;
+      const url = `${EndPoints.GET_RECIPE}/${encodeURIComponent(recipeId)}`;
       const response = await getApiCall(url);
       return response.data;
     } catch (error) {

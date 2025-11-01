@@ -262,7 +262,8 @@ const MealBuilder = ({ navigation }) => {
                         }}
                         onPress={() => {
                           console.log('Selected Items before:', selectedItems);
-                          console.log(category, 'Category');
+                          console.log('Category:', category);
+
                           const newItem = {
                             dishname: subItem?.name,
                             calories: subItem?.calories,
@@ -273,33 +274,42 @@ const MealBuilder = ({ navigation }) => {
                             recepieId: subItem?.recipeLink,
                           };
 
+                          const isAlreadyAdded = selectedItems.some(
+                            i =>
+                              i.dishname === newItem.dishname &&
+                              i.calories === newItem.calories &&
+                              i.id === newItem.id &&
+                              i.servingSize === newItem.servingSize &&
+                              i.adjustmentWeight === newItem.adjustmentWeight &&
+                              i.section === newItem.section &&
+                              i.recepieId === newItem.recepieId,
+                          );
+
                           if (isAlreadyAdded) {
-                            // 🔄 Remove item
+                            // 🔄 Remove only the matching item
                             setSelectedItems(prev =>
                               prev.filter(
                                 i =>
                                   !(
-                                    i.dishname === newItem?.dishname &&
-                                    i.calories &&
-                                    i.id === newItem?.id &&
-                                    i.servingSize === newItem?.servingSize &&
+                                    i.dishname === newItem.dishname &&
+                                    i.calories === newItem.calories &&
+                                    i.id === newItem.id &&
+                                    i.servingSize === newItem.servingSize &&
                                     i.adjustmentWeight ===
-                                      newItem?.adjustmentWeight
-                                  ) &&
-                                  i.section === newItem?.section &&
-                                  i.recepieId === newItem?.recepieId,
+                                      newItem.adjustmentWeight &&
+                                    i.section === newItem.section &&
+                                    i.recepieId === newItem.recepieId
+                                  ),
                               ),
                             );
-                            // console.log('Removed:', newItem);
+                            console.log('Removed:', newItem);
                           } else {
                             // ➕ Add item
                             setSelectedItems(prev => [...prev, newItem]);
-                            // console.log('Added:', newItem);
-                            // console.log('Current Selection:', [
-                            //   ...selectedItems,
-                            //   newItem,
-                            // ]);
+                            console.log('Added:', newItem);
                           }
+
+                          console.log('Selected Items after:', selectedItems);
                         }}
                       >
                         <Text

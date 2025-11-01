@@ -15,16 +15,14 @@ import images from '../../utilities/Images';
 
 const Recipe = ({ navigation, route }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const { receipeData } = route?.params;
-  const { ingredients, instructions } = receipeData || {};
-  console.log('Received recipe data:', receipeData);
-  ``;
-  console.log('Recipe ingredients:', ingredients);
-  console.log('Recipe instructions:', instructions);
+  console.log('Route params in Recipe screen:', route.params);
+  const { recipeData } = route.params;
+  console.log('Recipe Data:', recipeData);
+  const { ingredients, instructions } = recipeData || {};
 
-  // console.log('Received recipe data:', receipeData);
+  // console.log('Received recipe data:', recipeData);
 
-  if (!receipeData || receipeData.message === 'Recipe not found.') {
+  if (!recipeData || recipeData.message === 'Recipe not found.') {
     return (
       <View
         style={{
@@ -130,72 +128,62 @@ const Recipe = ({ navigation, route }) => {
           {/* Instructions */}
           <View style={styles.card}>
             <View>
-              <Text
-                style={{
-                  alignSelf: 'center',
-                  fontSize: 18,
-                  fontWeight: '400',
-                  fontFamily: 'Roboto-Regular',
-                }}
-              >
-                {receipeData?.name}
-              </Text>
-              <View
-                style={{
-                  marginVertical: hp(4),
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Text style={styles.text}>Prep time : 5 mins</Text>
-                <Text style={styles.text}>
-                  Cook time : {receipeData?.prepTime}
-                </Text>
+              <View style={styles.recipeHeader}>
+                <Text style={styles.recipeTitle}>{recipeData?.name}</Text>
+
+                <View style={styles.timeContainer}>
+                  <View style={styles.timeBadge}>
+                    <Text style={styles.timeLabel}>Prep</Text>
+                    <Text style={styles.timeValue}>
+                      {recipeData?.prepTime ?? '5 mins'}
+                    </Text>
+                  </View>
+                  <View style={styles.timeBadge}>
+                    <Text style={styles.timeLabel}>Cook</Text>
+                    <Text style={styles.timeValue}>
+                      {recipeData?.cookTime ?? '10 mins'}
+                    </Text>
+                  </View>
+                </View>
               </View>
+
               <Text style={styles.sectionTitle}>Ingredients:</Text>
 
+              {/* ingredients  */}
               {ingredients?.map((item, index) => (
-                <Text key={index} style={styles.text}>
-                  • {item?.quantity} {item?.unit} {item?.name}
-                </Text>
+                <View key={`ingredient-${index}`} style={styles.ingredientRow}>
+                  <View
+                    key={`substep-${index}-${item.name}`}
+                    style={styles.stepRow}
+                  >
+                    <View style={styles.stepBadge}>
+                      <Text style={styles.stepBadgeText}>{index + 1}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.ingredientText}>
+                    {item?.quantity} {item?.unit} {item?.name}
+                  </Text>
+                </View>
               ))}
             </View>
             <Text style={[styles.sectionTitle, { marginTop: hp(3) }]}>
               Instructions:
             </Text>
             {instructions?.map((step, index) => (
-              <View key={index}>
-                {step?.heading == 'Instructions' ? null : (
-                  <Text
-                    style={{
-                      marginVertical: hp(1),
-                      fontWeight: 'bold',
-                      color: '#1E64AC',
-                      fontFamily: 'Roboto-Regular',
-                    }}
-                  >
-                    {step?.heading}
-                  </Text>
+              <View key={`step-${index}`} style={styles.stepSection}>
+                {step?.heading?.toLowerCase() !== 'instructions' && (
+                  <Text style={styles.stepHeading}>{step.heading}</Text>
                 )}
 
-                {step?.steps.map((subStep, subIndex) => (
+                {step?.steps?.map((subStep, subIndex) => (
                   <View
-                    style={{
-                      flexDirection: 'row',
-                      // alignItems: 'center',
-                      // justifyContent: 'center',
-                    }}
-                    key={subIndex + 100}
+                    key={`substep-${index}-${subIndex}`}
+                    style={styles.stepRow}
                   >
-                    <Text key={subIndex + 8} style={styles.text}>
-                      {`${subIndex + 1} `}
-                    </Text>
-                    <Text
-                      key={subIndex + 3}
-                      style={[styles.text, { width: wp(80) }]}
-                    >
-                      {`${subStep}`}
-                    </Text>
+                    <View style={styles.stepBadge}>
+                      <Text style={styles.stepBadgeText}>{subIndex + 1}</Text>
+                    </View>
+                    <Text style={styles.stepText}>{subStep}</Text>
                   </View>
                 ))}
               </View>
@@ -237,7 +225,7 @@ const styles = StyleSheet.create({
     borderRadius: wp(2),
     marginTop: hp(2),
     borderLeftWidth: 4,
-    borderColor: '#17AD8D',
+    borderColor: '#1E64AC',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -254,24 +242,109 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
     fontFamily: 'Roboto-Regular',
   },
-  text: {
-    // width: '100%',
-    fontSize: 14.5,
-    marginBottom: hp(0.5),
+
+  stepSection: {
+    marginBottom: hp(3),
+  },
+  recipeHeader: {
+    alignItems: 'center',
+    marginBottom: hp(3),
+  },
+
+  recipeTitle: {
+    fontSize: 22,
+    fontWeight: '700',
     fontFamily: 'Roboto-Regular',
-    color: '#1E64AC',
-    fontWeight: '400',
+    color: '#1E293B',
+    textAlign: 'center',
+    marginBottom: hp(1),
   },
-  controls: {
-    marginTop: hp(3),
+
+  timeContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: wp(5),
+    justifyContent: 'space-between',
+    gap: wp(10),
+    marginTop: hp(1),
   },
-  iconWrap: {
+
+  timeBadge: {
+    backgroundColor: '#E0F2FE',
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(4),
+    borderRadius: wp(2),
+    alignItems: 'center',
+  },
+
+  timeLabel: {
+    fontSize: 12,
+    color: '#1E64AC',
+    fontWeight: '600',
+    marginBottom: hp(0.5),
+  },
+
+  timeValue: {
+    fontSize: 14,
+    color: '#1E293B',
+    fontWeight: '500',
+  },
+
+  stepHeading: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E64AC',
+    marginBottom: hp(1),
+    fontFamily: 'Roboto-Regular',
+  },
+
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: hp(1.5),
+  },
+
+  stepBadge: {
     backgroundColor: '#1E64AC',
-    padding: wp(3),
-    borderRadius: wp(10),
+    borderRadius: wp(2),
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(0.5),
+    marginRight: wp(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  stepBadgeText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+
+  stepText: {
+    flex: 1,
+    fontSize: 14.5,
+    color: '#1E293B',
+    fontFamily: 'Roboto-Regular',
+    lineHeight: 20,
+  },
+  ingredientRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: hp(1),
+  },
+
+  dot: {
+    fontSize: 16,
+    color: '#17AD8D',
+    marginRight: wp(2),
+    lineHeight: 20,
+  },
+
+  ingredientText: {
+    fontSize: 14.5,
+    fontFamily: 'Roboto-Regular',
+    color: '#1E293B',
+    fontWeight: '400',
+    lineHeight: 20,
+    flexShrink: 1,
   },
 });
 

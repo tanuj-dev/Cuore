@@ -127,286 +127,275 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
       ) : null}
 
       <View style={styles.container}>
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true} // ✅ makes FlatList scroll properly
+          showsVerticalScrollIndicator={true}
         >
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Title */}
+          {/* Title */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Text style={styles.title}>Add/Delete Entry</Text>
+            <TouchableOpacity onPress={() => setIsVisible(false)}>
+              <Image
+                style={{
+                  width: 13,
+                  height: 13,
+                  resizeMode: 'contain',
+                  tintColor: '#6B7280',
+                }}
+                source={Images.CROSS}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Existing Entries */}
+          <Text style={styles.subtitle}>Existing Entries</Text>
+
+          <FlatList
+            nestedScrollEnabled={true} // ✅ enables inner scroll
+            data={existingReminders}
+            keyExtractor={(item, index) => item.id || index.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.entryCard}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.entryText}>{item.title}</Text>
+                  <Text style={styles.entrySubtext}>{item.time}</Text>
+                </View>
+
+                {/* Edit */}
+                <TouchableOpacity
+                  onPress={() => {
+                    setRequestId(item);
+                    setShowModal(true);
+                  }}
+                  style={styles.iconButton}
+                >
+                  <Image
+                    source={Images.EDIT}
+                    style={{ width: 16, height: 16 }}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+
+                {/* Delete */}
+                <TouchableOpacity
+                  onPress={() => {
+                    const res = dispatch(
+                      deleteReminderThunk({
+                        userId: user_id,
+                        sourceId: item?.sourceId,
+                      }),
+                    );
+                    console.log('Delete Reminder Response:', res);
+                    dispatch(getHomeData(user_id));
+                    setIsVisible(false);
+                  }}
+                  style={styles.iconButton}
+                >
+                  <Image
+                    source={Images.DELETE}
+                    style={{ width: 16, height: 16, tintColor: '#EF4444' }}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No reminders yet</Text>
+            }
+            style={{ marginBottom: 10 }}
+          />
+
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Add New Entry */}
+          <Text style={styles.subtitle}>Add New Entry</Text>
+
+          {/* Reminder Input */}
+          <View style={styles.inputGroup}>
+            <TextInput
+              placeholder="Enter reminder"
+              style={styles.input}
+              value={reminderText}
+              onChangeText={setReminderText}
+            />
             <View
               style={{
                 flexDirection: 'row',
-                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: 6,
               }}
             >
-              <Text style={styles.title}>Add/Delete Entry</Text>
-              <TouchableOpacity onPress={() => setIsVisible(false)}>
-                <Image
-                  style={{
-                    width: 13,
-                    height: 13,
-                    resizeMode: 'contain',
-                    tintColor: '#6B7280',
-                  }}
-                  source={Images.CROSS}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* Existing Entries */}
-            <Text style={styles.subtitle}>Existing Entries</Text>
-            <FlatList
-              data={existingReminders}
-              keyExtractor={(item, index) => item.id || index.toString()}
-              renderItem={({ item }) => (
-                <View style={styles.entryCard}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.entryText}>{item.title}</Text>
-                    <Text style={styles.entrySubtext}>{item.time}</Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => {
-                      console.log(item?.title);
-                      setRequestId(item);
-                      setShowModal(true);
-                    }}
-                    style={styles.iconButton}
-                  >
-                    <Image
-                      source={Images.EDIT}
-                      style={{ width: 16, height: 16 }}
-                      resizeMode="contain"
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => {
-                      const res = dispatch(
-                        deleteReminderThunk({
-                          userId: user_id,
-                          sourceId: item?.sourceId,
-                        }),
-                      );
-                      console.log('Delete Reminder Response:', res);
-                      dispatch(getHomeData(user_id));
-                      setIsVisible(false);
-                    }}
-                    style={styles.iconButton}
-                  >
-                    <Image
-                      source={Images.DELETE}
-                      style={{ width: 16, height: 16, tintColor: '#EF4444' }}
-                      resizeMode="contain"
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-              ListEmptyComponent={
-                <Text style={styles.emptyText}>No reminders yet</Text>
-              }
-            />
-
-            {/* Divider */}
-            <View style={styles.divider} />
-
-            {/* Add New Entry */}
-            <Text style={styles.subtitle}>Add New Entry</Text>
-
-            {/* Reminder Input */}
-            <View style={styles.inputGroup}>
-              <TextInput
-                placeholder="Enter reminder"
-                style={styles.input}
-                value={reminderText}
-                onChangeText={setReminderText}
+              <Image
+                source={Images.NOTICE}
+                style={{ width: 16, height: 16, marginRight: 6 }}
               />
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginTop: 6,
-                }}
-              >
-                <Image
-                  source={Images.NOTICE} // replace with your image path
-                  style={{ width: 16, height: 16, marginRight: 6 }}
-                />
-                <Text style={styles.infoText}>
-                  Use '/' to separate multiple reminders set for the same time
-                </Text>
-              </View>
+              <Text style={styles.infoText}>
+                Use '/' to separate multiple reminders set for the same time
+              </Text>
             </View>
+          </View>
 
-            {/* Date & Time */}
-            <View style={styles.dateTimeRow}>
-              {/* Date Picker */}
-              <TouchableOpacity
-                style={styles.dateTimeInput}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text style={{ color: date ? '#000' : '#888' }}>
-                  {date ? date.toDateString() : 'Start Date'}{' '}
-                  {/* placeholder text */}
-                </Text>
-
-                <Image
-                  source={Images.CALANDER} // replace with your calendar image
-                  style={{ width: 18, height: 18, marginLeft: 8 }}
-                />
-              </TouchableOpacity>
-
-              {/* Time Picker */}
-              <TouchableOpacity
-                style={styles.dateTimeInput}
-                onPress={() => setShowTimePicker(true)}
-              >
-                <Text style={{ color: time ? '#000' : '#888' }}>
-                  {time ? formatTime(time) : 'HH:MM'} {/* placeholder text */}
-                </Text>
-                <Image
-                  source={Images.CLOCK} // replace with your clock image
-                  style={{ width: 18, height: 18, marginLeft: 8 }}
-                />
-              </TouchableOpacity>
-            </View>
-            {showDatePicker && (
-              <DateTimePicker
-                dateFormat="longdate"
-                style={{ flex: 1, marginBottom: 10 }}
-                value={date || new Date()}
-                mode="date"
-                display="spinner"
-                onChange={handleDateChange}
-              />
-            )}
-            {showTimePicker && (
-              <DateTimePicker
-                value={time || new Date()}
-                mode="time"
-                display="spinner"
-                onChange={handleTimeChange}
-              />
-            )}
-
-            {/* Repeat */}
-            <View style={styles.pickercontainer}>
-              {/* Fake input */}
-              <TouchableOpacity
-                style={styles.pickerinput}
-                onPress={() => setShowPicker(!showPicker)}
-              >
-                <Text style={{ color: repeat ? '#000' : '#888' }}>Repeat</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '500',
-                      color: '#6B7280',
-                    }}
-                  >
-                    {' '}
-                    {repeat ? repeat : 'Daily'}
-                  </Text>
-                  <Image style={{ marginLeft: 4 }} source={Images.DOWN}></Image>
-                </View>
-              </TouchableOpacity>
-
-              {/* Conditionally show Picker */}
-              {showPicker && (
-                <Picker
-                  itemStyle={{ color: '#1E64AC' }} // iOS only
-                  selectedValue={repeat}
-                  onValueChange={itemValue => {
-                    setRepeat(itemValue);
-                    setShowPicker(false); // hide after selection
-                  }}
-                  style={styles.repeatpicker}
-                >
-                  <Picker.Item label="Never" value="Never" />
-                  <Picker.Item label="Every Day" value="Every Day" />
-                  <Picker.Item label="Every Week" value="Every Week" />
-                  <Picker.Item label="Every 2 Week" value="Every 2 Week" />
-                  <Picker.Item label="Every Month" value="Every Month" />
-                  <Picker.Item label="Every Year" value="Every Year" />
-                </Picker>
-              )}
-            </View>
-
-            {/* End Repeat */}
-
-            <View style={[styles.pickercontainer, { marginTop: -10 }]}>
-              {/* Fake input */}
-              <TouchableOpacity
-                style={styles.pickerinput}
-                onPress={() => setShowEndPicker(!showEndPicker)}
-              >
-                <Text style={{ color: '#888' }}>End Repeat</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '500',
-                      color: '#6B7280',
-                    }}
-                  >
-                    {endRepeat ? endRepeat : 'Never'}
-                  </Text>
-                  <Image style={{ marginLeft: 4 }} source={Images.DOWN}></Image>
-                </View>
-              </TouchableOpacity>
-
-              {/* Conditionally show Picker */}
-              {showEndPicker && (
-                <Picker
-                  selectedValue={endRepeat}
-                  onValueChange={itemValue => {
-                    setEndRepeat(itemValue);
-                    setShowEndPicker(false); // hide after selection
-                  }}
-                  style={styles.repeatpicker}
-                  itemStyle={{ color: '#1E64AC' }} // iOS only
-                >
-                  <Picker.Item
-                    style={{ color: 'red' }}
-                    label="Never"
-                    value="Never"
-                  />
-                  <Picker.Item label="On Date" value="On Date" />
-                  {/* <Picker.Item label="After 6 Months" value="6 Months" /> */}
-                </Picker>
-              )}
-            </View>
-
-            {/* <Picker
-            selectedValue={endRepeat}
-            onValueChange={itemValue => setEndRepeat(itemValue)}
-            style={styles.picker}
-          >
-           
-          </Picker> */}
-
-            {/* Flag as medication */}
-            <View style={styles.switchRow}>
-              <Switch
-                value={flagAsMedication}
-                onValueChange={setFlagAsMedication}
-              />
-              <Text style={styles.switchLabel}>Flag as medication</Text>
-            </View>
-
-            {/* Add Entry Button */}
+          {/* Date & Time */}
+          <View style={styles.dateTimeRow}>
+            {/* Date Picker */}
             <TouchableOpacity
-              onPress={() => handleAddEntry()}
-              style={styles.addButton}
+              style={styles.dateTimeInput}
+              onPress={() => setShowDatePicker(true)}
             >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.addButtonText}>Add Entry</Text>
-              )}
+              <Text style={{ color: date ? '#000' : '#888' }}>
+                {date ? date.toDateString() : 'Start Date'}
+              </Text>
+              <Image
+                source={Images.CALANDER}
+                style={{ width: 18, height: 18, marginLeft: 8 }}
+              />
             </TouchableOpacity>
-          </ScrollView>
-        </KeyboardAvoidingView>
+
+            {/* Time Picker */}
+            <TouchableOpacity
+              style={styles.dateTimeInput}
+              onPress={() => setShowTimePicker(true)}
+            >
+              <Text style={{ color: time ? '#000' : '#888' }}>
+                {time ? formatTime(time) : 'HH:MM'}
+              </Text>
+              <Image
+                source={Images.CLOCK}
+                style={{ width: 18, height: 18, marginLeft: 8 }}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {showDatePicker && (
+            <DateTimePicker
+              dateFormat="longdate"
+              style={{ flex: 1, marginBottom: 10 }}
+              value={date || new Date()}
+              mode="date"
+              display="spinner"
+              onChange={handleDateChange}
+            />
+          )}
+
+          {showTimePicker && (
+            <DateTimePicker
+              value={time || new Date()}
+              mode="time"
+              display="spinner"
+              onChange={handleTimeChange}
+            />
+          )}
+
+          {/* Repeat */}
+          <View style={styles.pickercontainer}>
+            <TouchableOpacity
+              style={styles.pickerinput}
+              onPress={() => setShowPicker(!showPicker)}
+            >
+              <Text style={{ color: repeat ? '#000' : '#888' }}>Repeat</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '500',
+                    color: '#6B7280',
+                  }}
+                >
+                  {repeat ? repeat : 'Daily'}
+                </Text>
+                <Image style={{ marginLeft: 4 }} source={Images.DOWN} />
+              </View>
+            </TouchableOpacity>
+
+            {showPicker && (
+              <Picker
+                itemStyle={{ color: '#1E64AC' }}
+                selectedValue={repeat}
+                onValueChange={itemValue => {
+                  setRepeat(itemValue);
+                  setShowPicker(false);
+                }}
+                style={styles.repeatpicker}
+              >
+                <Picker.Item label="Never" value="Never" />
+                <Picker.Item label="Every Day" value="Every Day" />
+                <Picker.Item label="Every Week" value="Every Week" />
+                <Picker.Item label="Every 2 Week" value="Every 2 Week" />
+                <Picker.Item label="Every Month" value="Every Month" />
+                <Picker.Item label="Every Year" value="Every Year" />
+              </Picker>
+            )}
+          </View>
+
+          {/* End Repeat */}
+          <View style={[styles.pickercontainer, { marginTop: -10 }]}>
+            <TouchableOpacity
+              style={styles.pickerinput}
+              onPress={() => setShowEndPicker(!showEndPicker)}
+            >
+              <Text style={{ color: '#888' }}>End Repeat</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '500',
+                    color: '#6B7280',
+                  }}
+                >
+                  {endRepeat ? endRepeat : 'Never'}
+                </Text>
+                <Image style={{ marginLeft: 4 }} source={Images.DOWN} />
+              </View>
+            </TouchableOpacity>
+
+            {showEndPicker && (
+              <Picker
+                selectedValue={endRepeat}
+                onValueChange={itemValue => {
+                  setEndRepeat(itemValue);
+                  setShowEndPicker(false);
+                }}
+                style={styles.repeatpicker}
+                itemStyle={{ color: '#1E64AC' }}
+              >
+                <Picker.Item label="Never" value="Never" />
+                <Picker.Item label="On Date" value="On Date" />
+              </Picker>
+            )}
+          </View>
+
+          {/* Flag as medication */}
+          <View style={styles.switchRow}>
+            <Switch
+              value={flagAsMedication}
+              onValueChange={setFlagAsMedication}
+            />
+            <Text style={styles.switchLabel}>Flag as medication</Text>
+          </View>
+
+          {/* Add Entry Button */}
+          <TouchableOpacity
+            onPress={() => handleAddEntry()}
+            style={styles.addButton}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.addButtonText}>Add Entry</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
       </View>
+
+      {/* Reminder Editor Modal */}
       <ReminderEditor
         userId={user_id}
         setIsVisible={setIsVisible}

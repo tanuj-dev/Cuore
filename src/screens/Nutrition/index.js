@@ -55,7 +55,7 @@ const Nutrition = ({ navigation }) => {
           setToastType('success');
           setLoading(false);
           setRecipeData(response);
-          navigation.navigate('Recipe', { receipeData: response });
+          navigation.navigate('Recipe', { recipeData: response });
         } else {
           setLoading(false);
           setToastType('error');
@@ -136,7 +136,7 @@ const Nutrition = ({ navigation }) => {
                 // tintColor: tagLabel === Images.WARNING,
                 height: tagLabel === Images.WARNING ? hp(2) : hp(2.5),
                 width: tagLabel === Images.WARNING ? wp(10) : wp(15),
-                marginLeft: hp(-1),
+                marginLeft: tagLabel === Images.EGG ? hp(-2) : hp(-1),
                 resizeMode: 'contain',
               }}
               source={tagLabel}

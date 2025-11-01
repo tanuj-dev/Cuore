@@ -73,7 +73,7 @@ const MealBuilder1 = ({ navigation, route }) => {
       section: item.section,
       cuisine: activeCuisine,
       mealTime: activeTab,
-      recipeLink: item.id,
+      recipeLink: item.recepieId._id,
     }));
 
     try {

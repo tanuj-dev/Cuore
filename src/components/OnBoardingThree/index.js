@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ const options = [
 ];
 
 const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
+  console.log('Initial data in OnBoardingThree:', initialData);
   const [selectedOptions, setSelectedOptions] = useState([]);
   const [text, setText] = useState('');
 
@@ -42,6 +43,7 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
 
         setSelectedOptions(savedOptions);
         setText(initialData.other_conditions || '');
+        console.log(selectedOptions, 'selectedOptions restored');
       }
     }, [initialData]),
   );
@@ -57,11 +59,19 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
     });
   };
 
+  useEffect(() => {
+    updateParent(selectedOptions, text);
+  }, [selectedOptions]);
+
+  // console.log('Selected options:', selectedOptions);
+
   // ✅ Text input change handler
   const handleChangeText = input => {
     if (input.length <= 60) {
       setText(input);
       updateParent(selectedOptions, input);
+    } else {
+      // console.log('Character limit reached');
     }
   };
 

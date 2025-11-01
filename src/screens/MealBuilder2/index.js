@@ -32,9 +32,11 @@ const MealBuilder2 = ({ navigation, route }) => {
   const [adjustedPortions, setAdjustedPortions] = useState(data || []);
 
   const handleRecipePress = async recipeId => {
+    console.log('Recipe ID:', recipeId);
+    const recipe = recipeId;
     try {
       setLoading(true);
-      const res = await dispatch(getRecipe(recipeId)).unwrap();
+      const res = await dispatch(getRecipe(recipe)).unwrap();
       setLoading(false);
       navigation.navigate('Recipe', { recipeData: res });
     } catch (error) {
@@ -94,7 +96,7 @@ const MealBuilder2 = ({ navigation, route }) => {
 
             return (
               <TouchableOpacity
-                onPress={() => handleRecipePress(item.recipeLink)}
+                onPress={() => handleRecipePress(item?.recipeLink)}
                 style={{
                   marginHorizontal: hp(1),
                   backgroundColor: '#FFFFFF',

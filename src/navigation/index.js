@@ -260,7 +260,7 @@ export default function Navigator() {
         <Stack.Screen name="Nutrition" component={Nutrition} />
         <Stack.Screen name="CalorieIgnite" component={CalorieIgnite} />
         <Stack.Screen name="MidMorningBoost" component={MidMorningBoost} />
-        <Stack.Screen name="RefrestRefuel" component={RefreshRefuel} />
+        <Stack.Screen name="RefreshRefuel" component={RefreshRefuel} />
         <Stack.Screen name="MealBuilder" component={MealBuilder} />
         <Stack.Screen name="MealBuilder1" component={MealBuilder1} />
         <Stack.Screen name="MealBuilder2" component={MealBuilder2} />

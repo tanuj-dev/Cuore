@@ -243,20 +243,27 @@ const Today = ({ navigation, route }) => {
   // }
 
   const titleToRouteMap = {
-    'Wake Up': 'OnBoarding',
+    'Wake Up': 'Mind',
     Breakfast: 'Nutrition',
     Fitness: 'Fitness',
     Lunch: 'Nutrition',
     'Short Nap or Walk': 'Fitness',
     Dinner: 'Nutrition',
-    Sleep: 'CalorieIgnite',
+    Sleep: 'Mind',
     'Check Fasting Sugar': 'OnBoarding',
     'Refresh & Refuel': 'RefreshRefuel',
-    Medication: 'MidMorningBoost',
+    'Mid-Morning Boost': 'MidMorningBoost',
     'Check BP': 'OnBoarding',
     'Quiet Mind Restful Night': 'Mind',
+    'Calorie Ignite': 'CalorieIgnite',
+    'After-Dinner Walk': 'Fitness',
   };
-  const titlesWithPayload = ['Fitness', 'Breakfast', 'Dinner'];
+  const titlesWithPayload = [
+    'Fitness',
+    'Breakfast',
+    'Dinner',
+    'Check Fasting Sugar',
+  ];
 
   return (
     <View style={{ flex: 1 }}>
@@ -400,7 +407,7 @@ const Today = ({ navigation, route }) => {
                     width: wp(4),
                     tintColor:
                       item?.type == 'red'
-                        ? '#FA003F'
+                        ? '#'
                         : item?.type == 'yellow'
                         ? '#FFCE1B'
                         : '#A16207',
@@ -503,26 +510,26 @@ const Today = ({ navigation, route }) => {
                       />
                     </TouchableOpacity>
 
-                    {item?.editable && (
-                      <TouchableOpacity
-                        onPress={() => {
-                          setRequestId(item);
-
-                          setShowModal(true);
-                        }}
-                      >
-                        <Image
-                          style={{
-                            height: hp(2),
-                            width: hp(2),
-                            // backgroundColor: 'red',
-                            resizeMode: 'contain',
-                            // marginLeft: -hp(3),
+                    {item?.editable === true &&
+                      ['wake up', 'fitness'].includes(
+                        item.title?.toLowerCase(),
+                      ) && (
+                        <TouchableOpacity
+                          onPress={() => {
+                            setRequestId(item);
+                            setShowModal(true);
                           }}
-                          source={Images.EDIT}
-                        />
-                      </TouchableOpacity>
-                    )}
+                        >
+                          <Image
+                            style={{
+                              height: hp(2),
+                              width: hp(2),
+                              resizeMode: 'contain',
+                            }}
+                            source={Images.EDIT}
+                          />
+                        </TouchableOpacity>
+                      )}
                   </View>
                 </View>
 
@@ -537,10 +544,9 @@ const Today = ({ navigation, route }) => {
                     if (route) {
                       if (titlesWithPayload.includes(item.title)) {
                         navigation.navigate(route, {
-                          time: item.time,
-                          title: item.title,
-                          type: item.type,
-                          fromSchedule: true,
+                          STEP: 7,
+                          screen: 'Reassess',
+                          navigateTo: 'Home',
                         });
                       } else {
                         navigation.navigate(route);
