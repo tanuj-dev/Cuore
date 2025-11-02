@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { getHomeData } from '../../redux/slices';
 import ReminderEditor from '../../components/ReminderEditor';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from '../../components/Toast';
 import moment from 'moment';
 import { getOnboardingThunk } from '../../redux/slices';
@@ -266,7 +267,7 @@ const Today = ({ navigation, route }) => {
   ];
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView edges={['top']} style={{ flex: 1 }}>
       <View style={styles.floatingText}>
         <TouchableOpacity onPress={() => setIsVisible(true)}>
           <Image source={Images.PLUS} style={styles.addIcon} />
@@ -676,7 +677,7 @@ const Today = ({ navigation, route }) => {
           setShowModal={setShowModal}
         />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

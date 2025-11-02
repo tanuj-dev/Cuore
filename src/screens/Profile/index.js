@@ -15,6 +15,7 @@ import { logout } from '../../redux/Auth/slice';
 import { useDispatch } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { resetCreateAccount } from '../../redux/Auth/slice';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const profileOptions = [
   {
@@ -146,47 +147,48 @@ const Profile = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={{ backgroundColor: '#FAFAFA' }}>
-        {/* Logo at the top */}
-        <View
-          style={{
-            padding: hp(2),
-            elevation: 2,
-            // height: hp(7),
-            backgroundColor: '#FFFFFF',
-          }}
-        >
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+      <ScrollView style={styles.container}>
+        <View style={{ backgroundColor: '#FAFAFA' }}>
+          {/* Logo at the top */}
           <View
             style={{
-              marginTop: Platform.OS == 'ios' ? hp(5) : hp(1.5),
-              justifyContent: 'center',
+              padding: hp(2),
+              elevation: 2,
+              // height: hp(7),
+              backgroundColor: '#FFFFFF',
             }}
           >
-            <Image
-              source={Images.APP_LOGO}
-              style={styles.logo}
-              resizeMode="contain"
-            />
+            <View
+              style={{
+                marginTop: Platform.OS == 'ios' ? hp(0) : hp(1.5),
+                justifyContent: 'center',
+              }}
+            >
+              <Image
+                source={Images.APP_LOGO}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
           </View>
-        </View>
 
-        <View style={{ padding: wp(4) }}>
-          {/* User profile card */}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('EditProfile')}
-            style={styles.profileCard}
-          >
-            <Image source={Images.UNCLE} style={styles.profileImage} />
-            <Text style={styles.name}>M. Johnson</Text>
-            <Image source={Images.RIGHT_ARROW} style={styles.profileArrow} />
-          </TouchableOpacity>
+          <View style={{ padding: wp(4) }}>
+            {/* User profile card */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate('EditProfile')}
+              style={styles.profileCard}
+            >
+              <Image source={Images.UNCLE} style={styles.profileImage} />
+              <Text style={styles.name}>M. Johnson</Text>
+              <Image source={Images.RIGHT_ARROW} style={styles.profileArrow} />
+            </TouchableOpacity>
 
-          {/* Render sections */}
-          {Object.entries(groupedSections).map(([sectionTitle, items]) =>
-            renderSection(sectionTitle, items),
-          )}
-          {/* <TouchableOpacity
+            {/* Render sections */}
+            {Object.entries(groupedSections).map(([sectionTitle, items]) =>
+              renderSection(sectionTitle, items),
+            )}
+            {/* <TouchableOpacity
             onPress={async () => {
               console.log('Logging out...');
            
@@ -194,9 +196,10 @@ const Profile = ({ navigation }) => {
           >
             <Text>login</Text>
           </TouchableOpacity> */}
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

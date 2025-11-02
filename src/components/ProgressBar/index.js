@@ -21,7 +21,7 @@ const ProgressBarWithImage = ({ navigation, data }) => {
 
     Animated.timing(animatedLeft, {
       toValue: targetLeft,
-      duration: 2000,
+      duration: 1000,
       useNativeDriver: false,
     }).start();
   }, [progress]);
