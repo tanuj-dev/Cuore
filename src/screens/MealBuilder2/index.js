@@ -145,7 +145,7 @@ const MealBuilder2 = ({ navigation, route }) => {
                           color: '#000000',
                         }}
                       >
-                        {updatedName}
+                        {newServingSize}
                       </Text>
                       <Text
                         style={{
