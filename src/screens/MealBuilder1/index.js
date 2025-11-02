@@ -58,11 +58,22 @@ const MealBuilder1 = ({ navigation, route }) => {
   const maxAllowed = 4;
 
   const handleAdjustPortions = async () => {
+    console.log('Handling portion adjustment...');
+
+    // Early exit if too many items
     if (selectedItems.length > 4) {
+      console.log('Exceeded max allowed items');
       setShowLimitModal(true);
       return;
     }
 
+    // Early exit if no items selected
+    if (selectedItems.length === 0) {
+      Alert.alert('No items selected', 'Please select at least one item.');
+      return;
+    }
+
+    // Prepare cart items for dispatch
     const cartItems = selectedItems.map(item => ({
       _id: item._id,
       name: item.dishname,
@@ -73,23 +84,23 @@ const MealBuilder1 = ({ navigation, route }) => {
       section: item.section,
       cuisine: activeCuisine,
       mealTime: activeTab,
-      recipeLink: item.recepieId._id,
+      recipeLink: item.recepieId?._id ?? null,
     }));
+
+    console.log('Cart Items to adjust:', cartItems);
 
     try {
       setLoading(true);
-      console.log(cartItems, 'Cart Items for Adjustment');
+
       const response = await dispatch(
         adjustPortion({ recommendedCalories: targetCalories, cartItems }),
       ).unwrap();
-      if (response?.adjustedItems?.length > 0) {
-        setLoading(false);
 
+      if (response?.adjustedItems?.length > 0) {
         console.log('Adjusted portion response:', response);
         setAdjustedPortions(response);
         navigation.navigate('MealBuilder2', { selectedItems: response });
       } else {
-        setLoading(false);
         Alert.alert(
           'Adjustment Error',
           'Could not adjust portions. Please try again.',
@@ -97,7 +108,9 @@ const MealBuilder1 = ({ navigation, route }) => {
       }
     } catch (error) {
       console.warn('Adjustment failed:', error);
-      // optionally show error modal or toast
+      Alert.alert('Error', 'Something went wrong while adjusting portions.');
+    } finally {
+      setLoading(false);
     }
   };
 
