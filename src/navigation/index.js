@@ -220,6 +220,8 @@ function TodayStack() {
       <Stack.Screen name="OnBoarding" component={OnBoarding} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
       <Stack.Screen name="Score" component={Score} />
+      <Stack.Screen name="Nutrition" component={Nutrition} />
+      <Stack.Screen name="Mind" component={Mind} />
     </Stack.Navigator>
   );
 }

@@ -59,11 +59,11 @@ const Score = ({ navigation, route }) => {
       });
     }
 
-    if (vitals?.cholesterol?.tg_hdl_ratio) {
+    if (vitals?.cholesterol) {
       result.push({
         label: 'Cholesterol (TG/HDL)',
-        value: vitals.cholesterol.tg_hdl_ratio.value,
-        target: vitals.cholesterol.tg_hdl_ratio.target,
+        value: vitals.cholesterol.value,
+        target: vitals.cholesterol.target,
       });
     }
 
@@ -511,6 +511,7 @@ const getVitalColor = (label, value, target, hasDiabetes) => {
 };
 
 const VitalCard = ({ label, value, target, colorCode, hint, hasDiabetes }) => {
+  console.log(label, value, target, 'vital card props');
   const barColor = getVitalColor(label, value, target, hasDiabetes);
   return (
     <View style={styles.vitalCard}>

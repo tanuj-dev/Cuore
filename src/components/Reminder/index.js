@@ -169,6 +169,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
                 </View>
 
                 {/* Edit */}
+
                 <TouchableOpacity
                   onPress={() => {
                     setRequestId(item);
@@ -183,27 +184,29 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
                   />
                 </TouchableOpacity>
 
-                {/* Delete */}
-                <TouchableOpacity
-                  onPress={() => {
-                    const res = dispatch(
-                      deleteReminderThunk({
-                        userId: user_id,
-                        sourceId: item?.sourceId,
-                      }),
-                    );
-                    console.log('Delete Reminder Response:', res);
-                    dispatch(getHomeData(user_id));
-                    setIsVisible(false);
-                  }}
-                  style={styles.iconButton}
-                >
-                  <Image
-                    source={Images.DELETE}
-                    style={{ width: 16, height: 16, tintColor: '#EF4444' }}
-                    resizeMode="contain"
-                  />
-                </TouchableOpacity>
+                {item?.title?.toLowerCase() !==
+                  'wake up'(
+                    <TouchableOpacity
+                      onPress={() => {
+                        const res = dispatch(
+                          deleteReminderThunk({
+                            userId: user_id,
+                            sourceId: item?.sourceId,
+                          }),
+                        );
+                        console.log('Delete Reminder Response:', res);
+                        dispatch(getHomeData(user_id));
+                        setIsVisible(false);
+                      }}
+                      style={styles.iconButton}
+                    >
+                      <Image
+                        source={Images.DELETE}
+                        style={{ width: 16, height: 16, tintColor: '#EF4444' }}
+                        resizeMode="contain"
+                      />
+                    </TouchableOpacity>,
+                  )}
               </View>
             )}
             ListEmptyComponent={

@@ -544,11 +544,20 @@ const Today = ({ navigation, route }) => {
                     const route = titleToRouteMap[item.title];
                     if (route) {
                       if (titlesWithPayload.includes(item.title)) {
-                        navigation.navigate(route, {
-                          STEP: 7,
-                          screen: 'Reassess',
-                          navigateTo: 'Home',
-                        });
+                        if (item.title === 'OnBoarding') {
+                          navigation.navigate(route, {
+                            STEP: 7,
+                            screen: 'Reassess',
+                            navigateTo: 'Home',
+                          });
+                        } else if (item.title === 'Fitness') {
+                          navigation.navigate(route),
+                            {
+                              initialTab: 'Today',
+                            };
+                        } else {
+                          navigation.navigate(route);
+                        }
                       } else {
                         navigation.navigate(route);
                       }
