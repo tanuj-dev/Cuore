@@ -147,8 +147,10 @@ const WorkoutCard = ({
   );
 };
 
-const Fitness = ({ navigation }) => {
-  const [selectedDay, setSelectedDay] = useState('Wed');
+const Fitness = ({ navigation, route }) => {
+  console.log('Navigation and route props:', route);
+  const todayWorkoutDay = route?.params?.initialTab || 'Wed';
+  const [selectedDay, setSelectedDay] = useState(todayWorkoutDay);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [time, setTime] = useState(new Date());
   const [expandedIndex, setExpandedIndex] = useState(null);
@@ -491,12 +493,11 @@ const styles = StyleSheet.create({
   dayBtn: {
     // backgroundColor: 'red',
     alignItems: 'center',
-    // paddingHorizontal: wp(-1),
+
     paddingVertical: hp(0.8),
-    // marginHorizontal: wp(1),
+
     borderRadius: 20,
-    width: 53,
-    // backgroundColor: '#E0E0E0',
+    paddingHorizontal: wp(3),
   },
   selectedDayBtn: {
     // elevation: 4,
@@ -511,9 +512,9 @@ const styles = StyleSheet.create({
   },
   selectedDayText: {
     fontFamily: 'Roboto-Regular',
-    color: '#374151',
+    color: '#000000',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '800',
   },
   innerShadowContainer: {
     position: 'relative',

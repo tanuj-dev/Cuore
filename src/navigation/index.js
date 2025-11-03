@@ -222,6 +222,9 @@ function TodayStack() {
       <Stack.Screen name="Score" component={Score} />
       <Stack.Screen name="Nutrition" component={Nutrition} />
       <Stack.Screen name="Mind" component={Mind} />
+      <Stack.Screen name="Fitness" component={Fitness} />
+      <Stack.Screen name="FitnessDetails" component={FitnessDetails} />
+      <Stack.Screen name="MindDetails" component={MindDetails} />
     </Stack.Navigator>
   );
 }

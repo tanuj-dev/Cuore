@@ -16,9 +16,13 @@ import ApiErrorFallback from '../../components/ApiError';
 import Toast from '../../components/Toast';
 import { Activity } from 'lucide-react-native';
 
-const Nutrition = ({ navigation }) => {
+const Nutrition = ({ navigation, route }) => {
+  console.log('Navigation and route props:', navigation, route);
+  const mealTime = route?.params?.mealTime || 'Breakfast';
+  console.log('Meal time parameter:', mealTime);
+
   // const [selectedTab, setSelectedTab] = useState('Breakfast');
-  const [activeTab, setActiveTab] = useState('Breakfast');
+  const [activeTab, setActiveTab] = useState(mealTime);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [toastType, setToastType] = useState('success');
@@ -130,21 +134,19 @@ const Nutrition = ({ navigation }) => {
           </View>
         </View>
         <View style={styles.cardFooter}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image
-              style={{
-                // tintColor: tagLabel === Images.WARNING,
-                height: tagLabel === Images.WARNING ? hp(2) : hp(2.5),
-                width: tagLabel === Images.WARNING ? wp(10) : wp(15),
-                marginLeft: tagLabel === Images.EGG ? hp(-2) : hp(-1),
-                resizeMode: 'contain',
-              }}
-              source={tagLabel}
-            ></Image>
-            <Text style={styles.kcal}>
-              {item?.calories || item?.custom_plate} kcal
-            </Text>
-          </View>
+          <Image
+            style={{
+              // tintColor: tagLabel === Images.WARNING,
+              height: tagLabel === Images.WARNING ? hp(2) : hp(2.5),
+              width: tagLabel === Images.WARNING ? wp(10) : wp(15),
+              marginLeft: tagLabel === Images.EGG ? hp(-2) : hp(-1),
+              resizeMode: 'contain',
+            }}
+            source={tagLabel}
+          ></Image>
+          <Text style={styles.kcal}>
+            {item?.calories || item?.custom_plate} kcal
+          </Text>
         </View>
       </TouchableOpacity>
     );

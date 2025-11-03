@@ -42,13 +42,6 @@ import {
 import ApiErrorFallback from '../../components/ApiError';
 import { black } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 
-const routeMap = {
-  Breakfast: 'Nutrition',
-  'Refresh & Refuel': 'RefrestRefuel',
-  'Wake Up': 'CalorieIgnite',
-  Medication: 'MidMorningBoost',
-};
-
 const Today = ({ navigation, route }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('Feb 26');
@@ -261,10 +254,59 @@ const Today = ({ navigation, route }) => {
   };
   const titlesWithPayload = [
     'Fitness',
-    'Breakfast',
+    'Lunch',
     'Dinner',
+    'Short Nap or Walk',
+    'After-Dinner Walk',
     'Check Fasting Sugar',
   ];
+  const handleNavigationPress = (
+    item,
+    navigation,
+    titleToRouteMap,
+    titlesWithPayload,
+  ) => {
+    const route = titleToRouteMap[item.title];
+    if (!route) return;
+
+    const title = item.title?.toLowerCase();
+    const hasPayload = titlesWithPayload.includes(item.title);
+
+    if (hasPayload) {
+      switch (title) {
+        case 'onboarding':
+          navigation.navigate(route, {
+            STEP: 7,
+            screen: 'Reassess',
+            navigateTo: 'Home',
+          });
+          break;
+
+        case 'fitness':
+        case 'short nap or walk':
+        case 'after-dinner walk':
+          const dayKey = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
+            new Date().getDay()
+          ];
+          navigation.navigate(route, {
+            initialTab: dayKey,
+          });
+          break;
+        case 'lunch':
+          navigation.navigate(route, { mealTime: 'LunchDinner' });
+          break;
+
+        case 'dinner':
+          navigation.navigate(route, { mealTime: 'LunchDinner' });
+          break;
+        default:
+          navigation.navigate(route);
+          break;
+      }
+    } else {
+      navigation.navigate(route);
+    }
+  };
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
@@ -540,29 +582,14 @@ const Today = ({ navigation, route }) => {
                 </View>
 
                 <TouchableOpacity
-                  onPress={() => {
-                    const route = titleToRouteMap[item.title];
-                    if (route) {
-                      if (titlesWithPayload.includes(item.title)) {
-                        if (item.title === 'OnBoarding') {
-                          navigation.navigate(route, {
-                            STEP: 7,
-                            screen: 'Reassess',
-                            navigateTo: 'Home',
-                          });
-                        } else if (item.title === 'Fitness') {
-                          navigation.navigate(route),
-                            {
-                              initialTab: 'Today',
-                            };
-                        } else {
-                          navigation.navigate(route);
-                        }
-                      } else {
-                        navigation.navigate(route);
-                      }
-                    }
-                  }}
+                  onPress={() =>
+                    handleNavigationPress(
+                      item,
+                      navigation,
+                      titleToRouteMap,
+                      titlesWithPayload,
+                    )
+                  }
                   style={[styles.taskCard, { borderLeftColor: item?.color }]}
                 >
                   <View style={styles.taskHeader}>

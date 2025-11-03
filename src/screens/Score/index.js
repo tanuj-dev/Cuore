@@ -59,11 +59,11 @@ const Score = ({ navigation, route }) => {
       });
     }
 
-    if (vitals?.cholesterol) {
+    if (vitals?.cholesterol?.tg_hdl_ratio) {
       result.push({
         label: 'Cholesterol (TG/HDL)',
-        value: vitals.cholesterol.value,
-        target: vitals.cholesterol.target,
+        value: vitals.cholesterol?.tg_hdl_ratio?.value,
+        target: vitals.cholesterol?.tg_hdl_ratio?.target,
       });
     }
 
@@ -515,40 +515,42 @@ const VitalCard = ({ label, value, target, colorCode, hint, hasDiabetes }) => {
   const barColor = getVitalColor(label, value, target, hasDiabetes);
   return (
     <View style={styles.vitalCard}>
-      <View style={styles.vitalRow}>
-        <View
-          style={{
-            width: wp(25),
-            // backgroundColor: 'yellow',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text
-            style={[
-              styles.vitalLabel,
-              { marginTop: hint == '' ? hp(2) : hp(0) },
-            ]}
+      {label && (
+        <View style={styles.vitalRow}>
+          <View
+            style={{
+              width: wp(25),
+              // backgroundColor: 'yellow',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            {label}
-          </Text>
-        </View>
-        <View
-          style={{
-            // backgroundColor: 'red',
-            width: wp(20),
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={styles.vitalValue}>{value}</Text>
-        </View>
-        <View style={{ flexDirection: 'row', width: hp(22) }}>
-          <View style={[styles.vitalBar, { backgroundColor: barColor }]} />
+            <Text
+              style={[
+                styles.vitalLabel,
+                { marginTop: hint == '' ? hp(2) : hp(0) },
+              ]}
+            >
+              {label}
+            </Text>
+          </View>
+          <View
+            style={{
+              // backgroundColor: 'red',
+              width: wp(20),
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={styles.vitalValue}>{value}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', width: hp(22) }}>
+            <View style={[styles.vitalBar, { backgroundColor: barColor }]} />
 
-          <Text style={styles.vitalTarget}>{target}</Text>
+            <Text style={styles.vitalTarget}>{target}</Text>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 };
