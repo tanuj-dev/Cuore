@@ -8,6 +8,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React from 'react';
 import { hp, wp, Images, color } from '../../utilities';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -83,105 +84,105 @@ const Explore = ({ navigation }) => {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'white' }}>
-      <View
-        style={{
-          padding: hp(1.5),
-          backgroundColor: 'white',
-          paddingVertical: hp(1),
-          height: Platform.OS === 'ios' ? hp(15) : hp(10),
-        }}
-      >
-        <View
-          style={{
-            justifyContent: 'space-between',
-            flexDirection: 'row',
-
-            marginTop: Platform.OS == 'ios' ? hp(6) : hp(3),
-          }}
-        >
-          <Image source={Images.APP_LOGO} style={styles.logo} />
-          <Image
-            source={Images.UNCLE}
-            style={[styles.logo, { marginLeft: hp(25) }]}
-          />
-        </View>
-      </View>
-
-      <View style={styles.container}>
-        <View style={{ flex: 1 }}>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+      <ScrollView>
+        <View style={{ flex: 1, backgroundColor: 'white' }}>
           <View
-            style={[
-              styles.header,
-              {
-                position: 'absolute',
-
-                left: 0,
-                right: 0,
-                zIndex: 10,
-                bottom: hp(1),
-              },
-            ]}
+            style={{
+              padding: hp(1.5),
+              backgroundColor: 'white',
+            }}
           >
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Health')}
+            <View
               style={{
-                // marginTop: hp(4),
+                justifyContent: 'space-between',
                 flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: '#FFFFFF',
-                padding: hp(1),
-                borderRadius: hp(3),
-                paddingHorizontal: hp(1.5),
-                borderWidth: 1,
-                borderColor: '#D1D5DB',
-                elevation: 4,
-                // alignSelf: 'flex-start', // keeps button from stretching full width
-                marginLeft: wp(4), // keeps it aligned from the left like before
               }}
             >
+              <Image source={Images.APP_LOGO} style={styles.logo} />
               <Image
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(2.5),
-                  width: wp(6),
-                }}
-                source={Images.DOCTOR_PROFILE}
+                source={Images.UNCLE}
+                style={[styles.logo, { marginLeft: hp(25) }]}
               />
-              <Text style={styles.heading}> Cuore Health</Text>
-            </TouchableOpacity>
-
-            <Text
-              style={[
-                styles.subheading,
-                { marginLeft: wp(4), marginTop: hp(1) },
-              ]}
-            >
-              Your Health Journey
-            </Text>
+            </View>
           </View>
 
-          {/* Add some padding to prevent content being overlapped */}
-          <View style={{ paddingTop: hp(10) }}>
-            {/* Your other content here */}
+          <View style={styles.container}>
+            <View style={{ flex: 1 }}>
+              <View
+                style={[
+                  styles.header,
+                  {
+                    position: 'absolute',
+
+                    left: 0,
+                    right: 0,
+                    zIndex: 10,
+                    bottom: hp(1),
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Health')}
+                  style={{
+                    // marginTop: hp(4),
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#FFFFFF',
+                    padding: hp(1),
+                    borderRadius: hp(3),
+                    paddingHorizontal: hp(1.5),
+                    borderWidth: 1,
+                    borderColor: '#D1D5DB',
+                    elevation: 4,
+                    // alignSelf: 'flex-start', // keeps button from stretching full width
+                    marginLeft: wp(4), // keeps it aligned from the left like before
+                  }}
+                >
+                  <Image
+                    style={{
+                      resizeMode: 'contain',
+                      height: hp(2.5),
+                      width: wp(6),
+                    }}
+                    source={Images.DOCTOR_PROFILE}
+                  />
+                  <Text style={styles.heading}> Cuore Health</Text>
+                </TouchableOpacity>
+
+                <Text
+                  style={[
+                    styles.subheading,
+                    { marginLeft: wp(4), marginTop: hp(1) },
+                  ]}
+                >
+                  Your Health Journey
+                </Text>
+              </View>
+
+              {/* Add some padding to prevent content being overlapped */}
+              <View style={{ paddingTop: hp(10) }}>
+                {/* Your other content here */}
+              </View>
+            </View>
+            <View style={{ flex: 9 }}>
+              <FlatList
+                showsVerticalScrollIndicator={false}
+                data={modules}
+                numColumns={2}
+                headerComponent={null}
+                columnWrapperStyle={styles.row}
+                keyExtractor={(item, index) =>
+                  item.id?.toString() ?? index.toString()
+                }
+                renderItem={renderItem}
+                contentContainerStyle={styles.grid}
+              />
+            </View>
           </View>
         </View>
-        <View style={{ flex: 9 }}>
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            data={modules}
-            numColumns={2}
-            headerComponent={null}
-            columnWrapperStyle={styles.row}
-            keyExtractor={(item, index) =>
-              item.id?.toString() ?? index.toString()
-            }
-            renderItem={renderItem}
-            contentContainerStyle={styles.grid}
-          />
-        </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -200,6 +201,7 @@ const styles = StyleSheet.create({
     height: hp(4),
     resizeMode: 'contain',
     marginBottom: hp(1),
+    resizeMode: 'contain',
   },
   heading: {
     fontFamily: 'Roboto-Regular',

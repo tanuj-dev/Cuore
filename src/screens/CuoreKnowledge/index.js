@@ -13,6 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { getKnowledge } from '../../redux/slices';
 import ApiError from '../../components/ApiError';
@@ -76,91 +77,73 @@ const CuoreKnowledge = ({ navigation }) => {
   }
 
   return (
-    <ScrollView
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      style={{ flex: 1, backgroundColor: 'white' }}
-    >
-      <View style={{ flex: 1, backgroundColor: '#EFF6FF' }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            backgroundColor: '#FFFFFF',
-            paddingTop: hp(2),
-            elevation: 1,
-          }}
-        >
-          {refreshing && <Loader />}
-
-          <TouchableOpacity
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            style={{ paddingHorizontal: hp(1) }}
-            onPress={() => navigation.goBack()}
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        style={{ flex: 1, backgroundColor: 'white' }}
+      >
+        <View style={{ flex: 1, backgroundColor: '#EFF6FF' }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: '#FFFFFF',
+              // paddingTop: hp(2),
+              elevation: 1,
+            }}
           >
-            <Image
-              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-              style={{
-                marginTop: Platform.OS == 'ios' ? hp(5) : hp(1),
-                resizeMode: 'contain',
-                height: hp(3.5),
-                width: wp(4),
-                marginLeft: Platform.OS == 'ios' ? hp(2) : hp(1),
-              }}
-            />
-          </TouchableOpacity>
+            {refreshing && <Loader />}
 
-          {/* Header Icon */}
-          <View style={styles.headerIconContainer}>
-            <View
-              style={{ padding: hp(0.8), borderWidth: 3, borderRadius: hp(10) }}
+            <TouchableOpacity
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              style={{ paddingHorizontal: hp(1) }}
+              onPress={() => navigation.goBack()}
             >
-              <Image source={Images.DOCTOR_PROFILE} style={styles.headerIcon} />
+              <Image
+                source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+                style={{
+                  // marginTop: Platform.OS == 'ios' ? hp(5) : hp(1),
+                  resizeMode: 'contain',
+                  height: hp(3.5),
+                  width: wp(4),
+                  marginLeft: Platform.OS == 'ios' ? hp(2) : hp(1),
+                }}
+              />
+            </TouchableOpacity>
+
+            {/* Header Icon */}
+            <View style={styles.headerIconContainer}>
+              <View
+                style={{
+                  padding: hp(0.8),
+                  borderWidth: 3,
+                  borderRadius: hp(10),
+                }}
+              >
+                <Image
+                  source={Images.DOCTOR_PROFILE}
+                  style={styles.headerIcon}
+                />
+              </View>
+              <Text style={styles.heading}>Recommended Articles</Text>
             </View>
-            <Text style={styles.heading}>Recommended Articles</Text>
+
+            {/* Heading */}
           </View>
 
-          {/* Heading */}
+          <View style={styles.container}>
+            <FlatList
+              data={knowledgeData}
+              renderItem={renderItem}
+              keyExtractor={item => item._id}
+              contentContainerStyle={{ paddingBottom: hp(10) }}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
         </View>
-
-        <View style={styles.container}>
-          {/* Search */}
-          {/* <View style={styles.searchContainer}>
-          <Image
-            source={Images.SEARCH} // Replace with actual key in your `images` object
-            style={{
-              resizeMode: 'contain',
-              height: hp(2),
-              width: wp(4),
-              marginRight: hp(1),
-              //   margin: 0,
-              //   tintColor: '#000000',
-            }}
-            resizeMode="contain"
-          />
-          <TextInput
-            placeholderTextColor={'#6B7280'}
-            placeholder="Search articles..."
-            style={styles.searchInput}
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View> */}
-
-          {/* Info Text */}
-          {/* <Text style={styles.infoText}>Finish this set to unlock the next!</Text> */}
-
-          {/* Article List */}
-          <FlatList
-            data={knowledgeData}
-            renderItem={renderItem}
-            keyExtractor={item => item._id}
-            contentContainerStyle={{ paddingBottom: hp(10) }}
-            showsVerticalScrollIndicator={false}
-          />
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -179,15 +162,13 @@ const styles = StyleSheet.create({
   headerIconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: hp(5),
+    // marginTop: hp(5),
     marginLeft: hp(-6),
     marginBottom: hp(2),
     // backgroundColor: 'red',
     width: '100%',
   },
   headerIcon: {
-    // borderWidth: 3,
-    // borderRadius: hp(10),
     width: wp(10),
     height: wp(10),
     resizeMode: 'contain',
@@ -231,7 +212,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: hp(2),
     padding: wp(2),
-    // paddingVertical: hp(),
+
     elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

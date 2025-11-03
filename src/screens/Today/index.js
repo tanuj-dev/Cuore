@@ -309,7 +309,10 @@ const Today = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+    <SafeAreaView
+      edges={['top']}
+      style={{ flex: 1, backgroundColor: '#F9FAFB' }}
+    >
       <View style={styles.floatingText}>
         <TouchableOpacity onPress={() => setIsVisible(true)}>
           <Image source={Images.PLUS} style={styles.addIcon} />
@@ -720,7 +723,7 @@ const Today = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
-    marginTop: Platform.OS == 'ios' ? hp(5) : hp(2),
+    marginTop: Platform.OS == 'ios' ? hp(0) : hp(2),
     fontFamily: 'Roboto-Regular',
     padding: hp(1.5),
     flexDirection: 'row',

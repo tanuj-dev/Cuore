@@ -78,95 +78,97 @@ const Chat = () => {
   };
 
   return (
-    <SafeAreaView edges={[, 'left', 'right']} style={{ flex: 1 }}>
-      <View style={{ backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView
+      edges={['top']}
+      style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+    >
+      <View style={{ flex: 1, backgroundColor: '#F3F4F6' }}>
+        <View style={{ backgroundColor: '#FFFFFF' }}>
+          <View
+            style={{
+              flexDirection: 'row',
+
+              paddingTop: hp(2),
+              elevation: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={styles.title}>Cuore Assist</Text>
+          </View>
+        </View>
+
         <View
           style={{
-            flexDirection: 'row',
-
-            paddingTop: hp(2),
-            elevation: 1,
+            backgroundColor: '#FFFFFF',
+            marginTop: hp(2),
+            marginHorizontal: wp(5),
             alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: Platform.OS == 'ios' && hp(5),
-            // height: hp(8),
-            // paddingVertical:hp(4)
+            padding: hp(1),
+            borderRadius: hp(1),
           }}
         >
-          <Text style={styles.title}>Cuore Assist</Text>
-        </View>
-      </View>
-
-      <View
-        style={{
-          backgroundColor: '#FFFFFF',
-          marginTop: hp(2),
-          marginHorizontal: wp(5),
-          alignItems: 'center',
-          padding: hp(1),
-          borderRadius: hp(1),
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: '400',
-            color: '#1E64AC',
-            alignSelf: 'center',
-            fontFamily: 'Roboto-Regular',
-          }}
-        >
-          Cuore Assist offers personalized responses based on your Health
-          Records and Assessments. It does not provide a medical diagnosis or
-          recommend any medication
-        </Text>
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            marginTop: hp(3),
-            fontSize: 14,
-            fontWeight: '400',
-            color: '#374151',
-          }}
-        >
-          9 of 10 queries remaining
-        </Text>
-      </View>
-
-      <View style={styles.container}>
-        <FlatList
-          data={messages}
-          renderItem={renderItem}
-          keyExtractor={(_, index) => index.toString()}
-          contentContainerStyle={{ padding: 16 }}
-        />
-      </View>
-      <View style={styles.inputBar}>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Type your message..."
-            value={input}
-            onChangeText={setInput}
-          />
-          <Image
-            source={Images.MIKE} // or Images.SHARE
-            style={styles.icon}
-          />
-        </View>
-
-        <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-          <Image
+          <Text
             style={{
-              resizeMode: 'contain',
-              height: hp(2.5),
-              width: wp(4),
-              marginRight: hp(1),
-              tintColor: '#FFFFFF',
+              fontSize: 14,
+              fontWeight: '400',
+              color: '#1E64AC',
+              alignSelf: 'center',
+              fontFamily: 'Roboto-Regular',
             }}
-            source={Images.SHARE}
-          ></Image>
-        </TouchableOpacity>
+          >
+            Cuore Assist offers personalized responses based on your Health
+            Records and Assessments. It does not provide a medical diagnosis or
+            recommend any medication
+          </Text>
+          <Text
+            style={{
+              fontFamily: 'Roboto-Regular',
+              marginTop: hp(3),
+              fontSize: 14,
+              fontWeight: '400',
+              color: '#374151',
+            }}
+          >
+            9 of 10 queries remaining
+          </Text>
+        </View>
+
+        <View style={styles.container}>
+          <FlatList
+            data={messages}
+            renderItem={renderItem}
+            keyExtractor={(_, index) => index.toString()}
+            contentContainerStyle={{ padding: 16 }}
+          />
+        </View>
+        <View style={styles.inputBar}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Type your message..."
+              value={input}
+              onChangeText={setInput}
+            />
+            <Image
+              source={Images.MIKE} // or Images.SHARE
+              style={styles.icon}
+            />
+          </View>
+
+          <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
+            <Image
+              style={{
+                resizeMode: 'contain',
+                height: hp(2.5),
+                width: wp(4),
+                marginRight: hp(1),
+                tintColor: '#FFFFFF',
+              }}
+              source={Images.SHARE}
+            ></Image>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -184,8 +186,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontFamily: 'Roboto-Regular',
-    // marginTop: hp(1),
-    // marginLeft: hp(10),
+
     fontSize: 20,
     fontWeight: '400',
     marginBottom: hp(2),

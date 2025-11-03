@@ -15,6 +15,7 @@ import { wp, hp, Images } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPredict } from '../../redux/slices';
 import Loader from '../../components/Loader';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const chartConfig = {
   // transparent: false,
@@ -281,339 +282,341 @@ const Predict = ({ navigation }) => {
   // }
 
   return (
-    <ScrollView
-      refreshControl={
-        <RefreshControl
-          title="Pull to refresh..."
-          refreshing={loading || refreshing}
-          onRefresh={onRefresh}
-        />
-      }
-      style={{ backgroundColor: '#FFFFFF' }}
-    >
-      <View
-        style={{ padding: hp(1.5), backgroundColor: '#FFFFFF', elevation: 1 }}
-      >
-        {loading && <Loader />}
-        <View
-          style={{
-            marginTop: Platform.OS == 'ios' ? hp(6) : hp(3),
-
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-          }}
-        >
-          <Text style={styles.header}>Predict</Text>
-          <Image
-            source={Images.SHARE_4}
-            style={{
-              width: hp(2),
-              height: hp(2),
-              marginLeft: hp(10),
-              tintColor: '#000000',
-            }}
-            resizeMode="contain"
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            title="Pull to refresh..."
+            refreshing={loading || refreshing}
+            onRefresh={onRefresh}
           />
-        </View>
-      </View>
+        }
+        style={{ backgroundColor: '#FFFFFF' }}
+      >
+        <View
+          style={{ padding: hp(1.5), backgroundColor: '#FFFFFF', elevation: 1 }}
+        >
+          {loading && <Loader />}
+          <View
+            style={{
+              // marginTop: Platform.OS == 'ios' ? hp(6) : hp(3),
 
-      <View style={styles.container}>
-        <View style={styles.tipBox}>
-          <Text style={styles.tipText}>
-            Entering your lifestyle and health data on time improves prediction
-            accuracy.
-          </Text>
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+            }}
+          >
+            <Text style={styles.header}>Predict</Text>
+            <Image
+              source={Images.SHARE_4}
+              style={{
+                width: hp(2),
+                height: hp(2),
+                marginLeft: hp(10),
+                tintColor: '#000000',
+              }}
+              resizeMode="contain"
+            />
+          </View>
         </View>
 
-        {predictData?.map((item, index) => {
-          console.log('Predict Item:', item);
-          return (
-            <View key={`module-${item?.title}-${index}`} style={styles.card}>
-              {['Blood Pressure & Heart Rate', 'Blood Sugar'].includes(
-                item?.title,
-              ) && (
-                <View style={styles.tabContainer}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setHistory('Predict');
-                      setActiveTab('Predict');
-                    }}
-                    style={[
-                      styles.tab,
-                      activeTab === 'Predict' && styles.activeTab,
-                    ]}
-                  >
-                    <Text
-                      style={
-                        activeTab === 'Predict'
-                          ? styles.activeText
-                          : styles.inactiveText
-                      }
+        <View style={styles.container}>
+          <View style={styles.tipBox}>
+            <Text style={styles.tipText}>
+              Entering your lifestyle and health data on time improves
+              prediction accuracy.
+            </Text>
+          </View>
+
+          {predictData?.map((item, index) => {
+            console.log('Predict Item:', item);
+            return (
+              <View key={`module-${item?.title}-${index}`} style={styles.card}>
+                {['Blood Pressure & Heart Rate', 'Blood Sugar'].includes(
+                  item?.title,
+                ) && (
+                  <View style={styles.tabContainer}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setHistory('Predict');
+                        setActiveTab('Predict');
+                      }}
+                      style={[
+                        styles.tab,
+                        activeTab === 'Predict' && styles.activeTab,
+                      ]}
                     >
-                      Predict
+                      <Text
+                        style={
+                          activeTab === 'Predict'
+                            ? styles.activeText
+                            : styles.inactiveText
+                        }
+                      >
+                        Predict
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        setHistory('history');
+                        setActiveTab('history');
+                      }}
+                      style={[
+                        styles.tab,
+                        activeTab === 'history' && styles.activeTab,
+                      ]}
+                    >
+                      <Text
+                        style={
+                          activeTab === 'history'
+                            ? styles.activeText
+                            : styles.inactiveText
+                        }
+                      >
+                        History
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <View style={styles.cardHeader}>
+                  <Text style={[styles.title]}>
+                    {item?.title == 'Blood Pressure & Heart Rate'
+                      ? 'BP & HR'
+                      : item?.title}
+                  </Text>
+                  <View style={styles.switchContainer}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (showRowData === item?.title) {
+                          setShowRowData('');
+                        } else {
+                          setShowRowData(item?.title);
+                        }
+                      }}
+                      style={{
+                        borderWidth: 0.5,
+                        borderColor: '#9CA3AF',
+                        height: hp(2),
+                        width: wp(4),
+                        borderRadius: hp(0.3),
+                        marginRight: hp(1),
+                      }}
+                    >
+                      {showRowData === item?.title && (
+                        <Image
+                          style={{
+                            resizeMode: 'cover',
+                            height: hp(2),
+                            width: wp(4),
+                            borderRadius: hp(0.3),
+                          }}
+                          source={Images.RIGHT_1}
+                        ></Image>
+                      )}
+                    </TouchableOpacity>
+                    <Text style={{ fontFamily: 'Roboto-Regular' }}>
+                      Show Data
                     </Text>
-                  </TouchableOpacity>
-
+                  </View>
                   <TouchableOpacity
                     onPress={() => {
-                      setHistory('history');
-                      setActiveTab('history');
+                      if (item?.title == 'Cuore Score') {
+                        const STEP = 1;
+                        navigation.navigate('OnBoarding', {
+                          STEP,
+                          screen: 'Reassess',
+                          navigateTo: 'Home',
+                        });
+                      } else if (item?.title == 'Blood Pressure & Heart Rate') {
+                        const STEP = 7;
+                        navigation.navigate('OnBoarding', {
+                          STEP,
+                          screen: 'Reassess',
+                          navigateTo: 'Home',
+                        });
+                      } else if (item?.title == 'Weight') {
+                        const STEP = 2;
+                        navigation.navigate('OnBoarding', {
+                          STEP,
+                          screen: 'Reassess',
+                          navigateTo: 'Home',
+                        });
+                      } else if (item?.title == 'Blood Sugar') {
+                        const STEP = 7;
+                        navigation.navigate('OnBoarding', {
+                          STEP,
+                          screen: 'Reassess',
+                          navigateTo: 'Home',
+                        });
+                      } else if (item?.title == 'A1C') {
+                        const STEP = 7;
+                        navigation.navigate('OnBoarding', {
+                          STEP,
+                          screen: 'Reassess',
+                          navigateTo: 'Home',
+                        });
+                      } else if (item?.title == 'BMI & Body Fat') {
+                        const STEP = 2;
+                        navigation.navigate('OnBoarding', {
+                          STEP,
+                          screen: 'Reassess',
+                          navigateTo: 'Home',
+                        });
+                      } else if (item?.title == 'Cholesterol') {
+                        const STEP = 7;
+                        navigation.navigate('OnBoarding', {
+                          STEP,
+                          screen: 'Reassess',
+                          navigateTo: 'Home',
+                        });
+                      } else if (item?.title == 'Lifestyle Metrics') {
+                        const STEP = 5;
+                        navigation.navigate('OnBoarding', {
+                          STEP,
+                          screen: 'Reassess',
+                          navigateTo: 'Home',
+                        });
+                      }
                     }}
                     style={[
-                      styles.tab,
-                      activeTab === 'history' && styles.activeTab,
+                      styles.button,
+                      { flexDirection: 'row', alignItems: 'center' },
                     ]}
                   >
-                    <Text
-                      style={
-                        activeTab === 'history'
-                          ? styles.activeText
-                          : styles.inactiveText
-                      }
-                    >
-                      History
+                    <Image
+                      style={{
+                        resizeMode: 'contain',
+                        width: wp(4),
+                        height: hp(2.2),
+                        marginRight: hp(1),
+                        tintColor: 'white',
+                      }}
+                      source={Images.EDIT}
+                    ></Image>
+                    <Text style={styles.buttonText}>
+                      {item?.title == 'Cuore Score' ? 'Re-assess' : 'Update'}
                     </Text>
                   </TouchableOpacity>
                 </View>
-              )}
-              <View style={styles.cardHeader}>
-                <Text style={[styles.title]}>
-                  {item?.title == 'Blood Pressure & Heart Rate'
-                    ? 'BP & HR'
-                    : item?.title}
-                </Text>
-                <View style={styles.switchContainer}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (showRowData === item?.title) {
-                        setShowRowData('');
-                      } else {
-                        setShowRowData(item?.title);
-                      }
-                    }}
-                    style={{
-                      borderWidth: 0.5,
-                      borderColor: '#9CA3AF',
-                      height: hp(2),
-                      width: wp(4),
-                      borderRadius: hp(0.3),
-                      marginRight: hp(1),
-                    }}
-                  >
-                    {showRowData === item?.title && (
-                      <Image
-                        style={{
-                          resizeMode: 'cover',
-                          height: hp(2),
-                          width: wp(4),
-                          borderRadius: hp(0.3),
-                        }}
-                        source={Images.RIGHT_1}
-                      ></Image>
-                    )}
-                  </TouchableOpacity>
-                  <Text style={{ fontFamily: 'Roboto-Regular' }}>
-                    Show Data
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => {
-                    if (item?.title == 'Cuore Score') {
-                      const STEP = 1;
-                      navigation.navigate('OnBoarding', {
-                        STEP,
-                        screen: 'Reassess',
-                        navigateTo: 'Home',
-                      });
-                    } else if (item?.title == 'Blood Pressure & Heart Rate') {
-                      const STEP = 7;
-                      navigation.navigate('OnBoarding', {
-                        STEP,
-                        screen: 'Reassess',
-                        navigateTo: 'Home',
-                      });
-                    } else if (item?.title == 'Weight') {
-                      const STEP = 2;
-                      navigation.navigate('OnBoarding', {
-                        STEP,
-                        screen: 'Reassess',
-                        navigateTo: 'Home',
-                      });
-                    } else if (item?.title == 'Blood Sugar') {
-                      const STEP = 7;
-                      navigation.navigate('OnBoarding', {
-                        STEP,
-                        screen: 'Reassess',
-                        navigateTo: 'Home',
-                      });
-                    } else if (item?.title == 'A1C') {
-                      const STEP = 7;
-                      navigation.navigate('OnBoarding', {
-                        STEP,
-                        screen: 'Reassess',
-                        navigateTo: 'Home',
-                      });
-                    } else if (item?.title == 'BMI & Body Fat') {
-                      const STEP = 2;
-                      navigation.navigate('OnBoarding', {
-                        STEP,
-                        screen: 'Reassess',
-                        navigateTo: 'Home',
-                      });
-                    } else if (item?.title == 'Cholesterol') {
-                      const STEP = 7;
-                      navigation.navigate('OnBoarding', {
-                        STEP,
-                        screen: 'Reassess',
-                        navigateTo: 'Home',
-                      });
-                    } else if (item?.title == 'Lifestyle Metrics') {
-                      const STEP = 5;
-                      navigation.navigate('OnBoarding', {
-                        STEP,
-                        screen: 'Reassess',
-                        navigateTo: 'Home',
-                      });
-                    }
-                  }}
-                  style={[
-                    styles.button,
-                    { flexDirection: 'row', alignItems: 'center' },
-                  ]}
-                >
-                  <Image
-                    style={{
-                      resizeMode: 'contain',
-                      width: wp(4),
-                      height: hp(2.2),
-                      marginRight: hp(1),
-                      tintColor: 'white',
-                    }}
-                    source={Images.EDIT}
-                  ></Image>
-                  <Text style={styles.buttonText}>
-                    {item?.title == 'Cuore Score' ? 'Re-assess' : 'Update'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              {/* {item.datasets.every(ds =>
+                {/* {item.datasets.every(ds =>
                 ds.actualData.every(val => val === null),
               ) ? (
                 <Text style={{ textAlign: 'center', marginTop: 20 }}>
                   No data available
                 </Text>
               ) : ( */}
-              <LineChart
-                key={item?.title}
-                data={convertToChartData({ graph: item, history })}
-                width={wp(87)}
-                height={hp(25)}
-                chartConfig={chartConfig}
-                withDots
-                renderDotContent={
-                  item.title === showRowData
-                    ? ({ x, y, index, indexData }) => (
-                        <Text
-                          key={`chart-${index}-dot-${index}-${indexData}`}
-                          style={{
-                            position: 'absolute',
-                            left: x - 10,
-                            top: y - 15,
-                            color: '#000',
-                            fontSize: 10,
-                          }}
-                        >
-                          {Math.round(indexData)}
-                        </Text>
-                      )
-                    : undefined
-                }
-                withShadow={false}
-                withInnerLines={false}
-              />
-              // {/* )} */}
-              {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}> */}
-              <View
-                style={{
-                  width: '100%',
-                  alignItems: 'flex-start',
-                  justifyContent: 'flex-start',
-                  flexDirection: 'row',
-                  gap: hp(2),
-                  marginVertical: hp(1),
-                }}
-              >
-                {item?.data?.datasets.map((ds, idx) => {
-                  const datasetCount = item?.data?.datasets?.length || 0;
-                  console.log('Dataset Count:', datasetCount);
+                <LineChart
+                  key={item?.title}
+                  data={convertToChartData({ graph: item, history })}
+                  width={wp(87)}
+                  height={hp(25)}
+                  chartConfig={chartConfig}
+                  withDots
+                  renderDotContent={
+                    item.title === showRowData
+                      ? ({ x, y, index, indexData }) => (
+                          <Text
+                            key={`chart-${index}-dot-${index}-${indexData}`}
+                            style={{
+                              position: 'absolute',
+                              left: x - 10,
+                              top: y - 15,
+                              color: '#000',
+                              fontSize: 10,
+                            }}
+                          >
+                            {Math.round(indexData)}
+                          </Text>
+                        )
+                      : undefined
+                  }
+                  withShadow={false}
+                  withInnerLines={false}
+                />
+                // {/* )} */}
+                {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}> */}
+                <View
+                  style={{
+                    width: '100%',
+                    alignItems: 'flex-start',
+                    justifyContent: 'flex-start',
+                    flexDirection: 'row',
+                    gap: hp(2),
+                    marginVertical: hp(1),
+                  }}
+                >
+                  {item?.data?.datasets.map((ds, idx) => {
+                    const datasetCount = item?.data?.datasets?.length || 0;
+                    console.log('Dataset Count:', datasetCount);
 
-                  return (
-                    <View
-                      key={`legend-${idx}`}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        marginBottom: hp(1),
-                      }}
-                    >
+                    return (
                       <View
+                        key={`legend-${idx}`}
                         style={{
-                          height: hp(1.5),
-                          width: hp(1.5),
-                          marginRight: hp(1),
-                          borderRadius: hp(5),
-                          backgroundColor:
-                            typeof ds.color === 'function'
-                              ? datasetCount > 1
-                                ? ds.color()
-                                : ''
-                              : datasetCount > 1
-                              ? ds.color
-                              : '',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          marginBottom: hp(1),
                         }}
-                      />
-                      {datasetCount > 1 && (
-                        <Text style={styles.hintText}>{ds.label}</Text>
-                      )}
-                    </View>
-                  );
-                })}
-              </View>
-              {item.title === 'Cuore Score' && (
-                <View>
-                  <Text
-                    style={[
-                      styles.hintText,
-                      { textAlign: 'center', color: '#1E64AC' },
-                    ]}
-                  >
-                    ⚠️ note that the predicted values are represented by lighter
-                    lines.
-                  </Text>
+                      >
+                        <View
+                          style={{
+                            height: hp(1.5),
+                            width: hp(1.5),
+                            marginRight: hp(1),
+                            borderRadius: hp(5),
+                            backgroundColor:
+                              typeof ds.color === 'function'
+                                ? datasetCount > 1
+                                  ? ds.color()
+                                  : ''
+                                : datasetCount > 1
+                                ? ds.color
+                                : '',
+                          }}
+                        />
+                        {datasetCount > 1 && (
+                          <Text style={styles.hintText}>{ds.label}</Text>
+                        )}
+                      </View>
+                    );
+                  })}
                 </View>
-              )}
-            </View>
-          );
-        })}
+                {item.title === 'Cuore Score' && (
+                  <View>
+                    <Text
+                      style={[
+                        styles.hintText,
+                        { textAlign: 'center', color: '#1E64AC' },
+                      ]}
+                    >
+                      ⚠️ note that the predicted values are represented by
+                      lighter lines.
+                    </Text>
+                  </View>
+                )}
+              </View>
+            );
+          })}
 
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Health')}
-          style={styles.footerButton}
-        >
-          <Image
-            style={{
-              resizeMode: 'contain',
-              width: wp(4),
-              height: hp(2),
-              marginRight: hp(1),
-            }}
-            source={Images.DOCTOR_PROFILE}
-          ></Image>
-          <Text style={styles.footerText}>Cuore Health</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Health')}
+            style={styles.footerButton}
+          >
+            <Image
+              style={{
+                resizeMode: 'contain',
+                width: wp(4),
+                height: hp(2),
+                marginRight: hp(1),
+              }}
+              source={Images.DOCTOR_PROFILE}
+            ></Image>
+            <Text style={styles.footerText}>Cuore Health</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

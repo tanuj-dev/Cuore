@@ -173,11 +173,9 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
           </View>
           {/* Existing Reminders */}
           <Text style={styles.subtitle}>Existing Entries</Text>
-          <FlatList
-            data={existingReminders}
-            keyExtractor={(item, index) => item.id || index.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.entryCard}>
+          {existingReminders && existingReminders.length > 0 ? (
+            existingReminders.map((item, index) => (
+              <View key={item.id || index.toString()} style={styles.entryCard}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.entryText}>{item.title}</Text>
                   <Text style={styles.entrySubtext}>{item.time}</Text>
@@ -217,11 +215,10 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
                   </TouchableOpacity>
                 )}
               </View>
-            )}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>No reminders yet</Text>
-            }
-          />
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No reminders yet</Text>
+          )}
           <View style={styles.divider} />
           {/* Add New Entry */}
           <Text style={styles.subtitle}>Add New Entry</Text>

@@ -10,7 +10,10 @@ import {
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
 import images from '../utilities/Images';
 import { hp, wp } from '../utilities';
@@ -72,109 +75,117 @@ function BottomTabNavigator() {
     Platform.OS === 'android' && insets.bottom === (0 || 48) ? 44 : 0;
 
   return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarStyle: {
-          // 🔹 Add bottom margin only for Android 3-button navigation
-          marginBottom: extraMarginBottom,
-          height: 70,
-          paddingBottom: Platform.OS === 'ios' ? 10 : null,
-        },
-        headerShown: false,
-        tabBarActiveTintColor: '#1E64AC',
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: Platform.OS === 'android' ? 'black' : 'white',
       }}
+      edges={[Platform.OS === 'android' ? 'bottom' : 'none']}
     >
-      <Tab.Screen
-        name="Today"
-        component={TodayStack}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Image
-              source={images.HOME}
-              style={{
-                width: size,
-                height: size,
-                tintColor: color,
-                resizeMode: 'contain',
-              }}
-            />
-          ),
+      <Tab.Navigator
+        screenOptions={{
+          tabBarStyle: {
+            // 🔹 Add bottom margin only for Android 3-button navigation
+            // marginBottom: extraMarginBottom,
+            height: 70,
+            marginBottom: Platform.OS === 'ios' ? 5 : null,
+          },
+          headerShown: false,
+          tabBarActiveTintColor: '#1E64AC',
         }}
-      />
-      <Tab.Screen
-        name="Explore"
-        component={ExploreStack}
-        options={{
-          unmountOnBlur: true,
-          tabBarIcon: ({ color, size }) => (
-            <Image
-              source={images.EXPLORE}
-              style={{
-                width: size,
-                height: size,
-                tintColor: color,
-                resizeMode: 'contain',
-              }}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Predict"
-        component={PredictStack}
-        options={{
-          unmountOnBlur: true,
-          tabBarIcon: ({ color, size }) => (
-            <Image
-              source={images.PREDICT}
-              style={{
-                width: size,
-                height: size,
-                tintColor: color,
-                resizeMode: 'contain',
-              }}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Chat"
-        component={Chat}
-        options={{
-          unmountOnBlur: true,
-          tabBarIcon: ({ color, size }) => (
-            <Image
-              source={images.CHAT}
-              style={{
-                width: size,
-                height: size,
-                tintColor: color,
-                resizeMode: 'contain',
-              }}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileStack}
-        options={{
-          unmountOnBlur: true,
-          tabBarIcon: ({ color, size }) => (
-            <Image
-              source={images.PROFILE}
-              style={{
-                width: size,
-                height: 30,
-                borderRadius: 20,
-                tintColor: color,
-                resizeMode: 'contain',
-              }}
-            />
-          ),
-        }}
-      />
-    </Tab.Navigator>
+      >
+        <Tab.Screen
+          name="Today"
+          component={TodayStack}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <Image
+                source={images.HOME}
+                style={{
+                  width: size,
+                  height: size,
+                  tintColor: color,
+                  resizeMode: 'contain',
+                }}
+              />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Explore"
+          component={ExploreStack}
+          options={{
+            unmountOnBlur: true,
+            tabBarIcon: ({ color, size }) => (
+              <Image
+                source={images.EXPLORE}
+                style={{
+                  width: size,
+                  height: size,
+                  tintColor: color,
+                  resizeMode: 'contain',
+                }}
+              />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Predict"
+          component={PredictStack}
+          options={{
+            unmountOnBlur: true,
+            tabBarIcon: ({ color, size }) => (
+              <Image
+                source={images.PREDICT}
+                style={{
+                  width: size,
+                  height: size,
+                  tintColor: color,
+                  resizeMode: 'contain',
+                }}
+              />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Chat"
+          component={Chat}
+          options={{
+            unmountOnBlur: true,
+            tabBarIcon: ({ color, size }) => (
+              <Image
+                source={images.CHAT}
+                style={{
+                  width: size,
+                  height: size,
+                  tintColor: color,
+                  resizeMode: 'contain',
+                }}
+              />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Profile"
+          component={ProfileStack}
+          options={{
+            unmountOnBlur: true,
+            tabBarIcon: ({ color, size }) => (
+              <Image
+                source={images.PROFILE}
+                style={{
+                  width: size,
+                  height: 30,
+                  borderRadius: 20,
+                  tintColor: color,
+                  resizeMode: 'contain',
+                }}
+              />
+            ),
+          }}
+        />
+      </Tab.Navigator>
+    </SafeAreaView>
   );
 }
 

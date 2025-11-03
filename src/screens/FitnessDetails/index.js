@@ -10,12 +10,52 @@ import {
 import Video from 'react-native-video';
 import { hp, wp, color, Images } from '../../utilities';
 import { Space } from 'lucide-react-native';
+import RenderHTML from 'react-native-render-html';
 // import {Ionicons} from '@expo/vector-icons';
 
 const FitnessDetails = ({ navigation, route }) => {
   const { instruction, data } = route?.params;
   console.log('Instructions:', instruction);
   console.log('Data:', data);
+
+  const exerciseVideoMap = {
+    'Arm Raises with Inhale–Exhale':
+      'https://www.youtube.com/embed/zB71bclwPuo', // found via “Let’s De-Stress: Seated Breathing (Exercise 1)”. :contentReference[oaicite:0]{index=0}
+    Bhujangasana: 'https://www.youtube.com/embed/URL_FOR_Bhujangasana',
+    'Ardha Matsyendrasana': 'https://www.youtube.com/embed/51EqCa6ZGCw', // “Ardha Matsyendrasana | The Half Fish Pose | Steps | Yogic Fitness” :contentReference[oaicite:1]{index=1}
+    Tadasana: 'https://www.youtube.com/embed/URL_FOR_Tadasana',
+    'Virabhadrasana 1':
+      'https://www.youtube.com/embed/URL_FOR_Virabhadrasana_1',
+    'Neck Rotation': 'https://www.youtube.com/embed/URL_FOR_Neck_Rotation',
+    'Lateral Leg Swings':
+      'https://www.youtube.com/embed/URL_FOR_Lateral_Leg_Swings',
+    'March on the Spot':
+      'https://www.youtube.com/embed/URL_FOR_March_on_the_spot',
+    'Bicycle Crunches':
+      'https://www.youtube.com/embed/URL_FOR_Bicycle_Crunches',
+    'Bodyweight Calf Raises': 'https://www.youtube.com/embed/CufVyiLj878', // found via “Bodyweight Calf Raise – YouTube” :contentReference[oaicite:2]{index=2}
+    'Cat–Camel Stretch':
+      'https://www.youtube.com/embed/URL_FOR_Cat_Camel_Stretch',
+    'Butterfly Stretch':
+      'https://www.youtube.com/embed/URL_FOR_Butterfly_Stretch',
+    'Shoulder Rotation':
+      'https://www.youtube.com/embed/URL_FOR_Shoulder_Rotation',
+    'Eagle arms stretch':
+      'https://www.youtube.com/embed/URL_FOR_Eagle_arms_stretch',
+    'Walk with intermittent Jogging':
+      'https://www.youtube.com/embed/URL_FOR_Walk_with_intermittent_Jogging',
+    'Walking (Brisk)': 'https://www.youtube.com/embed/URL_FOR_Walking_Brisk',
+    Skipping: 'https://www.youtube.com/embed/URL_FOR_Skipping',
+    'Superman Back Extension':
+      'https://www.youtube.com/embed/URL_FOR_Superman_Back_Extension',
+    'Incline Push-Up': 'https://www.youtube.com/embed/URL_FOR_Incline_Push_Up',
+    'Resistance Band Shoulder Press':
+      'https://www.youtube.com/embed/URL_FOR_Resistance_Band_Shoulder_Press',
+    'Dumbbell Hammer Curl':
+      'https://www.youtube.com/embed/URL_FOR_Dumbbell_Hammer_Curl',
+    'Dumbbell Triceps Overhead Extension':
+      'https://www.youtube.com/embed/URL_FOR_Dumbbell_Triceps_Overhead_Extension',
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -44,6 +84,7 @@ const FitnessDetails = ({ navigation, route }) => {
                 marginLeft: wp(1),
                 height: hp(3.5),
                 width: wp(4),
+                tintColor: '#000000',
               }}
               resizeMode="contain"
             />
@@ -52,7 +93,7 @@ const FitnessDetails = ({ navigation, route }) => {
             style={[
               styles.title,
               {
-                color: data?.title ? '#1E64AC' : '#000000',
+                color: '#000000',
                 alignSelf: 'center',
               },
             ]}
@@ -83,52 +124,74 @@ const FitnessDetails = ({ navigation, route }) => {
               justifyContent: 'space-between',
             }}
           >
-            <Text style={styles.detailText}>{instruction?.duration}</Text>
+            <Text style={styles.detailText}>
+              Duration: {instruction?.duration}
+            </Text>
             <Text style={styles.detailText}>Sets: {instruction?.sets}</Text>
           </View>
 
-          <Text style={styles.detailText}>{instruction?.equipment}</Text>
+          <Text style={styles.detailText}>
+            {instruction?.equipment == 'None'
+              ? 'No equipment specified'
+              : instruction?.equipment}
+          </Text>
         </View>
 
         {/* Instructions */}
-        <View style={[styles.instructionBox, {}]}>
-          <Text style={styles.instructionsTitle}>Instructions:</Text>
-          <Text style={styles.instructionsText}>1. Starting Position:</Text>
-          <Text style={styles.bullet}>
-            • Stand tall and hold onto a wall or a sturdy surface for support.
-          </Text>
-
-          <Text style={styles.instructionsText}>2. Weight Shift:</Text>
-          <Text style={styles.bullet}>
-            • Shift your weight onto your right leg, keeping your left leg
-            relaxed.
-          </Text>
-
-          <Text style={styles.instructionsText}>3. Swinging Movement:</Text>
-          <Text style={styles.bullet}>
-            • Swing your left leg out to the left side, keeping it straight, and
-            then cross it in front of your body to the right.
-          </Text>
-
-          <Text style={styles.instructionsText}>4. Repeat:</Text>
-          <Text style={styles.bullet}>
-            • Return your left leg to the starting position and repeat the
-            movement for the desired number of repetitions.
-          </Text>
-
-          <Text style={styles.instructionsText}>5. Switch Sides:</Text>
-          <Text style={styles.bullet}>
-            • Once you’ve completed the set with your left leg, switch to your
-            right leg and repeat the same swinging motion.
-          </Text>
-
-          <Text style={styles.instructionsTip}>
-            Tips for Lateral Leg Swing:
-          </Text>
-          <Text style={styles.bullet}>
-            • Keep your torso stationary and engage your core to maintain
-            balance.
-          </Text>
+        <View
+          style={[
+            styles.instructionBox,
+            { borderLeftColor: data?.color || '#884DFF' },
+          ]}
+        >
+          <RenderHTML
+            source={{
+              html: instruction?.instructionsText || (
+                <p>No instructions available.</p>
+              ),
+              numberOfLines: 0,
+            }}
+            tagsStyles={{
+              p: {
+                fontSize: 14,
+                color: '#4B5563',
+                lineHeight: 20,
+              },
+              ul: {
+                paddingLeft: 20,
+                marginBottom: 10,
+              },
+              ol: {
+                paddingLeft: 20,
+                marginBottom: 10,
+              },
+              li: {
+                marginBottom: 6,
+                fontSize: 14,
+                color: '#4B5563',
+              },
+              strong: {
+                fontWeight: 'bold',
+                color: '#111827',
+              },
+              em: {
+                fontStyle: 'italic',
+                color: '#6B7280',
+              },
+              h1: {
+                fontSize: 22,
+                fontWeight: '700',
+                marginBottom: 12,
+                color: data?.color || '#ed7d31',
+              },
+              h3: {
+                fontSize: 16,
+                fontWeight: '600',
+                marginBottom: 8,
+                color: '#1F2937',
+              },
+            }}
+          />
         </View>
       </View>
     </ScrollView>
@@ -146,7 +209,7 @@ const styles = StyleSheet.create({
     marginTop: hp(1),
     marginLeft: hp(2),
     fontSize: 18,
-    fontWeight: '400',
+    fontWeight: '500',
     marginBottom: hp(2),
     alignSelf: 'center',
     color: '#000000',

@@ -15,6 +15,7 @@ import GaugeMeter from '../../components/SpeedpMeter';
 import { useSelector, useDispatch } from 'react-redux';
 import { getMind } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // import MindTab from '../../components/MindTab';
 // import {Ionicons} from '@expo/vector-icons';
 
@@ -63,153 +64,191 @@ const Mind = ({ navigation }) => {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <View
-        style={{
-          backgroundColor: '#FFFFFF',
-          paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(1),
-          elevation: 2,
-        }}
-      >
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+      <View style={{ flex: 1 }}>
         <View
           style={{
-            flexDirection: 'row',
-            marginTop: Platform.OS == 'ios' && hp(3),
-            paddingHorizontal: hp(1),
-            alignItems: 'center',
+            backgroundColor: '#FFFFFF',
+            // paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(1),
+            // elevation: 2,
           }}
         >
+          <View
+            style={{
+              flexDirection: 'row',
+              // marginTop: Platform.OS == 'ios' && hp(3),
+              paddingHorizontal: hp(1),
+              alignItems: 'center',
+              marginBottom: hp(1),
+            }}
+          >
+            <TouchableOpacity
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              style={{ paddingHorizontal: hp(1), marginTop: hp(1) }}
+              onPress={() => navigation.goBack()}
+            >
+              <Image
+                source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+                style={{
+                  resizeMode: 'contain',
+                  height: hp(3.5),
+                  width: wp(4),
+                  // marginTop: hp(),
+                  // marginLeft: Platform.OS == 'ios' ? hp(1) : hp(0.2),
+                }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+            <Text style={styles.title}>Sleep & Stress</Text>
+          </View>
+        </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.container}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          <View style={styles.scoreContainer}>
+            <View
+              style={[
+                styles.scoreBox,
+                // {
+                //   backgroundColor: 'red',
+                //   borderRadius: wp(2),
+                //   padding: hp(1.5),
+                // },
+              ]}
+            >
+              <GaugeMeter
+                size={wp(32)}
+                value={data?.data?.sleepScore}
+                thickness={15}
+              />
+              {/* <Text style={styles.scoreValue}>78</Text> */}
+              <Text style={styles.scoreLabel}>Sleep Score</Text>
+            </View>
+            <View style={styles.scoreBox}>
+              <GaugeMeter
+                size={wp(32)}
+                value={data?.data?.stressScore}
+                thickness={15}
+              />
+              {/* <Text style={styles.scoreValue}>78</Text> */}
+              <Text style={styles.scoreLabel}>Stress Score</Text>
+            </View>
+          </View>
+
           <TouchableOpacity
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            style={{ paddingHorizontal: hp(1), marginTop: hp(3.5) }}
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              const STEP = 6;
+              navigation.navigate('OnBoarding', {
+                STEP,
+                screen: 'Reassess',
+                navigateTo: 'Mind',
+              });
+            }}
+            style={styles.reassessButton}
           >
             <Image
-              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
+              source={Images.EDIT} // Replace with actual key in your `images` object
               style={{
                 resizeMode: 'contain',
-                height: hp(3.5),
                 width: wp(4),
-                marginTop: hp(-1),
-                // marginLeft: Platform.OS == 'ios' ? hp(1) : hp(0.2),
+                height: hp(4),
+                // marginLeft: hp(-1.8),
+                tintColor: 'white',
               }}
-              resizeMode="contain"
             />
+
+            <Text style={styles.reassessText}>Re-assess</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Sleep & Stress</Text>
-        </View>
-      </View>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        style={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <View style={styles.scoreContainer}>
-          <View
-            style={[
-              styles.scoreBox,
-              // {
-              //   backgroundColor: 'red',
-              //   borderRadius: wp(2),
-              //   padding: hp(1.5),
-              // },
-            ]}
-          >
-            <GaugeMeter
-              size={wp(32)}
-              value={data?.data?.sleepScore}
-              thickness={15}
+
+          <View style={styles.reflectionCard}>
+            <Image
+              source={Images.BRAIN} // Replace with actual key in your `images` object
+              style={{
+                //   marginLeft: hp(3),
+                resizeMode: 'contain',
+                width: wp(4),
+                height: hp(2),
+                // marginLeft: hp(-1.8),
+                // tintColor: 'white',
+              }}
             />
-            {/* <Text style={styles.scoreValue}>78</Text> */}
-            <Text style={styles.scoreLabel}>Sleep Score</Text>
+            <View style={{ marginLeft: hp(2) }}>
+              <Text style={styles.reflectionTitle}>Mindful Reflections</Text>
+              <Text style={styles.reflectionQuote}>
+                Let go of what was. Surrender to what is. {'\n'}Have faith in
+                what will be.
+              </Text>
+            </View>
           </View>
-          <View style={styles.scoreBox}>
-            <GaugeMeter
-              size={wp(32)}
-              value={data?.data?.stressScore}
-              thickness={15}
+
+          <View style={{ flexDirection: 'row', backgroundColor: '' }}>
+            <Image
+              source={Images.SUN} // Replace with actual key in your `images` object
+              style={{
+                //   marginLeft: hp(3),
+                resizeMode: 'contain',
+                width: wp(4),
+                height: hp(2),
+                marginLeft: hp(-1.8),
+                tintColor: 'white',
+              }}
             />
-            {/* <Text style={styles.scoreValue}>78</Text> */}
-            <Text style={styles.scoreLabel}>Stress Score</Text>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => {
-            const STEP = 6;
-            navigation.navigate('OnBoarding', {
-              STEP,
-              screen: 'Reassess',
-              navigateTo: 'Mind',
-            });
-          }}
-          style={styles.reassessButton}
-        >
-          <Image
-            source={Images.EDIT} // Replace with actual key in your `images` object
-            style={{
-              resizeMode: 'contain',
-              width: wp(4),
-              height: hp(4),
-              // marginLeft: hp(-1.8),
-              tintColor: 'white',
-            }}
-          />
-
-          <Text style={styles.reassessText}>Re-assess</Text>
-        </TouchableOpacity>
-
-        <View style={styles.reflectionCard}>
-          <Image
-            source={Images.BRAIN} // Replace with actual key in your `images` object
-            style={{
-              //   marginLeft: hp(3),
-              resizeMode: 'contain',
-              width: wp(4),
-              height: hp(2),
-              // marginLeft: hp(-1.8),
-              // tintColor: 'white',
-            }}
-          />
-          <View style={{ marginLeft: hp(2) }}>
-            <Text style={styles.reflectionTitle}>Mindful Reflections</Text>
-            <Text style={styles.reflectionQuote}>
-              Let go of what was. Surrender to what is. {'\n'}Have faith in what
-              will be.
+            <Text style={[styles.sectionTitle, {}]}>
+              {/* Morning Calm, Mental Clarity */}
+              ☀️ Morning Calm, Mental Clarity
             </Text>
           </View>
-        </View>
-
-        <View style={{ flexDirection: 'row', backgroundColor: '' }}>
-          <Image
-            source={Images.SUN} // Replace with actual key in your `images` object
-            style={{
-              //   marginLeft: hp(3),
-              resizeMode: 'contain',
-              width: wp(4),
-              height: hp(2),
-              marginLeft: hp(-1.8),
-              tintColor: 'white',
-            }}
-          />
-          <Text style={[styles.sectionTitle, {}]}>
-            {/* Morning Calm, Mental Clarity */}
-            ☀️ Morning Calm, Mental Clarity
-          </Text>
-        </View>
-        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
           <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-            {morning?.map((item, index) => {
+            <ScrollView
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+            >
+              {morning?.map((item, index) => {
+                const scheme = colorSchemes[index % colorSchemes.length];
+                return (
+                  <View key={index} style={styles.cardRow}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate('MindDetails', {
+                          instructions: item?.instructions,
+                          audio: item?.audioUrl,
+                        })
+                      }
+                      style={[
+                        styles.activityCard,
+                        {
+                          borderWidth: 1.5,
+                          borderColor: scheme.borderColor,
+                          backgroundColor: scheme.backgroundColor,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.cardTitle}>{item?.title}</Text>
+                      <Text style={styles.cardDesc}>{item?.subtitle}</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </ScrollView>
+
+          {/* <Card  title={'Body Scan'} subtitle={'Relax & ground yourself'} ></Card> */}
+
+          <Text style={styles.sectionTitle}>🌙 Quiet Mind, Restful Night</Text>
+          <ScrollView showsHorizontalScrollIndicator={false} horizontal={true}>
+            {evening?.map((item, index) => {
               const scheme = colorSchemes[index % colorSchemes.length];
               return (
-                <View key={index} style={styles.cardRow}>
+                // console.log('Morning Item:', item),
+                <View key={index} horizontal={true} style={styles.cardRow}>
                   <TouchableOpacity
                     onPress={() =>
                       navigation.navigate('MindDetails', {
                         instructions: item?.instructions,
-                        audio: item?.audioUrl,
                       })
                     }
                     style={[
@@ -228,46 +267,14 @@ const Mind = ({ navigation }) => {
               );
             })}
           </ScrollView>
+
+          <Text style={styles.footerNote}>
+            Stick to one meditation for 21 days to unlock deeper benefits
+          </Text>
         </ScrollView>
-
-        {/* <Card  title={'Body Scan'} subtitle={'Relax & ground yourself'} ></Card> */}
-
-        <Text style={styles.sectionTitle}>🌙 Quiet Mind, Restful Night</Text>
-        <ScrollView showsHorizontalScrollIndicator={false} horizontal={true}>
-          {evening?.map((item, index) => {
-            const scheme = colorSchemes[index % colorSchemes.length];
-            return (
-              // console.log('Morning Item:', item),
-              <View key={index} horizontal={true} style={styles.cardRow}>
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate('MindDetails', {
-                      instructions: item?.instructions,
-                    })
-                  }
-                  style={[
-                    styles.activityCard,
-                    {
-                      borderWidth: 1.5,
-                      borderColor: scheme.borderColor,
-                      backgroundColor: scheme.backgroundColor,
-                    },
-                  ]}
-                >
-                  <Text style={styles.cardTitle}>{item?.title}</Text>
-                  <Text style={styles.cardDesc}>{item?.subtitle}</Text>
-                </TouchableOpacity>
-              </View>
-            );
-          })}
-        </ScrollView>
-
-        <Text style={styles.footerNote}>
-          Stick to one meditation for 21 days to unlock deeper benefits
-        </Text>
-      </ScrollView>
-      {/* <MindTab></MindTab> */}
-    </View>
+        {/* <MindTab></MindTab> */}
+      </View>
+    </SafeAreaView>
   );
 };
 
@@ -279,11 +286,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Roboto-Regular',
-    marginTop: hp(3.5),
+    marginTop: hp(1),
     marginLeft: hp(11),
     fontSize: 20,
     fontWeight: '400',
-    marginBottom: hp(2),
+    // marginBottom: hp(2),
     alignSelf: 'center',
     color: '#000000',
   },

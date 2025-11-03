@@ -16,6 +16,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateFitnessTime } from '../../redux/slices';
 import ToastMessage from '../../components/Toast';
 import ApiError from '../../components/ApiError';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -207,194 +208,196 @@ const Fitness = ({ navigation, route }) => {
   }
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: '#FFFFFF' }}
-      nestedScrollEnabled={true}
-    >
-      {toast && (
-        <ToastMessage
-          top={hp(8)}
-          message={toast}
-          type="success"
-          onHide={() => setToast(null)}
-        />
-      )}
-      <View style={{ flex: 1, backgroundColor: '#F6F5FF', height: '100%' }}>
-        <View style={{ backgroundColor: '#FFFFFF' }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: Platform.OS === 'ios' && hp(5),
-              paddingTop: hp(2),
-              alignItems: 'center',
-              // justifyContent: 'center',
-              elevation: 1,
-            }}
-          >
-            <TouchableOpacity
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              style={{ paddingHorizontal: hp(1) }}
-              onPress={() => navigation.goBack()}
-            >
-              <Image
-                source={Images.BACK_BUTTON}
-                style={{
-                  marginLeft: wp(1),
-                  resizeMode: 'contain',
-                  height: hp(3.5),
-                  width: wp(4),
-                }}
-              />
-            </TouchableOpacity>
-            <Text style={styles.title}>Cuore Fitness</Text>
-          </View>
-        </View>
-
-        <View
-          style={{
-            padding: wp(4),
-            backgroundColor: '#F6F5FF',
-            flex: 1,
-            height: hp(100),
-          }}
-        >
-          <View style={styles.timeCard}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Image
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(2.5),
-                  width: wp(5),
-                  tintColor: '#17AD8D',
-                }}
-                source={Images.WATCH}
-              />
-              <Text
-                style={{
-                  fontFamily: 'Roboto-Regular',
-                  marginLeft: hp(1),
-                  fontSize: 18,
-                  fontWeight: '400',
-                  color: '#000000',
-                }}
-              >
-                Update Preferred Exercise Time
-              </Text>
-            </View>
-
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '400',
-                color: '#4B5563',
-                marginTop: 4,
-              }}
-            >
-              Ideal between 6:00 AM – 7:00 PM
-            </Text>
-
-            <TouchableOpacity
-              style={styles.timeButton}
-              onPress={() => setShowTimePicker(true)}
-            >
-              <Text style={{ fontFamily: 'Roboto-Regular', fontSize: wp(4) }}>
-                {formatTime(time)}
-              </Text>
-              <Image
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(2),
-                  width: wp(5),
-                  tintColor: '#8F8F8F',
-                }}
-                source={Images.WATCH}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleUpdateTime}
-              style={styles.updateBtn}
-            >
-              <Text
-                style={{
-                  fontFamily: 'Roboto-Regular',
-                  color: '#FFFFFF',
-                  fontWeight: '400',
-                  fontSize: 14,
-                }}
-              >
-                ✓ Update Time
-              </Text>
-            </TouchableOpacity>
-
-            {showTimePicker && (
-              <DateTimePicker
-                mode="time"
-                value={time}
-                is24Hour={false}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={onChangeTime}
-              />
-            )}
-          </View>
-
-          <View style={styles.innerShadowContainer}>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+        nestedScrollEnabled={true}
+      >
+        {toast && (
+          <ToastMessage
+            top={hp(8)}
+            message={toast}
+            type="success"
+            onHide={() => setToast(null)}
+          />
+        )}
+        <View style={{ flex: 1, backgroundColor: '#F6F5FF', height: '100%' }}>
+          <View style={{ backgroundColor: '#FFFFFF' }}>
             <View
               style={{
-                paddingHorizontal: hp(1),
-                paddingVertical: hp(0.5),
+                flexDirection: 'row',
+                // marginTop: Platform.OS === 'ios' && hp(5),
+                // paddingTop: hp(2),
+                alignItems: 'center',
+                // justifyContent: 'center',
+                elevation: 1,
               }}
             >
-              <View style={{ flexDirection: 'row' }}>
-                {days.map((day, index) => (
-                  <TouchableOpacity
-                    key={day}
-                    onPress={() => {
-                      setSelectedDay(day);
-                      setExpandedIndex(null);
-                    }}
-                    style={[
-                      styles.dayBtn,
-                      selectedDay === day && styles.selectedDayBtn,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.dayText,
-                        selectedDay === day && styles.selectedDayText,
-                      ]}
-                    >
-                      {day}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <TouchableOpacity
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                style={{ paddingHorizontal: hp(1) }}
+                onPress={() => navigation.goBack()}
+              >
+                <Image
+                  source={Images.BACK_BUTTON}
+                  style={{
+                    marginLeft: wp(1),
+                    resizeMode: 'contain',
+                    height: hp(3.5),
+                    width: wp(4),
+                  }}
+                />
+              </TouchableOpacity>
+              <Text style={styles.title}>Cuore Fitness</Text>
             </View>
           </View>
 
-          <FlatList
-            data={fitnessData?.[selectedDay]}
-            keyExtractor={(item, index) => `${item.title}-${index}`}
-            renderItem={({ item, index }) => (
-              <WorkoutCard
-                item={item}
-                index={index}
-                navigation={navigation}
-                expandedIndex={expandedIndex}
-                setExpandedIndex={setExpandedIndex}
-              />
-            )}
-            contentContainerStyle={{ paddingBottom: hp(5) }}
-            ListEmptyComponent={
-              <Text style={{ textAlign: 'center', marginTop: hp(2) }}>
-                No exercises scheduled for {selectedDay}.
+          <View
+            style={{
+              padding: wp(4),
+              backgroundColor: '#F6F5FF',
+              flex: 1,
+              height: hp(100),
+            }}
+          >
+            <View style={styles.timeCard}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image
+                  style={{
+                    resizeMode: 'contain',
+                    height: hp(2.5),
+                    width: wp(5),
+                    tintColor: '#17AD8D',
+                  }}
+                  source={Images.WATCH}
+                />
+                <Text
+                  style={{
+                    fontFamily: 'Roboto-Regular',
+                    marginLeft: hp(1),
+                    fontSize: 18,
+                    fontWeight: '400',
+                    color: '#000000',
+                  }}
+                >
+                  Update Preferred Exercise Time
+                </Text>
+              </View>
+
+              <Text
+                style={{
+                  fontFamily: 'Roboto-Regular',
+                  fontSize: 14,
+                  fontWeight: '400',
+                  color: '#4B5563',
+                  marginTop: 4,
+                }}
+              >
+                Ideal between 6:00 AM – 7:00 PM
               </Text>
-            }
-          />
+
+              <TouchableOpacity
+                style={styles.timeButton}
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Text style={{ fontFamily: 'Roboto-Regular', fontSize: wp(4) }}>
+                  {formatTime(time)}
+                </Text>
+                <Image
+                  style={{
+                    resizeMode: 'contain',
+                    height: hp(2),
+                    width: wp(5),
+                    tintColor: '#8F8F8F',
+                  }}
+                  source={Images.WATCH}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleUpdateTime}
+                style={styles.updateBtn}
+              >
+                <Text
+                  style={{
+                    fontFamily: 'Roboto-Regular',
+                    color: '#FFFFFF',
+                    fontWeight: '400',
+                    fontSize: 14,
+                  }}
+                >
+                  ✓ Update Time
+                </Text>
+              </TouchableOpacity>
+
+              {showTimePicker && (
+                <DateTimePicker
+                  mode="time"
+                  value={time}
+                  is24Hour={false}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onChangeTime}
+                />
+              )}
+            </View>
+
+            <View style={styles.innerShadowContainer}>
+              <View
+                style={{
+                  paddingHorizontal: hp(1),
+                  paddingVertical: hp(0.5),
+                }}
+              >
+                <View style={{ flexDirection: 'row' }}>
+                  {days.map((day, index) => (
+                    <TouchableOpacity
+                      key={day}
+                      onPress={() => {
+                        setSelectedDay(day);
+                        setExpandedIndex(null);
+                      }}
+                      style={[
+                        styles.dayBtn,
+                        selectedDay === day && styles.selectedDayBtn,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.dayText,
+                          selectedDay === day && styles.selectedDayText,
+                        ]}
+                      >
+                        {day}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            <FlatList
+              data={fitnessData?.[selectedDay]}
+              keyExtractor={(item, index) => `${item.title}-${index}`}
+              renderItem={({ item, index }) => (
+                <WorkoutCard
+                  item={item}
+                  index={index}
+                  navigation={navigation}
+                  expandedIndex={expandedIndex}
+                  setExpandedIndex={setExpandedIndex}
+                />
+              )}
+              contentContainerStyle={{ paddingBottom: hp(5) }}
+              ListEmptyComponent={
+                <Text style={{ textAlign: 'center', marginTop: hp(2) }}>
+                  No exercises scheduled for {selectedDay}.
+                </Text>
+              }
+            />
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

@@ -32,7 +32,7 @@ const KnowledgeDetails = ({ navigation, route }) => {
               flexDirection: 'row',
               backgroundColor: '#FFFFFF',
               paddingVertical: hp(1.5),
-              elevation: 2,
+              // elevation: 2,
               alignItems: 'center',
             }}
           >

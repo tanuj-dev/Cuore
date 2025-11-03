@@ -147,7 +147,7 @@ const Profile = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
       <ScrollView style={styles.container}>
         <View style={{ backgroundColor: '#FAFAFA' }}>
           {/* Logo at the top */}
@@ -161,7 +161,6 @@ const Profile = ({ navigation }) => {
           >
             <View
               style={{
-                marginTop: Platform.OS == 'ios' ? hp(0) : hp(1.5),
                 justifyContent: 'center',
               }}
             >
@@ -210,6 +209,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     // backgroundColor:'red',
+    resizeMode: 'contain',
     width: wp(20),
     height: hp(3),
     // marginBottom: hp(2),

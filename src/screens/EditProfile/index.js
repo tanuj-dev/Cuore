@@ -13,6 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { hp, wp, Images } from '../../utilities';
 import { useDispatch } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
@@ -231,145 +232,154 @@ const EditProfile = ({ navigation }) => {
   );
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? hp(8) : 0}
-      style={{ flex: 1 }}
+    <SafeAreaView
+      edges={['top']}
+      style={{ flex: 1, backgroundColor: '#FFFFFF' }}
     >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? hp(8) : 0}
+        style={{ flex: 1 }}
       >
-        <View>
-          <View
-            style={{
-              backgroundColor: '#FFFFFF',
-              elevation: 1,
-            }}
-          >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, backgroundColor: '#F9FAFB' }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View>
             <View
               style={{
-                alignItems: 'center',
-                padding: hp(2),
-                flexDirection: 'row',
-                marginTop: Platform.OS == 'ios' ? hp(5) : hp(1.5),
+                backgroundColor: '#FFFFFF',
+                elevation: 1,
               }}
             >
-              <TouchableOpacity
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                onPress={() => navigation.goBack()}
-              >
-                <Image
-                  source={Images.BACK_BUTTON}
-                  style={{
-                    height: hp(3),
-                    width: wp(4),
-                    resizeMode: 'contain',
-                    tintColor: '#000000',
-                  }}
-                />
-              </TouchableOpacity>
-
-              <Text
+              <View
                 style={{
-                  fontFamily: 'Roboto-Regular',
-                  fontSize: 20,
-                  fontWeight: '400',
-                  color: '#000000',
-                  marginLeft: hp(2),
-                }}
-              >
-                Edit Profile
-              </Text>
-            </View>
-          </View>
-          <View style={styles.container}>
-            <View style={{ flexDirection: 'row', marginBottom: hp(4) }}>
-              <TouchableOpacity onPress={showImagePickerOptions}>
-                {profileImage ? (
-                  <Image
-                    source={{ uri: profileImage }}
-                    style={{
-                      width: wp(13),
-                      height: wp(13),
-                      borderRadius: wp(10),
-                      resizeMode: 'cover',
-                    }}
-                  />
-                ) : (
-                  <Image
-                    style={{
-                      resizeMode: 'contain',
-                      height: hp(5),
-                      width: wp(12),
-                    }}
-                    source={Images.UNCLE}
-                  />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={showImagePickerOptions}
-                style={{
-                  borderWidth: 1,
-                  paddingHorizontal: hp(4),
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  marginLeft: hp(5),
-                  borderColor: '#E5E7EB',
-                  borderRadius: hp(0.5),
+                  padding: hp(2),
+                  flexDirection: 'row',
+                  // marginTop: Platform.OS == 'ios' ? hp(5) : hp(1.5),
                 }}
               >
-                <Text
-                  style={{ fontSize: 16, fontWeight: '400', color: '#374151' }}
+                <TouchableOpacity
+                  hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                  onPress={() => navigation.goBack()}
                 >
-                  Upload Profile Picture
+                  <Image
+                    source={Images.BACK_BUTTON}
+                    style={{
+                      height: hp(3),
+                      width: wp(4),
+                      resizeMode: 'contain',
+                      tintColor: '#000000',
+                    }}
+                  />
+                </TouchableOpacity>
+
+                <Text
+                  style={{
+                    fontFamily: 'Roboto-Regular',
+                    fontSize: 20,
+                    fontWeight: '400',
+                    color: '#000000',
+                    marginLeft: hp(2),
+                  }}
+                >
+                  Edit Profile
                 </Text>
-              </TouchableOpacity>
+              </View>
             </View>
-            {renderInputField(
-              'User Name',
-              userName,
-              editName,
-              setUserName,
-              () => setEditName(true),
-              'alpha',
-            )}
-            {renderInputField(
-              'User Mobile',
-              userMobile,
-              editMobile,
-              setUserMobile,
-              () => setEditMobile(true),
-              'alpha',
-            )}
-            {renderInputField(
-              'Confirm User Mobile',
-              confirmMobile,
-              editConfirm,
-              setConfirmMobile,
-              () => setEditConfirm(true),
-              'numeric',
-            )}
+            <View style={styles.container}>
+              <View style={{ flexDirection: 'row', marginBottom: hp(4) }}>
+                <TouchableOpacity onPress={showImagePickerOptions}>
+                  {profileImage ? (
+                    <Image
+                      source={{ uri: profileImage }}
+                      style={{
+                        width: wp(13),
+                        height: wp(13),
+                        borderRadius: wp(10),
+                        resizeMode: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <Image
+                      style={{
+                        resizeMode: 'contain',
+                        height: hp(5),
+                        width: wp(12),
+                      }}
+                      source={Images.UNCLE}
+                    />
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={showImagePickerOptions}
+                  style={{
+                    borderWidth: 1,
+                    paddingHorizontal: hp(4),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginLeft: hp(5),
+                    borderColor: '#E5E7EB',
+                    borderRadius: hp(0.5),
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: '400',
+                      color: '#374151',
+                    }}
+                  >
+                    Upload Profile Picture
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {renderInputField(
+                'User Name',
+                userName,
+                editName,
+                setUserName,
+                () => setEditName(true),
+                'alpha',
+              )}
+              {renderInputField(
+                'User Mobile',
+                userMobile,
+                editMobile,
+                setUserMobile,
+                () => setEditMobile(true),
+                'alpha',
+              )}
+              {renderInputField(
+                'Confirm User Mobile',
+                confirmMobile,
+                editConfirm,
+                setConfirmMobile,
+                () => setEditConfirm(true),
+                'numeric',
+              )}
 
-            <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                <Text style={styles.saveText}>Save Changes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => {
-                  navigation.goBack();
+              <View style={styles.buttonRow}>
+                <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+                  <Text style={styles.saveText}>Save Changes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => {
+                    navigation.goBack();
 
-                  handleCancel();
-                }}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
+                    handleCancel();
+                  }}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 

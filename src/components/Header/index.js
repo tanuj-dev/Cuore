@@ -8,17 +8,17 @@ import {
 } from 'react-native';
 import React from 'react';
 import { hp, wp, Images } from '../../utilities';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Header = ({ title, navigation }) => {
   return (
-    <View>
+    <SafeAreaView edges={['top']} style={{ backgroundColor: '#FFFFFF' }}>
       <View
         style={{
-          paddingVertical: Platform.OS === 'ios' ? hp(2) : hp(1),
           flexDirection: 'row',
-          marginTop: Platform.OS == 'ios' && hp(5),
+
           alignItems: 'center',
-          elevation: 1,
+
           backgroundColor: '#FFFFFF',
         }}
       >
@@ -26,7 +26,7 @@ const Header = ({ title, navigation }) => {
           style={{
             hitSlop: { top: 20, bottom: 20, left: 20, right: 20 },
             paddingHorizontal: hp(1),
-            marginTop: Platform.OS == 'android' && hp(1),
+            // marginTop: Platform.OS == 'android' && hp(1),
           }}
           onPress={() => navigation.goBack()}
         >
@@ -43,14 +43,14 @@ const Header = ({ title, navigation }) => {
         </TouchableOpacity>
         <Text style={styles.title}>{title}</Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   title: {
     fontFamily: 'Roboto-Regular',
-    marginTop: Platform.OS == 'ios' ? hp(1) : hp(3),
+    marginTop: Platform.OS == 'ios' ? hp(1) : hp(1),
     marginLeft: hp(10),
     fontSize: 20,
     fontWeight: '400',
