@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,16 @@ import {
   PermissionsAndroid,
   Alert,
   TextInput,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { hp, wp, Images } from '../../utilities';
+import { useSelector, useDispatch } from 'react-redux';
+import { getHealthRecord } from '../../redux/slices';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // import {Ionicons, MaterialIcons, Feather} from '@expo/vector-icons';
 const formatDate = date => {
   return date ? date.toLocaleDateString() : '';
@@ -96,7 +101,7 @@ const EditableSection = ({
 const Health = ({ navigation }) => {
   const [profileImage, setProfileImage] = useState(null);
   const [pastHistory, setPastHistory] = useState(
-    'Diabetes, HTN, Heart Attack, GB Removal, L Thigh Fracture',
+    'Hypertension, Diabetes Mellitus Type 2, Hyperlipidemia',
   );
   const [medications, setMedications] = useState(
     'Amlopress, Metformin, Storvas, Ecosprin',
@@ -108,6 +113,7 @@ const Health = ({ navigation }) => {
   const [editConsulted, setEditConsulted] = useState(false);
   const [date, setDate] = useState(new Date());
   const [show, setShow] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const onDateChange = (event, selectedDate) => {
     if (event.type === 'dismissed') {
@@ -239,332 +245,458 @@ const Health = ({ navigation }) => {
     );
   };
 
-  const healthObservationsData = [
-    { parameter: 'Heart Rate', value: '78 bpm', status: '#22C55E' },
-    { parameter: 'Blood Pressure', value: '142/92 mmHg', status: '#EF4444' },
-    { parameter: 'Blood Sugar PP', value: '180 mg/dL', status: '#EF4444' },
-    { parameter: 'HbA1c', value: '7.2%', status: '#EAB308' },
-    { parameter: 'TG/HDL Ratio', value: '3.8', status: '#EAB308' },
-    { parameter: 'HsCRP', value: '2.8 mg/L', status: '#EAB308' },
-    { parameter: 'Lifestyle Score', value: '65%', status: '#EAB308' },
-  ];
+  // const healthObservationsData = [
+  //   { parameter: 'Heart Rate', value: '78 bpm', status: '#22C55E' },
+  //   { parameter: 'Blood Pressure', value: '142/92 mmHg', status: '#EF4444' },
+  //   { parameter: 'Blood Sugar PP', value: '180 mg/dL', status: '#EF4444' },
+  //   { parameter: 'HbA1c', value: '7.2%', status: '#EAB308' },
+  //   { parameter: 'TG/HDL Ratio', value: '3.8', status: '#EAB308' },
+  //   { parameter: 'HsCRP', value: '2.8 mg/L', status: '#EAB308' },
+  //   { parameter: 'Lifestyle Score', value: '65%', status: '#EAB308' },
+  // ];
 
+  const healthObservations = useSelector(
+    state => state.health?.data?.data?.data?.healthObservations,
+  );
+  const healthRecords = useSelector(
+    state => state.health?.data?.data?.data?.healthRecords,
+  );
+  const userId = useSelector(state => state.auth?.userId);
+  const profile = useSelector(state => state.health?.data?.data?.data?.profile);
+  const loading = useSelector(state => state.health?.loading);
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(getHealthRecord(userId));
+  }, [dispatch, userId]);
+
+  useEffect(() => {
+    setMedications(profile?.medications.join(', '));
+    setPastHistory(profile?.pastHO ? profile?.pastHO.join(', ') : '');
+  }, [profile]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#1E64AC" />
+      </View>
+    );
+  }
+  const getHealthObservationsData = observations => {
+    const thresholds = {
+      heartRate: value => (value < 60 || value > 100 ? '#EAB308' : '#22C55E'),
+      bloodPressure: value => '#EAB308', // Add logic if needed
+      bloodSugarPP: value =>
+        value > 140 ? '#EF4444' : value > 100 ? '#EAB308' : '#22C55E',
+      HbA1c: value =>
+        value >= 8 ? '#EF4444' : value >= 6.5 ? '#EAB308' : '#22C55E',
+      TG_HDL_Ratio: value =>
+        value > 4 ? '#EF4444' : value > 2.5 ? '#EAB308' : '#22C55E',
+      HsCRP: value =>
+        value > 3 ? '#EF4444' : value > 1 ? '#EAB308' : '#22C55E',
+      lifestyleScore: value =>
+        value >= 70 ? '#22C55E' : value >= 50 ? '#EAB308' : '#EF4444',
+    };
+
+    return [
+      {
+        parameter: 'Heart Rate',
+        value: `${observations?.heartRate} bpm`,
+        status: thresholds?.heartRate(observations?.heartRate),
+      },
+      {
+        parameter: 'Blood Pressure',
+        value: `${observations?.bloodPressure} mmHg`,
+        status: thresholds?.bloodPressure(observations?.bloodPressure),
+      },
+      {
+        parameter: 'Blood Sugar PP',
+        value: `${observations?.bloodSugarPP} mg/dL`,
+        status: thresholds?.bloodSugarPP(observations?.bloodSugarPP),
+      },
+      {
+        parameter: 'HbA1c',
+        value: `${observations?.HbA1c}%`,
+        status: thresholds?.HbA1c(observations?.HbA1c),
+      },
+      {
+        parameter: 'TG/HDL Ratio',
+        value: `${observations?.TG_HDL_Ratio}`,
+        status: thresholds?.TG_HDL_Ratio(observations?.TG_HDL_Ratio),
+      },
+      {
+        parameter: 'HsCRP',
+        value: `${observations?.HsCRP} mg/L`,
+        status: thresholds.HsCRP(observations?.HsCRP),
+      },
+      {
+        parameter: 'Lifestyle Score',
+        value: `${observations?.lifestyleScore}%`,
+        status: thresholds.lifestyleScore(observations?.lifestyleScore),
+      },
+    ];
+  };
+  const onRefresh = () => {
+    dispatch(getHealthRecord(userId));
+  };
   return (
-    <ScrollView style={{ backgroundColor: '#FFFFFF', flex: 1 }}>
-      {/* Header */}
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        style={{ backgroundColor: '#FFFFFF', flex: 1 }}
+      >
+        {/* Header */}
 
-      <View style={{ flex: 1 }}>
-        <View style={{ elevation: 1, backgroundColor: '#FFFFFF' }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: Platform.OS == 'ios' && hp(4),
-              justifyContent: 'space-between',
-              padding: hp(1),
-
-              alignItems: 'center',
-            }}
-          >
-            <TouchableOpacity
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              onPress={() => navigation.goBack()}
-              style={{}}
-            >
-              <Image
-                source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(2.5),
-                  width: hp(4),
-                  // marginLeft: hp(-1.8),
-                }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-            <View>
-              <Text
-                style={{
-                  fontFamily: 'Roboto-Regular',
-                  fontSize: 20,
-                  fontWeight: '400',
-                  color: '#1F2937',
-                  marginTop: hp(3),
-                  // marginLeft: hp(1),
-                }}
-              >
-                Cuore Health
-              </Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Image
-                source={Images.SHARE_4} // Replace with actual key in your `images` object
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(2),
-                  width: hp(3),
-                  tintColor: 'black',
-                  // marginLeft: hp(-1.8),
-                }}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Patient Info */}
-
-        <View style={styles.container}>
-          <View style={styles.card}>
-            <View style={styles.row}>
-              <Image
-                source={Images.UNCLE} // Replace with actual key in your `images` object
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(5),
-                  width: wp(12),
-                  resizeMode: 'contain',
-                }}
-              />
-              <View style={{ marginLeft: hp(3) }}>
-                <Text style={styles.name}>M. Johnson</Text>
-                <Text style={styles.detail}>42 years Smoker</Text>
-              </View>
-            </View>
-
-            <EditableSection
-              label="Past H/O: "
-              value={pastHistory}
-              onChange={setPastHistory}
-              isEditing={editPast}
-              toggleEdit={() => setEditPast(!editPast)}
-            />
-
-            <EditableSection
-              label="Medications: "
-              value={medications}
-              onChange={setMedications}
-              isEditing={editMeds}
-              toggleEdit={() => setEditMeds(!editMeds)}
-            />
-
-            <EditableSection
-              label="Last Consulted: "
-              value={date}
-              show={show}
-              isDate={true} // ✅ tell component this is a date
-              onChange={onDateChange}
-              isEditing={editConsulted}
-              toggleEdit={() => {
-                setEditConsulted(!editConsulted);
-                setShow(!show);
-              }}
-            />
-          </View>
-
-          {/* Health Observations */}
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Health Observations</Text>
+        <View style={{ flex: 1 }}>
+          <View style={{ elevation: 1, backgroundColor: '#FFFFFF' }}>
             <View
               style={{
                 flexDirection: 'row',
+                // marginTop: Platform.OS == 'ios' && hp(4),
                 justifyContent: 'space-between',
-                marginBottom: hp(2),
+                padding: hp(1),
+
+                alignItems: 'center',
               }}
             >
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontFamily: 'Roboto-Regular',
-                }}
+              <TouchableOpacity
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                onPress={() => navigation.goBack()}
+                style={{}}
               >
-                Parameter
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '700',
-                  color: '#374151',
-                  fontFamily: 'Roboto-Regular',
-                }}
-              >
-                Value
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '700',
-                  color: '#000000',
-                  fontFamily: 'Roboto-Regular',
-                }}
-              >
-                Status
-              </Text>
-            </View>
-            <FlatList
-              data={healthObservationsData}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <View
+                <Image
+                  source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
                   style={{
-                    paddingVertical: hp(2),
-                    borderBottomWidth: 1,
-                    borderColor: '#E5E7EB',
+                    resizeMode: 'contain',
+                    height: hp(2.5),
+                    width: hp(4),
+                    // marginLeft: hp(-1.8),
+                  }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+              <View>
+                <Text
+                  style={{
+                    fontFamily: 'Roboto-Regular',
+                    fontSize: 20,
+                    fontWeight: '400',
+                    color: '#1F2937',
+                    // marginTop: hp(3),
+                    // marginLeft: hp(1),
                   }}
                 >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        // backgroundColor: 'pink',
-                        width: hp(17),
-                        fontSize: 14,
-                        fontWeight: '500',
-                        color: '#000000',
-                        fontFamily: 'Roboto-Regular',
-                      }}
-                    >
-                      {item.parameter}
-                    </Text>
-
-                    <Text
-                      style={{
-                        // backgroundColor: 'yellow',
-                        marginLeft: hp(3),
-                        width: hp(17),
-                        fontSize: 14,
-                        fontWeight: '500',
-                        color: '#374151',
-                        fontFamily: 'Roboto-Regular',
-                      }}
-                    >
-                      {item.value}
-                    </Text>
-                    <View
-                      style={{
-                        width: hp(17),
-                        alignItems: 'flex-start',
-                        // justifyContent: 'flex-start',
-                      }}
-                    >
-                      <View
-                        style={{
-                          // marginLeft: hp(1.5),
-                          height: hp(2),
-                          width: hp(2),
-                          borderRadius: hp(4),
-                          backgroundColor: item.status,
-                        }}
-                      ></View>
-                    </View>
-                  </View>
-                </View>
-              )}
-            ></FlatList>
-          </View>
-
-          <Text></Text>
-
-          {/* Health Records */}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('HealthRecords')}
-            style={styles.card}
-          >
-            <Text style={styles.sectionTitle}>Health Records</Text>
-            <View
-              style={{ borderStyle: 'dotted', borderWidth: 1, padding: hp(1) }}
-            >
-              {profileImage ? (
-                <Image
-                  source={{ uri: profileImage }}
-                  style={{
-                    width: '100%',
-                    height: 150,
-                    resizeMode: 'contain',
-                    borderRadius: 6,
-                  }}
-                ></Image>
-              ) : (
-                <Image source={Images.PRECRIPTION} style={styles.recordImage} />
-              )}
-            </View>
-
-            <TouchableOpacity
-              onPress={showImagePickerOptions}
-              style={styles.button}
-            >
-              <Image
-                source={Images.CAMERA} // Replace with actual key in your `images` object
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(2.5),
-                  width: hp(4),
-                  // marginLeft: hp(-1.8),
-                }}
-                resizeMode="contain"
-              />
-              {/* <Feather name="camera" size={18} color="white" /> */}
-              <Text style={styles.buttonText}> Add New Record*</Text>
-            </TouchableOpacity>
-            <Text style={styles.note}>
-              * By uploading health records, you agree to our medical records
-              policy and consent to OCR processing for better health insights.
-            </Text>
-          </TouchableOpacity>
-
-          {/* Summary of Records */}
-          <View style={styles.card}>
-            <View
-              style={{ flexDirection: 'row', justifyContent: 'space-between' }}
-            >
-              <Text style={styles.sectionTitle}>Summary of Records</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Image
-                  style={{
-                    height: hp(1.5),
-                    width: hp(2),
-                    resizeMode: 'contain',
-                    marginHorizontal: hp(1),
-                  }}
-                  source={Images.NOTICE}
-                ></Image>
-                <Text style={{ width: wp(45), fontSize: 12, color: '#6B7280' }}>
-                  Accuracy depends on clarity and legibility of handwriting.
+                  Cuore Health
                 </Text>
               </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image
+                  source={Images.SHARE_4} // Replace with actual key in your `images` object
+                  style={{
+                    resizeMode: 'contain',
+                    height: hp(2),
+                    width: hp(3),
+                    tintColor: 'black',
+                    // marginLeft: hp(-1.8),
+                  }}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* Patient Info */}
+
+          <View style={styles.container}>
+            <View style={styles.card}>
+              <View style={styles.row}>
+                <Image
+                  source={Images.UNCLE} // Replace with actual key in your `images` object
+                  style={{
+                    resizeMode: 'contain',
+                    height: hp(5),
+                    width: wp(12),
+                    resizeMode: 'contain',
+                  }}
+                />
+                <View style={{ marginLeft: hp(3) }}>
+                  <Text style={styles.name}>
+                    {profile?.name == 'User' ? 'Tanuj' : profile?.name}
+                  </Text>
+                  <Text style={styles.detail}>
+                    {profile?.age} years{' '}
+                    {profile?.smoker == 'Never' ? 'Non-Smoker' : 'Smoker'}
+                  </Text>
+                </View>
+              </View>
+
+              {profile?.pastHO ? (
+                <EditableSection
+                  label="Past H/O: "
+                  value={pastHistory}
+                  onChange={setPastHistory}
+                  isEditing={editPast}
+                />
+              ) : (
+                <EditableSection
+                  label="Past H/O: "
+                  value={'No history available'}
+                  onChange={setPastHistory}
+                  isEditing={editPast}
+                />
+              )}
+
+              <EditableSection
+                label="Medications: "
+                value={medications ? medications : 'No medications listed'}
+                onChange={setMedications}
+                isEditing={editMeds}
+                toggleEdit={() => setEditMeds(!editMeds)}
+              />
+
+              <EditableSection
+                label="Last Consulted: "
+                value={profile?.lastConsulted ?? date}
+                show={show}
+                isDate={true} // ✅ tell component this is a date
+                onChange={onDateChange}
+                isEditing={editConsulted}
+                toggleEdit={() => {
+                  setEditConsulted(!editConsulted);
+                  setShow(!show);
+                }}
+              />
             </View>
 
-            <Text style={styles.bold}>History: </Text>
-            <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
-              Cholecystectomy (Gallbladder removal)   Left thigh fracture
-            </Text>
+            {/* Health Observations */}
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Health Observations</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginBottom: hp(2),
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: '700',
+                    color: '#374151',
+                    fontFamily: 'Roboto-Regular',
+                  }}
+                >
+                  Parameter
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: '#374151',
+                    fontFamily: 'Roboto-Regular',
+                  }}
+                >
+                  Value
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: '#000000',
+                    fontFamily: 'Roboto-Regular',
+                  }}
+                >
+                  Status
+                </Text>
+              </View>
+              <FlatList
+                data={getHealthObservationsData(healthObservations)}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <View
+                    style={{
+                      paddingVertical: hp(2),
+                      borderBottomWidth: 1,
+                      borderColor: '#E5E7EB',
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          // backgroundColor: 'pink',
+                          width: hp(17),
+                          fontSize: 14,
+                          fontWeight: '500',
+                          color: '#000000',
+                          fontFamily: 'Roboto-Regular',
+                        }}
+                      >
+                        {item.parameter}
+                      </Text>
 
-            <Text style={[styles.bold, { marginTop: hp(1) }]}>
-              Medications:
-            </Text>
-            <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
-              Diabetes on metformin   Hypertension (HTN) on Cardace
-            </Text>
+                      <Text
+                        style={{
+                          // backgroundColor: 'yellow',
+                          marginLeft: hp(3),
+                          width: hp(17),
+                          fontSize: 14,
+                          fontWeight: '500',
+                          color: '#374151',
+                          fontFamily: 'Roboto-Regular',
+                        }}
+                      >
+                        {item.value}
+                      </Text>
+                      <View
+                        style={{
+                          width: hp(17),
+                          alignItems: 'flex-start',
+                          // justifyContent: 'flex-start',
+                        }}
+                      >
+                        <View
+                          style={{
+                            // marginLeft: hp(1.5),
+                            height: hp(2),
+                            width: hp(2),
+                            borderRadius: hp(4),
+                            backgroundColor: item.status,
+                          }}
+                        ></View>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              ></FlatList>
+            </View>
 
-            <Text style={[styles.label, { marginTop: hp(1) }]}>
-              <Text style={styles.bold}>Labs:</Text>
-            </Text>
-            <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
-              RBS: 230
-            </Text>
-          </View>
-          <View style={styles.card}>
-            <View
-              style={{ flexDirection: 'row', justifyContent: 'space-between' }}
+            <Text></Text>
+
+            {/* Health Records */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate('HealthRecords')}
+              style={styles.card}
             >
-              <Text style={styles.sectionTitle}>Disease Progression Risk</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {/* <Image
+              <Text style={styles.sectionTitle}>Health Records</Text>
+              <View
+                style={{
+                  borderStyle: 'dotted',
+                  borderWidth: 1,
+                  padding: hp(1),
+                }}
+              >
+                {profileImage ? (
+                  <Image
+                    source={{ uri: profileImage }}
+                    style={{
+                      width: '100%',
+                      height: 150,
+                      resizeMode: 'contain',
+                      borderRadius: 6,
+                    }}
+                  ></Image>
+                ) : (
+                  <Image
+                    source={Images.PRECRIPTION}
+                    style={styles.recordImage}
+                  />
+                )}
+              </View>
+
+              <TouchableOpacity
+                onPress={showImagePickerOptions}
+                style={styles.button}
+              >
+                <Image
+                  source={Images.CAMERA} // Replace with actual key in your `images` object
+                  style={{
+                    resizeMode: 'contain',
+                    height: hp(2.5),
+                    width: hp(4),
+                    // marginLeft: hp(-1.8),
+                  }}
+                  resizeMode="contain"
+                />
+                {/* <Feather name="camera" size={18} color="white" /> */}
+                <Text style={styles.buttonText}> Add New Record*</Text>
+              </TouchableOpacity>
+              <Text style={styles.note}>
+                * By uploading health records, you agree to our medical records
+                policy and consent to OCR processing for better health insights.
+              </Text>
+            </TouchableOpacity>
+
+            {/* Summary of Records */}
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Text style={styles.sectionTitle}>Summary of Records</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Image
+                    style={{
+                      height: hp(1.5),
+                      width: hp(2),
+                      resizeMode: 'contain',
+                      marginHorizontal: hp(1),
+                    }}
+                    source={Images.NOTICE}
+                  ></Image>
+                  <Text
+                    style={{ width: wp(45), fontSize: 12, color: '#6B7280' }}
+                  >
+                    Accuracy depends on clarity and legibility of handwriting.
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.bold}>History: </Text>
+              <Text
+                style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}
+              >
+                Cholecystectomy (Gallbladder removal)   Left thigh fracture
+              </Text>
+
+              <Text style={[styles.bold, { marginTop: hp(1) }]}>
+                Medications:
+              </Text>
+              <Text
+                style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}
+              >
+                Diabetes on metformin   Hypertension (HTN) on Cardace
+              </Text>
+
+              <Text style={[styles.label, { marginTop: hp(1) }]}>
+                <Text style={styles.bold}>Labs:</Text>
+              </Text>
+              <Text
+                style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}
+              >
+                RBS: 230
+              </Text>
+            </View>
+            <View style={styles.card}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Text style={styles.sectionTitle}>
+                  Disease Progression Risk
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {/* <Image
                   style={{
                     height: hp(1.5),
                     width: hp(2),
@@ -572,17 +704,19 @@ const Health = ({ navigation }) => {
                     marginHorizontal: hp(1),
                   }}
                   source={Images.NOTICE}></Image> */}
-                {/* <Text style={{width: wp(45), fontSize: 12, color: '#6B7280'}}>
+                  {/* <Text style={{width: wp(45), fontSize: 12, color: '#6B7280'}}>
                   Accuracy depends on clarity and legibility of handwriting.
                 </Text> */}
+                </View>
               </View>
-            </View>
-            <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
-              You may have a 52% chance of developing diabetes and early kidney
-              issues within the next 4 years.
-            </Text>
+              <Text
+                style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}
+              >
+                You may have a 52% chance of developing diabetes and early
+                kidney issues within the next 4 years.
+              </Text>
 
-            {/* <Text style={styles.bold}>History: </Text>
+              {/* <Text style={styles.bold}>History: </Text>
            
 
             <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
@@ -596,10 +730,11 @@ const Health = ({ navigation }) => {
             <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
               RBS: 230
             </Text> */}
+            </View>
           </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

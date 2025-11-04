@@ -492,16 +492,18 @@ const getVitalColor = (label, value, target, hasDiabetes) => {
       const cleanValue = parseFloat(String(value).replace('%', ''));
       const cleanTarget = parseFloat(String(target).replace('%', ''));
 
-      if (isNaN(cleanValue) || isNaN(cleanTarget)) {
+      if (isNaN(cleanValue) || isNaN(cleanTarget) || cleanTarget === 0) {
         console.warn('Invalid Body Fat values:', value, target);
         return 'red';
       }
 
       const diff = Math.abs(cleanValue - cleanTarget);
+      const percentageDiff = (diff / cleanTarget) * 100;
       console.log(diff, 'diff');
+      console.log(percentageDiff.toFixed(2), '% difference');
 
-      if (diff < 5) return 'green';
-      if (diff <= 15) return 'orange';
+      if (percentageDiff < 5) return 'green';
+      if (percentageDiff <= 15) return 'orange';
       return 'red';
     }
 

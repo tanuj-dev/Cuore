@@ -217,7 +217,14 @@ const MealBuilder = ({ navigation }) => {
                           height: hp(2),
                           width: wp(4),
                           borderRadius: hp(2),
-                          backgroundColor: subItem?.healthColor ?? 'grey',
+                          backgroundColor:
+                            subItem?.healthColor == 'red'
+                              ? tagColors['Avoid']
+                              : subItem?.healthColor == 'yellow'
+                              ? tagColors['Limit']
+                              : subItem?.healthColor == 'green'
+                              ? tagColors['Include']
+                              : '#D1D5DB',
                         }}
                       />
                       <View

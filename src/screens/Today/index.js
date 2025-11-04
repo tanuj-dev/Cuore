@@ -28,7 +28,11 @@ import {
   cancelNotification,
   showImmediateNotification,
 } from '../../notifications/NotificationScheduler';
-import { getNourish, getBuilderItems } from '../../redux/slices';
+import {
+  getNourish,
+  getBuilderItems,
+  getHealthRecord,
+} from '../../redux/slices';
 import SessionExpiredModal from '../../components/SessionExpired';
 import handleLoginRedirect from '../../utilities/Common';
 import {
@@ -52,9 +56,10 @@ const Today = ({ navigation, route }) => {
   const [alarmTime, setAlarmTime] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(true);
   const [toast, setToast] = useState(null);
+  const [selectedItems, setSelectedItems] = useState([]);
 
   const dispatch = useDispatch();
-  const dates = ['Feb 25', 'Feb 26', 'Feb 87'];
+  const dates = ['Feb 25', 'Feb 26', 'Feb 27'];
 
   const { data, loading, error } = useSelector(state => state.home);
   const homeData = data ? data : null;
@@ -109,6 +114,7 @@ const Today = ({ navigation, route }) => {
       dispatch(getMind(userId));
       dispatch(getTobacco(userId));
       dispatch(getCuoreScoreThunk(userId));
+      // dispatch(getHealthRecord(userId));
       const res = dispatch(getFitness());
       console.log('Fitness Data Response:', res);
       const combos = [
@@ -208,8 +214,9 @@ const Today = ({ navigation, route }) => {
 
   const handleLoginRedirect = async () => {
     setSessionExpired(false);
-    console.log(await EncryptedStorage.getItem('auth_tokens'));
+    // console.log(await EncryptedStorage.getItem('auth_tokens'));
     await EncryptedStorage.removeItem('auth_tokens');
+    setSessionExpired(false);
     // await EncryptedStorage.removeItem('userid');
     dispatch(logout());
     navigation.replace('Login'); // or navigate, depending on your flow
@@ -587,9 +594,23 @@ const Today = ({ navigation, route }) => {
                 </View>
 
                 {/* check black dot */}
-                <View style={styles.blackDot}>
-                  <View style={styles.blackDotInner} />
-                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (selectedItems.includes(item.title)) {
+                      setSelectedItems(
+                        selectedItems.filter(i => i !== item.title),
+                      );
+                    } else {
+                      setSelectedItems([...selectedItems, item.title]);
+                    }
+                  }}
+                >
+                  <View style={styles.blackDot}>
+                    {selectedItems.includes(item.title) && (
+                      <View style={styles.blackDotInner} />
+                    )}
+                  </View>
+                </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={() =>
@@ -606,7 +627,11 @@ const Today = ({ navigation, route }) => {
                     <Text style={styles.taskIcon}>{item?.icon}</Text>
                   </View>
                   <View
-                    style={{ justifyContent: 'center', flexDirection: 'row' }}
+                    style={{
+                      justifyContent: 'space-between',
+                      flexDirection: 'row',
+                      flex: 1,
+                    }}
                   >
                     <View style={{ justifyContent: 'center' }}>
                       <Text style={styles.taskTitle}>
@@ -618,7 +643,7 @@ const Today = ({ navigation, route }) => {
                         {item.description}
                       </Text>
                     </View>
-                    {item?.completed ? (
+                    {item?.completed || selectedItems.includes(item.title) ? (
                       <Image source={Images.RIGHT} style={styles.checkIcon} />
                     ) : (
                       <Image source={Images.WARNING} style={styles.checkIcon} />
@@ -892,9 +917,9 @@ const styles = StyleSheet.create({
     width: hp(2),
     height: hp(3),
     marginTop: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
+    // justifyContent: 'center',
+    // alignItems: 'flex-end',
+    // alignSelf: 'flex-end',
     // position: 'absolute',
     // right: 10,
     // bottom: hp(3),

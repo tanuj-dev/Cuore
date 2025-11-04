@@ -5,7 +5,7 @@ import { updateProfile } from './Profile/profileThunk';
 import { createAccountThunk } from './Auth/authThunk';
 import { getOnboardingThunk } from './OnBoardng/onBoardingThunk';
 import { createReassessment } from './OnBoardng/onBoardingThunk';
-import { getHomeData } from './Home/homeThunk';
+import { getHomeData, getHealthRecord } from './Home/homeThunk';
 import { setReminder } from './Home/setReminderThunk';
 // import { updateReminderTime } from './Home/updateTime';
 import { getCuoreScoreThunk } from './OnBoardng/onBoardingThunk';
@@ -50,4 +50,5 @@ export {
   logTobaccoUsage,
   getPredict,
   deleteReminderThunk,
+  getHealthRecord,
 };

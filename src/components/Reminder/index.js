@@ -59,13 +59,9 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
   const handleTimeChange = (event, selectedTime) => {
     setShowTimePicker(false);
     if (selectedTime) {
-      const localTime = new Date(
-        selectedTime.getTime() + selectedTime.getTimezoneOffset() * 60000,
-      );
-      setTime(localTime);
+      setTime(selectedTime); // Use directly — it's already in local time
     } else {
-      // Default: current time
-      setTime(new Date());
+      setTime(new Date()); // fallback to current time
     }
   };
 

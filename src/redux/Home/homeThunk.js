@@ -13,3 +13,24 @@ export const getHomeData = createAsyncThunk(
     }
   },
 );
+
+export const getHealthRecord = createAsyncThunk(
+  'health/getHealthRecord',
+  async ({ userId }, { rejectWithValue }) => {
+    console.log('Fetching health record for userId:', userId);
+    try {
+      const endpoint = `/api/v1/cuorehealth/${userId}`;
+      const response = await getApiCall(endpoint);
+      console.log('Get Health Record API Response:', response);
+      if (response?.status === 200) {
+        return { data: response.data, success: true };
+      } else {
+        return { data: response.data, success: false };
+      }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'failed to fetch health record',
+      );
+    }
+  },
+);

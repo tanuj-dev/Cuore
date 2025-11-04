@@ -10,7 +10,7 @@ import {
 } from './OnBoardng/slice';
 import { fitnessSlice } from './Fitness/slice';
 
-import { homeSlice } from './Home/slice';
+import { homeSlice, getHealth } from './Home/slice';
 import {
   nourishSlice,
   builderSlice,
@@ -36,6 +36,7 @@ const store = configureStore({
     mind: mindSlice.reducer,
     tobacco: tobaccoSlice.reducer,
     predictData: predictSlice.reducer,
+    health: getHealth.reducer,
   },
 });
 
