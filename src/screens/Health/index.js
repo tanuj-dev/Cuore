@@ -114,6 +114,7 @@ const Health = ({ navigation }) => {
   const [date, setDate] = useState(new Date());
   const [show, setShow] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const dispatch = useDispatch();
 
   const onDateChange = (event, selectedDate) => {
     if (event.type === 'dismissed') {
@@ -265,14 +266,13 @@ const Health = ({ navigation }) => {
   const profile = useSelector(state => state.health?.data?.data?.data?.profile);
   const loading = useSelector(state => state.health?.loading);
 
-  const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(getHealthRecord(userId));
-  }, [dispatch, userId]);
+    getHealthRecord(userId);
+  }, [userId]);
 
   useEffect(() => {
     setMedications(profile?.medications.join(', '));
-    setPastHistory(profile?.pastHO ? profile?.pastHO.join(', ') : '');
+    // setPastHistory(profile?.pastHO ? profile?.pastHO.join(', ') : '');
   }, [profile]);
 
   if (loading) {
@@ -301,37 +301,47 @@ const Health = ({ navigation }) => {
     return [
       {
         parameter: 'Heart Rate',
-        value: `${observations?.heartRate} bpm`,
+        value: observations?.heartRate
+          ? `${observations?.heartRate} bpm`
+          : '  -',
         status: thresholds?.heartRate(observations?.heartRate),
       },
       {
         parameter: 'Blood Pressure',
-        value: `${observations?.bloodPressure} mmHg`,
+        value: observations?.bloodPressure
+          ? `${observations?.bloodPressure} mmHg`
+          : '  -',
         status: thresholds?.bloodPressure(observations?.bloodPressure),
       },
       {
         parameter: 'Blood Sugar PP',
-        value: `${observations?.bloodSugarPP} mg/dL`,
+        value: observations?.bloodSugarPP
+          ? `${observations?.bloodSugarPP} mg/dL`
+          : '  -',
         status: thresholds?.bloodSugarPP(observations?.bloodSugarPP),
       },
       {
         parameter: 'HbA1c',
-        value: `${observations?.HbA1c}%`,
+        value: observations?.HbA1c ? `${observations?.HbA1c}%` : '  -',
         status: thresholds?.HbA1c(observations?.HbA1c),
       },
       {
         parameter: 'TG/HDL Ratio',
-        value: `${observations?.TG_HDL_Ratio}`,
+        value: observations?.TG_HDL_Ratio
+          ? `${observations?.TG_HDL_Ratio}`
+          : '  -',
         status: thresholds?.TG_HDL_Ratio(observations?.TG_HDL_Ratio),
       },
       {
         parameter: 'HsCRP',
-        value: `${observations?.HsCRP} mg/L`,
-        status: thresholds.HsCRP(observations?.HsCRP),
+        value: observations?.HsCRP ? `${observations?.HsCRP} mg/L` : '  -',
+        status: thresholds?.HsCRP(observations?.HsCRP),
       },
       {
         parameter: 'Lifestyle Score',
-        value: `${observations?.lifestyleScore}%`,
+        value: observations?.lifestyleScore
+          ? `${observations?.lifestyleScore}%`
+          : '  -',
         status: thresholds.lifestyleScore(observations?.lifestyleScore),
       },
     ];
@@ -435,7 +445,7 @@ const Health = ({ navigation }) => {
               {profile?.pastHO ? (
                 <EditableSection
                   label="Past H/O: "
-                  value={pastHistory}
+                  value={profile?.pastHO}
                   onChange={setPastHistory}
                   isEditing={editPast}
                 />
@@ -472,7 +482,43 @@ const Health = ({ navigation }) => {
 
             {/* Health Observations */}
             <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Health Observations</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: hp(2),
+                }}
+              >
+                <Text style={styles.sectionTitle}>Health Observations</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    const STEP = 7;
+                    navigation.navigate('OnBoarding', {
+                      STEP,
+                      screen: 'Reassess',
+                      navigateTo: 'Home',
+                    });
+                  }}
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#1E64AC',
+                    paddingVertical: hp(1),
+                    width: hp(12),
+                    borderRadius: hp(1),
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.progressTitle,
+                      { color: '#FFFFFF', fontSize: 12.5 },
+                    ]}
+                  >
+                    Update Biomarkers
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <View
                 style={{
                   flexDirection: 'row',
@@ -538,7 +584,7 @@ const Health = ({ navigation }) => {
                           fontFamily: 'Roboto-Regular',
                         }}
                       >
-                        {item.parameter}
+                        {item?.parameter}
                       </Text>
 
                       <Text
@@ -552,7 +598,7 @@ const Health = ({ navigation }) => {
                           fontFamily: 'Roboto-Regular',
                         }}
                       >
-                        {item.value}
+                        {item?.value ?? '-'}
                       </Text>
                       <View
                         style={{
@@ -857,6 +903,14 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: hp(0.5),
     fontFamily: 'Roboto-Regular',
+  },
+  progressTitle: {
+    // marginLeft: hp(1),
+    fontFamily: 'Roboto-Regular',
+    fontWeight: '800',
+    color: '#18202B',
+    alignSelf: 'center',
+    textAlign: 'center',
   },
 });
 

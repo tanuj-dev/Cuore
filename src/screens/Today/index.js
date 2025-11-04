@@ -57,6 +57,8 @@ const Today = ({ navigation, route }) => {
   const [sessionExpired, setSessionExpired] = useState(true);
   const [toast, setToast] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [toastType, setToastType] = useState('success');
+  const [scrollY, setScrollY] = useState(0); // 🟢 scroll height tracker
 
   const dispatch = useDispatch();
   const dates = ['Feb 25', 'Feb 26', 'Feb 27'];
@@ -185,11 +187,13 @@ const Today = ({ navigation, route }) => {
       minutes,
     );
     setToast(`Alarm set for ${moment(scheduledTime).format('hh:mm A')}`);
+    setToastType('success');
     setAlarmTime(true);
   };
   const handleCancel = async id => {
     await cancelNotification(id);
     setToast('Alarm cancelled');
+    setToastType('error');
     setAlarmTime(false);
   };
 
@@ -259,6 +263,8 @@ const Today = ({ navigation, route }) => {
     'Calorie Ignite': 'CalorieIgnite',
     'After-Dinner Walk': 'Fitness',
     Meditation: 'DefaultScreen',
+    'Hydration Check': 'Fitness',
+    'Optional Snack': 'Fitness',
   };
   const titlesWithPayload = [
     'Fitness',
@@ -295,8 +301,6 @@ const Today = ({ navigation, route }) => {
           break;
 
         case 'fitness':
-        case 'short nap or walk':
-        case 'after-dinner walk':
           const dayKey = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
             new Date().getDay()
           ];
@@ -304,6 +308,7 @@ const Today = ({ navigation, route }) => {
             initialTab: dayKey,
           });
           break;
+
         case 'lunch':
           navigation.navigate(route, { mealTime: 'LunchDinner' });
           break;
@@ -314,6 +319,9 @@ const Today = ({ navigation, route }) => {
       }
     } else {
       if (route) {
+        if (route == 'Fitness') {
+          return;
+        }
         console.log('Navigating to route:', route);
         navigation.navigate(route);
       } else {
@@ -327,11 +335,11 @@ const Today = ({ navigation, route }) => {
       edges={['top']}
       style={{ flex: 1, backgroundColor: '#F9FAFB' }}
     >
-      <View style={styles.floatingText}>
+      {/* <View style={styles.floatingText}>
         <TouchableOpacity onPress={() => setIsVisible(true)}>
           <Image source={Images.PLUS} style={styles.addIcon} />
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       <ScrollView
         nestedScrollEnabled
@@ -342,24 +350,58 @@ const Today = ({ navigation, route }) => {
             onRefresh={onRefresh}
           />
         }
+        onScroll={e => {
+          const yOffset = e.nativeEvent.contentOffset.y;
+          setScrollY(yOffset); // 🟢 update scroll value
+        }}
+        scrollEventThrottle={16} // 🟢 ensures frequent updates
         style={styles.container}
       >
         <View style={styles.header}>
           <Text style={styles.username}>Tanuj Prajapati</Text>
-          <TouchableOpacity
-            style={
-              {
-                // shadowColor: '#000',
-                // shadowOpacity: 0.1,
-                // shadowOffset: { width: 0, height: 2 },
-                // shadowRadius: 4,
-                // elevation: 1,
-              }
-            }
-            onPress={() => navigation.navigate('Health')}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              // shadowColor: '#000',
+              // shadowOpacity: 0.1,
+              // shadowOffset: { width: 0, height: 2 },
+              // shadowRadius: 4,
+              // elevation: 1,
+            }}
           >
-            <Image source={Images.DOCTOR_PROFILE} style={styles.userIcon} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setIsVisible(true)}
+              style={{
+                padding: hp(1),
+                backgroundColor: '#1E64AC',
+                borderRadius: hp(1),
+                marginRight: hp(2),
+                width: Platform.OS === 'ios' ? hp(13) : hp(12),
+              }}
+            >
+              <Text
+                style={{ fontSize: 12.5, fontWeight: '800', color: '#FFFFFF' }}
+              >
+                Add Reminder
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Health')}>
+              <Image
+                source={Images.DOCTOR_PROFILE}
+                style={[
+                  styles.userIcon,
+                  {
+                    shadowColor: '#000',
+                    shadowOpacity: 0.1,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowRadius: 4,
+                    // elevation: 1,
+                  },
+                ]}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Dates Tabs */}
@@ -519,6 +561,7 @@ const Today = ({ navigation, route }) => {
               message={toast}
               type="success"
               onHide={() => setToast(null)}
+              top={hp(4) + scrollY}
             />
           )}
 
@@ -709,7 +752,7 @@ const Today = ({ navigation, route }) => {
               fontWeight: '400',
             }}
           >
-            14-Day Streak
+            {homeData?.streak}-Day Streak
           </Text>
           <Text
             style={{

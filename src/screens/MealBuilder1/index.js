@@ -325,6 +325,18 @@ const MealBuilder1 = ({ navigation, route }) => {
                 Extra: {totalCalories - TargetCalories} calories
               </Text>
             )}
+            {selectedItems?.length < 2 && (
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '400',
+                  color: '#DC2626',
+                  marginTop: hp(0.5),
+                }}
+              >
+                Note: Balance your meal by adding more dishes
+              </Text>
+            )}
           </View>
         )}
 

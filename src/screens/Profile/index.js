@@ -138,12 +138,24 @@ const Profile = ({ navigation }) => {
   );
 
   const handleLogout = async () => {
-    console.log(await EncryptedStorage.getItem('auth_tokens'));
-    await EncryptedStorage.removeItem('auth_tokens');
-    // await EncryptedStorage.removeItem('userid');
-    dispatch(logout());
-    // dispatch(resetCreateAccount());
-    navigation.replace('Login'); // or navigate, depending on your flow
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          console.log(await EncryptedStorage.getItem('auth_tokens'));
+          await EncryptedStorage.removeItem('auth_tokens');
+          // await EncryptedStorage.removeItem('userid');
+          dispatch(logout());
+          // dispatch(resetCreateAccount());
+          navigation.replace('Login'); // or navigate, depending on your flow
+        },
+      },
+    ]);
   };
 
   return (

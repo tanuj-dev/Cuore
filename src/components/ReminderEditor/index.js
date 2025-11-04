@@ -86,7 +86,11 @@ const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
   };
   useEffect(() => {
     if (requestId) {
-      setReminderText(requestId?.title || '');
+      setReminderText(
+        requestId?.title == 'Medication'
+          ? requestId?.description
+          : requestId?.title || '',
+      );
     }
   }, [requestId]);
 

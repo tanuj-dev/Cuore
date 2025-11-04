@@ -173,7 +173,9 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
             existingReminders.map((item, index) => (
               <View key={item.id || index.toString()} style={styles.entryCard}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.entryText}>{item.title}</Text>
+                  <Text style={styles.entryText}>
+                    {item.title == 'Medication' ? item.description : item.title}
+                  </Text>
                   <Text style={styles.entrySubtext}>{item.time}</Text>
                 </View>
 

@@ -71,7 +71,7 @@ const Nutrition = ({ navigation, route }) => {
   const renderMealCard = (item, index) => {
     const dietTag = item?.dietTag?.toUpperCase() || item?.type?.toUpperCase();
     let tagColor = '#dc2626';
-    let tagLabel = Images.EGG;
+    let tagLabel = Images.VEG;
 
     if (dietTag.startsWith('V')) {
       tagColor = '#16a34a';
@@ -116,14 +116,43 @@ const Nutrition = ({ navigation, route }) => {
           </View>
         </View>
         <View style={styles.cardFooter}>
-          <Image
-            style={{
-              height: tagLabel === Images.WARNING ? hp(2) : hp(2.5),
-              width: tagLabel === Images.WARNING ? wp(10) : wp(15),
-              resizeMode: 'contain',
-            }}
-            source={tagLabel}
-          />
+          {tagLabel === Images.EGG ? (
+            <View
+              style={{
+                backgroundColor: '#E5E7EB',
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginRight: hp(2),
+                paddingHorizontal: wp(2),
+                borderRadius: hp(1),
+              }}
+            >
+              <Image
+                style={{
+                  height: hp(2),
+                  width: wp(3),
+                  resizeMode: 'contain',
+                  marginRight: hp(0.5),
+                }}
+                source={Images.EGG}
+              />
+              <Text
+                style={{ fontSize: hp(1.8), color: 'f59e0b', fontSize: 10 }}
+              >
+                Egg
+              </Text>
+            </View>
+          ) : (
+            <Image
+              style={{
+                height: tagLabel === Images.WARNING ? hp(2) : hp(2.5),
+                width: tagLabel === Images.WARNING ? wp(10) : wp(15),
+                resizeMode: 'contain',
+              }}
+              source={tagLabel}
+            />
+          )}
+
           <Text style={styles.kcal}>
             {item?.calories || item?.custom_plate} kcal
           </Text>

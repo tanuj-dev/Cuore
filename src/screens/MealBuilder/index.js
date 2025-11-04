@@ -454,7 +454,7 @@ const MealBuilder = ({ navigation }) => {
             <Text style={styles.target}>Target</Text>
             <Text style={styles.kcal}>
               {targetCalories}
-              kcal
+              {' kcal'}
             </Text>
           </View>
 
@@ -465,10 +465,22 @@ const MealBuilder = ({ navigation }) => {
           />
 
           <View>
-            <Text style={styles.target}>Remaining</Text>
-            <Text style={[styles.kcal, styles.remainingKcal]}>
-              {targetCalories - sumofCalories}
-              kcal
+            <Text
+              style={[
+                styles.target,
+                targetCalories - sumofCalories < 0 && { color: 'red' },
+              ]}
+            >
+              Remaining
+            </Text>
+            <Text
+              style={[
+                styles.kcal,
+                styles.remainingKcal,
+                targetCalories - sumofCalories < 0 && { color: 'red' },
+              ]}
+            >
+              {targetCalories - sumofCalories} kcal
             </Text>
           </View>
         </View>
