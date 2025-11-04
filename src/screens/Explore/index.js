@@ -69,6 +69,13 @@ const Explore = ({ navigation }) => {
         const route = routeMap[item.title]; // Corrected here
 
         if (route) {
+          if (route == 'Fitness') {
+            const dayKey = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
+              new Date().getDay()
+            ];
+            navigation.navigate(route, { initialTab: dayKey });
+          }
+
           // Alert.alert(route);
           navigation.navigate(route);
         } else {

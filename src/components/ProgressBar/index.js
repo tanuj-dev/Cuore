@@ -12,6 +12,7 @@ import images from '../../utilities/Images';
 import { hp, wp } from '../../utilities';
 
 const ProgressBarWithImage = ({ navigation, data }) => {
+  console.log('ProgressBar data:', data);
   const progress = data?.periods?.[0]?.value || 0;
   const progressBarWidth = 300;
   const animatedLeft = useRef(new Animated.Value(0)).current;
@@ -76,15 +77,44 @@ const ProgressBarWithImage = ({ navigation, data }) => {
           </TouchableOpacity>
         </Animated.View>
 
-        <View style={styles.percentRow}>
-          <Text style={styles.percentText}>0%</Text>
-          <View style={styles.centerIndicator}>
+        <Animated.View
+          style={{
+            flexDirection: 'row',
+            position: 'absolute',
+            bottom: hp(2.5),
+            alignItems: 'center',
+            zIndex: 1000,
+            height: hp(4),
+            width: hp(6),
+            borderRadius: hp(5),
+            padding: hp(0.5),
+            left: animatedLeft,
+            top: hp(2),
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Score')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginLeft: -hp(1),
+            }}
+          >
             <Image
               source={images.FLAG}
-              style={{ width: 14, height: 14, marginRight: 4 }}
+              style={{
+                width: 14,
+                height: 14,
+                marginRight: 4,
+                resizeMode: 'contain',
+              }}
             />
-            <Text style={styles.percentText}>{Math.round(progress)}%</Text>
-          </View>
+            <Text style={styles.percentText}>{Math.round(progress)}</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        <View style={styles.percentRow}>
+          <Text style={styles.percentText}>0%</Text>
           <Text style={styles.percentText}>100%</Text>
         </View>
       </View>
@@ -119,6 +149,19 @@ const styles = StyleSheet.create({
   progressBar: {
     height: 12,
     borderRadius: 6,
+  },
+  profileImage: {
+    right: -13,
+    resizeMode: 'contain',
+    position: 'absolute',
+    margin: 0,
+    width: hp(3.5),
+    height: hp(3.5),
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'white',
+    bottom: -9,
+    zIndex: 100,
   },
   percentRow: {
     flexDirection: 'row',

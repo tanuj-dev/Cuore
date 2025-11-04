@@ -131,6 +131,7 @@ const FitnessDetails = ({ navigation, route }) => {
           </View>
 
           <Text style={styles.detailText}>
+            Equipment:
             {instruction?.equipment == 'None'
               ? 'No equipment specified'
               : instruction?.equipment}

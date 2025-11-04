@@ -236,6 +236,7 @@ function TodayStack() {
       <Stack.Screen name="Fitness" component={Fitness} />
       <Stack.Screen name="FitnessDetails" component={FitnessDetails} />
       <Stack.Screen name="MindDetails" component={MindDetails} />
+      <Stack.Screen name="RefreshRefuel" component={RefreshRefuel} />
     </Stack.Navigator>
   );
 }

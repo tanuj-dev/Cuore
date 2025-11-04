@@ -251,6 +251,7 @@ const Today = ({ navigation, route }) => {
     'Quiet Mind Restful Night': 'Mind',
     'Calorie Ignite': 'CalorieIgnite',
     'After-Dinner Walk': 'Fitness',
+    Meditation: 'DefaultScreen',
   };
   const titlesWithPayload = [
     'Fitness',
@@ -267,7 +268,11 @@ const Today = ({ navigation, route }) => {
     titlesWithPayload,
   ) => {
     const route = titleToRouteMap[item.title];
-    if (!route) return;
+    if (!route) {
+      setIsVisible(!isVisible);
+      console.log('No route found for title:', item.title);
+      return;
+    }
 
     const title = item.title?.toLowerCase();
     const hasPayload = titlesWithPayload.includes(item.title);
@@ -299,12 +304,14 @@ const Today = ({ navigation, route }) => {
         case 'dinner':
           navigation.navigate(route, { mealTime: 'LunchDinner' });
           break;
-        default:
-          navigation.navigate(route);
-          break;
       }
     } else {
-      navigation.navigate(route);
+      if (route) {
+        console.log('Navigating to route:', route);
+        navigation.navigate(route);
+      } else {
+        console.log('No route found for title:');
+      }
     }
   };
 
