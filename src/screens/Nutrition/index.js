@@ -22,7 +22,6 @@ const Nutrition = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [toastType, setToastType] = useState('success');
-  const [scrollY, setScrollY] = useState(0); // 🟢 scroll height tracker
 
   const dispatch = useDispatch();
   const nourishData = useSelector(state => state.nourish.data);
@@ -37,14 +36,13 @@ const Nutrition = ({ navigation, route }) => {
   }, [activeTab]);
 
   // 🟢 Log scroll position when it changes
-  useEffect(() => {
-    console.log('Scroll Y:', scrollY);
-  }, [scrollY]);
 
   const handlePress = async (item, navigation) => {
     try {
       if (item.type === 'custom_plate') {
-        navigation.navigate('MealBuilder');
+        navigation.navigate('MealBuilder', {
+          mealItem: activeTab == 'Breakfast' ? 'Breakfast' : 'LunchDinner',
+        });
       } else {
         setLoading(true);
         const response = await dispatch(
@@ -119,25 +117,26 @@ const Nutrition = ({ navigation, route }) => {
           {tagLabel === Images.EGG ? (
             <View
               style={{
-                backgroundColor: '#E5E7EB',
+                backgroundColor: '#fff8c3',
                 flexDirection: 'row',
                 alignItems: 'center',
                 marginRight: hp(2),
                 paddingHorizontal: wp(2),
                 borderRadius: hp(1),
+                justifyContent: 'center',
               }}
             >
               <Image
                 style={{
-                  height: hp(2),
+                  height: hp(2.5),
                   width: wp(3),
                   resizeMode: 'contain',
-                  marginRight: hp(0.5),
+                  marginRight: hp(0),
                 }}
                 source={Images.EGG}
               />
               <Text
-                style={{ fontSize: hp(1.8), color: 'f59e0b', fontSize: 10 }}
+                style={{ fontSize: hp(1.8), color: '#c68a40', fontSize: 10 }}
               >
                 Egg
               </Text>
@@ -146,14 +145,19 @@ const Nutrition = ({ navigation, route }) => {
             <Image
               style={{
                 height: tagLabel === Images.WARNING ? hp(2) : hp(2.5),
-                width: tagLabel === Images.WARNING ? wp(10) : wp(15),
+                width: tagLabel === Images.WARNING ? wp(14) : wp(13),
                 resizeMode: 'contain',
               }}
               source={tagLabel}
             />
           )}
 
-          <Text style={styles.kcal}>
+          <Text
+            style={[
+              styles.kcal,
+              tagLabel == Images.EGG ? { marginLeft: -hp(1.2) } : '',
+            ]}
+          >
             {item?.calories || item?.custom_plate} kcal
           </Text>
         </View>
@@ -162,111 +166,110 @@ const Nutrition = ({ navigation, route }) => {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      onScroll={e => {
-        const yOffset = e.nativeEvent.contentOffset.y;
-        setScrollY(yOffset); // 🟢 update scroll value
-      }}
-      scrollEventThrottle={16} // 🟢 ensures frequent updates
-    >
-      {/* 🔵 Header */}
-      <ImageBackground
-        style={{ padding: hp(2) }}
-        source={Images.BACKGROUND_IMAGE_NUTRITION}
-      >
-        {toast && (
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      {toast && (
+        <View style={styles.toastContainer}>
           <Toast
             message={toast}
             type={toastType}
             onHide={() => setToast(null)}
             // 🟢 dynamically position Toast based on scroll
-            top={hp(12) + scrollY}
+            top={hp(4)}
           />
-        )}
-
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: Platform.OS === 'ios' ? hp(4) : hp(1.5),
-          }}
+        </View>
+      )}
+      <ScrollView
+        style={styles.container}
+        scrollEventThrottle={16} // 🟢 ensures frequent updates
+      >
+        {/* 🔵 Header */}
+        <ImageBackground
+          style={{ padding: hp(2) }}
+          source={Images.BACKGROUND_IMAGE_NUTRITION}
         >
-          <TouchableOpacity
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            onPress={() => navigation.goBack()}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: Platform.OS === 'ios' ? hp(4) : hp(1.5),
+            }}
           >
+            <TouchableOpacity
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              onPress={() => navigation.goBack()}
+            >
+              <Image
+                style={{ resizeMode: 'contain', height: hp(3), width: wp(4) }}
+                source={Images.BACK_BUTTON}
+              />
+            </TouchableOpacity>
             <Image
-              style={{ resizeMode: 'contain', height: hp(3), width: wp(4) }}
-              source={Images.BACK_BUTTON}
+              style={{ height: hp(2), width: wp(4), resizeMode: 'contain' }}
+              source={Images.SHARE_4}
             />
-          </TouchableOpacity>
-          <Image
-            style={{ height: hp(2), width: wp(4), resizeMode: 'contain' }}
-            source={Images.SHARE_4}
-          />
-        </View>
+          </View>
 
-        <View
-          style={{
-            justifyContent: 'center',
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginTop: hp(2),
-          }}
-        >
-          {/* Breakfast Tab */}
-          <TouchableOpacity
-            onPress={() => setActiveTab('Breakfast')}
-            style={[
-              styles.tabButton,
-              {
-                backgroundColor:
-                  activeTab === 'Breakfast' ? '#1E64AC' : '#9CA3AF',
-              },
-            ]}
+          <View
+            style={{
+              justifyContent: 'center',
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginTop: hp(2),
+            }}
           >
-            <Image style={styles.tabIcon} source={Images.BREAKFAST} />
-            <Text style={styles.tabText}>Breakfast</Text>
-          </TouchableOpacity>
+            {/* Breakfast Tab */}
+            <TouchableOpacity
+              onPress={() => setActiveTab('Breakfast')}
+              style={[
+                styles.tabButton,
+                {
+                  backgroundColor:
+                    activeTab === 'Breakfast' ? '#1E64AC' : '#9CA3AF',
+                },
+              ]}
+            >
+              <Image style={styles.tabIcon} source={Images.BREAKFAST} />
+              <Text style={styles.tabText}>Breakfast</Text>
+            </TouchableOpacity>
 
-          {/* Lunch & Dinner Tab */}
-          <TouchableOpacity
-            onPress={() => setActiveTab('LunchDinner')}
-            style={[
-              styles.tabButton,
-              {
-                backgroundColor:
-                  activeTab === 'LunchDinner' ? '#1E64AC' : '#9CA3AF',
-              },
-            ]}
-          >
-            <Image style={styles.tabIcon} source={Images.KNIFE} />
-            <Text style={styles.tabText}>Lunch/Dinner</Text>
-          </TouchableOpacity>
+            {/* Lunch & Dinner Tab */}
+            <TouchableOpacity
+              onPress={() => setActiveTab('LunchDinner')}
+              style={[
+                styles.tabButton,
+                {
+                  backgroundColor:
+                    activeTab === 'LunchDinner' ? '#1E64AC' : '#9CA3AF',
+                },
+              ]}
+            >
+              <Image style={styles.tabIcon} source={Images.KNIFE} />
+              <Text style={styles.tabText}>Lunch/Dinner</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loading ? (
+            <ActivityIndicator
+              style={{ marginTop: hp(2) }}
+              size="small"
+              color="#1E64AC"
+            />
+          ) : (
+            <Text style={styles.headerTitle}>
+              Daily variety leads to better results— try a new option each day.
+            </Text>
+          )}
+        </ImageBackground>
+
+        {/* 🥗 Meal Cards */}
+        <View style={styles.cardList}>
+          {nourishData?.meal_plan?.map((item, index) =>
+            renderMealCard(item, index),
+          )}
         </View>
-
-        {loading ? (
-          <ActivityIndicator
-            style={{ marginTop: hp(2) }}
-            size="small"
-            color="#1E64AC"
-          />
-        ) : (
-          <Text style={styles.headerTitle}>
-            Daily variety leads to better results— try a new option each day.
-          </Text>
-        )}
-      </ImageBackground>
-
-      {/* 🥗 Meal Cards */}
-      <View style={styles.cardList}>
-        {nourishData?.meal_plan?.map((item, index) =>
-          renderMealCard(item, index),
-        )}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -313,6 +316,8 @@ const styles = StyleSheet.create({
   cardFooter: {
     marginTop: hp(1.5),
     flexDirection: 'row',
+    // justifyContent: 'space-between',
+    alignItems: 'center',
   },
   kcal: {
     fontFamily: 'Roboto-Regular',
@@ -339,6 +344,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#FFFFFF',
     marginLeft: hp(1),
+  },
+  toastContainer: {
+    position: 'absolute',
+    top: hp(10),
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 9999,
+    elevation: 9999, // for Android
   },
 });
 

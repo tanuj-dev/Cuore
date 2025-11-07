@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -27,41 +27,56 @@ const tagColors = {
   Avoid: '#EF4444',
 };
 
-const MealBuilder = ({ navigation }) => {
+const MealBuilder = ({ navigation, route }) => {
   const [activeTab, setActiveTab] = useState('Breakfast');
   const [activeCuisine, setActiveCuisine] = useState('Indian');
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
+  const { mealItem = 'Breakfast' } = route?.params;
   const dispatch = useDispatch();
-
   const animationMap = useRef({})?.current;
 
-  // 🔧 Select Redux data
-  const { BreakfastIndian, BreakfastGlobal, DinnerIndian, DinnerGlobal } =
-    useSelector(state => {
-      const items = state.builder.itemsByCombo || {};
-      return {
-        BreakfastIndian: items['Breakfast_Indian']?.['grouped_items'] || {},
-        BreakfastGlobal: items['Breakfast_Global']?.['grouped_items'] || {},
-        DinnerIndian: items['Lunch_Indian']?.['grouped_items'] || {},
-        DinnerGlobal: items['Lunch_Global']?.['grouped_items'] || {},
-      };
-    });
-  const targetCalories = useSelector(
-    state =>
-      state?.builder?.itemsByCombo?.Breakfast_Indian?.recommended_calories || 0,
-  );
+  useEffect(() => {
+    if (mealItem) {
+      setActiveTab(mealItem);
+    }
+  }, [mealItem]);
+
+  // Redux data
+  const {
+    BreakfastIndian,
+    BreakfastGlobal,
+    DinnerIndian,
+    DinnerGlobal,
+    CaloriesBreakfastIndian,
+    CaloriesBreakfastGlobal,
+    CaloriesDinnerIndian,
+    CaloriesDinnerGlobal,
+  } = useSelector(state => {
+    const items = state.builder.itemsByCombo || {};
+    return {
+      BreakfastIndian: items['Breakfast_Indian']?.grouped_items || {},
+      CaloriesBreakfastIndian:
+        items['Breakfast_Indian']?.recommended_calories || 0,
+      BreakfastGlobal: items['Breakfast_Global']?.grouped_items || {},
+      CaloriesBreakfastGlobal:
+        items['Breakfast_Global']?.recommended_calories || 0,
+      DinnerIndian: items['Lunch_Indian']?.grouped_items || {},
+      CaloriesDinnerIndian: items['Lunch_Indian']?.recommended_calories || 0,
+      DinnerGlobal: items['Lunch_Global']?.grouped_items || {},
+      CaloriesDinnerGlobal: items['Lunch_Global']?.recommended_calories || 0,
+    };
+  });
+
   const sumofCalories = selectedItems.reduce(
     (sum, item) => sum + item.calories,
     0,
   );
-  // console.log('Sum of Selected Calories:', sumofCalories);
 
-  // console.log('Target Calories:', targetCalories);
-
-  // 🎯 Select the correct dataset
+  // Select dataset based on tab + cuisine
   let selectedData = {};
   if (activeTab === 'Breakfast' && activeCuisine === 'Indian') {
     selectedData = BreakfastIndian;
@@ -73,13 +88,23 @@ const MealBuilder = ({ navigation }) => {
     selectedData = DinnerGlobal;
   }
 
-  const categoryNames = Object.keys(selectedData);
-  const sectionedData = categoryNames.map(category => ({
-    category,
-    items: selectedData[category] || [],
-  }));
+  // ✅ Filter data by search text
+  const sectionedData = useMemo(() => {
+    const lowerSearch = searchText.toLowerCase().trim();
+    const categoryNames = Object.keys(selectedData);
+    return categoryNames
+      .map(category => {
+        const items = selectedData[category] || [];
+        const filteredItems = lowerSearch
+          ? items.filter(i => i.name?.toLowerCase().includes(lowerSearch))
+          : items;
+        return filteredItems.length > 0
+          ? { category, items: filteredItems }
+          : null;
+      })
+      .filter(Boolean);
+  }, [selectedData, searchText]);
 
-  // 🔄 Toggle per category
   const toggleExpand = category => {
     const isSame = expandedCategory === category;
     const newCategory = isSame ? null : category;
@@ -96,7 +121,7 @@ const MealBuilder = ({ navigation }) => {
       useNativeDriver: false,
     }).start();
 
-    // Collapse all other categories
+    // Collapse others
     Object.keys(animationMap).forEach(key => {
       if (key !== category) {
         Animated.timing(animationMap[key], {
@@ -109,7 +134,6 @@ const MealBuilder = ({ navigation }) => {
     });
   };
 
-  // 🧱 Render card
   const renderCard = ({ item }) => {
     const category = item.category;
     const items = item.items || [];
@@ -134,6 +158,8 @@ const MealBuilder = ({ navigation }) => {
           borderColor: '#E5E7EB',
           margin: 3,
           padding: hp(2),
+          marginHorizontal: hp(2),
+          marginBottom: hp(1),
         }}
       >
         {/* Header */}
@@ -149,55 +175,48 @@ const MealBuilder = ({ navigation }) => {
             style={{
               fontFamily: 'Roboto-Regular',
               fontSize: 14,
-              fontWeight: '400',
-              color: '#000000',
+              color: '#000',
             }}
           >
-            {category}
-            {items.length ? ` (${items.length})` : ''}
+            {category} ({items.length})
           </Text>
-          <TouchableOpacity onPress={() => toggleExpand(category)}>
-            <Animated.Image
-              style={{
-                height: hp(2),
-                width: wp(3),
-                transform: [
-                  {
-                    rotate: animationMap[category].interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0deg', '90deg'],
-                    }),
-                  },
-                ],
-              }}
-              source={images.RIGHT_ARROW}
-            />
-          </TouchableOpacity>
+          <Animated.Image
+            style={{
+              height: hp(2),
+              width: wp(3),
+              transform: [
+                {
+                  rotate: animationMap[category].interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0deg', '90deg'],
+                  }),
+                },
+              ],
+            }}
+            source={images.RIGHT_ARROW}
+          />
         </TouchableOpacity>
 
         {/* Expanded Items */}
         <Animated.View style={{ height: animatedHeight, overflow: 'hidden' }}>
           {isActive &&
             items.map((subItem, index) => {
-              console.log('SubItem:', subItem);
               const isAlreadyAdded = selectedItems.some(
-                i =>
-                  i.dishname === subItem?.name &&
-                  i.calories === subItem?.calories,
+                i => i.dishname === subItem?.name,
               );
 
               return (
                 <View key={subItem?._id || index}>
                   <View
                     style={{
-                      backgroundColor: '#FFFFFF',
+                      backgroundColor: '#FFF',
                       height: hp(8),
                       overflow: 'hidden',
                       margin: hp(0.5),
                       borderRadius: hp(0.5),
                       justifyContent: 'center',
-                      elevation: 0.5, // Android
-                      shadowColor: '#000', // iOS
+                      elevation: 0.5,
+                      shadowColor: '#000',
                       shadowOffset: { width: 0, height: 1 },
                       shadowOpacity: 0.5,
                       shadowRadius: 2,
@@ -238,7 +257,7 @@ const MealBuilder = ({ navigation }) => {
                           style={{
                             fontSize: 14,
                             fontWeight: '400',
-                            color: '#000000',
+                            color: '#000',
                           }}
                         >
                           {subItem?.name}
@@ -265,66 +284,29 @@ const MealBuilder = ({ navigation }) => {
                           backgroundColor: isAlreadyAdded
                             ? '#D1FAE5'
                             : '#FFFFFF',
-                          borderColor: isAlreadyAdded ? '#22C55E' : '#000000',
+                          borderColor: isAlreadyAdded ? '#22C55E' : '#000',
                         }}
                         onPress={() => {
-                          console.log('Selected Items before:', selectedItems);
-                          console.log('Category:', category);
-
                           const newItem = {
                             dishname: subItem?.name,
                             calories: subItem?.calories,
                             id: subItem?._id,
-                            servingSize: subItem?.servingSize,
-                            adjustmentWeight: subItem?.adjustmentWeight,
                             section: category,
-                            recepieId: subItem?.recipeLink,
                           };
-
-                          const isAlreadyAdded = selectedItems.some(
-                            i =>
-                              i.dishname === newItem.dishname &&
-                              i.calories === newItem.calories &&
-                              i.id === newItem.id &&
-                              i.servingSize === newItem.servingSize &&
-                              i.adjustmentWeight === newItem.adjustmentWeight &&
-                              i.section === newItem.section &&
-                              i.recepieId === newItem.recepieId,
-                          );
-
                           if (isAlreadyAdded) {
-                            // 🔄 Remove only the matching item
                             setSelectedItems(prev =>
-                              prev.filter(
-                                i =>
-                                  !(
-                                    i.dishname === newItem.dishname &&
-                                    i.calories === newItem.calories &&
-                                    i.id === newItem.id &&
-                                    i.servingSize === newItem.servingSize &&
-                                    i.adjustmentWeight ===
-                                      newItem.adjustmentWeight &&
-                                    i.section === newItem.section &&
-                                    i.recepieId === newItem.recepieId
-                                  ),
-                              ),
+                              prev.filter(i => i.dishname !== newItem.dishname),
                             );
-                            console.log('Removed:', newItem);
                           } else {
-                            // ➕ Add item
                             setSelectedItems(prev => [...prev, newItem]);
-                            console.log('Added:', newItem);
                           }
-
-                          console.log('Selected Items after:', selectedItems);
                         }}
                       >
                         <Text
                           style={{
                             fontSize: 14,
                             fontWeight: '400',
-                            color: '#000000',
-                            fontFamily: 'Roboto-Regular',
+                            color: '#000',
                           }}
                         >
                           {isAlreadyAdded ? 'Added' : 'Add'}
@@ -349,7 +331,6 @@ const MealBuilder = ({ navigation }) => {
         { mealTime: 'Lunch', cuisine: 'Indian' },
         { mealTime: 'Lunch', cuisine: 'Global' },
       ];
-
       await Promise.all(combos.map(combo => dispatch(getBuilderItems(combo))));
     } catch (err) {
       console.error('Refresh failed:', err);
@@ -358,78 +339,33 @@ const MealBuilder = ({ navigation }) => {
     }
   };
 
-  if (!sectionedData || sectionedData.length === 0) {
-    return (
-      <ApiErrorFallback
-        message="Failed to load meal data"
-        onRetry={onRefresh}
-      />
-    );
-  }
+  // if (!sectionedData || sectionedData.length === 0) {
+  //   return <ApiErrorFallback message="No meals found" onRetry={onRefresh} />;
+  // }
 
   return (
     <View style={{ flex: 1 }}>
+      {/* Floating Cart */}
       {selectedItems.length > 0 && (
         <TouchableOpacity
           onPress={() =>
             navigation.navigate('MealBuilder1', {
               dishes: selectedItems,
-              targetCalories,
-              sumofCalories,
               activeTab,
+              targetCalories:
+                activeTab === 'Breakfast' && CaloriesBreakfastIndian
+                  ? CaloriesBreakfastIndian
+                  : CaloriesDinnerGlobal,
               activeCuisine,
+              sumofCalories,
             })
           }
           style={styles.floatingText}
         >
-          {/* <Text style={styles.floatingTextLabel}>Floating Reminder</Text> */}
-          <View>
-            <View style={{ position: 'relative' }}>
-              {/* 🔴 Badge */}
-
-              {/* 🛒 Cart Icon */}
-              <Image
-                source={Images.CART}
-                style={[styles.cartImage, { tintColor: 'white' }]}
-              />
-            </View>
-          </View>
-          <View>
-            <Text
-              style={{
-                fontSize: 15,
-                fontWeight: '600',
-                color: '#FFFFFF',
-                marginLeft: hp(1),
-              }}
-            >
-              View Cart
-            </Text>
-            <Text
-              style={{
-                marginTop: hp(0.5),
-                fontSize: 14,
-                fontWeight: '500',
-                color: '#FFFFFF',
-                marginLeft: hp(1),
-              }}
-            >
-              {selectedItems?.length} View Cart
-            </Text>
-          </View>
-          <Image
-            source={Images.RIGHT_ARROW}
-            style={[
-              styles.cartImage,
-              {
-                tintColor: 'white',
-                marginLeft: hp(1.5),
-                height: hp(2.5),
-                // resizeMode: 'contain',
-                width: wp(2.5),
-              },
-            ]}
-          />
+          <Image source={Images.CART} style={styles.cartImage} />
+          <Text style={{ color: '#FFF', marginLeft: hp(1), fontWeight: '600' }}>
+            View Cart ({selectedItems.length})
+          </Text>
         </TouchableOpacity>
       )}
 
@@ -453,13 +389,20 @@ const MealBuilder = ({ navigation }) => {
           <View>
             <Text style={styles.target}>Target</Text>
             <Text style={styles.kcal}>
-              {targetCalories}
+              {activeTab === 'Breakfast' && CaloriesBreakfastIndian
+                ? CaloriesBreakfastIndian
+                : CaloriesDinnerGlobal}
               {' kcal'}
             </Text>
           </View>
 
           <ProgressBar
-            progress={sumofCalories / targetCalories}
+            progress={
+              sumofCalories /
+              (activeTab === 'Breakfast' && CaloriesBreakfastIndian
+                ? CaloriesBreakfastIndian
+                : CaloriesDinnerGlobal)
+            }
             color="#3271B1"
             style={styles.progress}
           />
@@ -468,7 +411,11 @@ const MealBuilder = ({ navigation }) => {
             <Text
               style={[
                 styles.target,
-                targetCalories - sumofCalories < 0 && { color: 'red' },
+                (activeTab === 'Breakfast' && CaloriesBreakfastIndian
+                  ? CaloriesBreakfastIndian
+                  : CaloriesDinnerGlobal) -
+                  sumofCalories <
+                  0 && { color: 'red' },
               ]}
             >
               Remaining
@@ -477,10 +424,17 @@ const MealBuilder = ({ navigation }) => {
               style={[
                 styles.kcal,
                 styles.remainingKcal,
-                targetCalories - sumofCalories < 0 && { color: 'red' },
+                (activeTab === 'Breakfast' && CaloriesBreakfastIndian
+                  ? CaloriesBreakfastIndian
+                  : CaloriesDinnerGlobal) -
+                  sumofCalories <
+                  0 && { color: 'red' },
               ]}
             >
-              {targetCalories - sumofCalories} kcal
+              {(activeTab === 'Breakfast' && CaloriesBreakfastIndian
+                ? CaloriesBreakfastIndian
+                : CaloriesDinnerGlobal) - sumofCalories}{' '}
+              kcal
             </Text>
           </View>
         </View>
@@ -498,7 +452,6 @@ const MealBuilder = ({ navigation }) => {
       >
         <View style={styles.body}>
           <View style={styles.mealTypeRow}>
-            {/* Breakfast Tab */}
             <TouchableOpacity
               onPress={() => setActiveTab('Breakfast')}
               style={[
@@ -518,8 +471,6 @@ const MealBuilder = ({ navigation }) => {
                 Breakfast
               </Text>
             </TouchableOpacity>
-
-            {/* Lunch Dinner Tab */}
             <TouchableOpacity
               onPress={() => setActiveTab('LunchDinner')}
               style={[
@@ -540,12 +491,17 @@ const MealBuilder = ({ navigation }) => {
               </Text>
             </TouchableOpacity>
           </View>
+        </View>
 
+        <>
+          {/* Search */}
           <View style={styles.searchBox}>
             <Image style={styles.searchIcon} source={Images.SEARCH} />
             <TextInput
+              value={searchText}
+              onChangeText={setSearchText}
               placeholderTextColor={'#6B7280'}
-              placeholder="Search..."
+              placeholder="Search meals..."
               style={styles.searchInput}
             />
           </View>
@@ -593,7 +549,6 @@ const MealBuilder = ({ navigation }) => {
               </Text>
             </TouchableOpacity>
           </View>
-
           <View style={styles.tagRow}>
             {['Include', 'Limit', 'Avoid'].map(tag => (
               <View key={tag} style={styles.tagItem}>
@@ -612,15 +567,24 @@ const MealBuilder = ({ navigation }) => {
 
           <FlatList
             data={sectionedData}
-            keyExtractor={item => item.id}
+            keyExtractor={(item, index) => item.category + index}
             renderItem={renderCard}
             contentContainerStyle={{ paddingBottom: 100 }}
+            ListEmptyComponent={() => (
+              <Text
+                style={{ textAlign: 'center', marginTop: 20, color: '#777' }}
+              >
+                No items found 😢
+              </Text>
+            )}
           />
-        </View>
+        </>
       </ScrollView>
     </View>
   );
 };
+
+// --- styles unchanged ---
 
 const styles = StyleSheet.create({
   backgroundImage: {
@@ -736,6 +700,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   searchBox: {
+    marginHorizontal: hp(2),
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     padding: hp(0.5),
@@ -752,18 +717,25 @@ const styles = StyleSheet.create({
     marginRight: hp(1),
     resizeMode: 'contain',
   },
-  searchInput: { fontFamily: 'Roboto-Regular', flex: 1 },
+  searchInput: {
+    fontFamily: 'Roboto-Regular',
+    flex: 1,
+    paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(1),
+  },
   cuisineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: hp(2),
+    // backgroundColor: 'red',
+    // width: wp(90),
+    // backgroundColor: 'red',
   },
   cuisineSelected: {
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#6B7280',
-    width: hp(20),
+    width: hp(18),
     paddingVertical: hp(1.3),
     borderRadius: hp(0.6),
   },
@@ -771,6 +743,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
+
+    alignItems: 'center',
+    justifyContent: 'center',
     marginHorizontal: 10,
   },
   cuisineSelectedText: {
@@ -783,7 +758,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#E5E7EB',
-    width: hp(20),
+    width: hp(18),
     paddingVertical: hp(1.3),
     borderRadius: hp(0.6),
   },
@@ -798,6 +773,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginBottom: hp(2),
     marginTop: hp(2),
+    marginHorizontal: hp(1),
+    marginVertical: hp(1),
   },
   tagItem: {
     flexDirection: 'row',

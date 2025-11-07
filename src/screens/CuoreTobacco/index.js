@@ -31,7 +31,7 @@ const Tobacco = ({ navigation }) => {
 
   const data = useSelector(state => state.tobacco.data?.data);
   const dailyChalanges = useSelector(
-    state => state.tobacco.data?.data.allChallenges,
+    state => state.tobacco.data?.data?.allChallenges,
   );
   const userId = useSelector(state => state.auth.userId);
   const profileData = data?.profile;

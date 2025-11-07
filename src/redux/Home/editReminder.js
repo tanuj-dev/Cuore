@@ -12,7 +12,18 @@ export const editReminderThunk = createAsyncThunk(
     try {
       const endpoint = `/api/v1/timeline/${userId}/reminders/${sourceId}`;
       const response = await putApiCall(endpoint, payload2);
-      return response.data;
+
+      if (response?.status === 200) {
+        return {
+          success: true,
+          data: response.data,
+        };
+      } else {
+        return {
+          success: false,
+          data: response.data,
+        };
+      }
     } catch (error) {
       return rejectWithValue(
         error.response?.data || 'Failed to update reminder',
@@ -26,7 +37,17 @@ export const deleteReminderThunk = createAsyncThunk(
     try {
       const endpoint = `/api/v1/timeline/${userId}/reminders/${sourceId}`;
       const response = await deleteApiCall(endpoint);
-      return response.data;
+      if (response?.status === 200) {
+        return {
+          success: true,
+          data: response.data,
+        };
+      } else {
+        return {
+          success: false,
+          data: response.data,
+        };
+      }
     } catch (error) {
       return rejectWithValue(
         error.response?.data || 'Failed to delete reminder',

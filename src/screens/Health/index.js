@@ -32,6 +32,7 @@ const EditableSection = ({
   isEditing,
   toggleEdit,
   show,
+  navigation,
   isDate = false, // ✅ new prop to tell if it's a date field
 }) => (
   <View
@@ -82,7 +83,21 @@ const EditableSection = ({
         </Text>
       )}
 
-      <TouchableOpacity onPress={toggleEdit}>
+      <TouchableOpacity
+        onPress={() => {
+          if (label == 'Past H/O: ') {
+            const STEP = 3;
+            navigation.navigate('OnBoarding', {
+              STEP,
+              screen: 'Reassess',
+              navigateTo: 'Home',
+            });
+          } else if (label == 'Medications: ') {
+            const STEP = 2;
+            navigation.goBack();
+          }
+        }}
+      >
         <Image
           source={Images.EDIT}
           style={{
@@ -263,12 +278,15 @@ const Health = ({ navigation }) => {
     state => state.health?.data?.data?.data?.healthRecords,
   );
   const userId = useSelector(state => state.auth?.userId);
+  console.log('userId in Health screen:', userId);
   const profile = useSelector(state => state.health?.data?.data?.data?.profile);
   const loading = useSelector(state => state.health?.loading);
 
   useEffect(() => {
-    getHealthRecord(userId);
-  }, [userId]);
+    if (userId) {
+      dispatch(getHealthRecord(userId));
+    }
+  }, []);
 
   useEffect(() => {
     setMedications(profile?.medications.join(', '));
@@ -437,7 +455,11 @@ const Health = ({ navigation }) => {
                   </Text>
                   <Text style={styles.detail}>
                     {profile?.age} years{' '}
-                    {profile?.smoker == 'Never' ? 'Non-Smoker' : 'Smoker'}
+                    {profile?.smoker == 'Never'
+                      ? 'Non-Smoker'
+                      : profile?.smoker == 'Quit >6 months ago'
+                      ? 'Past-Smoker'
+                      : 'Smoker'}
                   </Text>
                 </View>
               </View>
@@ -448,6 +470,7 @@ const Health = ({ navigation }) => {
                   value={profile?.pastHO}
                   onChange={setPastHistory}
                   isEditing={editPast}
+                  navigation={navigation}
                 />
               ) : (
                 <EditableSection
@@ -455,6 +478,7 @@ const Health = ({ navigation }) => {
                   value={'No history available'}
                   onChange={setPastHistory}
                   isEditing={editPast}
+                  navigation={navigation}
                 />
               )}
 
@@ -464,6 +488,7 @@ const Health = ({ navigation }) => {
                 onChange={setMedications}
                 isEditing={editMeds}
                 toggleEdit={() => setEditMeds(!editMeds)}
+                navigation={navigation}
               />
 
               <EditableSection
@@ -477,6 +502,7 @@ const Health = ({ navigation }) => {
                   setEditConsulted(!editConsulted);
                   setShow(!show);
                 }}
+                navigation={navigation}
               />
             </View>
 
@@ -850,11 +876,33 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#1E64AC',
-    marginBottom: 8,
+    fontWeight: '700',
+    color: '#1F2937',
     fontFamily: 'Roboto-Regular',
   },
+
+  progressTitle: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    fontFamily: 'Roboto-Regular',
+  },
+
+  columnHeader: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#374151',
+    fontFamily: 'Roboto-Regular',
+    width: hp(17),
+  },
+
+  cellText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    fontFamily: 'Roboto-Regular',
+    width: hp(17),
+  },
+
   observationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

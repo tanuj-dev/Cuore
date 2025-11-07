@@ -16,7 +16,7 @@ export const getHomeData = createAsyncThunk(
 
 export const getHealthRecord = createAsyncThunk(
   'health/getHealthRecord',
-  async ({ userId }, { rejectWithValue }) => {
+  async (userId, { rejectWithValue }) => {
     console.log('Fetching health record for userId:', userId);
     try {
       const endpoint = `/api/v1/cuorehealth/${userId}`;

@@ -9,13 +9,16 @@ import {
   ActivityIndicator,
   RefreshControl,
   FlatList,
+  StatusBar,
+  useColorScheme,
+  Alert,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import ProgressBarWithImage from '../../components/ProgressBar';
 import Reminder from '../../components/Reminder';
 import { useDispatch, useSelector } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
-import { getHomeData } from '../../redux/slices';
+import { getHomeData, getProfile } from '../../redux/slices';
 import ReminderEditor from '../../components/ReminderEditor';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from '../../components/Toast';
@@ -45,20 +48,19 @@ import {
 } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
 import { black } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
+import { checkReminderThunk } from '../../redux/slices';
 
 const Today = ({ navigation, route }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('Feb 26');
-  const [checked, setChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [requestId, setRequestId] = useState(null);
   const [alarmTime, setAlarmTime] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(true);
   const [toast, setToast] = useState(null);
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [reminderList, setReminderList] = useState([]);
   const [toastType, setToastType] = useState('success');
-  const [scrollY, setScrollY] = useState(0); // 🟢 scroll height tracker
 
   const dispatch = useDispatch();
   const dates = ['Feb 25', 'Feb 26', 'Feb 27'];
@@ -68,10 +70,12 @@ const Today = ({ navigation, route }) => {
   const userId = useSelector(state => state.auth.userId);
   const sessionExpiredMessage =
     data?.message == 'Not authorized, invalid or expired token.';
+  const profileData = useSelector(state => state.profile.data?.data?.user);
 
   const onRefresh = async () => {
     setRefreshing(true);
     try {
+      await dispatch(getProfile(userId));
       await dispatch(getHomeData(userId));
       await dispatch(getMind(userId));
       await dispatch(getTobacco(userId));
@@ -90,27 +94,9 @@ const Today = ({ navigation, route }) => {
   };
 
   useEffect(() => {
-    const fetchStoredData = async () => {
-      try {
-        const tokensRaw = await EncryptedStorage.getItem('auth_tokens');
-        const userRaw = await EncryptedStorage.getItem('userid');
-
-        const tokens = tokensRaw ? JSON.parse(tokensRaw) : null;
-        const userInfo = userRaw ? JSON.parse(userRaw) : null;
-
-        console.log('🔐 Parsed Auth Tokens:', tokens);
-        console.log('👤 Parsed User Info:', userInfo);
-      } catch (error) {
-        console.error('❌ Failed to parse encrypted storage:', error);
-      }
-    };
-
-    fetchStoredData();
-  }, []);
-
-  useEffect(() => {
     if (userId) {
       dispatch(getHomeData(userId));
+      dispatch(getProfile(userId));
       dispatch(getPredict(userId));
       dispatch(getKnowledge(userId));
       dispatch(getMind(userId));
@@ -144,7 +130,9 @@ const Today = ({ navigation, route }) => {
 
   useEffect(() => {
     dispatch(getOnboardingThunk());
-  }, []);
+    setReminderList(homeData?.dailySchedule || []);
+  }, [homeData]);
+  console.log('Reminder List:', reminderList);
 
   const handleScheduleAtTime = async (time, title, body) => {
     // Parse the time string (e.g., "8:00 AM") to get hours and minutes
@@ -234,18 +222,6 @@ const Today = ({ navigation, route }) => {
       />
     );
   }
-  //  else if (!data) {
-  //   return (
-  //     <ApiErrorFallback
-  //       message="No data available at the moment."
-  //       onRetry={as() => {
-  //         if (userId) {
-  //           dispatch(getHomeData(userId));
-  //         }
-  //       }}
-  //     />
-  //   );
-  // }
 
   const titleToRouteMap = {
     'Wake Up': 'Mind',
@@ -335,6 +311,7 @@ const Today = ({ navigation, route }) => {
       edges={['top']}
       style={{ flex: 1, backgroundColor: '#F9FAFB' }}
     >
+      <StatusBar barStyle="dark-content" backgroundColor="#000" />
       {/* <View style={styles.floatingText}>
         <TouchableOpacity onPress={() => setIsVisible(true)}>
           <Image source={Images.PLUS} style={styles.addIcon} />
@@ -350,56 +327,76 @@ const Today = ({ navigation, route }) => {
             onRefresh={onRefresh}
           />
         }
-        onScroll={e => {
-          const yOffset = e.nativeEvent.contentOffset.y;
-          setScrollY(yOffset); // 🟢 update scroll value
-        }}
         scrollEventThrottle={16} // 🟢 ensures frequent updates
         style={styles.container}
       >
         <View style={styles.header}>
-          <Text style={styles.username}>Tanuj Prajapati</Text>
+          <Text style={styles.username}>
+            {profileData?.display_name || 'User'}
+          </Text>
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              // shadowColor: '#000',
-              // shadowOpacity: 0.1,
-              // shadowOffset: { width: 0, height: 2 },
-              // shadowRadius: 4,
-              // elevation: 1,
             }}
           >
             <TouchableOpacity
               onPress={() => setIsVisible(true)}
-              style={{
-                padding: hp(1),
-                backgroundColor: '#1E64AC',
-                borderRadius: hp(1),
-                marginRight: hp(2),
-                width: Platform.OS === 'ios' ? hp(13) : hp(12),
-              }}
+              style={[
+                styles.updateButton,
+                {
+                  flexDirection: 'row',
+                  marginHorizontal: wp(2),
+                  paddingHorizontal: wp(1),
+                  backgroundColor: '#f0f6ff',
+                  // width: wp(35),
+                },
+              ]}
             >
+              <Image
+                source={Images.ADD}
+                style={[styles.userIcon, { height: hp(1.5), width: hp(1.5) }]}
+              />
               <Text
-                style={{ fontSize: 12.5, fontWeight: '800', color: '#FFFFFF' }}
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: '800',
+                  color: '#2951a8',
+                  marginLeft: 4,
+                  textAlign: 'center',
+                }}
               >
-                Add Reminder
+                Add{'\n'}Reminder
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Health')}>
+            <TouchableOpacity
+              style={[
+                styles.updateButton,
+                {
+                  flexDirection: 'row',
+                  marginHorizontal: wp(2),
+                  paddingHorizontal: wp(1),
+                  backgroundColor: '#f7edee',
+                  // width: wp(35),
+                },
+              ]}
+              onPress={() => navigation.navigate('Health')}
+            >
               <Image
                 source={Images.DOCTOR_PROFILE}
-                style={[
-                  styles.userIcon,
-                  {
-                    shadowColor: '#000',
-                    shadowOpacity: 0.1,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowRadius: 4,
-                    // elevation: 1,
-                  },
-                ]}
+                style={[styles.userIcon, { tintColor: '#9e4043' }]}
               />
+              <Text
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: '800',
+                  color: '#9e4043',
+                  textAlign: 'center',
+                  marginLeft: 4,
+                }}
+              >
+                Cuore{'\n'}Health
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -450,22 +447,15 @@ const Today = ({ navigation, route }) => {
                 navigateTo: 'Home',
               });
             }}
-            style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#1E64AC',
-              paddingVertical: hp(1),
-              width: hp(12),
-              borderRadius: hp(1),
-            }}
+            style={[styles.updateButton, { backgroundColor: '#f1fcfb' }]}
           >
             <Text
               style={[
                 styles.progressTitle,
-                { color: '#FFFFFF', fontSize: 12.5 },
+                { color: '#376858', fontSize: 12.5 },
               ]}
             >
-              Update Biomarkers
+              Update{'\n'}Biomarkers
             </Text>
           </TouchableOpacity>
         </View>
@@ -556,18 +546,17 @@ const Today = ({ navigation, route }) => {
               Optimize Your Health with Smart Guidance
             </Text>
           </View>
-          {toast && (
-            <Toast
-              message={toast}
-              type="success"
-              onHide={() => setToast(null)}
-              top={hp(4) + scrollY}
-            />
-          )}
 
           <FlatList
-            data={homeData?.dailySchedule || []}
+            data={reminderList || []}
             keyExtractor={(item, index) => (item?.title || 'task') + index}
+            ListEmptyComponent={
+              <View style={{ alignItems: 'center', marginTop: 40 }}>
+                <Text style={{ fontSize: 16, color: '#6B7280' }}>
+                  No items found.
+                </Text>
+              </View>
+            }
             renderItem={({ item, index }) => (
               <View key={item?.id || index} style={styles.taskRow}>
                 <View
@@ -596,11 +585,6 @@ const Today = ({ navigation, route }) => {
                           item?.title,
                           item?.description,
                         );
-                        // console.log(
-                        //   item,
-                        //   'Scheduling notification for this item',
-                        // );
-                        // handleTest();
                       }}
                     >
                       <Image
@@ -639,19 +623,21 @@ const Today = ({ navigation, route }) => {
                 {/* check black dot */}
                 <TouchableOpacity
                   onPress={() => {
-                    if (selectedItems.includes(item.title)) {
-                      setSelectedItems(
-                        selectedItems.filter(i => i !== item.title),
-                      );
-                    } else {
-                      setSelectedItems([...selectedItems, item.title]);
-                    }
+                    // Optimistically update local state
+                    setReminderList(prev =>
+                      prev.map(reminder =>
+                        reminder.id === item.id
+                          ? { ...reminder, completed: !reminder.completed }
+                          : reminder,
+                      ),
+                    );
+
+                    // Dispatch backend update
+                    dispatch(checkReminderThunk({ id: item.id, userId }));
                   }}
                 >
                   <View style={styles.blackDot}>
-                    {selectedItems.includes(item.title) && (
-                      <View style={styles.blackDotInner} />
-                    )}
+                    {item.completed && <View style={styles.blackDotInner} />}
                   </View>
                 </TouchableOpacity>
 
@@ -686,11 +672,11 @@ const Today = ({ navigation, route }) => {
                         {item.description}
                       </Text>
                     </View>
-                    {item?.completed || selectedItems.includes(item.title) ? (
+                    {item?.completed && (
                       <Image source={Images.RIGHT} style={styles.checkIcon} />
-                    ) : (
-                      <Image source={Images.WARNING} style={styles.checkIcon} />
                     )}
+
+                    {/* <Image source={Images.WARNING} style={styles.checkIcon} /> */}
                   </View>
                 </TouchableOpacity>
               </View>
@@ -708,13 +694,49 @@ const Today = ({ navigation, route }) => {
             }}
           >
             <TouchableOpacity
-              onPress={() => setChecked(!checked)}
               style={[
                 styles.checkAll,
-                { backgroundColor: checked ? '#1E64AC' : 'transparent' },
+                {
+                  backgroundColor: reminderList.every(item => item.completed)
+                    ? '#1E64AC'
+                    : 'transparent',
+                },
               ]}
+              onPress={() => {
+                Alert.alert(
+                  'Confirm',
+                  'Are you sure you want to check off all tasks?',
+                  [
+                    {
+                      text: 'Cancel',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'OK',
+                      onPress: () => {
+                        // Optimistically mark all as completed
+                        setReminderList(prev =>
+                          prev.map(reminder => ({
+                            ...reminder,
+                            completed: true,
+                          })),
+                        );
+
+                        // Dispatch backend updates
+                        reminderList.forEach(reminder => {
+                          if (!reminder.completed) {
+                            dispatch(
+                              checkReminderThunk({ id: reminder.id, userId }),
+                            );
+                          }
+                        });
+                      },
+                    },
+                  ],
+                );
+              }}
             >
-              {checked && (
+              {reminderList.every(item => item.completed) && (
                 <Text style={{ color: '#FFFFFF', fontSize: 12 }}>✔</Text>
               )}
             </TouchableOpacity>
@@ -777,7 +799,7 @@ const Today = ({ navigation, route }) => {
         </View>
 
         <Reminder
-          existingReminders={
+          scheduleReminder={
             homeData?.dailySchedule?.filter(item => item?.editable == true) ||
             []
           }
@@ -791,6 +813,11 @@ const Today = ({ navigation, route }) => {
           setShowModal={setShowModal}
         />
       </ScrollView>
+      {toast && (
+        <View style={[styles.toastContainer]}>
+          <Toast message={toast} type="success" onHide={() => setToast(null)} />
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -813,20 +840,22 @@ const styles = StyleSheet.create({
   },
   userIcon: {
     // elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+
     borderRadius: hp(5),
     tintColor: '#1E64AC',
     width: hp(3),
-    height: hp(3.5),
+    height: hp(2),
     resizeMode: 'contain',
   },
   tabs: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginVertical: 16,
+    backgroundColor: '#F9FAFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    // paddingBottom: 8,
+    paddingVertical: 8,
   },
   activeTab: { fontWeight: '500', fontSize: 16, color: '#1E64AC' },
   inactiveTab: { fontSize: 16, color: '#9CA3AF' },
@@ -1016,6 +1045,31 @@ const styles = StyleSheet.create({
     width: hp(1.2),
     borderRadius: hp(2),
     backgroundColor: '#000000',
+  },
+  updateButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: hp(1),
+    // paddingHorizontal: hp(2),
+    paddingLeft: hp(1),
+    paddingRight: hp(1),
+    // width: hp(12),
+    borderRadius: hp(1),
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+  toastContainer: {
+    position: 'absolute',
+    top: hp(10),
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 9999,
+    elevation: 9999, // for Android
   },
 });
 

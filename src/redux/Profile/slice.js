@@ -1,16 +1,15 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { updateProfile } from './profileThunk';
+import { getProfile } from './profileThunk';
 
 const initialState = {
   loading: false,
-  profile: null,
-  userId: null,
-  message: '',
+
+  data: null,
   error: null,
   success: false,
 };
 
-const profileSlice = createSlice({
+export const profileSlice = createSlice({
   name: 'profile',
   initialState,
   reducers: {
@@ -26,29 +25,27 @@ const profileSlice = createSlice({
   extraReducers: builder => {
     builder
       // Pending
-      .addCase(updateProfile.pending, state => {
+      .addCase(getProfile.pending, state => {
         state.loading = true;
         state.error = null;
         state.success = false;
       })
 
       // Fulfilled
-      .addCase(updateProfile.fulfilled, (state, action) => {
+      .addCase(getProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.success = true;
-        state.profile = action.payload.profile;
-        state.userId = action.payload.userId;
-        state.message = action.payload.message;
+        state.data = action.payload?.data;
       })
 
       // Rejected
-      .addCase(updateProfile.rejected, (state, action) => {
+      .addCase(getProfile.rejected, (state, action) => {
         state.loading = false;
         state.success = false;
-        state.error = action.payload?.message || 'Failed to update profile';
+        state.error = action.payload?.message || 'Failed to fetch profile';
       });
   },
 });
 
-export const { resetProfileState } = profileSlice.actions;
-export default profileSlice.reducer;
+// export const { resetProfileState } = profileSlice.actions;
+// export default profileSlice.reducer;

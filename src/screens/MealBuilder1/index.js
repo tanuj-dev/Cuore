@@ -23,6 +23,7 @@ const tagColors = {
 
 const MealBuilder1 = ({ navigation, route }) => {
   const dispatch = useDispatch();
+  console.log('Route params:', route.params);
   const { dishes, targetCalories, sumofCalories, activeTab, activeCuisine } =
     route.params;
 

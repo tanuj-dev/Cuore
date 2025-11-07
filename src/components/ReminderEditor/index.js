@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useDispatch, useSelector } from 'react-redux';
-import { editWakeupThunk } from '../../redux/slices';
 import moment from 'moment';
 import {
   getHomeData,
@@ -20,31 +19,32 @@ import {
   deleteReminderThunk,
 } from '../../redux/slices';
 
-const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
-  // console.log('Editing reminder:', requestId);
+const ReminderEditor = ({
+  showModal,
+  setShowModal,
+  requestId,
+  setVisible,
+  setExistingReminder,
+  existingReminder,
+}) => {
   const [reminderText, setReminderText] = useState('');
-  // console.log('Initial reminder text:', reminderText);
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  console.log(existingReminder, '<<--- existingReminder in editor');
+
   const dispatch = useDispatch();
+  const userId = useSelector(state => state?.auth?.userId);
+
   const onTimeSelected = (event, selectedTime) => {
     setShowTimePicker(false);
     if (selectedTime) setTime(selectedTime);
   };
 
-  const userId = useSelector(state => state?.auth?.userId);
-  // console.log('User ID in ReminderEditor:', userId);
-
   const handleChange = async () => {
-    const formattedTime = moment(time).format('hh:mm A'); // e.g., "07:15 AM"
-
-    const payload = {
-      newWakeUpTime: formattedTime,
-      // reminderText: reminderText.trim(),
-    };
+    const formattedTime = moment(time).format('hh:mm A');
     const payload2 = {
       time: formattedTime,
       title: reminderText.trim(),
@@ -52,42 +52,49 @@ const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
 
     try {
       setLoading(true);
-      const reminderId = requestId?.sourceId;
-      console.log(payload2, 'payload');
-      const res =
-        requestId?.title == 'Wake Up'
-          ? await dispatch(editWakeupThunk({ userId, payload })).unwrap()
-          : await dispatch(
-              editReminderThunk({ sourceId: reminderId, userId, payload2 }),
-            ).unwrap();
-      console.log(res, 'res');
-      if (
-        requestId?.title == 'Wake Up'
-          ? res?.message ==
-            'Wake-up time updated successfully. Timeline adjusted.'
-          : res?.message == 'Reminder updated successfully.'
-      ) {
-        dispatch(getHomeData(userId));
-        setVisible(false);
+      const reminderId =
+        requestId.title === 'Wake Up' ? requestId?.id : requestId?.sourceId;
+
+      // ✅ Optimistically update the reminder in UI
+      setExistingReminder(prev =>
+        prev.map(reminder =>
+          requestId.title === 'Wake Up'
+            ? reminder.id === requestId.id
+              ? { ...reminder, time: formattedTime, title: reminderText.trim() }
+              : reminder
+            : reminder.sourceId === requestId.sourceId
+            ? { ...reminder, time: formattedTime, title: reminderText.trim() }
+            : reminder,
+        ),
+      );
+
+      // ✅ Proceed with backend update
+      const res = await dispatch(
+        editReminderThunk({ sourceId: reminderId, userId, payload2 }),
+      ).unwrap();
+      console.log(res, '<<--- Reminder edit response');
+
+      if (res?.success) {
+        showModal(false);
         setLoading(false);
       } else {
-        setVisible(false);
         Alert.alert('Error', 'Failed to update reminder. Please try again.');
+        setVisible(false);
         setLoading(false);
       }
-
-      console.log('✅ Wakeup updated successfully');
     } catch (err) {
       setLoading(false);
-      console.error('❌ Wakeup update failed:', err);
+      console.error('❌ Reminder update failed:', err);
+    } finally {
+      setLoading(false);
+      setShowModal(false);
     }
-
-    setShowModal(false);
   };
+
   useEffect(() => {
     if (requestId) {
       setReminderText(
-        requestId?.title == 'Medication'
+        requestId?.title === 'Medication'
           ? requestId?.description
           : requestId?.title || '',
       );
@@ -95,75 +102,67 @@ const ReminderEditor = ({ showModal, setShowModal, requestId, setVisible }) => {
   }, [requestId]);
 
   return (
-    <>
-      <Modal
-        onBackdropPress={() => setShowModal(false)} // 👈 tap outside to close
-        onSwipeComplete={() => setShowModal(false)} // 👈 swipe down to close
-        visible={showModal}
-        transparent
-        animationType="slide"
-        animationIn="slideInUp"
-        animationOut="slideOutDown"
-        onRequestClose={() => setShowModal(false)}
+    <Modal
+      visible={showModal}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowModal(false)}
+    >
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressOut={() => setShowModal(false)}
+        style={styles.overlay}
       >
-        <TouchableOpacity
-          onPress={() => {
-            setReminderText('');
-            setShowModal(false);
-          }}
-          style={styles.overlay}
-        >
-          <View style={styles.bottomSheet}>
-            <Text style={styles.title}>Edit Reminder</Text>
+        <View style={styles.bottomSheet}>
+          <Text style={styles.title}>Edit Reminder</Text>
 
-            <TouchableOpacity
-              style={styles.input}
-              onPress={() => setShowTimePicker(true)}
-            >
-              <Text style={{ color: '#333' }}>
-                {time?.toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.input}
+            onPress={() => setShowTimePicker(true)}
+          >
+            <Text style={{ color: '#333' }}>
+              {time?.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+          </TouchableOpacity>
 
-            {showTimePicker && (
-              <DateTimePicker
-                value={time.getTime() ? time : new Date()}
-                mode="time"
-                is24Hour={true}
-                display={Platform.OS === 'ios' ? 'default' : 'default'}
-                onChange={onTimeSelected}
-              />
-            )}
-
-            <TextInput
-              placeholder="Reminder text"
-              value={reminderText}
-              onChangeText={text => {
-                if (text.length <= 20) {
-                  setReminderText(text);
-                  setError('');
-                } else {
-                  setError('Reminder must be 20 characters or less');
-                }
-              }}
-              style={styles.input}
+          {showTimePicker && (
+            <DateTimePicker
+              value={time}
+              mode="time"
+              is24Hour={true}
+              display={Platform.OS === 'ios' ? 'default' : 'default'}
+              onChange={onTimeSelected}
             />
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          )}
 
-            <TouchableOpacity style={styles.button} onPress={handleChange}>
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.buttonText}>Change</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    </>
+          <TextInput
+            placeholder="Reminder text"
+            value={reminderText}
+            onChangeText={text => {
+              if (text.length <= 20) {
+                setReminderText(text);
+                setError('');
+              } else {
+                setError('Reminder must be 20 characters or less');
+              }
+            }}
+            style={styles.input}
+          />
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+          <TouchableOpacity style={styles.button} onPress={handleChange}>
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Change</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
   );
 };
 
@@ -173,7 +172,7 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)', // darker for better focus
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   bottomSheet: {
     backgroundColor: '#FFFFFF',
@@ -213,16 +212,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
-  charLimitText: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: -4,
-  },
   errorText: {
-    // backgroundColor: 'red',
     fontSize: 12,
     color: '#EF4444',
-    // marginTop: 4,
     marginBottom: 10,
   },
 });

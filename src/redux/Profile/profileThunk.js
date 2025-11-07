@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { putApiCall } from '../../utilities/Services';
+import { getApiCall, putApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
 
 export const updateProfile = createAsyncThunk(
@@ -14,9 +14,37 @@ export const updateProfile = createAsyncThunk(
       if (res?.status === 200) {
         return {
           success: true,
-          message: data?.message || 'Profile updated successfully',
-          userId: data?.user_id,
-          profile: data?.profile,
+          data: data,
+        };
+      } else {
+        return rejectWithValue({
+          success: false,
+          message: data?.message || 'Failed to update profile',
+        });
+      }
+    } catch (err) {
+      return rejectWithValue({
+        success: false,
+        message: err?.message || 'Network error',
+      });
+    }
+  },
+);
+
+export const getProfile = createAsyncThunk(
+  'profile/getProfile',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const endpoint = `/api/v1/users/${userId}/profile`;
+
+      const res = await getApiCall(endpoint);
+      const data = res?.data;
+
+      if (res?.status === 200) {
+        return {
+          success: true,
+          message: data?.message || 'Profile fetched successfully',
+          data: data,
         };
       } else {
         return rejectWithValue({

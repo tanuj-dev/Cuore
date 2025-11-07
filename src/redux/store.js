@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authSlices from './Auth/slice'; // this is the object with both reducers
 
-import profileReducer from './Profile/slice';
+import { profileSlice } from './Profile/slice';
 import {
   onboardingSlice,
   onboardingSliceData,
@@ -24,7 +24,7 @@ const store = configureStore({
     auth: authSlices.auth,
     createAccount: authSlices.createAccount,
     onboarding: onboardingSlice.reducer,
-    profile: profileReducer,
+    profile: profileSlice.reducer,
     onboardingdata: onboardingSliceData.reducer,
     reassessment: reassessmentSlice.reducer,
     home: homeSlice.reducer,

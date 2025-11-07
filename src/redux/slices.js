@@ -1,7 +1,7 @@
 import { sendOtp } from './Auth/authThunk';
 
 import { verifyOtp } from './Auth/verifyOtpThunk';
-import { updateProfile } from './Profile/profileThunk';
+import { updateProfile, getProfile } from './Profile/profileThunk';
 import { createAccountThunk } from './Auth/authThunk';
 import { getOnboardingThunk } from './OnBoardng/onBoardingThunk';
 import { createReassessment } from './OnBoardng/onBoardingThunk';
@@ -24,6 +24,8 @@ import {
 } from './Explore/exploreThunk';
 import { getFitness, updateFitnessTime } from './Fitness/fitnessThunk';
 import { getPredict } from './Predict/predictThunk';
+import { checkReminderThunk } from './Home/checkReminderThunk';
+
 export {
   sendOtp,
   verifyOtp,
@@ -51,4 +53,6 @@ export {
   getPredict,
   deleteReminderThunk,
   getHealthRecord,
+  getProfile,
+  checkReminderThunk,
 };

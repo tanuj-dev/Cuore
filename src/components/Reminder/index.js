@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { use, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,7 @@ import { useDispatch } from 'react-redux';
 import ReminderEditor from '../ReminderEditor';
 import Toast from '../../components/Toast';
 
-const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
+const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
   const dispatch = useDispatch();
 
   const [reminderText, setReminderText] = useState('');
@@ -41,6 +41,9 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
   const [requestId, setRequestId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
+  const [existingReminder, setExistingReminder] = useState([]);
+  console.log('Existing Reminders in Reminder Modal:', existingReminder);
 
   // ✅ Handle Date Picker (store as Date, not string)
   const handleDateChange = (event, selectedDate) => {
@@ -89,6 +92,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
 
   // ✅ Final Reminder Creation Handler
   const handleAddEntry = async () => {
+    if (reminderText.trim() === '') {
+      setToastMessage('Please enter a reminder text.');
+      setToastType('error');
+      return;
+    }
+
     const currentTime = new Date();
 
     // Ensure valid date (default: today)
@@ -111,6 +120,8 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
       isMedication: flagAsMedication,
     };
 
+    // setExistingReminder(prev => [...prev, reminderData]);
+
     setLoading(true);
     try {
       const res = await dispatch(
@@ -119,33 +130,47 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
       console.log('Set Reminder Response:', res);
 
       if (res?.payload?.success) {
+        setExistingReminder(prev => [...prev, reminderData]);
         setToastMessage('Reminder set successfully!');
-        setIsVisible(false);
-        dispatch(getHomeData(user_id));
+        setToastType('success');
+        setReminderText('');
+
+        // setIsVisible(false);
+        // dispatch(getHomeData(user_id));
       } else {
         setToastMessage('Failed to set reminder.');
+        setToastType('error');
       }
     } catch (error) {
       console.error(error);
       setToastMessage('Something went wrong.');
+      setToastType('error');
     } finally {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    setExistingReminder(scheduleReminder || []);
+  }, [scheduleReminder]);
 
   return (
     <Modal
-      swipeThreshold={10}
+      // swipeThreshold={10}
       propagateSwipe
       animationIn="slideInUp"
       animationOut="slideOutDown"
-      swipeDirection="down"
+      // swipeDirection="down"
       isVisible={isVisible}
       onBackdropPress={() => setIsVisible(false)}
       style={styles.modal}
     >
       {toastMessage ? (
-        <Toast message={toastMessage} onHide={() => setToastMessage('')} />
+        <Toast
+          top={120}
+          message={toastMessage}
+          onHide={() => setToastMessage('')}
+          type={toastType}
+        />
       ) : null}
 
       <View style={styles.container}>
@@ -160,7 +185,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
             style={{ flexDirection: 'row', justifyContent: 'space-between' }}
           >
             <Text style={styles.title}>Add/Delete Entry</Text>
-            <TouchableOpacity onPress={() => setIsVisible(false)}>
+            <TouchableOpacity
+              onPress={() => {
+                dispatch(getHomeData(user_id));
+                setIsVisible(false);
+              }}
+            >
               <Image
                 style={{ width: 13, height: 13, tintColor: '#6B7280' }}
                 source={Images.CROSS}
@@ -169,8 +199,8 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
           </View>
           {/* Existing Reminders */}
           <Text style={styles.subtitle}>Existing Entries</Text>
-          {existingReminders && existingReminders.length > 0 ? (
-            existingReminders.map((item, index) => (
+          {existingReminder && existingReminder.length > 0 ? (
+            existingReminder.map((item, index) => (
               <View key={item.id || index.toString()} style={styles.entryCard}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.entryText}>
@@ -195,14 +225,22 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
                 {item?.title?.toLowerCase() !== 'wake up' && (
                   <TouchableOpacity
                     onPress={() => {
+                      // Optimistically remove from UI
+                      setExistingReminder(prev =>
+                        prev.filter(
+                          reminder => reminder.sourceId !== item.sourceId,
+                        ),
+                      );
+
+                      // Let backend update happen in background
                       dispatch(
                         deleteReminderThunk({
                           userId: user_id,
-                          sourceId: item?.sourceId,
+                          sourceId: item.sourceId,
                         }),
                       );
-                      dispatch(getHomeData(user_id));
-                      setIsVisible(false);
+                      // dispatch(getHomeData(user_id));
+                      // setIsVisible(false);
                     }}
                     style={styles.iconButton}
                   >
@@ -369,6 +407,8 @@ const Reminder = ({ isVisible, setIsVisible, user_id, existingReminders }) => {
 
       {/* Reminder Editor Modal */}
       <ReminderEditor
+        existingReminder={existingReminder}
+        setExistingReminder={setExistingReminder}
         userId={user_id}
         setIsVisible={setIsVisible}
         requestId={requestId}

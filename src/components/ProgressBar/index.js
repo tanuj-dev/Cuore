@@ -109,7 +109,7 @@ const ProgressBarWithImage = ({ navigation, data }) => {
                 resizeMode: 'contain',
               }}
             />
-            <Text style={styles.percentText}>{Math.round(progress)}</Text>
+            <Text style={styles.percentText}>{Math.round(progress)}%</Text>
           </TouchableOpacity>
         </Animated.View>
 

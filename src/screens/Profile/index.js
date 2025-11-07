@@ -1,4 +1,4 @@
-import React, { use, useEffect } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,16 @@ import {
   ScrollView,
   Modal,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
-import { useSelector } from 'react-redux';
+// import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/Auth/slice';
-import { useDispatch } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { resetCreateAccount } from '../../redux/Auth/slice';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getProfile } from '../../redux/slices';
 
 const profileOptions = [
   {
@@ -70,6 +72,8 @@ const profileOptions = [
 const Profile = ({ navigation }) => {
   const dispatch = useDispatch();
   // Group the options by section
+
+  const [refreshing, setRefreshing] = useState(false);
   const groupedSections = profileOptions.reduce((acc, item) => {
     if (!acc[item.section]) acc[item.section] = [];
     acc[item.section].push(item);
@@ -157,10 +161,36 @@ const Profile = ({ navigation }) => {
       },
     ]);
   };
+  const userID = useSelector(state => state?.auth?.userId);
+  const userProfile = useSelector(state => state?.profile?.data?.data);
+  console.log('userProfile', userProfile);
+  console.log('userID', userID);
+  useEffect(() => {
+    if (userID) {
+      dispatch(getProfile(userID));
+    }
+  }, [userID]);
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    if (userID) {
+      dispatch(getProfile(userID)).then(() => setRefreshing(false));
+    } else {
+      setRefreshing(false);
+    }
+  };
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
-      <ScrollView style={styles.container}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            title="Pull to refresh"
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
+        style={styles.container}
+      >
         <View style={{ backgroundColor: '#FAFAFA' }}>
           {/* Logo at the top */}
           <View
@@ -191,7 +221,7 @@ const Profile = ({ navigation }) => {
               style={styles.profileCard}
             >
               <Image source={Images.UNCLE} style={styles.profileImage} />
-              <Text style={styles.name}>M. Johnson</Text>
+              <Text style={styles.name}>{userProfile?.user?.display_name}</Text>
               <Image source={Images.RIGHT_ARROW} style={styles.profileArrow} />
             </TouchableOpacity>
 

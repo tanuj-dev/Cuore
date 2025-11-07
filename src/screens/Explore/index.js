@@ -66,17 +66,23 @@ const Explore = ({ navigation }) => {
   const renderItem = ({ item }) => (
     <TouchableOpacity
       onPress={() => {
-        const route = routeMap[item.title]; // Corrected here
+        const route = routeMap[item.title];
 
         if (route) {
-          if (route == 'Fitness') {
+          if (route.toLowerCase() === 'fitness') {
             const dayKey = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
               new Date().getDay()
             ];
+            console.log('dayKey', dayKey);
             navigation.navigate(route, { initialTab: dayKey });
+            return;
           }
 
-          // Alert.alert(route);
+          if (route === 'MealBuilder') {
+            navigation.navigate(route, { mealItem: 'Breakfast' });
+            return;
+          }
+
           navigation.navigate(route);
         } else {
           Alert.alert('Route not found');

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -15,21 +15,33 @@ import {
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hp, wp, Images } from '../../utilities';
-import { useDispatch } from 'react-redux';
-import EncryptedStorage from 'react-native-encrypted-storage';
-import { updateProfile } from './../../redux/slices';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateProfile, getProfile } from './../../redux/slices';
+import ToastMessage from '../../components/Toast';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 const EditProfile = ({ navigation }) => {
   const [userName, setUserName] = useState('M. Johnson');
   const [userMobile, setUserMobile] = useState('981121234');
-  const [confirmMobile, setConfirmMobile] = useState('981121234');
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
   const [profileImage, setProfileImage] = useState(null);
-  const [editName, setEditName] = useState(false);
-  const [editMobile, setEditMobile] = useState(false);
-  const [editConfirm, setEditConfirm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false); // ✅ single edit mode toggle
 
   const dispatch = useDispatch();
+  const userID = useSelector(state => state.auth.userId);
+  const userProfile = useSelector(state => state.profile.data?.data?.user);
 
+  useEffect(() => {
+    setUserName(userProfile?.display_name || 'M. Johnson');
+    setUserMobile(
+      userProfile?.phone?.startsWith('+91')
+        ? userProfile.phone.slice(3)
+        : userProfile.phone,
+    );
+  }, [userProfile]);
+
+  // 🔐 Camera & storage permissions
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -93,13 +105,8 @@ const EditProfile = ({ navigation }) => {
           return;
         }
         launchCamera(options, response => {
-          if (response.didCancel) {
-            console.log('User cancelled image picker');
-          } else if (response.error) {
-            console.log('ImagePicker Error: ', response.error);
-          } else if (response.assets && response.assets.length > 0) {
+          if (response.assets && response.assets.length > 0) {
             setProfileImage(response.assets[0].uri);
-            // return(response.assets[0].uri);
           }
         });
       } else {
@@ -112,13 +119,8 @@ const EditProfile = ({ navigation }) => {
           return;
         }
         launchImageLibrary(options, response => {
-          if (response.didCancel) {
-            console.log('User cancelled image picker');
-          } else if (response.error) {
-            console.log('ImagePicker Error: ', response.error);
-          } else if (response.assets && response.assets.length > 0) {
+          if (response.assets && response.assets.length > 0) {
             setProfileImage(response.assets[0].uri);
-            // return(response.assets[0].uri);
           }
         });
       }
@@ -129,107 +131,144 @@ const EditProfile = ({ navigation }) => {
   };
 
   const showImagePickerOptions = () => {
+    if (!isEditing) return; // only allow editing mode to change photo
     Alert.alert(
       'Select Image',
       'Choose an option',
       [
-        {
-          text: 'Take Photo',
-          onPress: () => handleImagePicker('camera'),
-        },
+        { text: 'Take Photo', onPress: () => handleImagePicker('camera') },
         {
           text: 'Choose from Gallery',
           onPress: () => handleImagePicker('gallery'),
         },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
+        { text: 'Cancel', style: 'cancel' },
       ],
       { cancelable: true },
     );
   };
 
-  const handleSave = async () => {
+  // ✅ Single button handles both edit & save
+  const handleEditOrSave = async () => {
+    // Validation before saving
+    if (!userName.trim() || !userMobile.trim()) {
+      setToastMessage('Please fill in all required fields.');
+      setToastType('error');
+      return;
+    }
+    if (userName.length > 15) {
+      setToastMessage('User name cannot exceed 15 characters.');
+      setToastType('error');
+      return;
+    }
+    if (userMobile.length !== 10) {
+      setToastMessage('Mobile number must be exactly 10 digits.');
+      setToastType('error');
+      return;
+    }
+
+    const userId = userID;
+    const payload = {
+      display_name: userName.trim(),
+      phone: `+91${userMobile.trim()}`,
+    };
+
     try {
-      // 1️⃣ Validate phone numbers
-      if (editMobile || editConfirm) {
-        if (userMobile !== confirmMobile) {
-          Alert.alert('Error', 'Mobile numbers do not match');
-          return;
-        }
+      const resultAction = await dispatch(
+        updateProfile({ userId, profileData: payload }),
+      );
+
+      if (updateProfile.fulfilled.match(resultAction)) {
+        setToastMessage('Profile updated successfully!');
+        setToastType('success');
+        setIsEditing(false); // exit edit mode
+        dispatch(getProfile(userId)); // refresh profile data
+      } else {
+        const errorMessage =
+          resultAction.payload?.message || 'Failed to update profile';
+        setToastMessage(errorMessage);
+        setToastType('error');
       }
-
-      // 2️⃣ Get userId from storage
-      const authDataString = await EncryptedStorage.getItem('auth_tokens');
-      if (!authDataString) return;
-
-      const authData = JSON.parse(authDataString);
-      const userId = authData.userId;
-      if (!userId) return;
-
-      // 3️⃣ Build payload depending on what was edited
-      const payload = { consent_flags: { tos: true, share_with_doctor: true } };
-
-      if (editName) payload.display_name = userName;
-      if (editMobile) payload.phone = userMobile;
-      // confirmMobile is just validation, usually not sent
-
-      if (Object.keys(payload).length === 0) {
-        Alert.alert('No changes', 'Please edit a field first');
-        return;
-      }
-
-      // 4️⃣ Dispatch profile update thunk
-      dispatch(updateProfile({ userId, profileData: payload }));
-
-      // 5️⃣ Reset edit flags
-      if (editName) setEditName(false);
-      if (editMobile) setEditMobile(false);
-      if (editConfirm) setEditConfirm(false);
-
-      Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
       console.error('Profile update error:', error);
-      Alert.alert('Error', 'Failed to update profile');
+      setToastMessage('Something went wrong. Please try again.');
+      setToastType('error');
     }
   };
 
   const handleCancel = () => {
-    setUserName('M. Johnson');
-    setUserMobile('981121234');
-    setConfirmMobile('981121234');
+    setUserName(userProfile?.display_name || '');
+    setUserMobile(userProfile?.phone || '');
     setProfileImage(null);
-    setEditName(false);
-    setEditMobile(false);
-    setEditConfirm(false);
+    setIsEditing(false);
+  };
+  const handleNameChange = text => {
+    if (text.length <= 15) {
+      setUserName(text);
+    } else {
+      setToastMessage('User name cannot exceed 15 characters.');
+      setToastType('error');
+    }
   };
 
-  const renderInputField = (
-    label,
-    value,
-    editable,
-    setValue,
-    toggleEdit,
-    numeric,
-  ) => (
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.inputWrapper}>
-        <TextInput
-          style={styles.input}
-          value={value}
-          editable={editable}
-          onChangeText={setValue}
-          placeholder={label}
-          keyboardType={numeric == 'numeric' ? 'numeric' : 'default'}
-        />
-        <TouchableOpacity onPress={toggleEdit}>
-          <Image source={Images.EDIT} style={styles.arrowIcon} />
-        </TouchableOpacity>
+  const handleMobileChange = text => {
+    const digits = text.replace(/\D/g, '');
+    if (digits.length <= 10) {
+      setUserMobile(digits);
+    } else {
+      setToastMessage('Mobile number cannot exceed 10 digits.');
+      setToastType('error');
+    }
+  };
+
+  const renderInputField = (label, value, setValue, numeric) => {
+    const isMobile = numeric === 'numeric';
+    return (
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>{label}</Text>
+
+        {isMobile ? (
+          <View
+            style={[
+              styles.input,
+              {
+                backgroundColor: isEditing ? '#FFF' : '#F3F4F6',
+                flexDirection: 'row',
+                alignItems: 'center',
+              },
+            ]}
+          >
+            <Text style={styles.prefixText}>+91</Text>
+            <TextInput
+              style={{ flex: 1, color: '#6B7280', fontSize: 16 }}
+              value={value}
+              editable={isEditing}
+              onChangeText={handleMobileChange}
+              placeholder="Enter mobile number"
+              keyboardType="numeric"
+            />
+          </View>
+        ) : (
+          <TextInput
+            style={[
+              styles.input,
+              { backgroundColor: isEditing ? '#FFF' : '#F3F4F6' },
+            ]}
+            value={value}
+            editable={isEditing}
+            onChangeText={handleNameChange}
+            placeholder={label}
+          />
+        )}
+
+        {isMobile && value.length === 11 && (
+          <Text style={styles.helperText}>Max 10 digits allowed</Text>
+        )}
+        {!isMobile && value.length === 16 && (
+          <Text style={styles.helperText}>Max 15 characters allowed</Text>
+        )}
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView
@@ -245,19 +284,22 @@ const EditProfile = ({ navigation }) => {
           contentContainerStyle={{ flexGrow: 1, backgroundColor: '#F9FAFB' }}
           keyboardShouldPersistTaps="handled"
         >
+          {toastMessage && (
+            <ToastMessage
+              top={60}
+              message={toastMessage}
+              type={toastType}
+              onHide={() => setToastMessage('')}
+            />
+          )}
           <View>
-            <View
-              style={{
-                backgroundColor: '#FFFFFF',
-                elevation: 1,
-              }}
-            >
+            {/* Header */}
+            <View style={{ backgroundColor: '#FFFFFF', elevation: 1 }}>
               <View
                 style={{
                   alignItems: 'center',
                   padding: hp(2),
                   flexDirection: 'row',
-                  // marginTop: Platform.OS == 'ios' ? hp(5) : hp(1.5),
                 }}
               >
                 <TouchableOpacity
@@ -288,8 +330,16 @@ const EditProfile = ({ navigation }) => {
                 </Text>
               </View>
             </View>
+
+            {/* Profile Content */}
             <View style={styles.container}>
-              <View style={{ flexDirection: 'row', marginBottom: hp(4) }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  marginBottom: hp(4),
+                  alignItems: 'center',
+                }}
+              >
                 <TouchableOpacity onPress={showImagePickerOptions}>
                   {profileImage ? (
                     <Image
@@ -312,68 +362,56 @@ const EditProfile = ({ navigation }) => {
                     />
                   )}
                 </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={showImagePickerOptions}
-                  style={{
-                    borderWidth: 1,
-                    paddingHorizontal: hp(4),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginLeft: hp(5),
-                    borderColor: '#E5E7EB',
-                    borderRadius: hp(0.5),
-                  }}
-                >
+                {!isEditing && (
+                  <TouchableOpacity
+                    style={{ marginLeft: hp(30) }}
+                    onPress={() => setIsEditing(true)}
+                  >
+                    <Image source={Images.EDIT} style={styles.editIcon} />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={showImagePickerOptions}>
                   <Text
                     style={{
-                      fontSize: 16,
-                      fontWeight: '400',
+                      marginLeft: hp(2),
+                      fontSize: 14,
                       color: '#374151',
                     }}
                   >
-                    Upload Profile Picture
+                    {isEditing ? 'Tap to change picture' : ''}
                   </Text>
                 </TouchableOpacity>
               </View>
-              {renderInputField(
-                'User Name',
-                userName,
-                editName,
-                setUserName,
-                () => setEditName(true),
-                'alpha',
-              )}
+
+              {renderInputField('User Name', userName, setUserName, 'alpha')}
               {renderInputField(
                 'User Mobile',
                 userMobile,
-                editMobile,
                 setUserMobile,
-                () => setEditMobile(true),
-                'alpha',
-              )}
-              {renderInputField(
-                'Confirm User Mobile',
-                confirmMobile,
-                editConfirm,
-                setConfirmMobile,
-                () => setEditConfirm(true),
                 'numeric',
               )}
 
               <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                  <Text style={styles.saveText}>Save Changes</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.cancelBtn}
-                  onPress={() => {
-                    navigation.goBack();
+                {isEditing && (
+                  <TouchableOpacity
+                    style={[
+                      styles.saveBtn,
+                      { backgroundColor: isEditing ? '#1E64AC' : '#1E64AC' },
+                    ]}
+                    onPress={handleEditOrSave}
+                  >
+                    <Text style={styles.saveText}>{'Save Changes'}</Text>
+                  </TouchableOpacity>
+                )}
 
-                    handleCancel();
-                  }}
-                >
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
+                {isEditing && (
+                  <TouchableOpacity
+                    style={styles.cancelBtn}
+                    onPress={handleCancel}
+                  >
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </View>
@@ -383,17 +421,21 @@ const EditProfile = ({ navigation }) => {
   );
 };
 
-// ... keep your existing styles ...
-
 const styles = StyleSheet.create({
   container: {
     padding: wp(5),
-    height: hp(80),
     margin: wp(4),
     backgroundColor: '#fff',
     borderRadius: 12,
     elevation: 2,
   },
+  prefixText: {
+    color: '#6B7280',
+    fontSize: 16,
+    marginRight: wp(1),
+    fontWeight: '500',
+  },
+
   inputGroup: {
     marginBottom: hp(2),
   },
@@ -404,22 +446,20 @@ const styles = StyleSheet.create({
     marginBottom: hp(0.5),
     fontWeight: '400',
   },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingHorizontal: wp(3),
-    height: hp(6),
-    borderWidth: 0.5,
-    borderColor: '#D1D5DB',
-    justifyContent: 'space-between',
-  },
   input: {
     fontFamily: 'Roboto-Regular',
-    flex: 1,
     fontSize: 16,
     color: '#6B7280',
+    borderWidth: 0.5,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(1),
+  },
+  helperText: {
+    fontSize: 12,
+    color: 'gray',
+    marginTop: 3,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -428,7 +468,6 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     alignItems: 'center',
-    backgroundColor: '#1E64AC',
     paddingVertical: hp(1.5),
     paddingHorizontal: wp(6),
     width: wp(40),
@@ -456,11 +495,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
   },
-  arrowIcon: {
-    width: wp(4),
-    height: wp(4),
+  editIcon: {
+    width: wp(5),
+    height: wp(5),
     resizeMode: 'contain',
-    // tintColor: 'black',
   },
 });
 
