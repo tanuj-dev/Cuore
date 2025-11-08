@@ -25,6 +25,7 @@ import {
 import { getFitness, updateFitnessTime } from './Fitness/fitnessThunk';
 import { getPredict } from './Predict/predictThunk';
 import { checkReminderThunk } from './Home/checkReminderThunk';
+import { searchBuilderThunk } from './Nutrition/thunk';
 
 export {
   sendOtp,
@@ -55,4 +56,5 @@ export {
   getHealthRecord,
   getProfile,
   checkReminderThunk,
+  searchBuilderThunk,
 };

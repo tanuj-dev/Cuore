@@ -9,6 +9,7 @@ import {
   ImageBackground,
   ActivityIndicator,
   Platform,
+  TextInput,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
@@ -23,6 +24,9 @@ const Nutrition = ({ navigation, route }) => {
   const [toast, setToast] = useState(null);
   const [toastType, setToastType] = useState('success');
 
+  const [searchText, setSearchText] = useState('');
+  const [filteredMeals, setFilteredMeals] = useState([]);
+
   const dispatch = useDispatch();
   const nourishData = useSelector(state => state.nourish.data);
   const [receipeData, setRecipeData] = useState(null);
@@ -35,7 +39,26 @@ const Nutrition = ({ navigation, route }) => {
     }
   }, [activeTab]);
 
-  // 🟢 Log scroll position when it changes
+  useEffect(() => {
+    if (nourishData?.meal_plan) {
+      setFilteredMeals(nourishData.meal_plan);
+    }
+  }, [nourishData]);
+
+  // 🧠 Search logic
+  const handleSearch = text => {
+    setSearchText(text);
+    if (!text.trim()) {
+      setFilteredMeals(nourishData?.meal_plan || []);
+    } else {
+      const filtered = nourishData?.meal_plan?.filter(
+        item =>
+          item?.name?.toLowerCase().includes(text.toLowerCase()) ||
+          item?.title?.toLowerCase().includes(text.toLowerCase()),
+      );
+      setFilteredMeals(filtered);
+    }
+  };
 
   const handlePress = async (item, navigation) => {
     try {
@@ -173,14 +196,14 @@ const Nutrition = ({ navigation, route }) => {
             message={toast}
             type={toastType}
             onHide={() => setToast(null)}
-            // 🟢 dynamically position Toast based on scroll
             top={hp(4)}
           />
         </View>
       )}
       <ScrollView
         style={styles.container}
-        scrollEventThrottle={16} // 🟢 ensures frequent updates
+        scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
       >
         {/* 🔵 Header */}
         <ImageBackground
@@ -210,6 +233,7 @@ const Nutrition = ({ navigation, route }) => {
             />
           </View>
 
+          {/* Tabs */}
           <View
             style={{
               justifyContent: 'center',
@@ -249,6 +273,18 @@ const Nutrition = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
 
+          {/* 🔍 Search Bar */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Search')}
+            style={styles.searchContainer}
+          >
+            <View>
+              <Image source={Images.SEARCH} style={styles.searchIcon} />
+            </View>
+
+            <Text style={{ color: '#9CA3AF' }}> Search Recipe...</Text>
+          </TouchableOpacity>
+
           {loading ? (
             <ActivityIndicator
               style={{ marginTop: hp(2) }}
@@ -264,8 +300,10 @@ const Nutrition = ({ navigation, route }) => {
 
         {/* 🥗 Meal Cards */}
         <View style={styles.cardList}>
-          {nourishData?.meal_plan?.map((item, index) =>
-            renderMealCard(item, index),
+          {filteredMeals?.length > 0 ? (
+            filteredMeals.map((item, index) => renderMealCard(item, index))
+          ) : (
+            <Text style={styles.noResultText}>No meals found.</Text>
           )}
         </View>
       </ScrollView>
@@ -316,7 +354,6 @@ const styles = StyleSheet.create({
   cardFooter: {
     marginTop: hp(1.5),
     flexDirection: 'row',
-    // justifyContent: 'space-between',
     alignItems: 'center',
   },
   kcal: {
@@ -352,7 +389,38 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     zIndex: 9999,
-    elevation: 9999, // for Android
+    elevation: 9999,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: hp(1),
+    marginHorizontal: hp(1),
+    marginTop: hp(2),
+    paddingHorizontal: hp(2),
+    paddingVertical: hp(1),
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  searchIcon: {
+    height: hp(2.5),
+    width: wp(4),
+    resizeMode: 'contain',
+    tintColor: '#9CA3AF',
+    marginRight: hp(1),
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#111827',
+    paddingVertical: Platform.OS === 'ios' ? hp(1.5) : 0,
+  },
+  noResultText: {
+    textAlign: 'center',
+    color: '#6B7280',
+    fontSize: 14,
+    marginTop: hp(2),
   },
 });
 

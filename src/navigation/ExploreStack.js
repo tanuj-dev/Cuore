@@ -15,6 +15,7 @@ import MealBuilder2 from '../screens/MealBuilder2';
 import Health from '../screens/Health';
 import HealthRecords from '../screens/HealthRecords';
 import OnBoarding from '../screens/OnBoarding';
+import Search from '../screens/Search/search';
 
 const Stack = createStackNavigator();
 
@@ -37,6 +38,7 @@ export function ExploreStack() {
       <Stack.Screen name="Health" component={Health} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
       <Stack.Screen name="OnBoarding" component={OnBoarding} />
+      <Stack.Screen name="Search" component={Search} />
     </Stack.Navigator>
   );
 }

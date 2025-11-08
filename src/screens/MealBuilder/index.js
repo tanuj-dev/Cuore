@@ -629,13 +629,13 @@ const styles = StyleSheet.create({
   target: {
     fontFamily: 'Roboto-Regular',
     fontSize: 14,
-    fontWeight: '400',
-    color: '#5B636F',
+    fontWeight: '700',
+    color: '#000',
   },
   kcal: {
     fontFamily: 'Roboto-Regular',
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: '700',
     color: '#000000',
   },
   remainingKcal: {

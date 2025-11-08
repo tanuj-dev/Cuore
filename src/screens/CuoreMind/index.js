@@ -249,6 +249,7 @@ const Mind = ({ navigation }) => {
                     onPress={() =>
                       navigation.navigate('MindDetails', {
                         instructions: item?.instructions,
+                        audio: item?.audioUrl,
                       })
                     }
                     style={[

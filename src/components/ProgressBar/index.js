@@ -97,10 +97,10 @@ const ProgressBarWithImage = ({ navigation, data }) => {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              marginLeft: -hp(1),
+              marginLeft: hp(0),
             }}
           >
-            <Image
+            {/* <Image
               source={images.FLAG}
               style={{
                 width: 14,
@@ -108,14 +108,14 @@ const ProgressBarWithImage = ({ navigation, data }) => {
                 marginRight: 4,
                 resizeMode: 'contain',
               }}
-            />
+            /> */}
             <Text style={styles.percentText}>{Math.round(progress)}%</Text>
           </TouchableOpacity>
         </Animated.View>
 
         <View style={styles.percentRow}>
           <Text style={styles.percentText}>0%</Text>
-          <Text style={styles.percentText}>100%</Text>
+          <Text style={styles.percentText}>{data?.goal}</Text>
         </View>
       </View>
     </TouchableOpacity>

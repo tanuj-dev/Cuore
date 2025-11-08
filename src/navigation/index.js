@@ -61,6 +61,7 @@ import Recipe from '../screens/Recipe';
 import Doctor from '../screens/Doctor';
 import Health from '../screens/Health';
 import { ExploreStack } from './ExploreStack';
+import Search from '../screens/Search/search';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();

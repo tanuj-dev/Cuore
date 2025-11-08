@@ -9,7 +9,7 @@ import {
   Modal,
 } from 'react-native';
 import React from 'react';
-import {hp, wp, Images} from '../../utilities';
+import { hp, wp, Images } from '../../utilities';
 
 const PaymentConfirmation = ({
   navigation,
@@ -21,11 +21,12 @@ const PaymentConfirmation = ({
       animationType="slide"
       transparent={true}
       visible={paymentSuccessModalVisible}
-      onRequestClose={() => setPaymentSuccessModalVisible(false)}>
+      onRequestClose={() => setPaymentSuccessModalVisible(false)}
+    >
       <View style={styles.modalOverlay}>
         <View
           style={{
-             marginTop:Platform.OS =='ios'&& hp(2),
+            marginTop: Platform.OS == 'ios' && hp(2),
             flexDirection: 'row',
             backgroundColor: '#FFFFFF',
             // paddingTop: hp(6),
@@ -34,7 +35,8 @@ const PaymentConfirmation = ({
             alignItems: 'center',
             justifyContent: 'center',
             paddingBottom: hp(2),
-          }}>
+          }}
+        >
           <Text style={styles.title}>Confirmation</Text>
         </View>
         <View
@@ -45,13 +47,15 @@ const PaymentConfirmation = ({
             margin: hp(2),
             elevation: 2,
             borderRadius: hp(1),
-          }}>
+          }}
+        >
           <Image
             source={Images.RIGHT}
             style={{
               resizeMode: 'cover',
               height: hp(10),
               width: wp(18),
+              resizeMode: 'contain',
             }}
           />
           <Text
@@ -61,7 +65,8 @@ const PaymentConfirmation = ({
               fontWeight: '400',
               color: '#000000',
               marginVertical: hp(2),
-            }}>
+            }}
+          >
             Payment Successful!
           </Text>
           <Text
@@ -71,7 +76,8 @@ const PaymentConfirmation = ({
               fontWeight: '400',
               color: '#4B5563',
               marginBottom: hp(0.5),
-            }}>
+            }}
+          >
             Your transaction has been completed
           </Text>
           <Text
@@ -80,7 +86,8 @@ const PaymentConfirmation = ({
               fontSize: 14,
               fontWeight: '400',
               color: '#4B5563',
-            }}>
+            }}
+          >
             Payment Successful.
           </Text>
           <View
@@ -90,22 +97,25 @@ const PaymentConfirmation = ({
               //   borderWidth: 1,
               width: '100%',
               marginTop: hp(2),
-            }}></View>
+            }}
+          ></View>
 
-          <View style={{marginTop: hp(1.5)}}>
+          <View style={{ marginTop: hp(1.5) }}>
             <View
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 width: '100%',
-              }}>
+              }}
+            >
               <Text
                 style={{
                   fontFamily: 'Roboto-Regular',
                   fontSize: 14,
                   fontWeight: '400',
                   color: '#4B5563',
-                }}>
+                }}
+              >
                 Transaction ID:
               </Text>
               <Text
@@ -114,7 +124,8 @@ const PaymentConfirmation = ({
                   fontSize: 14,
                   fontWeight: '400',
                   color: '#000000',
-                }}>
+                }}
+              >
                 TXN123456789
               </Text>
             </View>
@@ -124,14 +135,16 @@ const PaymentConfirmation = ({
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 width: '100%',
-              }}>
+              }}
+            >
               <Text
                 style={{
                   fontFamily: 'Roboto-Regular',
                   fontSize: 14,
                   fontWeight: '400',
                   color: '#4B5563',
-                }}>
+                }}
+              >
                 Amount Paid:
               </Text>
               <Text
@@ -140,7 +153,8 @@ const PaymentConfirmation = ({
                   fontSize: 14,
                   fontWeight: '400',
                   color: '#000000',
-                }}>
+                }}
+              >
                 ₹1699.00
               </Text>
             </View>
@@ -149,14 +163,16 @@ const PaymentConfirmation = ({
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 width: '100%',
-              }}>
+              }}
+            >
               <Text
                 style={{
                   fontFamily: 'Roboto-Regular',
                   fontSize: 14,
                   fontWeight: '400',
                   color: '#4B5563',
-                }}>
+                }}
+              >
                 Payment Method:
               </Text>
               <Text
@@ -165,7 +181,8 @@ const PaymentConfirmation = ({
                   fontSize: 14,
                   fontWeight: '400',
                   color: '#000000',
-                }}>
+                }}
+              >
                 **** 3456
               </Text>
             </View>
@@ -176,10 +193,11 @@ const PaymentConfirmation = ({
 
         <TouchableOpacity
           onPress={
-            () =>navigation.reset({
-  index: 0,
-  routes: [{ name: 'Home' }],
-})
+            () =>
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Home' }],
+              })
             // setPaymentSuccessModalVisible(!paymentSuccessModalVisible)
           }
           style={{
@@ -190,14 +208,16 @@ const PaymentConfirmation = ({
             padding: hp(2),
             borderRadius: hp(0.5),
             marginTop: hp(2),
-          }}>
+          }}
+        >
           <Text
             style={{
               fontFamily: 'Roboto-Regular',
               fontSize: 15,
               fontWeight: '400',
               color: '#FFFFFF',
-            }}>
+            }}
+          >
             Home
           </Text>
         </TouchableOpacity>

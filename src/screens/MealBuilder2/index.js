@@ -177,7 +177,9 @@ const MealBuilder2 = ({ navigation, route }) => {
         />
 
         <TouchableOpacity
-          onPress={() => navigation.navigate({ index: 0, name: 'MealBuilder' })}
+          onPress={() =>
+            navigation.navigate('MealBuilder', { mealTime: 'Breakfast' })
+          }
           style={{
             backgroundColor: '#1E64AC',
             marginHorizontal: wp(20),

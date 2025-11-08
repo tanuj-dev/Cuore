@@ -13,11 +13,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
-import {
-  getHomeData,
-  editReminderThunk,
-  deleteReminderThunk,
-} from '../../redux/slices';
+import { editReminderThunk } from '../../redux/slices';
 
 const ReminderEditor = ({
   showModal,
@@ -25,7 +21,6 @@ const ReminderEditor = ({
   requestId,
   setVisible,
   setExistingReminder,
-  existingReminder,
 }) => {
   const [reminderText, setReminderText] = useState('');
   const [time, setTime] = useState(new Date());
@@ -33,73 +28,73 @@ const ReminderEditor = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  console.log(existingReminder, '<<--- existingReminder in editor');
-
   const dispatch = useDispatch();
   const userId = useSelector(state => state?.auth?.userId);
 
-  const onTimeSelected = (event, selectedTime) => {
-    setShowTimePicker(false);
-    if (selectedTime) setTime(selectedTime);
+  useEffect(() => {
+    if (requestId) {
+      const initialText =
+        requestId?.title === 'Medication'
+          ? requestId?.description
+          : requestId?.title || '';
+      setReminderText(initialText);
+    }
+  }, [requestId]);
+
+  const getReminderId = () =>
+    requestId?.title === 'Wake Up' ? requestId?.id : requestId?.sourceId;
+
+  const updateLocalReminder = (formattedTime, title) => {
+    setExistingReminder(prev =>
+      prev.map(reminder => {
+        const isMatch =
+          requestId?.title === 'Wake Up'
+            ? reminder.id === requestId?.id
+            : reminder.sourceId === requestId?.sourceId;
+
+        return isMatch ? { ...reminder, time: formattedTime, title } : reminder;
+      }),
+    );
   };
 
   const handleChange = async () => {
     const formattedTime = moment(time).format('hh:mm A');
-    const payload2 = {
-      time: formattedTime,
-      title: reminderText.trim(),
-    };
+    const trimmedTitle = reminderText.trim();
+
+    if (!trimmedTitle) {
+      setError('Reminder text cannot be empty');
+      return;
+    }
 
     try {
       setLoading(true);
-      const reminderId =
-        requestId.title === 'Wake Up' ? requestId?.id : requestId?.sourceId;
+      updateLocalReminder(formattedTime, trimmedTitle);
 
-      // ✅ Optimistically update the reminder in UI
-      setExistingReminder(prev =>
-        prev.map(reminder =>
-          requestId.title === 'Wake Up'
-            ? reminder.id === requestId.id
-              ? { ...reminder, time: formattedTime, title: reminderText.trim() }
-              : reminder
-            : reminder.sourceId === requestId.sourceId
-            ? { ...reminder, time: formattedTime, title: reminderText.trim() }
-            : reminder,
-        ),
-      );
-
-      // ✅ Proceed with backend update
       const res = await dispatch(
-        editReminderThunk({ sourceId: reminderId, userId, payload2 }),
+        editReminderThunk({
+          sourceId: getReminderId(),
+          userId,
+          payload2: { time: formattedTime, title: trimmedTitle },
+        }),
       ).unwrap();
-      console.log(res, '<<--- Reminder edit response');
 
       if (res?.success) {
-        showModal(false);
-        setLoading(false);
+        setShowModal(false);
       } else {
         Alert.alert('Error', 'Failed to update reminder. Please try again.');
         setVisible(false);
-        setLoading(false);
       }
     } catch (err) {
-      setLoading(false);
       console.error('❌ Reminder update failed:', err);
     } finally {
       setLoading(false);
-      setShowModal(false);
     }
   };
 
-  useEffect(() => {
-    if (requestId) {
-      setReminderText(
-        requestId?.title === 'Medication'
-          ? requestId?.description
-          : requestId?.title || '',
-      );
-    }
-  }, [requestId]);
+  const onTimeSelected = (_, selectedTime) => {
+    setShowTimePicker(false);
+    if (selectedTime) setTime(selectedTime);
+  };
 
   return (
     <Modal
@@ -120,8 +115,8 @@ const ReminderEditor = ({
             style={styles.input}
             onPress={() => setShowTimePicker(true)}
           >
-            <Text style={{ color: '#333' }}>
-              {time?.toLocaleTimeString([], {
+            <Text style={styles.timeText}>
+              {time.toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
@@ -133,7 +128,7 @@ const ReminderEditor = ({
               value={time}
               mode="time"
               is24Hour={true}
-              display={Platform.OS === 'ios' ? 'default' : 'default'}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={onTimeSelected}
             />
           )}
@@ -153,11 +148,15 @@ const ReminderEditor = ({
           />
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-          <TouchableOpacity style={styles.button} onPress={handleChange}>
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleChange}
+            disabled={loading}
+          >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.buttonText}>Change</Text>
+              <Text style={styles.buttonText}>Save Changes</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -167,7 +166,6 @@ const ReminderEditor = ({
 };
 
 export default ReminderEditor;
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -207,14 +205,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#EF4444',
-    marginBottom: 10,
-  },
+  buttonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 16 },
+  errorText: { fontSize: 12, color: '#EF4444', marginBottom: 10 },
 });

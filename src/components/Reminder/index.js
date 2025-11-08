@@ -128,9 +128,14 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
         setReminder({ userId: user_id, reminderData }),
       );
       console.log('Set Reminder Response:', res);
+      const id = res?.payload?.data?.data?._id || null;
+      const sourceId = res?.payload?.data?.sourceId || null;
 
       if (res?.payload?.success) {
-        setExistingReminder(prev => [...prev, reminderData]);
+        setExistingReminder(prev => [
+          ...prev,
+          { ...reminderData, id, sourceId },
+        ]);
         setToastMessage('Reminder set successfully!');
         setToastType('success');
         setReminderText('');

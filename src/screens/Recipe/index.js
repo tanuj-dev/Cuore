@@ -303,8 +303,8 @@ const styles = StyleSheet.create({
   },
 
   stepBadge: {
-    backgroundColor: '#1E64AC',
-    borderRadius: wp(2),
+    backgroundColor: '#4c8dcfff',
+    borderRadius: wp(10),
     paddingHorizontal: wp(2),
     paddingVertical: hp(0.5),
     marginRight: wp(2),
@@ -315,13 +315,13 @@ const styles = StyleSheet.create({
   stepBadgeText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: 10,
   },
 
   stepText: {
     flex: 1,
     fontSize: 14.5,
-    color: '#1E293B',
+    color: '#4b6184ff',
     fontFamily: 'Roboto-Regular',
     lineHeight: 20,
   },
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   ingredientText: {
     fontSize: 14.5,
     fontFamily: 'Roboto-Regular',
-    color: '#1E293B',
+    color: '#4b6184ff',
     fontWeight: '400',
     lineHeight: 20,
     flexShrink: 1,
