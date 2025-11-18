@@ -150,7 +150,7 @@ function BottomTabNavigator() {
         />
         <Tab.Screen
           name="Chat"
-          component={Chat}
+          component={Support}
           options={{
             unmountOnBlur: true,
             tabBarIcon: ({ color, size }) => (
@@ -242,6 +242,7 @@ function TodayStack() {
       <Stack.Screen name="MealBuilder1" component={MealBuilder1} />
       <Stack.Screen name="MealBuilder2" component={MealBuilder2} />
       <Stack.Screen name="Recipe" component={Recipe} />
+      <Stack.Screen name="Search" component={Search} />
     </Stack.Navigator>
   );
 }

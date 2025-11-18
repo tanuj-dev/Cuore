@@ -47,7 +47,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
 
   // ✅ Handle Date Picker (store as Date, not string)
   const handleDateChange = (event, selectedDate) => {
-    setShowDatePicker(false);
+    // setShowDatePicker(false);
 
     if (selectedDate) {
       // Convert to local timezone (fix UTC → IST issue)
@@ -60,7 +60,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
 
   // ✅ Handle Time Picker
   const handleTimeChange = (event, selectedTime) => {
-    setShowTimePicker(false);
+    // setShowTimePicker(false);
     if (selectedTime) {
       setTime(selectedTime); // Use directly — it's already in local time
     } else {
@@ -314,26 +314,22 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
             />
           )}
           {/* Repeat & End Repeat */}
-          {/* Repeat */}{' '}
+          {/* Repeat */}
           <View style={styles.pickercontainer}>
-            {' '}
             <TouchableOpacity
               style={styles.pickerinput}
               onPress={() => setShowPicker(!showPicker)}
             >
-              {' '}
-              <Text style={{ color: '#000' }}>Repeat</Text>{' '}
+              <Text style={{ color: '#000' }}>Repeat</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {' '}
                 <Text
                   style={{ fontSize: 14, fontWeight: '500', color: '#6B7280' }}
                 >
-                  {' '}
-                  {repeat}{' '}
-                </Text>{' '}
-                <Image style={{ marginLeft: 4 }} source={Images.DOWN} />{' '}
-              </View>{' '}
-            </TouchableOpacity>{' '}
+                  {repeat}
+                </Text>
+                <Image style={{ marginLeft: 4 }} source={Images.DOWN} />
+              </View>
+            </TouchableOpacity>
             {showPicker && (
               <Picker
                 itemStyle={{ color: '#1E64AC' }}
@@ -344,36 +340,31 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                 }}
                 style={styles.repeatpicker}
               >
-                {' '}
-                <Picker.Item label="Never" value="Never" />{' '}
-                <Picker.Item label="Every Day" value="Every Day" />{' '}
-                <Picker.Item label="Every Week" value="Every Week" />{' '}
-                <Picker.Item label="Every 2 Week" value="Every 2 Week" />{' '}
-                <Picker.Item label="Every Month" value="Every Month" />{' '}
-                <Picker.Item label="Every Year" value="Every Year" />{' '}
+                <Picker.Item label="Never" value="Never" />
+                <Picker.Item label="Every Day" value="Every Day" />
+                <Picker.Item label="Every Week" value="Every Week" />
+                <Picker.Item label="Every 2 Week" value="Every 2 Week" />
+                <Picker.Item label="Every Month" value="Every Month" />
+                <Picker.Item label="Every Year" value="Every Year" />
               </Picker>
-            )}{' '}
-          </View>{' '}
-          {/* End Repeat */}{' '}
+            )}
+          </View>
+          {/* End Repeat */}
           <View style={[styles.pickercontainer, { marginTop: -10 }]}>
-            {' '}
             <TouchableOpacity
               style={styles.pickerinput}
               onPress={() => setShowEndPicker(!showEndPicker)}
             >
-              {' '}
-              <Text style={{ color: '#000' }}>End Repeat</Text>{' '}
+              <Text style={{ color: '#000' }}>End Repeat</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {' '}
                 <Text
                   style={{ fontSize: 14, fontWeight: '500', color: '#6B7280' }}
                 >
-                  {' '}
-                  {endRepeat}{' '}
-                </Text>{' '}
-                <Image style={{ marginLeft: 4 }} source={Images.DOWN} />{' '}
-              </View>{' '}
-            </TouchableOpacity>{' '}
+                  {endRepeat}
+                </Text>
+                <Image style={{ marginLeft: 4 }} source={Images.DOWN} />
+              </View>
+            </TouchableOpacity>
             {showEndPicker && (
               <Picker
                 selectedValue={endRepeat}
@@ -384,11 +375,10 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                 style={styles.repeatpicker}
                 itemStyle={{ color: '#1E64AC' }}
               >
-                {' '}
-                <Picker.Item label="Never" value="Never" />{' '}
-                <Picker.Item label="On Date" value="On Date" />{' '}
+                <Picker.Item label="Never" value="Never" />
+                <Picker.Item label="On Date" value="On Date" />
               </Picker>
-            )}{' '}
+            )}
           </View>
           {/* ... (keep your Picker logic same here) */}
           {/* Medication Switch */}

@@ -616,7 +616,7 @@ const Health = ({ navigation }) => {
                       <Text
                         style={{
                           // backgroundColor: 'yellow',
-                          marginLeft: hp(3),
+                          marginLeft: hp(2),
                           width: hp(17),
                           fontSize: 14,
                           fontWeight: '500',
@@ -629,13 +629,16 @@ const Health = ({ navigation }) => {
                       <View
                         style={{
                           width: hp(17),
-                          alignItems: 'flex-start',
+                          // alignItems: 'flex-start',
                           // justifyContent: 'flex-start',
+                          right: hp(1),
+                          // alignSelf: 'center',
                         }}
                       >
                         <View
                           style={{
-                            // marginLeft: hp(1.5),
+                            // alignSelf: 'center',
+
                             height: hp(2),
                             width: hp(2),
                             borderRadius: hp(4),

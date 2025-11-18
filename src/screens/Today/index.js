@@ -332,7 +332,9 @@ const Today = ({ navigation, route }) => {
       >
         <View style={styles.header}>
           <Text style={styles.username}>
-            {profileData?.display_name || 'User'}
+            {profileData?.display_name
+              ? `Hi, ${profileData.display_name.split(' ')[0]}`
+              : 'User'}
           </Text>
           <View
             style={{
