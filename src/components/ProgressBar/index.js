@@ -34,7 +34,7 @@ const ProgressBarWithImage = ({ navigation, data }) => {
     >
       <View style={styles.labelRow}>
         <Text style={styles.label}>Aug '24</Text>
-        <Text style={styles.label}>Dec '24</Text>
+        {/* <Text style={styles.label}>Dec '24</Text> */}
         <Text style={styles.label}>{data?.periods?.[0]?.month}</Text>
       </View>
 

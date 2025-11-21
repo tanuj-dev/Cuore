@@ -62,10 +62,9 @@ const EditDoctor = ({ navigation }) => {
   };
 
   const handleCodeChange = text => {
-    // Allow only alphanumeric and up to 8 chars
-    const formatted = text.replace(/[^a-zA-Z0-9]/g, '');
-    if (formatted.length <= 8) {
-      setDoctorCode(formatted);
+    // Accept whatever the user types
+    if (text.length <= 10) {
+      setDoctorCode(text);
     } else {
       setToastMessage('Doctor code cannot exceed 8 characters.');
       setToastType('error');
@@ -79,7 +78,7 @@ const EditDoctor = ({ navigation }) => {
       !userID ||
       !doctorName ||
       doctorMobile.length !== 10 ||
-      doctorCode.length !== 8
+      doctorCode.length !== 10
     ) {
       setToastMessage('Please fill valid details for all required fields.');
       setToastType('error');

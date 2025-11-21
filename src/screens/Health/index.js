@@ -22,7 +22,9 @@ import { getHealthRecord } from '../../redux/slices';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import {Ionicons, MaterialIcons, Feather} from '@expo/vector-icons';
 const formatDate = date => {
-  return date ? date.toLocaleDateString() : '';
+  if (!date) return '';
+  const d = new Date(date);
+  return isNaN(d) ? '' : d.toDateString();
 };
 
 const EditableSection = ({
@@ -33,6 +35,7 @@ const EditableSection = ({
   toggleEdit,
   show,
   navigation,
+  date,
   isDate = false, // ✅ new prop to tell if it's a date field
 }) => (
   <View
@@ -55,15 +58,6 @@ const EditableSection = ({
         alignItems: 'center',
       }}
     >
-      {show && isDate && (
-        <DateTimePicker
-          value={value} // must be a Date object
-          mode="date"
-          display="default"
-          onChange={onChange}
-        />
-      )}
-
       {isEditing && !isDate ? (
         <TextInput
           value={value}
@@ -95,19 +89,22 @@ const EditableSection = ({
           } else if (label == 'Medications: ') {
             const STEP = 2;
             navigation.goBack();
+          } else {
           }
         }}
       >
-        <Image
-          source={Images.EDIT}
-          style={{
-            resizeMode: 'contain',
-            height: hp(2.5),
-            width: hp(4),
-            marginLeft: hp(1),
-            marginRight: hp(3),
-          }}
-        />
+        {label !== ('Medications: ' || 'Past H/O: ') && (
+          <Image
+            source={Images.EDIT}
+            style={{
+              resizeMode: 'contain',
+              height: hp(2.5),
+              width: hp(4),
+              marginLeft: hp(1),
+              marginRight: hp(3),
+            }}
+          />
+        )}
       </TouchableOpacity>
     </View>
   </View>
@@ -137,7 +134,7 @@ const Health = ({ navigation }) => {
       return;
     }
     const currentDate = selectedDate || date;
-    setShow(Platform.OS === 'ios');
+    // setShow(Platform.OS === 'ios');
     setDate(currentDate);
   };
 
@@ -300,70 +297,60 @@ const Health = ({ navigation }) => {
       </View>
     );
   }
-  const getHealthObservationsData = observations => {
-    const thresholds = {
-      heartRate: value => (value < 60 || value > 100 ? '#EAB308' : '#22C55E'),
-      bloodPressure: value => '#EAB308', // Add logic if needed
-      bloodSugarPP: value =>
-        value > 140 ? '#EF4444' : value > 100 ? '#EAB308' : '#22C55E',
-      HbA1c: value =>
-        value >= 8 ? '#EF4444' : value >= 6.5 ? '#EAB308' : '#22C55E',
-      TG_HDL_Ratio: value =>
-        value > 4 ? '#EF4444' : value > 2.5 ? '#EAB308' : '#22C55E',
-      HsCRP: value =>
-        value > 3 ? '#EF4444' : value > 1 ? '#EAB308' : '#22C55E',
-      lifestyleScore: value =>
-        value >= 70 ? '#22C55E' : value >= 50 ? '#EAB308' : '#EF4444',
-    };
-
+  const getHealthObservationsData = (observations: any) => {
     return [
       {
         parameter: 'Heart Rate',
-        value: observations?.heartRate
-          ? `${observations?.heartRate} bpm`
-          : '  -',
-        status: thresholds?.heartRate(observations?.heartRate),
+        value: observations?.heartRate?.value
+          ? `${observations.heartRate.value} bpm`
+          : ' -',
+        status: observations?.heartRate?.status,
       },
       {
         parameter: 'Blood Pressure',
-        value: observations?.bloodPressure
-          ? `${observations?.bloodPressure} mmHg`
-          : '  -',
-        status: thresholds?.bloodPressure(observations?.bloodPressure),
+        value: observations?.bloodPressure?.value
+          ? `${observations.bloodPressure.value} mmHg`
+          : ' -',
+        status: observations?.bloodPressure?.status,
       },
       {
         parameter: 'Blood Sugar PP',
-        value: observations?.bloodSugarPP
-          ? `${observations?.bloodSugarPP} mg/dL`
-          : '  -',
-        status: thresholds?.bloodSugarPP(observations?.bloodSugarPP),
+        value: observations?.bloodSugarPP?.value
+          ? `${observations.bloodSugarPP.value} mg/dL`
+          : ' -',
+        status: observations?.bloodSugarPP?.status,
       },
       {
         parameter: 'HbA1c',
-        value: observations?.HbA1c ? `${observations?.HbA1c}%` : '  -',
-        status: thresholds?.HbA1c(observations?.HbA1c),
+        value: observations?.HbA1c?.value
+          ? `${observations.HbA1c.value}%`
+          : ' -',
+        status: observations?.HbA1c?.status,
       },
       {
         parameter: 'TG/HDL Ratio',
-        value: observations?.TG_HDL_Ratio
-          ? `${observations?.TG_HDL_Ratio}`
-          : '  -',
-        status: thresholds?.TG_HDL_Ratio(observations?.TG_HDL_Ratio),
+        value: observations?.TG_HDL_Ratio?.value
+          ? `${observations.TG_HDL_Ratio.value}`
+          : ' -',
+        status: observations?.TG_HDL_Ratio?.status,
       },
       {
         parameter: 'HsCRP',
-        value: observations?.HsCRP ? `${observations?.HsCRP} mg/L` : '  -',
-        status: thresholds?.HsCRP(observations?.HsCRP),
+        value: observations?.HsCRP?.value
+          ? `${observations.HsCRP.value} mg/L`
+          : ' -',
+        status: observations?.HsCRP?.status,
       },
       {
         parameter: 'Lifestyle Score',
-        value: observations?.lifestyleScore
-          ? `${observations?.lifestyleScore}%`
-          : '  -',
-        status: thresholds.lifestyleScore(observations?.lifestyleScore),
+        value: observations?.lifestyleScore?.value
+          ? `${observations.lifestyleScore.value}%`
+          : ' -',
+        status: observations?.lifestyleScore?.status,
       },
     ];
   };
+
   const onRefresh = () => {
     dispatch(getHealthRecord(userId));
   };
@@ -451,7 +438,7 @@ const Health = ({ navigation }) => {
                 />
                 <View style={{ marginLeft: hp(3) }}>
                   <Text style={styles.name}>
-                    {profile?.name == 'User' ? 'Tanuj' : profile?.name}
+                    {profile?.name ? profile?.name : 'user'}
                   </Text>
                   <Text style={styles.detail}>
                     {profile?.age} years{' '}
@@ -485,15 +472,16 @@ const Health = ({ navigation }) => {
               <EditableSection
                 label="Medications: "
                 value={medications ? medications : 'No medications listed'}
-                onChange={setMedications}
-                isEditing={editMeds}
-                toggleEdit={() => setEditMeds(!editMeds)}
+                // onChange={setMedications}
+                // isEditing={editMeds}
+                // toggleEdit={() => setEditMeds(!editMeds)}
                 navigation={navigation}
               />
 
               <EditableSection
                 label="Last Consulted: "
                 value={profile?.lastConsulted ?? date}
+                date={date}
                 show={show}
                 isDate={true} // ✅ tell component this is a date
                 onChange={onDateChange}
