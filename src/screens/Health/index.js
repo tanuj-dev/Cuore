@@ -20,6 +20,7 @@ import { hp, wp, Images } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
 import { getHealthRecord } from '../../redux/slices';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { updateLastConsulted } from '../../redux/Home/homeThunk';
 // import {Ionicons, MaterialIcons, Feather} from '@expo/vector-icons';
 const formatDate = date => {
   if (!date) return '';
@@ -27,116 +28,21 @@ const formatDate = date => {
   return isNaN(d) ? '' : d.toDateString();
 };
 
-const EditableSection = ({
-  label,
-  value,
-  onChange,
-  isEditing,
-  toggleEdit,
-  show,
-  navigation,
-  date,
-  isDate = false, // ✅ new prop to tell if it's a date field
-}) => (
-  <View
-    style={{
-      marginTop: hp(1),
-      alignItems: 'flex-start',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      width: '85%',
-    }}
-  >
-    <View style={{ width: hp(14) }}>
-      <Text style={styles.bold}>{label}</Text>
-    </View>
-
-    <View
-      style={{
-        width: hp(30),
-        flexDirection: 'row',
-        alignItems: 'center',
-      }}
-    >
-      {isEditing && !isDate ? (
-        <TextInput
-          value={value}
-          onChangeText={onChange}
-          multiline
-          style={{
-            flex: 1,
-            fontSize: 14,
-            borderBottomWidth: 1,
-            borderColor: '#ccc',
-            paddingVertical: 2,
-          }}
-        />
-      ) : (
-        <Text style={[styles.label, { flex: 1 }]}>
-          {isDate ? formatDate(value) : value}
-        </Text>
-      )}
-
-      <TouchableOpacity
-        onPress={() => {
-          if (label == 'Past H/O: ') {
-            const STEP = 3;
-            navigation.navigate('OnBoarding', {
-              STEP,
-              screen: 'Reassess',
-              navigateTo: 'Home',
-            });
-          } else if (label == 'Medications: ') {
-            const STEP = 2;
-            navigation.goBack();
-          } else {
-          }
-        }}
-      >
-        {label !== ('Medications: ' || 'Past H/O: ') && (
-          <Image
-            source={Images.EDIT}
-            style={{
-              resizeMode: 'contain',
-              height: hp(2.5),
-              width: hp(4),
-              marginLeft: hp(1),
-              marginRight: hp(3),
-            }}
-          />
-        )}
-      </TouchableOpacity>
-    </View>
-  </View>
-);
-
 const Health = ({ navigation }) => {
   const [profileImage, setProfileImage] = useState(null);
-  const [pastHistory, setPastHistory] = useState(
-    'Hypertension, Diabetes Mellitus Type 2, Hyperlipidemia',
-  );
+
   const [medications, setMedications] = useState(
     'Amlopress, Metformin, Storvas, Ecosprin',
   );
-  const [lastConsulted, setLastConsulted] = useState('25 May 2024');
+  // const userId = useSelector(state => state.auth.userId);
 
-  const [editPast, setEditPast] = useState(false);
-  const [editMeds, setEditMeds] = useState(false);
-  const [editConsulted, setEditConsulted] = useState(false);
   const [date, setDate] = useState(new Date());
   const [show, setShow] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const dispatch = useDispatch();
 
-  const onDateChange = (event, selectedDate) => {
-    if (event.type === 'dismissed') {
-      setShow(false);
-      return;
-    }
-    const currentDate = selectedDate || date;
-    // setShow(Platform.OS === 'ios');
-    setDate(currentDate);
-  };
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [lastConsulted, setLastConsulted] = useState(new Date());
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -279,11 +185,36 @@ const Health = ({ navigation }) => {
   const profile = useSelector(state => state.health?.data?.data?.data?.profile);
   const loading = useSelector(state => state.health?.loading);
 
+  const onDateChange = async (event, selectedDate) => {
+    if (event.type === 'dismissed') {
+      setShowDatePicker(false);
+      return;
+    }
+
+    const currentDate = selectedDate || lastConsulted;
+    setLastConsulted(currentDate);
+    setShowDatePicker(false);
+
+    // Format date as YYYY-MM-DD
+    const formattedDate = currentDate.toISOString().split('T')[0];
+
+    const payload = {
+      lastConsultedDate: formattedDate,
+    };
+    console.log(userId, payload, '========');
+
+    // Dispatch with both userId (in URL) and payload (in body)
+    const res = await dispatch(updateLastConsulted({ userId, payload }));
+    console.log(res, 'res===');
+    if (res.payload.success) {
+    }
+  };
+
   useEffect(() => {
     if (userId) {
       dispatch(getHealthRecord(userId));
     }
-  }, []);
+  }, [lastConsulted]);
 
   useEffect(() => {
     setMedications(profile?.medications.join(', '));
@@ -297,7 +228,7 @@ const Health = ({ navigation }) => {
       </View>
     );
   }
-  const getHealthObservationsData = (observations: any) => {
+  const getHealthObservationsData = observations => {
     return [
       {
         parameter: 'Heart Rate',
@@ -426,72 +357,120 @@ const Health = ({ navigation }) => {
 
           <View style={styles.container}>
             <View style={styles.card}>
+              {/* Name + Age + Smoker */}
               <View style={styles.row}>
                 <Image
-                  source={Images.UNCLE} // Replace with actual key in your `images` object
+                  source={Images.UNCLE}
                   style={{
                     resizeMode: 'contain',
                     height: hp(5),
                     width: wp(12),
-                    resizeMode: 'contain',
                   }}
                 />
                 <View style={{ marginLeft: hp(3) }}>
-                  <Text style={styles.name}>
-                    {profile?.name ? profile?.name : 'user'}
-                  </Text>
+                  <Text style={styles.name}>{profile?.name}</Text>
                   <Text style={styles.detail}>
                     {profile?.age} years{' '}
-                    {profile?.smoker == 'Never'
-                      ? 'Non-Smoker'
-                      : profile?.smoker == 'Quit >6 months ago'
-                      ? 'Past-Smoker'
+                    {profile?.smoker === 'Quit >6 months ago'
+                      ? 'Past Smoker'
                       : 'Smoker'}
                   </Text>
                 </View>
               </View>
 
-              {profile?.pastHO ? (
-                <EditableSection
-                  label="Past H/O: "
-                  value={profile?.pastHO}
-                  onChange={setPastHistory}
-                  isEditing={editPast}
-                  navigation={navigation}
-                />
-              ) : (
-                <EditableSection
-                  label="Past H/O: "
-                  value={'No history available'}
-                  onChange={setPastHistory}
-                  isEditing={editPast}
-                  navigation={navigation}
+              {/* Past HO */}
+              <View
+                style={{
+                  marginTop: hp(2),
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sectionTitle}>Past Ho:</Text>
+                  <Text style={styles.detail}>{profile?.pastHO}</Text>
+                </View>
+                <TouchableOpacity>
+                  <Image
+                    source={Images.EDIT}
+                    style={{
+                      height: hp(3),
+                      width: wp(4),
+                      resizeMode: 'contain',
+                    }}
+                    size={20}
+                    color="gray"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Medications */}
+              <View
+                style={{
+                  marginTop: hp(2),
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sectionTitle}>Medications:</Text>
+                  <Text style={styles.detail}>
+                    {Array.isArray(profile?.medications) &&
+                    profile.medications.length > 0
+                      ? profile.medications.join(', ')
+                      : 'No medications listed'}
+                  </Text>
+                </View>
+                <TouchableOpacity>
+                  <Image
+                    source={Images.EDIT}
+                    style={{
+                      height: hp(3),
+                      width: wp(4),
+                      resizeMode: 'contain',
+                    }}
+                    size={20}
+                    color="gray"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Last Consulted */}
+              <View
+                style={{
+                  marginTop: hp(2),
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sectionTitle}>Last Consulted:</Text>
+                  <Text style={styles.detail}>
+                    {lastConsulted.toDateString()} {/* shows updated date */}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                  <Image
+                    source={Images.EDIT}
+                    style={{
+                      height: hp(3),
+                      width: wp(4),
+                      resizeMode: 'contain',
+                    }}
+                    size={20}
+                    color="gray"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={lastConsulted}
+                  mode="date"
+                  display="default"
+                  onChange={onDateChange}
                 />
               )}
-
-              <EditableSection
-                label="Medications: "
-                value={medications ? medications : 'No medications listed'}
-                // onChange={setMedications}
-                // isEditing={editMeds}
-                // toggleEdit={() => setEditMeds(!editMeds)}
-                navigation={navigation}
-              />
-
-              <EditableSection
-                label="Last Consulted: "
-                value={profile?.lastConsulted ?? date}
-                date={date}
-                show={show}
-                isDate={true} // ✅ tell component this is a date
-                onChange={onDateChange}
-                isEditing={editConsulted}
-                toggleEdit={() => {
-                  setEditConsulted(!editConsulted);
-                  setShow(!show);
-                }}
-                navigation={navigation}
-              />
             </View>
 
             {/* Health Observations */}

@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { getApiCall } from '../../utilities/Services';
+import { getApiCall, postApiCall, putApiCall } from '../../utilities/Services';
 
 export const getHomeData = createAsyncThunk(
   'onboarding/fetchHomeData',
@@ -22,6 +22,29 @@ export const getHealthRecord = createAsyncThunk(
       const endpoint = `/api/v1/cuorehealth/${userId}`;
       const response = await getApiCall(endpoint);
       console.log('Get Health Record API Response:', response);
+      if (response?.status === 200) {
+        return { data: response.data, success: true };
+      } else {
+        return { data: response.data, success: false };
+      }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'failed to fetch health record',
+      );
+    }
+  },
+);
+
+// export const updateLastConsulted =
+export const updateLastConsulted = createAsyncThunk(
+  'uploadConsulted',
+  async ({ userId, payload }, { rejectWithValue }) => {
+    console.log('Fetching health record for userId:', userId, payload);
+    try {
+      const endpoint = `/api/v1/cuorehealth/${userId}/last-consulted`;
+
+      const response = await putApiCall(endpoint, payload);
+      console.log('post lastConsulted Record API Response:', response);
       if (response?.status === 200) {
         return { data: response.data, success: true };
       } else {

@@ -35,6 +35,7 @@ const Score = ({ navigation, route }) => {
         label: 'Resting BP',
         value: vitals.blood_pressure.current,
         target: vitals.blood_pressure.target,
+        status: vitals.blood_pressure.status.lower,
       });
     }
 
@@ -43,11 +44,19 @@ const Score = ({ navigation, route }) => {
         label: 'Blood Sugar (Fasting)',
         value: vitals.blood_sugar.fasting?.value,
         target: vitals.blood_sugar.fasting?.target,
+        status: vitals.blood_sugar.fasting.status,
       });
       result.push({
         label: 'Blood Sugar (After Meal)',
         value: vitals.blood_sugar.after_meal?.value,
         target: vitals.blood_sugar.after_meal?.target || '—',
+        status: vitals.blood_sugar.after_meal.status,
+      });
+      result.push({
+        label: 'A1C',
+        value: vitals.blood_sugar.A1C?.value,
+        target: vitals.blood_sugar.A1C?.target,
+        status: vitals?.blood_sugar.A1C.status,
       });
     }
 
@@ -56,6 +65,7 @@ const Score = ({ navigation, route }) => {
         label: 'Body Fat',
         value: `${vitals.body_fat?.value}${vitals.body_fat?.unit}`,
         target: `${vitals.body_fat?.target}${vitals.body_fat?.unit}`,
+        status: vitals.body_fat.status,
       });
     }
 
@@ -64,6 +74,7 @@ const Score = ({ navigation, route }) => {
         label: 'Cholesterol (TG/HDL)',
         value: vitals.cholesterol?.tg_hdl_ratio?.value,
         target: vitals.cholesterol?.tg_hdl_ratio?.target,
+        status: vitals?.cholesterol?.tg_hdl_ratio?.status,
       });
     }
 

@@ -51,7 +51,10 @@ const CuoreKnowledge = ({ navigation }) => {
       }
       style={styles.card}
     >
-      <Image source={Images.KNOWLEDGE_5} style={styles.image} />
+      {item?.images?.[0]?.url && (
+        <Image source={{ uri: item.images[0].url }} style={styles.image} />
+      )}
+
       <View style={styles.textContainer}>
         <Text numberOfLines={2} style={styles.title}>
           {item.title}

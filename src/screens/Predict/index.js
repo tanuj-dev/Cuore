@@ -190,7 +190,8 @@ const healthGraphs = [
   },
 ];
 
-const convertToChartData = ({ graph, history }) => {
+const convertToChartData = ({ graph, history, historyData }) => {
+  console.log(historyData, '========>');
   const { labels = [], datasets = [] } = graph.data || {};
 
   if (!labels.length || !datasets.length) {
@@ -262,7 +263,12 @@ const Predict = ({ navigation }) => {
   const dispatch = useDispatch();
 
   const userId = useSelector(state => state.auth?.userId);
-  const predictData = useSelector(state => state?.predictData?.data?.data);
+  const predictData = useSelector(
+    state => state?.predictData?.data?.data?.graphs,
+  );
+  const historyData = useSelector(
+    state => state?.predictData?.data?.data?.history,
+  );
   const loading = useSelector(state => state?.predict?.loading);
   console.log('predictData', predictData);
 
@@ -508,7 +514,11 @@ const Predict = ({ navigation }) => {
               ) : ( */}
                 <LineChart
                   key={item?.title}
-                  data={convertToChartData({ graph: item, history })}
+                  data={convertToChartData({
+                    graph: item,
+                    history,
+                    historyData: historyData,
+                  })}
                   width={wp(87)}
                   height={hp(25)}
                   chartConfig={chartConfig}

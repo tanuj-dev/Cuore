@@ -33,9 +33,13 @@ const ProgressBarWithImage = ({ navigation, data }) => {
       style={styles.container}
     >
       <View style={styles.labelRow}>
-        <Text style={styles.label}>Aug '24</Text>
+        <Text style={styles.label}>
+          {data?.periods[0].programTimeline.startMonth}
+        </Text>
         {/* <Text style={styles.label}>Dec '24</Text> */}
-        <Text style={styles.label}>{data?.periods?.[0]?.month}</Text>
+        <Text style={styles.label}>
+          {data?.periods[0].programTimeline.targetMonth}
+        </Text>
       </View>
 
       <View style={{ alignItems: 'center' }}>
