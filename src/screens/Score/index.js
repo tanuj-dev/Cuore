@@ -340,6 +340,7 @@ const Score = ({ navigation, route }) => {
                     label={item.label}
                     value={item.value}
                     target={item.target}
+                    color={item.status}
                     colorCode={'red'}
                     hasDiabetes={hasDiabetes}
                   />
@@ -523,7 +524,15 @@ const getVitalColor = (label, value, target, hasDiabetes) => {
   }
 };
 
-const VitalCard = ({ label, value, target, colorCode, hint, hasDiabetes }) => {
+const VitalCard = ({
+  label,
+  value,
+  target,
+  colorCode,
+  hint,
+  hasDiabetes,
+  color,
+}) => {
   console.log(label, value, target, 'vital card props');
   const barColor = getVitalColor(label, value, target, hasDiabetes);
   return (
@@ -558,7 +567,7 @@ const VitalCard = ({ label, value, target, colorCode, hint, hasDiabetes }) => {
             <Text style={styles.vitalValue}>{value}</Text>
           </View>
           <View style={{ flexDirection: 'row', width: hp(22) }}>
-            <View style={[styles.vitalBar, { backgroundColor: barColor }]} />
+            <View style={[styles.vitalBar, { backgroundColor: color }]} />
 
             <Text style={styles.vitalTarget}>{target}</Text>
           </View>
