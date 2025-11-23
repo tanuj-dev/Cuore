@@ -390,7 +390,16 @@ const Health = ({ navigation }) => {
                   <Text style={styles.sectionTitle}>Past Ho:</Text>
                   <Text style={styles.detail}>{profile?.pastHO}</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    const STEP = 3;
+                    navigation.navigate('OnBoarding', {
+                      STEP,
+                      screen: 'Reassess',
+                      navigateTo: 'Home',
+                    });
+                  }}
+                >
                   <Image
                     source={Images.EDIT}
                     style={{
@@ -421,7 +430,7 @@ const Health = ({ navigation }) => {
                       : 'No medications listed'}
                   </Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
                   <Image
                     source={Images.EDIT}
                     style={{
