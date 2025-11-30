@@ -18,6 +18,7 @@ const Endpoints = {
   ADJUST_PORTION: '/api/builder/adjust-portions',
   GET_FITNESS: '/api/fitness/fitness-plan',
   UPDATE_FITNESS_TIME: '/api/fitness/update-ex-time',
+  LOGINCAREGIVER: '/api/v1/auth/caregiver/otp/request',
 };
 
 export default Endpoints;

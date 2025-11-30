@@ -63,10 +63,18 @@ const Today = ({ navigation, route }) => {
   const [toastType, setToastType] = useState('success');
 
   const dispatch = useDispatch();
-  const dates = ['Feb 25', 'Feb 26', 'Feb 27'];
 
   const { data, loading, error } = useSelector(state => state.home);
   const homeData = data ? data : null;
+
+  // 👇 format "2025-11-30" (YYYY-MM-DD) -> "Nov 30"
+  const formattedDate = homeData?.date
+    ? moment(homeData.date, 'YYYY-MM-DD').format('MMM DD')
+    : '';
+
+  // 👇 use the same formatted date three times
+  const dates = [formattedDate, formattedDate, formattedDate];
+
   const userId = useSelector(state => state.auth.userId);
   const sessionExpiredMessage =
     data?.message == 'Not authorized, invalid or expired token.';

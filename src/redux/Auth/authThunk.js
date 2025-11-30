@@ -92,3 +92,58 @@ export const createAccountThunk = createAsyncThunk(
     }
   },
 );
+
+export const loginCaregiverThunk = createAsyncThunk(
+  'auth/loginCaregiver',
+  async (payload, { rejectWithValue }) => {
+    try {
+      // Example: payload = { phone, otp_code }
+      const response = await postApiCall(
+        '/api/v1/auth/caregiver/otp/request',
+        payload,
+      );
+
+      if (response?.status == 201 || response?.status === 200) {
+        return response.data;
+      } else {
+        return rejectWithValue(
+          response?.data || { message: 'Failed to login caregiver' },
+        );
+      }
+    } catch (error) {
+      console.log('LOGincaregiver ERROR:', error);
+      return rejectWithValue(
+        error?.response?.data || { message: 'Something went wrong' },
+      );
+    }
+  },
+);
+
+export const verifyCaregiverThunk = createAsyncThunk(
+  'auth/verifyCaregiver',
+  async (
+    // payload: { phone: string; otp_code: string; requestId?: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      // Example payload: { phone: '+919515951595', otp_code: '1234', requestId: 'abc123' }
+      const response = await postApiCall(
+        '/api/v1/auth/caregiver/otp/verify',
+        payload,
+      );
+
+      if (response?.status === 200) {
+        return response.data; // contains token, user info, etc.
+      } else {
+        return rejectWithValue(
+          response?.data || { message: 'Failed to verify caregiver' },
+        );
+      }
+    } catch (error) {
+      console.log('verifyCaregiver ERROR:', error);
+      return rejectWithValue(
+        error?.response?.data || { message: 'Something went wrong' },
+      );
+    }
+  },
+);

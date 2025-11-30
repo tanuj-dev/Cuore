@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,46 +13,48 @@ import {
   Alert,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
-
+import { useDispatch, useSelector } from 'react-redux';
+import { getDoctors, searchDoctors } from '../../redux/Profile/profileThunk';
 const Doctor = ({ navigation }) => {
-  const [doctors, setDoctors] = useState([
-    {
-      id: '1',
-      name: 'Dr. Sarah James',
-      address: 'SCO 12, GF, CK Market.\nGKII, New delhi\n99110 02234',
-      linkedPatients: 78,
-      selected: false,
-    },
-    {
-      id: '2',
-      name: 'Dr. Sarah James',
-      address: 'SCO 12, GF, CK Market.\nGKII, New delhi\n99110 02234',
-      linkedPatients: 78,
-      selected: false,
-    },
-    {
-      id: '3',
-      name: 'Dr. Sarah James',
-      address: 'SCO 12, GF, CK Market.\nGKII, New delhi\n99110 02234',
-      linkedPatients: 78,
-      selected: false,
-    },
-    {
-      id: '4',
-      name: 'Dr. Sarah James',
-      address: 'SCO 12, GF, CK Market.\nGKII, New delhi\n99110 02234',
-      linkedPatients: 78,
-      selected: false,
-    },
-  ]);
+  const dispatch = useDispatch();
+  const { data, loading, error } = useSelector(state => state.doctors);
+  const doctor = data?.data?.data || [];
+  useEffect(() => {
+    dispatch(getDoctors());
+  }, [dispatch]);
+
+  const [doctors, setDoctors] = useState(doctor);
+  const [search, setSearch] = useState('');
+
+  // 🔍 debounce search API
+  useEffect(() => {
+    const query = search.trim();
+
+    // if search is empty, reset to original doctors list
+    if (!query) {
+      setDoctors(doctor);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await dispatch(searchDoctors(query)).unwrap();
+        if (res?.success) {
+          setDoctors(res?.data?.data || []);
+        } else {
+          Alert.alert(res?.message || 'Failed to search doctors');
+        }
+      } catch (err) {
+        console.log('Search doctors error:', err);
+        Alert.alert('Failed to search doctors');
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [search, doctor, dispatch]);
 
   const toggleSelection = id => {
-    setDoctors(prev =>
-      prev.map(doc => ({
-        ...doc,
-        selected: doc.id === id, // only one doctor can be selected
-      })),
-    );
+    setDoctors(prev => prev.map(doc => ({ ...doc, selected: doc._id === id })));
   };
 
   const renderDoctorCard = ({ item }) => (
@@ -67,11 +69,11 @@ const Doctor = ({ navigation }) => {
       }}
     >
       {item.selected ? (
-        <TouchableOpacity onPress={() => toggleSelection(item.id)}>
+        <TouchableOpacity onPress={() => toggleSelection(item._id)}>
           <Image source={Images.RIGHT} style={styles.checkbox} />
         </TouchableOpacity>
       ) : (
-        <TouchableOpacity onPress={() => toggleSelection(item.id)}>
+        <TouchableOpacity onPress={() => toggleSelection(item._id)}>
           <View
             style={{
               marginRight: hp(1),
@@ -91,24 +93,58 @@ const Doctor = ({ navigation }) => {
         <View style={styles.row}>
           <View style={styles.details}>
             <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.address}>{item.address}</Text>
+            <Text style={styles.address}>
+              {'Sector: ' +
+                item.address?.areaSector +
+                '\n' +
+                item.address?.city +
+                '\n' +
+                item.address?.clinicAddress}
+            </Text>
           </View>
           <Text style={styles.patientCount}>{item.linkedPatients}</Text>
         </View>
         <View
           style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: hp(1),
+            marginTop: hp(2),
+            marginHorizontal: hp(2),
+            padding: hp(2),
+            borderRadius: hp(1),
+            backgroundColor: '#F9FAFB',
+            borderWidth: 1,
+            borderColor: '#E5E7EB',
           }}
         >
-          <Text style={{ color: '#6B7280', fontSize: 12 }}>Fee</Text>
-          <Text style={{ color: '#6B7280', fontSize: 12 }}>
-            6 months: ₹1000{' '}
-          </Text>
-          <Text style={{ color: '#6B7280', fontSize: 12 }}>
-            12 months: ₹1000
-          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Text
+              style={{ color: '#374151', fontSize: 14, fontWeight: 'bold' }}
+            >
+              Fees:
+            </Text>
+            <View>
+              {String(item.fees || '')
+                .split('   ')
+                .map((part, index) => (
+                  <Text
+                    key={index}
+                    style={{
+                      color: '#6B7280',
+                      fontSize: 12,
+                      marginTop: hp(0.2), // spacing between each fee line
+                      // marginLeft: hp(12), // indent for neat alignment
+                    }}
+                  >
+                    {part.trim()}
+                  </Text>
+                ))}
+            </View>
+          </View>
         </View>
       </TouchableOpacity>
     </View>
@@ -210,6 +246,8 @@ const Doctor = ({ navigation }) => {
               <Image style={styles.searchIcon} source={Images.SEARCH} />
               <TextInput
                 //   value={'tanuj'}
+                value={search}
+                onChangeText={setSearch}
                 placeholderTextColor={'#6B7280'}
                 placeholder="Search your doctor..."
                 style={styles.searchInput}
@@ -328,7 +366,12 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   row: { flexDirection: 'row', alignItems: 'center' },
-  checkbox: { width: wp(4), height: wp(5), marginRight: wp(2) },
+  checkbox: {
+    width: wp(4),
+    height: wp(5),
+    marginRight: wp(2),
+    resizeMode: 'contain',
+  },
   details: { flex: 1 },
   name: {
     fontFamily: 'Roboto-Regular',

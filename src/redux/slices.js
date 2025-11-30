@@ -1,7 +1,12 @@
-import { sendOtp } from './Auth/authThunk';
+import { sendOtp, loginCaregiverThunk } from './Auth/authThunk';
 
 import { verifyOtp } from './Auth/verifyOtpThunk';
-import { updateProfile, getProfile } from './Profile/profileThunk';
+import {
+  updateProfile,
+  getProfile,
+  getDoctors,
+  searchDoctors,
+} from './Profile/profileThunk';
 import { createAccountThunk } from './Auth/authThunk';
 import { getOnboardingThunk } from './OnBoardng/onBoardingThunk';
 import { createReassessment } from './OnBoardng/onBoardingThunk';
@@ -57,4 +62,7 @@ export {
   getProfile,
   checkReminderThunk,
   searchBuilderThunk,
+  loginCaregiverThunk,
+  getDoctors,
+  searchDoctors,
 };

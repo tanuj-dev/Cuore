@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
-import { sendOtp } from '../../redux/slices';
+import { sendOtp, loginCaregiverThunk } from '../../redux/slices';
 import Toast from '../../components/Toast';
 
 const Login = ({ navigation }) => {
@@ -24,7 +24,8 @@ const Login = ({ navigation }) => {
   const dispatch = useDispatch();
 
   const handleSendOtp = async () => {
-    if (!/^\d{10}$/.test(phoneNumber) || phoneNumber.length !== 10) {
+    // ✅ Validate phone number
+    if (!/^\d{10}$/.test(phoneNumber)) {
       setToast({
         message: 'Please enter a valid 10-digit mobile number',
         type: 'error',
@@ -33,19 +34,35 @@ const Login = ({ navigation }) => {
     }
 
     setLoading(true);
-
     console.log('Dispatching sendOtp with phone number:', phoneNumber);
 
     try {
-      const result = await dispatch(sendOtp(`+91${phoneNumber}`)).unwrap();
+      if (tab === 'Caregiver') {
+        // ✅ Use the actual phoneNumber, not a hard-coded string
+        const payload = {
+          phone: `+91${phoneNumber}`,
+        };
 
-      console.log('OTP sent:', result);
-      navigation.navigate('OtpScreen', {
-        phone: phoneNumber,
-        requestId: result.requestId,
-        retryAfter: result.retryAfter,
-        testOtp: result.testOtp,
-      });
+        const result = await dispatch(loginCaregiverThunk(payload)).unwrap();
+
+        console.log('Caregiver OTP sent:', result);
+        navigation.navigate('OtpScreen', {
+          phone: phoneNumber,
+          requestId: result.request_id,
+          // retryAfter: result.retry_after_seconds,
+          testOtp: result.test_otp_code,
+        });
+      } else {
+        const result = await dispatch(sendOtp(`+91${phoneNumber}`)).unwrap();
+
+        console.log('OTP sent:', result);
+        navigation.navigate('OtpScreen', {
+          phone: phoneNumber,
+          requestId: result.requestId,
+          retryAfter: result.retryAfter,
+          testOtp: result.testOtp,
+        });
+      }
     } catch (err) {
       console.log('OTP failed:', err.message);
 

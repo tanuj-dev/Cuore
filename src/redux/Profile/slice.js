@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { getProfile } from './profileThunk';
+import { getDoctors } from './profileThunk';
 
 const initialState = {
   loading: false,
@@ -46,6 +47,26 @@ export const profileSlice = createSlice({
       });
   },
 });
-
-// export const { resetProfileState } = profileSlice.actions;
-// export default profileSlice.reducer;
+export const doctorsSlice = createSlice({
+  name: 'doctors',
+  initialState: {
+    data: null,
+    loading: false,
+    error: null,
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(getDoctors.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getDoctors.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(getDoctors.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
+});

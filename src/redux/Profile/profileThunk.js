@@ -60,3 +60,49 @@ export const getProfile = createAsyncThunk(
     }
   },
 );
+
+export const getDoctors = createAsyncThunk(
+  'profile/getDoctors',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const endpoint = `api/v1/users/find-doctor`;
+      const res = await getApiCall(endpoint);
+      const data = res?.data;
+
+      if (res?.status === 200) {
+        return {
+          success: true,
+          message: data?.message || 'Doctors fetched successfully',
+          data: data,
+        };
+      } else {
+        return rejectWithValue({
+          success: false,
+          message: data?.message || 'Failed to fetch doctors',
+        });
+      }
+    } catch (err) {
+      return rejectWithValue(err?.message || 'Network error');
+    }
+  },
+);
+export const searchDoctors = createAsyncThunk(
+  'profile/searchDoctors',
+  async (search, { rejectWithValue }) => {
+    const endpoint = `/api/v1/users/find-doctor?search=${search}`;
+    const res = await getApiCall(endpoint);
+    const data = res?.data;
+    if (res?.status === 200) {
+      return {
+        success: true,
+        message: data?.message || 'Doctors fetched successfully',
+        data: data,
+      };
+    } else {
+      return rejectWithValue({
+        success: false,
+        message: data?.message || 'Failed to fetch doctors',
+      });
+    }
+  },
+);

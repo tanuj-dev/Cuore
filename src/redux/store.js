@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import authSlices from './Auth/slice'; // this is the object with both reducers
 
 import { profileSlice } from './Profile/slice';
+import { doctorsSlice } from './Profile/slice';
 import {
   onboardingSlice,
   onboardingSliceData,
@@ -37,6 +38,7 @@ const store = configureStore({
     tobacco: tobaccoSlice.reducer,
     predictData: predictSlice.reducer,
     health: getHealth.reducer,
+    doctors: doctorsSlice.reducer,
   },
 });
 
