@@ -181,7 +181,7 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           {errors.HsCRP && <Text style={styles.errorText}>{errors.HsCRP}</Text>}
         </View>
 
-        <View style={styles.unitContainer}>
+        {/* <View style={styles.unitContainer}>
           {['mg/dl', 'mg/L'].map(unit => (
             <TouchableOpacity
               key={unit}
@@ -201,7 +201,7 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </View> */}
 
         <View style={[styles.inputGroup, { opacity: 0 }]}>
           <Text style={styles.label}>Hidden</Text>

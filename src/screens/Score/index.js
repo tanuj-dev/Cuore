@@ -88,6 +88,8 @@ const Score = ({ navigation, route }) => {
   const health_metrics = useSelector(
     state => state.cuoreScore?.data?.health_metrics,
   );
+  const date = useSelector(state => state.cuoreScore?.data?.current_date);
+
   const hasDiabetes = useSelector(
     state => state.onboardingdata?.data?.data?.o3Data?.hasDiabetes,
   );
@@ -198,7 +200,7 @@ const Score = ({ navigation, route }) => {
               </View>
             </View>
             <View style={styles.header}>
-              <Text style={styles.date}>Feb 25, 2025</Text>
+              <Text style={styles.date}>{date || ''}</Text>
               <Text style={styles.title}>Cuore Score</Text>
               <View style={styles.avatarWrapper}>
                 <Image source={Images.avatar} style={styles.avatar} />

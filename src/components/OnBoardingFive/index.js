@@ -17,7 +17,8 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
   const [fruitsVeg, setFruitsVeg] = useState('');
   const [processedFood, setProcessedFood] = useState('');
   const [fiberFood, setFiberFood] = useState('');
-  const [restDay, setRestDay] = useState('Sun');
+  // ❌ was 'Sun' – this made it look like user had already selected
+  const [restDay, setRestDay] = useState('');
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -29,7 +30,8 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
       setFruitsVeg(initialData.fruits_veg || '');
       setProcessedFood(initialData.processed_food || '');
       setFiberFood(initialData.high_fiber || '');
-      setRestDay(initialData.rest_day || 'Sun');
+      // ❌ was 'Sun' – now only use value if it exists
+      setRestDay(initialData.rest_day || '');
 
       if (initialData.preferred_ex_time) {
         const [timeStr, ampm] = initialData.preferred_ex_time.split(' ');
@@ -178,6 +180,13 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* 🔴 show message until user selects a rest day (first time only) */}
+        {!restDay && (
+          <Text style={styles.errorText}>
+            Please select your weekly rest day.
+          </Text>
+        )}
 
         <Text style={styles.question}>What is your eating preference?</Text>
         {renderRadioOptions(
@@ -346,6 +355,12 @@ const styles = StyleSheet.create({
   selectedDayText: {
     fontFamily: 'Roboto-Regular',
     color: '#fff',
+  },
+  errorText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: wp(3.2),
+    color: '#DC2626',
+    marginTop: hp(0.5),
   },
   button: {
     backgroundColor: '#007bff',

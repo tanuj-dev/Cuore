@@ -66,21 +66,33 @@ const EditDoctor = ({ navigation }) => {
     if (text.length <= 10) {
       setDoctorCode(text);
     } else {
-      setToastMessage('Doctor code cannot exceed 8 characters.');
+      setToastMessage('Doctor code cannot exceed 10 characters.');
       setToastType('error');
     }
   };
 
   const handleSave = async () => {
-    // Extract the number part after +91
+    // per-field validation with specific messages
+    if (!userID) {
+      setToastMessage('User not found. Please log in again.');
+      setToastType('error');
+      return;
+    }
 
-    if (
-      !userID ||
-      !doctorName ||
-      doctorMobile.length !== 10 ||
-      doctorCode.length !== 10
-    ) {
-      setToastMessage('Please fill valid details for all required fields.');
+    if (!doctorName.trim()) {
+      setToastMessage('Please enter the doctor name.');
+      setToastType('error');
+      return;
+    }
+
+    if (!doctorMobile || doctorMobile.length !== 10) {
+      setToastMessage('Please enter a valid 10-digit mobile number.');
+      setToastType('error');
+      return;
+    }
+
+    if (!doctorCode.trim() || doctorCode.length !== 10) {
+      setToastMessage('Please enter a valid 10-character doctor code.');
       setToastType('error');
       return;
     }

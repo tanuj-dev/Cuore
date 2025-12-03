@@ -25,34 +25,6 @@ const Doctor = ({ navigation }) => {
 
   const [doctors, setDoctors] = useState(doctor);
   const [search, setSearch] = useState('');
-
-  // 🔍 debounce search API
-  useEffect(() => {
-    const query = search.trim();
-
-    // if search is empty, reset to original doctors list
-    if (!query) {
-      setDoctors(doctor);
-      return;
-    }
-
-    const timeoutId = setTimeout(async () => {
-      try {
-        const res = await dispatch(searchDoctors(query)).unwrap();
-        if (res?.success) {
-          setDoctors(res?.data?.data || []);
-        } else {
-          Alert.alert(res?.message || 'Failed to search doctors');
-        }
-      } catch (err) {
-        console.log('Search doctors error:', err);
-        Alert.alert('Failed to search doctors');
-      }
-    }, 500); // 500ms debounce
-
-    return () => clearTimeout(timeoutId);
-  }, [search, doctor, dispatch]);
-
   const toggleSelection = id => {
     setDoctors(prev => prev.map(doc => ({ ...doc, selected: doc._id === id })));
   };
@@ -251,6 +223,17 @@ const Doctor = ({ navigation }) => {
                 placeholderTextColor={'#6B7280'}
                 placeholder="Search your doctor..."
                 style={styles.searchInput}
+                onSubmitEditing={async () => {
+                  if (search.trim() !== '') {
+                    const data = await dispatch(searchDoctors(search)).unwrap();
+                    console.log(data);
+                    if (data?.success) {
+                      setDoctors(data?.data?.data || []);
+                    } else {
+                      Alert.alert(data?.message);
+                    }
+                  }
+                }}
               />
             </View>
 

@@ -73,7 +73,7 @@ const Today = ({ navigation, route }) => {
     : '';
 
   // 👇 use the same formatted date three times
-  const dates = [formattedDate, formattedDate, formattedDate];
+  const dates = [formattedDate];
 
   const userId = useSelector(state => state.auth.userId);
   const sessionExpiredMessage =
@@ -821,6 +821,7 @@ const Today = ({ navigation, route }) => {
           requestId={requestId}
           showModal={showModal}
           setShowModal={setShowModal}
+          setExistingReminder={setReminderList}
         />
       </ScrollView>
       {toast && (

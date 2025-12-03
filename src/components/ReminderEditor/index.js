@@ -31,6 +31,12 @@ const ReminderEditor = ({
   const dispatch = useDispatch();
   const userId = useSelector(state => state?.auth?.userId);
 
+  // ✅ safe fallbacks if parent did not pass these props
+  const safeSetExistingReminder =
+    typeof setExistingReminder === 'function' ? setExistingReminder : () => {};
+  const safeSetVisible =
+    typeof setVisible === 'function' ? setVisible : () => {};
+
   useEffect(() => {
     if (requestId) {
       const initialText =
@@ -45,7 +51,8 @@ const ReminderEditor = ({
     requestId?.title === 'Wake Up' ? requestId?.id : requestId?.sourceId;
 
   const updateLocalReminder = (formattedTime, title) => {
-    setExistingReminder(prev =>
+    // use safe setter so it won't crash if undefined
+    safeSetExistingReminder(prev =>
       prev.map(reminder => {
         const isMatch =
           requestId?.title === 'Wake Up'
@@ -82,7 +89,7 @@ const ReminderEditor = ({
         setShowModal(false);
       } else {
         Alert.alert('Error', 'Failed to update reminder. Please try again.');
-        setVisible(false);
+        safeSetVisible(false);
       }
     } catch (err) {
       console.error('❌ Reminder update failed:', err);

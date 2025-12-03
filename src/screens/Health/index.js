@@ -25,7 +25,27 @@ import { updateLastConsulted } from '../../redux/Home/homeThunk';
 const formatDate = date => {
   if (!date) return '';
   const d = new Date(date);
-  return isNaN(d) ? '' : d.toDateString();
+  if (isNaN(d.getTime())) return '';
+
+  const day = String(d.getDate()).padStart(2, '0');
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const month = monthNames[d.getMonth()];
+  const year = String(d.getFullYear()).slice(-2);
+
+  return `${day}/${month}/${year}`; // e.g. 04/Dec/25
 };
 
 const Health = ({ navigation }) => {
@@ -455,7 +475,7 @@ const Health = ({ navigation }) => {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.sectionTitle}>Last Consulted:</Text>
                   <Text style={styles.detail}>
-                    {lastConsulted.toDateString()} {/* shows updated date */}
+                    {formatDate(profile?.lastConsulted)}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => setShowDatePicker(true)}>
@@ -607,7 +627,7 @@ const Health = ({ navigation }) => {
                           width: hp(17),
                           // alignItems: 'flex-start',
                           // justifyContent: 'flex-start',
-                          right: hp(1),
+                          right: hp(0.3),
                           // alignSelf: 'center',
                         }}
                       >
