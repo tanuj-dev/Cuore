@@ -48,7 +48,7 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
     }, [initialData]),
   );
 
-  // ✅ Update parent whenever something changes
+  // ✅ Helper to notify parent (called only when user changes something)
   const updateParent = (
     updatedOptions = selectedOptions,
     updatedText = text,
@@ -58,10 +58,6 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
       other_conditions: updatedText,
     });
   };
-
-  useEffect(() => {
-    updateParent(selectedOptions, text);
-  }, [selectedOptions]);
 
   // console.log('Selected options:', selectedOptions);
 
@@ -118,8 +114,8 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
 
       {/* Additional input */}
       <Text style={styles.tagTitle}>
-        List any important medical or surgical conditions you’ve been treated
-        for. Use ‘/’ to separate multiple conditions
+        List major medical/surgical conditions (max 3). HTN & Diabetes already
+        covered above.
       </Text>
       <View style={styles.tagsWrapper}>
         <TextInput

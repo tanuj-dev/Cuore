@@ -309,11 +309,11 @@ const Predict = ({ navigation }) => {
 
               flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'space-around',
+              justifyContent: 'center',
             }}
           >
             <Text style={styles.header}>Predict</Text>
-            <Image
+            {/* <Image
               source={Images.SHARE_4}
               style={{
                 width: hp(2),
@@ -322,7 +322,7 @@ const Predict = ({ navigation }) => {
                 tintColor: '#000000',
               }}
               resizeMode="contain"
-            />
+            /> */}
           </View>
         </View>
 
@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     fontSize: 20,
     fontWeight: '400',
-    marginLeft: hp(17),
+    // marginLeft: hp(17),
     color: '#000000',
     // marginBottom: 16,
   },

@@ -141,10 +141,10 @@ const MidMorningBoost = ({ navigation }) => {
               resizeMode="contain"
             />
           </TouchableOpacity>
-          <Image
+          {/* <Image
             style={{ height: hp(2), width: wp(4), resizeMode: 'contain' }}
             source={Images.SHARE_4}
-          ></Image>
+          ></Image> */}
         </View>
 
         <View

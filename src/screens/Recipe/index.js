@@ -108,7 +108,7 @@ const Recipe = ({ navigation, route }) => {
               ></Image>
             </TouchableOpacity>
 
-            <Image
+            {/* <Image
               style={{
                 height: hp(3),
                 width: wp(4),
@@ -116,7 +116,7 @@ const Recipe = ({ navigation, route }) => {
                 tintColor: '#1E64AC',
               }}
               source={images.SHARE_4}
-            ></Image>
+            ></Image> */}
           </View>
 
           {/* Controls */}
