@@ -574,6 +574,7 @@ const Health = ({ navigation }) => {
                     fontWeight: '700',
                     color: '#000000',
                     fontFamily: 'Roboto-Regular',
+                    marginRight: hp(2),
                   }}
                 >
                   Status
@@ -627,8 +628,9 @@ const Health = ({ navigation }) => {
                           width: hp(17),
                           // alignItems: 'flex-start',
                           // justifyContent: 'flex-start',
-                          right: hp(0.3),
+                          // right: hp(0.3),
                           // alignSelf: 'center',
+                          // marginleft: hp(2),
                         }}
                       >
                         <View
@@ -682,7 +684,11 @@ const Health = ({ navigation }) => {
               </View>
 
               <TouchableOpacity
-                onPress={showImagePickerOptions}
+                onPress={() => {
+                  const STEP = 10;
+                  navigation.navigate('HealthRecords');
+                }}
+                // onPress={showImagePickerOptions}
                 style={styles.button}
               >
                 <Image

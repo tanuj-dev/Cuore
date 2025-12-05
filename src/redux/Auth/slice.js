@@ -8,6 +8,7 @@ const initialState = {
   userId: null,
   expiresIn: null,
   newUser: false,
+  role: null,
   loading: false,
   error: null,
 };
@@ -17,7 +18,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setUserData: (state, action) => {
-      const { accessToken, refreshToken, userId, expiresIn, newUser } =
+      const { accessToken, refreshToken, userId, expiresIn, newUser, role } =
         action.payload;
       state.accessToken = accessToken;
       state.refreshToken = refreshToken;
@@ -25,6 +26,7 @@ const authSlice = createSlice({
       state.expiresIn = expiresIn;
       state.newUser = newUser;
       state.error = null;
+      state.role = role;
     },
 
     logout: state => {
@@ -38,14 +40,21 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
-        const { access_token, refresh_token, user_id, expires_in, new_user } =
-          action.payload.data;
+        const {
+          access_token,
+          refresh_token,
+          user_id,
+          expires_in,
+          new_user,
+          role,
+        } = action.payload.data || {};
 
         state.accessToken = access_token;
         state.refreshToken = refresh_token;
         state.userId = user_id;
         state.expiresIn = expires_in;
         state.newUser = new_user;
+        state.role = role || null;
         state.loading = false;
         state.error = null;
       })

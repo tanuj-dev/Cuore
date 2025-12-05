@@ -23,7 +23,7 @@ const OtpScreen = () => {
 
   const loading = useSelector(state => state.auth.loading);
 
-  const { phone, requestId, retryAfter, testOtp, CreateAccountScreen } =
+  const { phone, role, requestId, retryAfter, testOtp, CreateAccountScreen } =
     route.params;
   console.log('Route params:', route.params);
 
@@ -71,6 +71,7 @@ const OtpScreen = () => {
             : Endpoints.VERIFYOTP,
           requestId,
           testOtp: enteredOtp,
+          role,
         }),
       ).unwrap();
       console.log('OTP verified:', result);
@@ -82,6 +83,7 @@ const OtpScreen = () => {
         expires_in,
         new_user,
         onboardingStatus,
+        role,
       } = result?.data;
 
       const tokenPayload = {
@@ -91,6 +93,7 @@ const OtpScreen = () => {
         expiresIn: expires_in,
         newUser: new_user,
         onboardingStatus: onboardingStatus,
+        role: role,
       };
 
       // ✅ Save token securely
@@ -123,7 +126,9 @@ const OtpScreen = () => {
   const handleResendOtp = async () => {
     try {
       setLoader(true);
-      const result = await dispatch(sendOtp(`+91${phone}`)).unwrap();
+      const result = await dispatch(
+        sendOtp({ phone: `+91${phone}`, role }),
+      ).unwrap();
       console.log('OTP resent:', result);
 
       setTimer(result.retryAfter || 30);

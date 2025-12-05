@@ -151,12 +151,26 @@ const Profile = ({ navigation }) => {
         text: 'Logout',
         style: 'destructive',
         onPress: async () => {
-          console.log(await EncryptedStorage.getItem('auth_tokens'));
+          console.log('LOGOUT CONFIRMED');
+          console.log(
+            'Existing auth_tokens before logout:',
+            await EncryptedStorage.getItem('auth_tokens'),
+          );
           await EncryptedStorage.removeItem('auth_tokens');
           // await EncryptedStorage.removeItem('userid');
           dispatch(logout());
           // dispatch(resetCreateAccount());
-          navigation.replace('Login'); // or navigate, depending on your flow
+          // Make sure we navigate on the root navigator, not just the Profile stack
+          const rootNavigation = navigation.getParent()?.getParent();
+          if (rootNavigation) {
+            rootNavigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          } else {
+            // Fallback: try a simple navigate which bubbles up
+            navigation.navigate('Login');
+          }
         },
       },
     ]);

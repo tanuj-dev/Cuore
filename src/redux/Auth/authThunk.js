@@ -4,12 +4,13 @@ import EndPoints from '../../utilities/Endpoints';
 
 export const sendOtp = createAsyncThunk(
   'auth/sendOtp',
-  async (phoneNumber, { rejectWithValue }) => {
-    console.log('[sendOtp] Thunk triggered with phoneNumber:', phoneNumber);
+  async ({ phone, role }, { rejectWithValue }) => {
+    console.log('[sendOtp] Thunk triggered with phone:', phone, 'role:', role);
 
     try {
       const payload = {
-        phone: phoneNumber,
+        phone,
+        role,
         purpose: 'login',
         client_info: {
           app_version: '1.0',
@@ -121,10 +122,7 @@ export const loginCaregiverThunk = createAsyncThunk(
 
 export const verifyCaregiverThunk = createAsyncThunk(
   'auth/verifyCaregiver',
-  async (
-    // payload: { phone: string; otp_code: string; requestId?: string },
-    { rejectWithValue },
-  ) => {
+  async (payload, { rejectWithValue }) => {
     try {
       // Example payload: { phone: '+919515951595', otp_code: '1234', requestId: 'abc123' }
       const response = await postApiCall(

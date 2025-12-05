@@ -29,7 +29,9 @@ const ProgressBarWithImage = ({ navigation, data }) => {
 
   return (
     <TouchableOpacity
-      onPress={() => navigation.navigate('Score')}
+      onPress={() => {
+        navigation.navigate('Score'), { navigateTo: 'Home' };
+      }}
       style={styles.container}
     >
       <View style={styles.labelRow}>

@@ -25,7 +25,7 @@ const Score = ({ navigation, route }) => {
   );
   const screen = route.params?.screen;
   const navigateTo = route.params?.navigateTo;
-  console.log(route.params, 'route params');
+  console.log(route, 'route params');
 
   const convertVitalsToArray = vitals => {
     const result = [];
@@ -84,6 +84,7 @@ const Score = ({ navigation, route }) => {
   const dispatch = useDispatch();
 
   const user_Id = useSelector(state => state.auth?.userId);
+  const role = useSelector(state => state.auth?.role);
   const loading = useSelector(state => state.cuoreScore?.loading);
   const health_metrics = useSelector(
     state => state.cuoreScore?.data?.health_metrics,
@@ -241,6 +242,7 @@ const Score = ({ navigation, route }) => {
             </View>
 
             <TouchableOpacity
+              disabled={role == 'caregiver'}
               onPress={() =>
                 navigation.navigate('OnBoarding', {
                   screen: 'Reassess',

@@ -37,32 +37,19 @@ const Login = ({ navigation }) => {
     console.log('Dispatching sendOtp with phone number:', phoneNumber);
 
     try {
-      if (tab === 'Caregiver') {
-        // ✅ Use the actual phoneNumber, not a hard-coded string
-        const payload = {
-          phone: `+91${phoneNumber}`,
-        };
+      const role = tab === 'Caregiver' ? 'caregiver' : 'user';
+      const result = await dispatch(
+        sendOtp({ phone: `+91${phoneNumber}`, role }),
+      ).unwrap();
 
-        const result = await dispatch(loginCaregiverThunk(payload)).unwrap();
-
-        console.log('Caregiver OTP sent:', result);
-        navigation.navigate('OtpScreen', {
-          phone: phoneNumber,
-          requestId: result.request_id,
-          // retryAfter: result.retry_after_seconds,
-          testOtp: result.test_otp_code,
-        });
-      } else {
-        const result = await dispatch(sendOtp(`+91${phoneNumber}`)).unwrap();
-
-        console.log('OTP sent:', result);
-        navigation.navigate('OtpScreen', {
-          phone: phoneNumber,
-          requestId: result.requestId,
-          retryAfter: result.retryAfter,
-          testOtp: result.testOtp,
-        });
-      }
+      console.log('OTP sent:', result);
+      navigation.navigate('OtpScreen', {
+        phone: phoneNumber,
+        role,
+        requestId: result.requestId,
+        retryAfter: result.retryAfter,
+        testOtp: result.testOtp,
+      });
     } catch (err) {
       console.log('OTP failed:', err.message);
 

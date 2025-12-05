@@ -49,6 +49,7 @@ import {
 import ApiErrorFallback from '../../components/ApiError';
 import { black } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 import { checkReminderThunk } from '../../redux/slices';
+import { getNotification } from '../../redux/Home/notificationThunk';
 
 const Today = ({ navigation, route }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -67,15 +68,17 @@ const Today = ({ navigation, route }) => {
   const { data, loading, error } = useSelector(state => state.home);
   const homeData = data ? data : null;
 
-  // 👇 format "2025-11-30" (YYYY-MM-DD) -> "Nov 30"
+  // 👇 format "2025-11-30" (YYYY-MM-DD) -> "Nov 30 2025"
   const formattedDate = homeData?.date
-    ? moment(homeData.date, 'YYYY-MM-DD').format('MMM DD')
+    ? moment(homeData.date, 'YYYY-MM-DD').format('MMM DD YYYY')
     : '';
 
   // 👇 use the same formatted date three times
   const dates = [formattedDate];
 
   const userId = useSelector(state => state.auth.userId);
+  const role = useSelector(state => state.auth.role);
+  const isCaregiver = role === 'caregiver';
   const sessionExpiredMessage =
     data?.message == 'Not authorized, invalid or expired token.';
   const profileData = useSelector(state => state.profile.data?.data?.user);
@@ -219,7 +222,15 @@ const Today = ({ navigation, route }) => {
     setSessionExpired(false);
     // await EncryptedStorage.removeItem('userid');
     dispatch(logout());
-    navigation.replace('Login'); // or navigate, depending on your flow
+    const rootNavigation = navigation.getParent();
+    if (rootNavigation) {
+      rootNavigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } else {
+      navigation.navigate('Login');
+    }
   };
 
   if (sessionExpiredMessage && sessionExpired) {
@@ -321,7 +332,7 @@ const Today = ({ navigation, route }) => {
     >
       <StatusBar barStyle="dark-content" backgroundColor="#000" />
       {/* <View style={styles.floatingText}>
-        <TouchableOpacity onPress={() => setIsVisible(true)}>
+        <TouchableOpacity disabled={isCaregiver} onPress={() => setIsVisible(true)}>
           <Image source={Images.PLUS} style={styles.addIcon} />
         </TouchableOpacity>
       </View> */}
@@ -351,6 +362,7 @@ const Today = ({ navigation, route }) => {
             }}
           >
             <TouchableOpacity
+              disabled={isCaregiver}
               onPress={() => setIsVisible(true)}
               style={[
                 styles.updateButton,
@@ -380,6 +392,7 @@ const Today = ({ navigation, route }) => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
+              // disabled={isCaregiver}
               style={[
                 styles.updateButton,
                 {
@@ -414,7 +427,11 @@ const Today = ({ navigation, route }) => {
         {/* Dates Tabs */}
         <View style={styles.tabs}>
           {dates.map(date => (
-            <TouchableOpacity key={date} onPress={() => setActiveTab(date)}>
+            <TouchableOpacity
+              key={date}
+              disabled={isCaregiver}
+              onPress={() => setActiveTab(date)}
+            >
               <Text
                 style={
                   activeTab === date ? styles.activeTab : styles.inactiveTab
@@ -427,7 +444,7 @@ const Today = ({ navigation, route }) => {
         </View>
 
         {/* Alerts */}
-        <View
+        {/* <View
           style={{
             alignItems: 'center',
             flexDirection: 'row',
@@ -443,12 +460,13 @@ const Today = ({ navigation, route }) => {
             source={Images.NOTICE}
           />
           <Text style={styles.alert}>2 tasks missed</Text>
-        </View>
+        </View> */}
 
         {/* Progress Section */}
         <View style={styles.progressContainer}>
           <Text style={styles.progressTitle}>Your Progress</Text>
           <TouchableOpacity
+            disabled={isCaregiver}
             onPress={() => {
               const STEP = 7;
               navigation.navigate('OnBoarding', {
@@ -531,6 +549,7 @@ const Today = ({ navigation, route }) => {
                   {item?.text}
                 </Text>
                 <TouchableOpacity
+                  disabled={isCaregiver}
                   style={{ position: 'absolute', right: hp(1), top: hp(1) }}
                 >
                   <Image
@@ -589,7 +608,21 @@ const Today = ({ navigation, route }) => {
                     }}
                   >
                     <TouchableOpacity
+                      disabled={isCaregiver}
                       onPress={() => {
+                        console.log(
+                          'NOTIFICATION ICON PRESSED, userId:',
+                          userId,
+                          'reminderId:',
+                          item?.id,
+                        );
+                        dispatch(
+                          getNotification({
+                            userId,
+                            reminderId: item?.id,
+                            time: item?.time,
+                          }),
+                        );
                         handleScheduleAtTime(
                           item?.time,
                           item?.title,
@@ -612,6 +645,7 @@ const Today = ({ navigation, route }) => {
                         item.title?.toLowerCase(),
                       ) && (
                         <TouchableOpacity
+                          disabled={isCaregiver}
                           onPress={() => {
                             setRequestId(item);
                             setShowModal(true);
@@ -632,6 +666,7 @@ const Today = ({ navigation, route }) => {
 
                 {/* check black dot */}
                 <TouchableOpacity
+                  disabled={isCaregiver}
                   onPress={() => {
                     // Optimistically update local state
                     setReminderList(prev =>
@@ -652,6 +687,7 @@ const Today = ({ navigation, route }) => {
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  disabled={isCaregiver}
                   onPress={() =>
                     handleNavigationPress(
                       item,
@@ -704,6 +740,7 @@ const Today = ({ navigation, route }) => {
             }}
           >
             <TouchableOpacity
+              disabled={isCaregiver}
               style={[
                 styles.checkAll,
                 {
@@ -860,13 +897,14 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 16,
+    justifyContent: 'flex-start',
+    // marginVertical: 16,
     backgroundColor: '#F9FAFB',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
     // paddingBottom: 8,
     paddingVertical: 8,
+    marginHorizontal: hp(2),
   },
   activeTab: { fontWeight: '500', fontSize: 16, color: '#1E64AC' },
   inactiveTab: { fontSize: 16, color: '#9CA3AF' },
