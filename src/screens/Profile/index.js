@@ -72,7 +72,8 @@ const profileOptions = [
 const Profile = ({ navigation }) => {
   const dispatch = useDispatch();
   // Group the options by section
-
+  const role = useSelector(state => state.auth.role);
+  const isCaregiver = role === 'caregiver';
   const [refreshing, setRefreshing] = useState(false);
   const groupedSections = profileOptions.reduce((acc, item) => {
     if (!acc[item.section]) acc[item.section] = [];
