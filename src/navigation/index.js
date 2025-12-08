@@ -215,7 +215,7 @@ function PredictStack() {
       <Stack.Screen name="Predict" component={Predict} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
       <Stack.Screen name="Health" component={Health} />
-      <Stack.Screen name="OnBoarding" component={OnBoarding} />
+      {/* <Stack.Screen name="OnBoarding" component={OnBoarding} /> */}
       <Stack.Screen name="Score" component={Score} />
     </Stack.Navigator>
   );
@@ -229,7 +229,7 @@ function TodayStack() {
       <Stack.Screen name="MidMorningBoost" component={MidMorningBoost} />
       <Stack.Screen name="RefrestRefuel" component={RefreshRefuel} />
       <Stack.Screen name="Health" component={Health} />
-      <Stack.Screen name="OnBoarding" component={OnBoarding} />
+      {/* <Stack.Screen name="OnBoarding" component={OnBoarding} /> */}
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
       <Stack.Screen name="Score" component={Score} />
       <Stack.Screen name="Nutrition" component={Nutrition} />

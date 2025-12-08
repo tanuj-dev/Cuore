@@ -37,7 +37,7 @@ export function ExploreStack() {
       <Stack.Screen name="MealBuilder2" component={MealBuilder2} />
       <Stack.Screen name="Health" component={Health} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
-      <Stack.Screen name="OnBoarding" component={OnBoarding} />
+      {/* <Stack.Screen name="OnBoarding" component={OnBoarding} /> */}
       <Stack.Screen name="Search" component={Search} />
     </Stack.Navigator>
   );

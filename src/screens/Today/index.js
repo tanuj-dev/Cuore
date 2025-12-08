@@ -185,7 +185,9 @@ const Today = ({ navigation, route }) => {
       hours,
       minutes,
     );
-    setToast(`Alarm set for ${moment(scheduledTime).format('hh:mm A')}`);
+    setToast(
+      `we will notify you at ${moment(scheduledTime).format('hh:mm A')}`,
+    );
     setToastType('success');
     setAlarmTime(true);
   };
@@ -616,6 +618,20 @@ const Today = ({ navigation, route }) => {
                           'reminderId:',
                           item?.id,
                         );
+
+                        // Optimistically update local state so UI changes immediately
+                        setReminderList(prev =>
+                          prev.map(reminder =>
+                            reminder.id === item.id
+                              ? {
+                                  ...reminder,
+                                  alarm_notified: !reminder.alarm_notified,
+                                }
+                              : reminder,
+                          ),
+                        );
+
+                        // Fire API/background work
                         dispatch(
                           getNotification({
                             userId,
@@ -636,7 +652,11 @@ const Today = ({ navigation, route }) => {
                           resizeMode: 'contain',
                           marginLeft: -hp(6),
                         }}
-                        source={Images?.NOTIFICATION}
+                        source={
+                          item?.alarm_notified
+                            ? Images?.NOTIFICATION
+                            : Images?.noNotification
+                        }
                       />
                     </TouchableOpacity>
 

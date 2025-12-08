@@ -115,6 +115,7 @@ const images = {
   EGGSVG: require('../assets/images/egg.svg'),
   EXIT: require('../assets/images/exit.png'),
   ADD: require('../assets/images/add.png'),
+  noNotification: require('../assets/images/noNoti.png'),
 
   // DM7: require('../assets/images/dm7.png'),
 };
