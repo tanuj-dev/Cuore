@@ -619,6 +619,13 @@ const Today = ({ navigation, route }) => {
                           item?.id,
                         );
 
+                        // Check if we're turning notification ON or OFF
+                        const isCurrentlyOn = item?.alarm_notified;
+                        const notificationId = `reminder-${item?.time.replace(
+                          /[: ]/g,
+                          '-',
+                        )}`;
+
                         // Optimistically update local state so UI changes immediately
                         setReminderList(prev =>
                           prev.map(reminder =>
@@ -639,11 +646,19 @@ const Today = ({ navigation, route }) => {
                             time: item?.time,
                           }),
                         );
-                        handleScheduleAtTime(
-                          item?.time,
-                          item?.title,
-                          item?.description,
-                        );
+
+                        // If turning ON, schedule notification; if turning OFF, cancel it
+                        if (isCurrentlyOn) {
+                          // Turning OFF - cancel the notification
+                          handleCancel(notificationId);
+                        } else {
+                          // Turning ON - schedule the notification
+                          handleScheduleAtTime(
+                            item?.time,
+                            item?.title,
+                            item?.description,
+                          );
+                        }
                       }}
                     >
                       <Image
@@ -651,6 +666,8 @@ const Today = ({ navigation, route }) => {
                           height: hp(2),
                           resizeMode: 'contain',
                           marginLeft: -hp(6),
+                          // backgroundColor: 'red',
+                          width: wp(10),
                         }}
                         source={
                           item?.alarm_notified
@@ -1017,7 +1034,7 @@ const styles = StyleSheet.create({
   taskCard: {
     elevation: 1,
     flex: 1,
-    height: hp(7.5),
+    height: hp(8),
     borderLeftWidth: 2,
     // paddingLeft: 12,
     backgroundColor: 'white',

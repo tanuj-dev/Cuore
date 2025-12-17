@@ -47,7 +47,13 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
 
   // ✅ Handle Date Picker (store as Date, not string)
   const handleDateChange = (event, selectedDate) => {
-    // setShowDatePicker(false);
+    // Close the picker regardless of platform / action
+    setShowDatePicker(false);
+
+    // If user dismissed, don't update state
+    if (event?.type === 'dismissed') {
+      return;
+    }
 
     if (selectedDate) {
       // Convert to local timezone (fix UTC → IST issue)
@@ -60,7 +66,14 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
 
   // ✅ Handle Time Picker
   const handleTimeChange = (event, selectedTime) => {
-    // setShowTimePicker(false);
+    // Close the picker regardless of platform / action
+    setShowTimePicker(false);
+
+    // If user dismissed, don't update state
+    if (event?.type === 'dismissed') {
+      return;
+    }
+
     if (selectedTime) {
       setTime(selectedTime); // Use directly — it's already in local time
     } else {

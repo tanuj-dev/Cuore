@@ -75,6 +75,12 @@ const OtpScreen = () => {
         }),
       ).unwrap();
       console.log('OTP verified:', result);
+      if (result?.data?.role === 'caregiver') {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+      }
 
       const {
         access_token,
@@ -108,6 +114,11 @@ const OtpScreen = () => {
       console.log('Retrieved token from storage:', JSON.parse(storedToken));
 
       if (onboardingStatus === 'complete') {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+      } else if (result?.data?.role === 'caregiver') {
         navigation.reset({
           index: 0,
           routes: [{ name: 'Home' }],

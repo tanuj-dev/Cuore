@@ -1,4 +1,4 @@
-import React, { use, useEffect } from 'react';
+import React, { use, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ViewShot from 'react-native-view-shot';
+import Share from 'react-native-share';
 import { hp, wp, Images, color } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
 import { getCuoreScoreThunk, getOnboardingThunk } from '../../redux/slices';
@@ -95,6 +99,32 @@ const Score = ({ navigation, route }) => {
     state => state.onboardingdata?.data?.data?.o3Data?.hasDiabetes,
   );
 
+  const viewShotRef = useRef(null);
+
+  const handleShareScreenshot = async () => {
+    try {
+      if (viewShotRef.current) {
+        // Capture only what's currently visible on screen (no scrolling)
+        const uri = await viewShotRef.current.capture();
+
+        const shareOptions = {
+          title: 'Cuore Score',
+          message: 'Check out my Cuore Score!',
+          url: uri,
+          type: 'image/jpeg',
+        };
+
+        await Share.open(shareOptions);
+      }
+    } catch (error) {
+      console.error('Error sharing screenshot:', error);
+      // User cancelled sharing - don't show error
+      if (error.message !== 'User did not share') {
+        Alert.alert('Error', 'Failed to share screenshot');
+      }
+    }
+  };
+
   useEffect(() => {
     if (user_Id) {
       dispatch(getCuoreScoreThunk(user_Id));
@@ -149,69 +179,83 @@ const Score = ({ navigation, route }) => {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
-      <ScrollView
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={() => dispatch(getCuoreScoreThunk(user_Id))}
-          />
-        }
-        style={styles.container}
+      <ViewShot
+        ref={viewShotRef}
+        options={{ format: 'jpg', quality: 0.9 }}
+        style={{ flex: 1 }}
+        collapsable={false}
       >
-        <View style={{ backgroundColor: '#F9FAFB' }}>
-          <View style={{ backgroundColor: '#FFFFFF', elevation: 1 }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                // backgroundColor: 'red',
-                // marginTop: Platform.OS == 'ios' && hp(2),
-                justifyContent: 'space-between',
-                padding: hp(1),
-              }}
-            >
-              <TouchableOpacity>
-                <Text> </Text>
-              </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          {/* Fixed Header - Non-scrollable */}
+          <View style={styles.fixedHeader}>
+            <View style={{ backgroundColor: '#FFFFFF', elevation: 1 }}>
               <View
                 style={{
                   flexDirection: 'row',
-                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  // padding: hp(1),
+                  paddingTop: hp(2),
+                  paddingHorizontal: hp(2),
                 }}
               >
-                <Image
-                  source={Images.SHARE_4} // Replace with actual key in your `images` object
+                <TouchableOpacity>
+                  <Text style={styles.date}>{date || ''}</Text>
+                </TouchableOpacity>
+                <View
                   style={{
-                    resizeMode: 'contain',
-                    height: hp(2),
-                    tintColor: 'black',
+                    flexDirection: 'row',
+                    alignItems: 'center',
                   }}
-                  resizeMode="contain"
-                />
-                <Image
-                  source={Images.UNCLE} // Replace with actual key in your `images` object
-                  style={{
-                    // tintColor: 'red',
-                    width: wp(9),
-                    resizeMode: 'cover',
-                    height: hp(3),
-                    // marginLeft: hp(-1.8),
-                  }}
-                  resizeMode="contain"
-                />
+                >
+                  <TouchableOpacity
+                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                    onPress={handleShareScreenshot}
+                  >
+                    <Image
+                      source={Images.SHARE_4}
+                      style={{
+                        resizeMode: 'contain',
+                        height: hp(2),
+                        tintColor: 'black',
+                      }}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                  <Image
+                    source={Images.UNCLE}
+                    style={{
+                      width: wp(9),
+                      resizeMode: 'cover',
+                      height: hp(3),
+                    }}
+                    resizeMode="contain"
+                  />
+                </View>
               </View>
-            </View>
-            <View style={styles.header}>
-              <Text style={styles.date}>{date || ''}</Text>
-              <Text style={styles.title}>Cuore Score</Text>
-              <View style={styles.avatarWrapper}>
-                <Image source={Images.avatar} style={styles.avatar} />
+              <View style={styles.header}>
+                <Text style={styles.title}>Cuore Score</Text>
+                <View style={styles.avatarWrapper}>
+                  <Image source={Images.avatar} style={styles.avatar} />
+                </View>
               </View>
             </View>
           </View>
 
-          <View style={styles.scoreCard}>
-            <GaugeMeter value={Math.round(health_metrics?.health_score)} />
-            {/* <Text
+          <ScrollView
+            refreshControl={
+              <RefreshControl
+                refreshing={loading}
+                onRefresh={() => dispatch(getCuoreScoreThunk(user_Id))}
+              />
+            }
+            style={styles.container}
+            nestedScrollEnabled={true}
+            showsVerticalScrollIndicator={true}
+          >
+            <View style={{ backgroundColor: '#F9FAFB' }}>
+              <View style={styles.scoreCard}>
+                <GaugeMeter value={Math.round(health_metrics?.health_score)} />
+                {/* <Text
             style={{
               fontSize: hp(2.5),
               color: 'red',
@@ -222,207 +266,214 @@ const Score = ({ navigation, route }) => {
           >
             {Math.round(health_metrics?.health_score)}
           </Text> */}
-            {/* <Text style={styles.score}>78</Text> */}
-            <Text style={styles.timeToTarget}>Estimated Time to Target</Text>
-            <View style={{ flexDirection: 'row' }}>
-              <Text
-                style={{
-                  fontFamily: 'Roboto-Regular',
-                  fontSize: 17,
-                  color: '#1E64AC',
-                  fontWeight: '500',
-                }}
-              >
-                {Math.round(health_metrics?.estimated_time_to_target?.value)}
-              </Text>
-              <Text style={styles.months}>
-                {' '}
-                {health_metrics?.estimated_time_to_target?.unit}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              disabled={role == 'caregiver'}
-              onPress={() =>
-                navigation.navigate('OnBoarding', {
-                  screen: 'Reassess',
-                })
-              }
-              style={styles.reassessButton}
-            >
-              <Image
-                source={Images.EDIT} // Replace with actual key in your `images` object
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(2),
-                  width: wp(6),
-                  tintColor: '#FFFFFF',
-
-                  // marginLeft: hp(2),
-                }}
-              />
-
-              <Text style={styles.reassessText}>Re-assess</Text>
-            </TouchableOpacity>
-            <Text style={styles.reassessNote}>
-              As your health evolves, so should your plan Re-assess monthly
-            </Text>
-          </View>
-
-          <View style={styles.row}>
-            <InfoCard
-              label="Metabolic Age"
-              value={health_metrics?.metabolic_age?.value}
-              subText={health_metrics?.metabolic_age?.gap}
-              png={Images.TREND}
-            />
-            <InfoCard
-              label="Weight"
-              value={health_metrics?.weight?.current}
-              subText={`Target:${Math.round(
-                health_metrics?.weight?.target,
-              )} kg`}
-              png={Images.WEIGHT}
-            />
-          </View>
-          <View style={styles.row}>
-            <InfoCard
-              label="BMI"
-              value={health_metrics?.bmi.value}
-              subText={`Target: ${health_metrics?.bmi?.target}`}
-              png={Images.WEIGHT}
-            />
-            <InfoCard
-              label="Lifestyle"
-              value={`${health_metrics?.lifestyle_score?.value?.toFixed(1)}%`}
-              subText={`Target: >${health_metrics?.lifestyle_score.target}`}
-              png={Images.TREND}
-            />
-          </View>
-
-          <View style={styles.row}>
-            <InfoCard
-              label="Recommended Calories"
-              value={`${health_metrics?.recommended?.calories?.value} kcal`}
-            />
-            <InfoCard
-              label="Recommended Exercise"
-              value={`${health_metrics?.recommended?.exercise?.value} min`}
-            />
-          </View>
-          <View
-            style={{
-              marginTop: hp(1),
-              // marginHorizontal: hp(1.5),
-              elevation: 0.5,
-              // padding: hp(2),
-              paddingVertical: hp(2),
-              margin: hp(1.5),
-              backgroundColor: 'white',
-              marginTop: hp(2),
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-              borderRadius: hp(1),
-            }}
-          >
-            {convertVitalsToArray(health_metrics?.vitals)
-              .filter(
-                item =>
-                  item.value !== undefined &&
-                  item.value !== null &&
-                  item.value !== '',
-              )
-              .map((item, index) => (
-                <View
-                  key={index}
-                  style={{ marginVertical: index === 2 ? hp(2) : 0 }}
-                >
-                  <VitalCard
-                    data={item.health_metrics?.vitals}
-                    label={item.label}
-                    value={item.value}
-                    target={item.target}
-                    color={item.status}
-                    colorCode={'red'}
-                    hasDiabetes={hasDiabetes}
-                  />
-                </View>
-              ))}
-
-            <View style={styles.focusRow}>
-              <Text style={styles.focusLabel}>Main Focus</Text>
-              <View style={styles.focusTags}>
-                <Text style={styles.focusTag}>
-                  {health_metrics?.main_focus?.[0]}
+                {/* <Text style={styles.score}>78</Text> */}
+                <Text style={styles.timeToTarget}>
+                  Estimated Time to Target
                 </Text>
-                <Text style={styles.focusTag}>
-                  {health_metrics?.main_focus?.[1]}
+                <View style={{ flexDirection: 'row' }}>
+                  <Text
+                    style={{
+                      fontFamily: 'Roboto-Regular',
+                      fontSize: 17,
+                      color: '#1E64AC',
+                      fontWeight: '500',
+                    }}
+                  >
+                    {Math.round(
+                      health_metrics?.estimated_time_to_target?.value,
+                    )}
+                  </Text>
+                  <Text style={styles.months}>
+                    {' '}
+                    {health_metrics?.estimated_time_to_target?.unit}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  disabled={role == 'caregiver'}
+                  onPress={() =>
+                    navigation.navigate('OnBoarding', {
+                      screen: 'Reassess',
+                    })
+                  }
+                  style={styles.reassessButton}
+                >
+                  <Image
+                    source={Images.EDIT} // Replace with actual key in your `images` object
+                    style={{
+                      resizeMode: 'contain',
+                      height: hp(2),
+                      width: wp(6),
+                      tintColor: '#FFFFFF',
+
+                      // marginLeft: hp(2),
+                    }}
+                  />
+
+                  <Text style={styles.reassessText}>Re-assess</Text>
+                </TouchableOpacity>
+                <Text style={styles.reassessNote}>
+                  As your health evolves, so should your plan Re-assess monthly
                 </Text>
               </View>
+
+              <View style={styles.row}>
+                <InfoCard
+                  label="Metabolic Age"
+                  value={health_metrics?.metabolic_age?.value}
+                  subText={health_metrics?.metabolic_age?.gap}
+                  png={Images.TREND}
+                />
+                <InfoCard
+                  label="Weight"
+                  value={health_metrics?.weight?.current}
+                  subText={`Target:${Math.round(
+                    health_metrics?.weight?.target,
+                  )} kg`}
+                  png={Images.WEIGHT}
+                />
+              </View>
+              <View style={styles.row}>
+                <InfoCard
+                  label="BMI"
+                  value={health_metrics?.bmi.value}
+                  subText={`Target: ${health_metrics?.bmi?.target}`}
+                  png={Images.WEIGHT}
+                />
+                <InfoCard
+                  label="Lifestyle"
+                  value={`${health_metrics?.lifestyle_score?.value?.toFixed(
+                    1,
+                  )}%`}
+                  subText={`Target: >${health_metrics?.lifestyle_score.target}`}
+                  png={Images.TREND}
+                />
+              </View>
+
+              <View style={styles.row}>
+                <InfoCard
+                  label="Recommended Calories"
+                  value={`${health_metrics?.recommended?.calories?.value} kcal`}
+                />
+                <InfoCard
+                  label="Recommended Exercise"
+                  value={`${health_metrics?.recommended?.exercise?.value} min`}
+                />
+              </View>
+              <View
+                style={{
+                  marginTop: hp(2),
+                  // marginHorizontal: hp(1.5),
+                  elevation: 0.5,
+                  // padding: hp(2),
+                  paddingVertical: hp(2),
+                  margin: hp(1.5),
+                  backgroundColor: 'white',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  borderRadius: hp(1),
+                }}
+              >
+                {convertVitalsToArray(health_metrics?.vitals)
+                  .filter(
+                    item =>
+                      item.value !== undefined &&
+                      item.value !== null &&
+                      item.value !== '',
+                  )
+                  .map((item, index) => (
+                    <View
+                      key={index}
+                      style={{ marginVertical: index === 2 ? hp(2) : 0 }}
+                    >
+                      <VitalCard
+                        data={item.health_metrics?.vitals}
+                        label={item.label}
+                        value={item.value}
+                        target={item.target}
+                        color={item.status}
+                        colorCode={'red'}
+                        hasDiabetes={hasDiabetes}
+                      />
+                    </View>
+                  ))}
+
+                <View style={styles.focusRow}>
+                  <Text style={styles.focusLabel}>Main Focus</Text>
+                  <View style={styles.focusTags}>
+                    <Text style={styles.focusTag}>
+                      {health_metrics?.main_focus?.[0]}
+                    </Text>
+                    <Text style={styles.focusTag}>
+                      {health_metrics?.main_focus?.[1]}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View
+                style={{
+                  backgroundColor: 'white',
+                  margin: hp(2),
+                  marginBottom: hp(6),
+                  // marginVertical: hp(1),
+                  marginTop: hp(2),
+                  borderRadius: hp(1),
+                  paddingVertical: hp(1),
+                  elevation: 1,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  // paddingBottom: hp(2),
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    // navigation.reset({
+                    //   index: 0,
+                    //   routes: [
+                    //     {
+                    //       name: 'Home',
+                    //       state: {
+                    //         index: 2, // Explore tab index
+                    //         routes: [
+                    //           { name: 'Today' },
+                    //           { name: 'Explore' },
+                    //           { name: 'Predict' },
+                    //           { name: 'Chat' },
+                    //           { name: 'Profile' },
+                    //         ],
+                    //       },
+                    //     },
+                    //   ],
+                    // });
+
+                    if (navigateTo == 'Home') {
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Home' }],
+                      });
+                    } else if (navigateTo == 'Mind') {
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Home' }],
+                      });
+                    } else {
+                      navigation.navigate('Checkout');
+                    }
+                  }}
+                  style={styles.continueButton}
+                >
+                  <Text style={styles.continueText}>Continue</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-
-          <View
-            style={{
-              backgroundColor: 'white',
-              margin: hp(2),
-              marginBottom: hp(6),
-              // marginVertical: hp(1),
-              marginTop: hp(2),
-              borderRadius: hp(1),
-              paddingVertical: hp(1),
-              elevation: 1,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-              // paddingBottom: hp(2),
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => {
-                // navigation.reset({
-                //   index: 0,
-                //   routes: [
-                //     {
-                //       name: 'Home',
-                //       state: {
-                //         index: 2, // Explore tab index
-                //         routes: [
-                //           { name: 'Today' },
-                //           { name: 'Explore' },
-                //           { name: 'Predict' },
-                //           { name: 'Chat' },
-                //           { name: 'Profile' },
-                //         ],
-                //       },
-                //     },
-                //   ],
-                // });
-
-                if (navigateTo == 'Home') {
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'Home' }],
-                  });
-                } else if (navigateTo == 'Mind') {
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'Home' }],
-                  });
-                } else {
-                  navigation.navigate('Checkout');
-                }
-              }}
-              style={styles.continueButton}
-            >
-              <Text style={styles.continueText}>Continue</Text>
-            </TouchableOpacity>
-          </View>
+          </ScrollView>
         </View>
-      </ScrollView>
+      </ViewShot>
     </SafeAreaView>
   );
 };
@@ -582,35 +633,46 @@ const VitalCard = ({
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#fff', marginTop: hp(9) },
+  fixedHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    elevation: 1000,
+    backgroundColor: '#FFFFFF',
+  },
   header: {
-    padding: wp(4),
+    // padding: wp(4),
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    // paddingBottom: hp(2),
   },
   date: {
     fontFamily: 'Roboto-Regular',
     fontSize: wp(3.5),
     color: '#6B7280',
-    marginBottom: hp(3),
+    // marginBottom: hp(3),
   },
   title: {
     fontFamily: 'Roboto-Regular',
-    marginLeft: hp(-4),
+    // marginLeft: hp(-4),
     fontSize: wp(5),
     fontWeight: '400',
-    marginTop: hp(2),
+    marginTop: hp(-3),
     color: '#000000',
+    textAlign: 'center',
+    marginLeft: hp(5),
   },
   avatarWrapper: {},
   avatar: { width: wp(10), height: wp(10), borderRadius: wp(5) },
 
   scoreCard: {
-    backgroundColor: 'red',
+    backgroundColor: '#FFFFFF',
     paddingVertical: hp(2),
     marginHorizontal: hp(1),
-    backgroundColor: '#FFFFFF',
     elevation: 1,
     borderRadius: hp(1),
     alignItems: 'center',
@@ -625,9 +687,8 @@ const styles = StyleSheet.create({
   timeToTarget: {
     fontFamily: 'Roboto-Regular',
     fontSize: 15,
-    color: 'red',
-    fontWeight: '400',
     color: '#4B5563',
+    fontWeight: '400',
   },
   months: {
     fontFamily: 'Roboto-Regular',
@@ -768,10 +829,9 @@ const styles = StyleSheet.create({
   },
   focusLabel: {
     fontFamily: 'Roboto-Regular',
-    fontSize: wp(4),
+    fontSize: 14,
     marginBottom: hp(1),
     color: '#000000',
-    fontSize: 14,
     fontWeight: '400',
   },
   focusTags: { flexDirection: 'row', gap: wp(3) },

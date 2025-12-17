@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
   Platform,
   TextInput,
 } from 'react-native';
+import ViewShot from 'react-native-view-shot';
+import Share from 'react-native-share';
 import { Images, hp, wp } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
 import { getNourish, getRecipe } from '../../redux/slices';
@@ -57,6 +59,34 @@ const Nutrition = ({ navigation, route }) => {
           item?.title?.toLowerCase().includes(text.toLowerCase()),
       );
       setFilteredMeals(filtered);
+    }
+  };
+
+  const viewShotRef = useRef(null);
+
+  const handleShareScreenshot = async () => {
+    try {
+      if (viewShotRef.current) {
+        const uri = await viewShotRef.current.capture();
+
+        const shareOptions = {
+          title: 'Nutrition Plan',
+          message: 'Check out my nutrition plan!',
+          url: uri,
+          type: 'image/jpeg',
+        };
+
+        await Share.open(shareOptions);
+        setToast('Screenshot shared successfully!');
+        setToastType('success');
+      }
+    } catch (error) {
+      console.error('Error sharing screenshot:', error);
+      // User cancelled sharing - don't show error
+      if (error.message !== 'User did not share') {
+        setToast('Failed to share screenshot');
+        setToastType('error');
+      }
     }
   };
 
@@ -200,119 +230,177 @@ const Nutrition = ({ navigation, route }) => {
           />
         </View>
       )}
-      <ScrollView
-        style={styles.container}
-        scrollEventThrottle={16}
-        keyboardShouldPersistTaps="handled"
+      <ViewShot
+        ref={viewShotRef}
+        options={{ format: 'jpg', quality: 0.9 }}
+        style={{ flex: 1 }}
       >
-        {/* 🔵 Header */}
-        <ImageBackground
-          style={{ padding: hp(2) }}
-          source={Images.BACKGROUND_IMAGE_NUTRITION}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginTop: Platform.OS === 'ios' ? hp(4) : hp(1.5),
-            }}
-          >
+        <View style={{ flex: 1 }}>
+          {/* Fixed Header Buttons - Always Visible */}
+          <View style={styles.fixedHeader}>
             <TouchableOpacity
               hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
               onPress={() => navigation.goBack()}
+              style={styles.fixedButton}
             >
               <Image
-                style={{ resizeMode: 'contain', height: hp(3), width: wp(4) }}
+                style={{
+                  resizeMode: 'contain',
+                  height: hp(3),
+                  width: wp(4),
+                }}
                 source={Images.BACK_BUTTON}
               />
             </TouchableOpacity>
-            <Image
-              style={{ height: hp(2), width: wp(4), resizeMode: 'contain' }}
-              source={Images.SHARE_4}
-            />
+            <TouchableOpacity
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              onPress={handleShareScreenshot}
+              style={styles.fixedButton}
+            >
+              <Image
+                style={{
+                  height: hp(2),
+                  width: wp(4),
+                  resizeMode: 'contain',
+                }}
+                source={Images.SHARE_4}
+              />
+            </TouchableOpacity>
           </View>
 
-          {/* Tabs */}
-          <View
-            style={{
-              justifyContent: 'center',
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginTop: hp(2),
+          <ScrollView
+            style={styles.container}
+            scrollEventThrottle={16}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+            contentContainerStyle={{
+              paddingTop: Platform.OS === 'ios' ? hp(4) : hp(1.5),
             }}
           >
-            {/* Breakfast Tab */}
-            <TouchableOpacity
-              onPress={() => setActiveTab('Breakfast')}
-              style={[
-                styles.tabButton,
-                {
-                  backgroundColor:
-                    activeTab === 'Breakfast' ? '#1E64AC' : '#9CA3AF',
-                },
-              ]}
+            {/* 🔵 Header */}
+            <ImageBackground
+              style={{ padding: hp(2) }}
+              source={Images.BACKGROUND_IMAGE_NUTRITION}
             >
-              <Image style={styles.tabIcon} source={Images.BREAKFAST} />
-              <Text style={styles.tabText}>Breakfast</Text>
-            </TouchableOpacity>
+              {/* Spacer for fixed buttons */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  height: Platform.OS === 'ios' ? hp(4) : hp(1.5),
+                }}
+              >
+                <View style={{ width: wp(4) }} />
+                <View style={{ width: wp(4) }} />
+              </View>
 
-            {/* Lunch & Dinner Tab */}
-            <TouchableOpacity
-              onPress={() => setActiveTab('LunchDinner')}
-              style={[
-                styles.tabButton,
-                {
-                  backgroundColor:
-                    activeTab === 'LunchDinner' ? '#1E64AC' : '#9CA3AF',
-                },
-              ]}
-            >
-              <Image style={styles.tabIcon} source={Images.KNIFE} />
-              <Text style={styles.tabText}>Lunch/Dinner</Text>
-            </TouchableOpacity>
-          </View>
+              {/* Tabs */}
+              <View
+                style={{
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginTop: hp(2),
+                }}
+              >
+                {/* Breakfast Tab */}
+                <TouchableOpacity
+                  onPress={() => setActiveTab('Breakfast')}
+                  style={[
+                    styles.tabButton,
+                    {
+                      backgroundColor:
+                        activeTab === 'Breakfast' ? '#1E64AC' : '#9CA3AF',
+                    },
+                  ]}
+                >
+                  <Image style={styles.tabIcon} source={Images.BREAKFAST} />
+                  <Text style={styles.tabText}>Breakfast</Text>
+                </TouchableOpacity>
 
-          {/* 🔍 Search Bar */}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Search')}
-            style={styles.searchContainer}
-          >
-            <View>
-              <Image source={Images.SEARCH} style={styles.searchIcon} />
+                {/* Lunch & Dinner Tab */}
+                <TouchableOpacity
+                  onPress={() => setActiveTab('LunchDinner')}
+                  style={[
+                    styles.tabButton,
+                    {
+                      backgroundColor:
+                        activeTab === 'LunchDinner' ? '#1E64AC' : '#9CA3AF',
+                    },
+                  ]}
+                >
+                  <Image style={styles.tabIcon} source={Images.KNIFE} />
+                  <Text style={styles.tabText}>Lunch/Dinner</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* 🔍 Search Bar */}
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Search')}
+                style={styles.searchContainer}
+              >
+                <View>
+                  <Image source={Images.SEARCH} style={styles.searchIcon} />
+                </View>
+
+                <Text style={{ color: '#9CA3AF' }}> Search Recipe...</Text>
+              </TouchableOpacity>
+
+              {loading ? (
+                <ActivityIndicator
+                  style={{ marginTop: hp(2) }}
+                  size="small"
+                  color="#1E64AC"
+                />
+              ) : (
+                <Text style={styles.headerTitle}>
+                  Daily variety leads to better results— try a new option each
+                  day.
+                </Text>
+              )}
+            </ImageBackground>
+
+            {/* 🥗 Meal Cards */}
+            <View style={styles.cardList}>
+              {filteredMeals?.length > 0 ? (
+                filteredMeals.map((item, index) => renderMealCard(item, index))
+              ) : (
+                <Text style={styles.noResultText}>No meals found.</Text>
+              )}
             </View>
-
-            <Text style={{ color: '#9CA3AF' }}> Search Recipe...</Text>
-          </TouchableOpacity>
-
-          {loading ? (
-            <ActivityIndicator
-              style={{ marginTop: hp(2) }}
-              size="small"
-              color="#1E64AC"
-            />
-          ) : (
-            <Text style={styles.headerTitle}>
-              Daily variety leads to better results— try a new option each day.
-            </Text>
-          )}
-        </ImageBackground>
-
-        {/* 🥗 Meal Cards */}
-        <View style={styles.cardList}>
-          {filteredMeals?.length > 0 ? (
-            filteredMeals.map((item, index) => renderMealCard(item, index))
-          ) : (
-            <Text style={styles.noResultText}>No meals found.</Text>
-          )}
+          </ScrollView>
         </View>
-      </ScrollView>
+      </ViewShot>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+  fixedHeader: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? hp(4) : hp(1.5),
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: hp(2),
+    zIndex: 1000,
+    elevation: 1000,
+    pointerEvents: 'box-none',
+  },
+  fixedButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: hp(1.5),
+    padding: hp(1),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   headerTitle: {
     fontFamily: 'Roboto-Regular',
     paddingHorizontal: hp(5),
