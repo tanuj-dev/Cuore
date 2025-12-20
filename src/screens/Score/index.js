@@ -208,6 +208,7 @@ const Score = ({ navigation, route }) => {
                   }}
                 >
                   <TouchableOpacity
+                    disabled={role == 'caregiver'}
                     hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                     onPress={handleShareScreenshot}
                   >
@@ -431,6 +432,7 @@ const Score = ({ navigation, route }) => {
                 }}
               >
                 <TouchableOpacity
+                  disabled={role == 'caregiver'}
                   onPress={() => {
                     // navigation.reset({
                     //   index: 0,

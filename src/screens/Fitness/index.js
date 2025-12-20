@@ -89,6 +89,7 @@ const Fitness = ({ navigation, route }) => {
 
   const dispatch = useDispatch();
   const data = useSelector(state => state.fitness.data);
+  const role = useSelector(state => state.auth.role);
   const fitnessData = data?.schedule;
 
   const onChangeTime = (event, selectedTime) => {
@@ -226,7 +227,11 @@ const Fitness = ({ navigation, route }) => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleUpdateTime} style={styles.updateBtn}>
+          <TouchableOpacity
+            disabled={role == 'caregiver'}
+            onPress={handleUpdateTime}
+            style={styles.updateBtn}
+          >
             <Text
               style={{
                 fontFamily: 'Roboto-Regular',

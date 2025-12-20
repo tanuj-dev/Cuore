@@ -255,7 +255,7 @@ const hexToRgb = hex => {
 };
 
 const Predict = ({ navigation }) => {
-  const [showRowData, setShowRowData] = useState('');
+  const [showRowData, setShowRowData] = useState([]);
   const [activeTab, setActiveTab] = useState('Predict');
   const [refreshing, setRefreshing] = useState(false);
   const [history, setHistory] = useState('Predict');
@@ -393,11 +393,16 @@ const Predict = ({ navigation }) => {
                   </Text>
                   <View style={styles.switchContainer}>
                     <TouchableOpacity
+                      style={{
+                        hitSlop: { top: 50, bottom: 50, left: 50, right: 50 },
+                      }}
                       onPress={() => {
-                        if (showRowData === item?.title) {
-                          setShowRowData('');
+                        if (showRowData.includes(item?.title)) {
+                          setShowRowData(
+                            showRowData.filter(title => title !== item?.title),
+                          );
                         } else {
-                          setShowRowData(item?.title);
+                          setShowRowData([...showRowData, item?.title]);
                         }
                       }}
                       style={{
@@ -407,13 +412,14 @@ const Predict = ({ navigation }) => {
                         width: wp(4),
                         borderRadius: hp(0.3),
                         marginRight: hp(1),
+                        // padding: hp(0.5),
                       }}
                     >
-                      {showRowData === item?.title && (
+                      {showRowData.includes(item?.title) && (
                         <Image
                           style={{
                             resizeMode: 'cover',
-                            height: hp(2),
+                            height: hp(2.2),
                             width: wp(4),
                             borderRadius: hp(0.3),
                           }}
@@ -524,7 +530,7 @@ const Predict = ({ navigation }) => {
                   chartConfig={chartConfig}
                   withDots
                   renderDotContent={
-                    item.title === showRowData
+                    showRowData.includes(item.title)
                       ? ({ x, y, index, indexData }) => (
                           <Text
                             key={`chart-${index}-dot-${index}-${indexData}`}

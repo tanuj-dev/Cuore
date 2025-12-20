@@ -101,6 +101,11 @@ const Profile = ({ navigation }) => {
 
       {items.map((item, index) => (
         <TouchableOpacity
+          disabled={
+            item.title === 'Select Persona' ||
+            item.title === 'Delete Account' ||
+            (item.title === 'Renew Subscription' && role == 'caregiver')
+          }
           onPress={() => {
             const route = routeMap[item.title]; // Corrected here
 
@@ -232,6 +237,7 @@ const Profile = ({ navigation }) => {
           <View style={{ padding: wp(4) }}>
             {/* User profile card */}
             <TouchableOpacity
+              disabled={role == 'caregiver'}
               onPress={() => navigation.navigate('EditProfile')}
               style={styles.profileCard}
             >

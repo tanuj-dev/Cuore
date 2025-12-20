@@ -24,6 +24,7 @@ const EditCaregiver = ({ navigation }) => {
   const [caregiverMobile, setCaregiverMobile] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'success' });
+  const role = useSelector(state => state.auth.role);
 
   useEffect(() => {
     if (caregiverData) {
@@ -119,7 +120,10 @@ const EditCaregiver = ({ navigation }) => {
       <View style={styles.container}>
         <View style={styles.headerRow}>
           {!isEditing && (
-            <TouchableOpacity onPress={() => setIsEditing(true)}>
+            <TouchableOpacity
+              disabled={role == 'caregiver'}
+              onPress={() => setIsEditing(true)}
+            >
               <Image source={Images.EDIT} style={styles.editIcon} />
             </TouchableOpacity>
           )}

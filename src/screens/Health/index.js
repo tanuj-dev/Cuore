@@ -205,6 +205,7 @@ const Health = ({ navigation }) => {
     state => state.health?.data?.data?.data?.healthRecords,
   );
   const userId = useSelector(state => state.auth?.userId);
+  const role = useSelector(state => state.auth?.role);
   console.log('userId in Health screen:', userId);
   const profile = useSelector(state => state.health?.data?.data?.data?.profile);
   const loading = useSelector(state => state.health?.loading);
@@ -292,7 +293,7 @@ const Health = ({ navigation }) => {
       {
         parameter: 'HsCRP',
         value: observations?.HsCRP?.value
-          ? `${observations.HsCRP.value} mg/L`
+          ? `${observations.HsCRP.value} mg/dL`
           : ' -',
         status: observations?.HsCRP?.status,
       },
@@ -362,6 +363,7 @@ const Health = ({ navigation }) => {
               <Text style={styles.fixedHeaderTitle}>Cuore Health</Text>
             </View>
             <TouchableOpacity
+              disabled={role == 'caregiver'}
               hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
               onPress={handleShareScreenshot}
               style={styles.fixedButton}
@@ -431,6 +433,7 @@ const Health = ({ navigation }) => {
                       <Text style={styles.detail}>{profile?.pastHO}</Text>
                     </View>
                     <TouchableOpacity
+                      disabled={role == 'caregiver'}
                       onPress={() => {
                         const STEP = 3;
                         navigation.navigate('OnBoarding', {
@@ -514,6 +517,7 @@ const Health = ({ navigation }) => {
 
                   {showDatePicker && (
                     <DateTimePicker
+                      disabled={role == 'caregiver'}
                       value={lastConsulted}
                       mode="date"
                       display="default"
@@ -534,6 +538,7 @@ const Health = ({ navigation }) => {
                   >
                     <Text style={styles.sectionTitle}>Health Observations</Text>
                     <TouchableOpacity
+                      disabled={role == 'caregiver'}
                       onPress={() => {
                         const STEP = 7;
                         navigation.navigate('OnBoarding', {

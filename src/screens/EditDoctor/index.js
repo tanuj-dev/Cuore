@@ -27,6 +27,7 @@ const EditDoctor = ({ navigation }) => {
   const dispatch = useDispatch();
   const userID = useSelector(state => state.auth.userId);
   const userProfile = useSelector(state => state.profile.data?.data?.doctor);
+  const role = useSelector(state => state.auth.role);
 
   useEffect(() => {
     if (userProfile) {
@@ -177,6 +178,7 @@ const EditDoctor = ({ navigation }) => {
         <View style={styles.container}>
           {!isEditing && (
             <TouchableOpacity
+              disabled={role == 'caregiver'}
               style={{ marginBottom: hp(2), alignSelf: 'flex-end' }}
               onPress={() => setIsEditing(true)}
             >
@@ -226,6 +228,7 @@ const EditDoctor = ({ navigation }) => {
             I do not have a Cuore-partnered doctor
           </Text>
           <TouchableOpacity
+            disabled={role == 'caregiver'}
             onPressIn={() => navigation.navigate('Doctor')}
             style={styles.findBtn}
           >

@@ -35,6 +35,7 @@ const Mind = ({ navigation }) => {
 
   const dispatch = useDispatch();
   const { data, loading, error } = useSelector(state => state.mind);
+  const role = useSelector(state => state.auth.role);
   console.log('Mind data from Redux:', data);
 
   const morning = data?.data?.morningHarmony;
@@ -140,6 +141,7 @@ const Mind = ({ navigation }) => {
           </View>
 
           <TouchableOpacity
+            disabled={role == 'caregiver'}
             onPress={() => {
               const STEP = 6;
               navigation.navigate('OnBoarding', {

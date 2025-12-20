@@ -724,7 +724,7 @@ const Today = ({ navigation, route }) => {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  disabled={isCaregiver}
+                  // disabled={isCaregiver}
                   onPress={() =>
                     handleNavigationPress(
                       item,
