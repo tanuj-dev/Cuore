@@ -17,6 +17,7 @@ import Share from 'react-native-share';
 import { hp, wp, Images, color } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
 import { getCuoreScoreThunk, getOnboardingThunk } from '../../redux/slices';
+import { shareData } from '../../redux/slices';
 import GaugeMeter from '../../components/SpeedpMeter';
 import Loader from '../../components/Loader';
 
@@ -103,19 +104,26 @@ const Score = ({ navigation, route }) => {
 
   const handleShareScreenshot = async () => {
     try {
-      if (viewShotRef.current) {
-        // Capture only what's currently visible on screen (no scrolling)
-        const uri = await viewShotRef.current.capture();
+      // if (viewShotRef.current) {
+      //   // Capture only what's currently visible on screen (no scrolling)
+      //   const uri = await viewShotRef.current.capture();
 
-        const shareOptions = {
-          title: 'Cuore Score',
-          message: 'Check out my Cuore Score!',
-          url: uri,
-          type: 'image/jpeg',
-        };
+      //   const shareOptions = {
+      //     title: 'Cuore Score',
+      //     message: 'Check out my Cuore Score!',
+      //     url: uri,
+      //     type: 'image/jpeg',
+      //   };
 
-        await Share.open(shareOptions);
-      }
+      //   await Share.open(shareOptions);
+      // }
+
+      const payload = {
+        page: 'CUORE_SCORE',
+      };
+
+      const response = await dispatch(shareData(payload));
+      // await Alert.alert(response.data.message);
     } catch (error) {
       console.error('Error sharing screenshot:', error);
       // User cancelled sharing - don't show error

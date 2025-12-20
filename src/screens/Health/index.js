@@ -26,6 +26,7 @@ import { hp, wp, Images } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
 import { getHealthRecord } from '../../redux/slices';
 import { updateLastConsulted } from '../../redux/Home/homeThunk';
+import { shareData } from '../../redux/slices';
 
 // Constants
 const HIT_SLOP = { top: 20, bottom: 20, left: 20, right: 20 };
@@ -184,18 +185,25 @@ const Health = ({ navigation }) => {
 
   const handleShareScreenshot = useCallback(async () => {
     try {
-      if (viewShotRef.current) {
-        const uri = await viewShotRef.current.capture();
+      // if (viewShotRef.current) {
+      //   const uri = await viewShotRef.current.capture();
 
-        const shareOptions = {
-          title: 'Health Records',
-          message: 'Check out my health records!',
-          url: uri,
-          type: 'image/jpeg',
-        };
+      //   const shareOptions = {
+      //     title: 'Health Records',
+      //     message: 'Check out my health records!',
+      //     url: uri,
+      //     type: 'image/jpeg',
+      //   };
 
-        await Share.open(shareOptions);
-      }
+      //   await Share.open(shareOptions);
+      // }
+
+      const payload = {
+        page: 'CUORE_HEALTH',
+      };
+
+      const response = await dispatch(shareData(payload));
+      // await Alert.alert(response.data.message);
     } catch (error) {
       // User cancelled sharing - don't show error
       if (error.message !== 'User did not share') {

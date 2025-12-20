@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
 import Navigator from './src/navigation';
@@ -11,19 +11,26 @@ const App = () => {
       console.log('[Store Changed]', store.getState());
     });
 
+    // Initialize Notifee for notifications
+    initializeNotifee();
+
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    // Initialize Notifee for notifications
-    initializeNotifee();
-  }, []);
-
   return (
-    <Provider store={store}>
-      <Navigator />
-    </Provider>
+    <View style={styles.appContainer}>
+      <Provider store={store}>
+        <Navigator />
+      </Provider>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  appContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+});
 
 export default App;

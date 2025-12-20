@@ -32,6 +32,7 @@ import { getPredict } from './Predict/predictThunk';
 import { checkReminderThunk } from './Home/checkReminderThunk';
 import { searchBuilderThunk } from './Nutrition/thunk';
 import { getNotification } from './Home/notificationThunk';
+import { shareData } from './Share/shareThunk';
 
 export {
   sendOtp,
@@ -67,4 +68,5 @@ export {
   getDoctors,
   searchDoctors,
   getNotification,
+  shareData,
 };

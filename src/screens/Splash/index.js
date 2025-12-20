@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { setUserData } from '../../redux/Auth/slice';
-import { hp, wp, Images, Strings } from '../../utilities';
+import { hp, wp, Images } from '../../utilities';
 
 const Splash = () => {
   const navigation = useNavigation();
@@ -34,7 +34,7 @@ const Splash = () => {
             await EncryptedStorage.removeItem('auth_tokens');
             setTimeout(() => {
               navigation.replace('Login');
-            }, 1000);
+            }, 3000);
             return;
           }
 
@@ -42,49 +42,60 @@ const Splash = () => {
             console.log('Onboarding not complete, navigating to Onboarding');
             setTimeout(() => {
               navigation.replace('Login');
-            }, 1000);
+            }, 3000);
           } else {
             dispatch(setUserData(parsed));
             setTimeout(() => {
               navigation.replace('Home');
-            }, 1000);
+            }, 3000);
           }
         } else {
           setTimeout(() => {
             navigation.replace('Login');
-          }, 1000);
+          }, 3000);
         }
       } catch (err) {
         console.log('Error reading token:', err.message);
         setTimeout(() => {
           navigation.replace('Login');
-        }, 1000);
+        }, 3000);
       } finally {
         setCheckingAuth(false);
       }
     };
 
     checkLoginStatus();
-  }, []);
+  }, [dispatch, navigation]);
 
   return (
     <View style={styles.container}>
-      <View style={styles.logoWrapper}>
-        <Image source={Images.APP_LOGO} style={styles.logo} />
+      {/* Content overlay - renders immediately */}
+      <View style={styles.contentContainer}>
+        <View style={styles.logoShadowWrapper}>
+          <View style={styles.logoWrapper}>
+            <Image
+              source={Images.CUORE}
+              style={styles.centeredLogo}
+              defaultSource={Images.CUORE}
+            />
+          </View>
+        </View>
+
+        <Text style={styles.title}>Your Everyday Health Companion</Text>
+        <Text style={styles.subtitle}>
+          Small Steps. Smart Guidance. Better Health
+        </Text>
+
+        {checkingAuth && (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator
+              size="large"
+              color="#2563EB"
+              style={styles.loader}
+            />
+          </View>
+        )}
       </View>
-
-      <Text style={styles.title}>Your Everyday Health Companion</Text>
-      <Text style={styles.subtitle}>
-        Small Steps. Smart Guidance. Better Health
-      </Text>
-
-      {checkingAuth && (
-        <ActivityIndicator
-          size="small"
-          color="#2563EB"
-          style={{ marginTop: hp(2) }}
-        />
-      )}
     </View>
   );
 };
@@ -94,42 +105,70 @@ export default Splash;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FFFFFF',
+  },
+  contentContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: wp(5),
+    paddingHorizontal: wp(8),
+    zIndex: 1,
+  },
+  logoShadowWrapper: {
+    height: wp(50),
+    width: wp(50),
+    marginBottom: hp(4),
+    // iOS shadow - applied to wrapper so it's not clipped
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    // Android shadow
+    elevation: 8,
   },
   logoWrapper: {
-    height: wp(32),
-    width: wp(32),
-    borderRadius: wp(32) / 2,
+    height: wp(50),
+    width: wp(50),
+    borderRadius: wp(25),
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    marginBottom: hp(3),
+    padding: wp(3),
+    overflow: 'hidden', // This is fine now since shadow is on parent
+    elevation: 8,
   },
-  logo: {
-    height: wp(20),
-    width: wp(27),
+
+  centeredLogo: {
+    height: hp(70),
+    width: wp(70),
     resizeMode: 'contain',
   },
   title: {
     fontFamily: 'Roboto-Regular',
-    fontSize: hp(2.2),
-    fontWeight: '600',
+    fontSize: hp(2.8),
+    fontWeight: '700',
     color: '#111827',
     textAlign: 'center',
-    marginBottom: hp(1),
+    marginBottom: hp(1.5),
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontFamily: 'Roboto-Regular',
-    fontSize: hp(1.6),
+    fontSize: hp(1.8),
     color: '#4B5563',
     textAlign: 'center',
+    lineHeight: hp(2.5),
+    paddingHorizontal: wp(5),
+  },
+  loaderContainer: {
+    marginTop: hp(4),
+    padding: wp(3),
+    borderRadius: wp(2),
+  },
+  loader: {
+    transform: [{ scale: 1.2 }],
   },
 });

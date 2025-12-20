@@ -116,6 +116,7 @@ const images = {
   EXIT: require('../assets/images/exit.png'),
   ADD: require('../assets/images/add.png'),
   noNotification: require('../assets/images/noNoti.png'),
+  CUORE: require('../assets/images/cuore.png'),
 
   // DM7: require('../assets/images/dm7.png'),
 };

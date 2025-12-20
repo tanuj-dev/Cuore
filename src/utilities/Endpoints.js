@@ -19,6 +19,7 @@ const Endpoints = {
   GET_FITNESS: '/api/fitness/fitness-plan',
   UPDATE_FITNESS_TIME: '/api/fitness/update-ex-time',
   LOGINCAREGIVER: '/api/v1/auth/caregiver/otp/request',
+  SHARE_DATA: '/api/v1/share/report',
 };
 
 export default Endpoints;
