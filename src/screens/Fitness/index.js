@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   Platform,
   StyleSheet,
   Image,
-  Animated,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { hp, wp, Images } from '../../utilities';
@@ -19,72 +18,47 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-const WorkoutCard = ({
-  item,
-  index,
-  navigation,
-  expandedIndex,
-  setExpandedIndex,
-}) => {
-  const animation = useRef(new Animated.Value(0)).current;
-  const isExpanded = expandedIndex === index;
+// Pure function - moved outside component
+const formatTime = date => {
+  const hours = date.getHours();
+  const mins = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const formattedHour = hours % 12 || 12;
+  const formattedMin = mins < 10 ? `0${mins}` : mins;
+  return `${formattedHour}:${formattedMin} ${ampm}`;
+};
 
-  useEffect(() => {
-    Animated.timing(animation, {
-      toValue: isExpanded ? 1 : 0,
-      duration: 400,
-      useNativeDriver: false,
-    }).start();
-  }, [isExpanded]);
+const WorkoutCard = React.memo(({ item, navigation }) => {
+  const handlePress = useCallback(() => {
+    navigation.navigate('FitnessDetails', {
+      instruction: item?.instructions,
+      data: item,
+    });
+  }, [navigation, item]);
 
   return (
     <TouchableOpacity
-      onPress={() =>
-        navigation.navigate('FitnessDetails', {
-          instruction: item?.instructions,
-          data: item,
-        })
-      }
+      onPress={handlePress}
       style={[styles.card, { borderLeftColor: item?.color }]}
+      activeOpacity={0.7}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Image
-          style={{
-            resizeMode: 'contain',
-            height: hp(2),
-            width: wp(4),
-            tintColor: '#000000',
-          }}
-          source={Images.COIN}
-        />
+      <View style={styles.cardHeader}>
+        <Image style={styles.coinIcon} source={Images.COIN} />
         <Text style={styles.cardTitle}>{item?.title}</Text>
       </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: hp(0.7),
-        }}
-      >
-        <Text style={{ fontSize: 14, color: '#374151' }}>
-          Reps: {item?.reps}
-        </Text>
-        <Text style={{ fontSize: 14, color: '#374151' }}>
-          Sets: {item?.sets}
-        </Text>
+      <View style={styles.cardDetails}>
+        <Text style={styles.detailText}>Reps: {item?.reps}</Text>
+        <Text style={styles.detailText}>Sets: {item?.sets}</Text>
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const Fitness = ({ navigation, route }) => {
-  console.log('Fitness Route Params:', route?.params);
   const todayWorkoutDay = route?.params?.initialTab;
-  console.log('Initial Tab:', todayWorkoutDay);
-  const [selectedDay, setSelectedDay] = useState(todayWorkoutDay);
+  const [selectedDay, setSelectedDay] = useState(todayWorkoutDay || days[0]);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [time, setTime] = useState(new Date());
-  const [expandedIndex, setExpandedIndex] = useState(null);
   const [toast, setToast] = useState(null);
 
   const dispatch = useDispatch();
@@ -92,21 +66,12 @@ const Fitness = ({ navigation, route }) => {
   const role = useSelector(state => state.auth.role);
   const fitnessData = data?.schedule;
 
-  const onChangeTime = (event, selectedTime) => {
+  const onChangeTime = useCallback((event, selectedTime) => {
     setShowTimePicker(false);
     if (selectedTime) setTime(selectedTime);
-  };
+  }, []);
 
-  const formatTime = date => {
-    const hours = date.getHours();
-    const mins = date.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const formattedHour = hours % 12 || 12;
-    const formattedMin = mins < 10 ? `0${mins}` : mins;
-    return `${formattedHour}:${formattedMin} ${ampm}`;
-  };
-
-  const handleUpdateTime = async () => {
+  const handleUpdateTime = useCallback(async () => {
     const formattedTime = formatTime(time);
     const formData = { preferred_ex_time: formattedTime };
     const res = await dispatch(updateFitnessTime(formData));
@@ -116,11 +81,46 @@ const Fitness = ({ navigation, route }) => {
     } else {
       setToast('Failed to update preferred exercise time. Please try again.');
     }
-  };
+  }, [time, dispatch]);
+
+  const handleDaySelect = useCallback(day => {
+    setSelectedDay(day);
+  }, []);
+
+  const handleGoBack = useCallback(() => {
+    navigation.goBack();
+  }, [navigation]);
+
+  const handleShowTimePicker = useCallback(() => {
+    setShowTimePicker(true);
+  }, []);
+
+  const handleHideToast = useCallback(() => {
+    setToast(null);
+  }, []);
+
+  const formattedTime = useMemo(() => formatTime(time), [time]);
+
+  const workoutData = useMemo(
+    () => fitnessData?.[selectedDay] || [],
+    [fitnessData, selectedDay],
+  );
+
+  const keyExtractor = useCallback(
+    (item, index) => `${item.title}-${index}`,
+    [],
+  );
+
+  const renderWorkoutCard = useCallback(
+    ({ item }) => <WorkoutCard item={item} navigation={navigation} />,
+    [navigation],
+  );
 
   useEffect(() => {
-    setTime(data?.preferredTime ? new Date(data.preferredTime) : new Date());
-  }, [data]);
+    if (data?.preferredTime) {
+      setTime(new Date(data.preferredTime));
+    }
+  }, [data?.preferredTime]);
 
   if (!fitnessData) {
     return (
@@ -132,116 +132,62 @@ const Fitness = ({ navigation, route }) => {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       {toast && (
         <ToastMessage
           top={hp(8)}
           message={toast}
           type="success"
-          onHide={() => setToast(null)}
+          onHide={handleHideToast}
         />
       )}
 
       {/* Header */}
-      <View style={{ backgroundColor: '#FFFFFF' }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            elevation: 1,
-          }}
-        >
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
           <TouchableOpacity
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            style={{ paddingHorizontal: hp(1) }}
-            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+            onPress={handleGoBack}
           >
-            <Image
-              source={Images.BACK_BUTTON}
-              style={{
-                marginLeft: wp(1),
-                resizeMode: 'contain',
-                height: hp(3.5),
-                width: wp(4),
-              }}
-            />
+            <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
           </TouchableOpacity>
           <Text style={styles.title}>Cuore Fitness</Text>
         </View>
       </View>
 
       {/* Main Content */}
-      <View style={{ flex: 1, backgroundColor: '#F6F5FF', padding: wp(4) }}>
+      <View style={styles.content}>
         {/* Time Update Card */}
         <View style={styles.timeCard}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image
-              style={{
-                resizeMode: 'contain',
-                height: hp(2.5),
-                width: wp(5),
-                tintColor: '#17AD8D',
-              }}
-              source={Images.WATCH}
-            />
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                marginLeft: hp(1),
-                fontSize: 18,
-                fontWeight: '400',
-                color: '#000000',
-              }}
-            >
+          <View style={styles.timeCardHeader}>
+            <Image style={styles.watchIcon} source={Images.WATCH} />
+            <Text style={styles.timeCardTitle}>
               Update Preferred Exercise Time
             </Text>
           </View>
 
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 14,
-              fontWeight: '400',
-              color: '#4B5563',
-              marginTop: 4,
-            }}
-          >
+          <Text style={styles.timeCardSubtitle}>
             Ideal between 6:00 AM – 7:00 PM
           </Text>
 
           <TouchableOpacity
             style={styles.timeButton}
-            onPress={() => setShowTimePicker(true)}
+            onPress={handleShowTimePicker}
           >
-            <Text style={{ fontFamily: 'Roboto-Regular', fontSize: wp(4) }}>
-              {formatTime(time)}
-            </Text>
-            <Image
-              style={{
-                resizeMode: 'contain',
-                height: hp(2),
-                width: wp(5),
-                tintColor: '#8F8F8F',
-              }}
-              source={Images.WATCH}
-            />
+            <Text style={styles.timeText}>{formattedTime}</Text>
+            <Image style={styles.timeWatchIcon} source={Images.WATCH} />
           </TouchableOpacity>
 
           <TouchableOpacity
-            disabled={role == 'caregiver'}
+            disabled={role === 'caregiver'}
             onPress={handleUpdateTime}
-            style={styles.updateBtn}
+            style={[
+              styles.updateBtn,
+              role === 'caregiver' && styles.updateBtnDisabled,
+            ]}
           >
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                color: '#FFFFFF',
-                fontWeight: '400',
-                fontSize: 14,
-              }}
-            >
-              ✓ Update Time
-            </Text>
+            <Text style={styles.updateBtnText}>✓ Update Time</Text>
           </TouchableOpacity>
 
           {showTimePicker && (
@@ -257,22 +203,12 @@ const Fitness = ({ navigation, route }) => {
 
         {/* Day Tabs */}
         <View style={styles.innerShadowContainer}>
-          <View
-            style={{
-              paddingHorizontal: hp(1),
-              paddingVertical: hp(0.5),
-            }}
-          >
-            <View
-              style={{ flexDirection: 'row', justifyContent: 'space-between' }}
-            >
+          <View style={styles.dayTabsContainer}>
+            <View style={styles.dayTabsRow}>
               {days.map(day => (
                 <TouchableOpacity
                   key={day}
-                  onPress={() => {
-                    setSelectedDay(day);
-                    setExpandedIndex(null);
-                  }}
+                  onPress={() => handleDaySelect(day)}
                   style={[
                     styles.dayBtn,
                     selectedDay === day && styles.selectedDayBtn,
@@ -294,24 +230,19 @@ const Fitness = ({ navigation, route }) => {
 
         {/* Workout List */}
         <FlatList
-          data={fitnessData?.[selectedDay]}
-          keyExtractor={(item, index) => `${item.title}-${index}`}
-          renderItem={({ item, index }) => (
-            <WorkoutCard
-              item={item}
-              index={index}
-              navigation={navigation}
-              expandedIndex={expandedIndex}
-              setExpandedIndex={setExpandedIndex}
-            />
-          )}
+          data={workoutData}
+          keyExtractor={keyExtractor}
+          renderItem={renderWorkoutCard}
           ListEmptyComponent={
-            <Text style={{ textAlign: 'center', marginTop: hp(2) }}>
+            <Text style={styles.emptyText}>
               No exercises scheduled for {selectedDay}.
             </Text>
           }
-          contentContainerStyle={{ paddingBottom: hp(8) }}
+          contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
         />
       </View>
     </SafeAreaView>
@@ -319,6 +250,27 @@ const Fitness = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  headerContainer: {
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 1,
+  },
+  backButton: {
+    paddingHorizontal: hp(1),
+  },
+  backIcon: {
+    marginLeft: wp(1),
+    resizeMode: 'contain',
+    height: hp(3.5),
+    width: wp(4),
+  },
   title: {
     fontFamily: 'Roboto-Regular',
     marginTop: hp(1),
@@ -329,12 +281,41 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     color: '#000000',
   },
+  content: {
+    flex: 1,
+    backgroundColor: '#F6F5FF',
+    padding: wp(4),
+  },
   timeCard: {
     backgroundColor: '#FFFFFF',
     padding: wp(4),
     borderRadius: 12,
     marginBottom: hp(2),
     elevation: 2,
+  },
+  timeCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  watchIcon: {
+    resizeMode: 'contain',
+    height: hp(2.5),
+    width: wp(5),
+    tintColor: '#17AD8D',
+  },
+  timeCardTitle: {
+    fontFamily: 'Roboto-Regular',
+    marginLeft: hp(1),
+    fontSize: 18,
+    fontWeight: '400',
+    color: '#000000',
+  },
+  timeCardSubtitle: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#4B5563',
+    marginTop: 4,
   },
   timeButton: {
     justifyContent: 'space-between',
@@ -347,12 +328,64 @@ const styles = StyleSheet.create({
     borderColor: '#D1D5DB',
     borderRadius: 8,
   },
+  timeText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: wp(4),
+  },
+  timeWatchIcon: {
+    resizeMode: 'contain',
+    height: hp(2),
+    width: wp(5),
+    tintColor: '#8F8F8F',
+  },
   updateBtn: {
     marginTop: hp(1.5),
     backgroundColor: '#0057D9',
     paddingVertical: hp(1),
     alignItems: 'center',
     borderRadius: 4,
+  },
+  updateBtnDisabled: {
+    opacity: 0.5,
+  },
+  updateBtnText: {
+    fontFamily: 'Roboto-Regular',
+    color: '#FFFFFF',
+    fontWeight: '400',
+    fontSize: 14,
+  },
+  innerShadowContainer: {
+    backgroundColor: '#fff',
+    marginBottom: hp(1),
+  },
+  dayTabsContainer: {
+    paddingHorizontal: hp(1),
+    paddingVertical: hp(0.5),
+  },
+  dayTabsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  dayBtn: {
+    alignItems: 'center',
+    paddingVertical: hp(0.8),
+    borderRadius: 20,
+    paddingHorizontal: wp(3),
+  },
+  selectedDayBtn: {
+    // Add any selected state styles if needed
+  },
+  dayText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#1E64AC',
+  },
+  selectedDayText: {
+    fontFamily: 'Roboto-Regular',
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '800',
   },
   card: {
     padding: wp(4),
@@ -366,6 +399,16 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  coinIcon: {
+    resizeMode: 'contain',
+    height: hp(2),
+    width: wp(4),
+    tintColor: '#000000',
+  },
   cardTitle: {
     fontFamily: 'Roboto-Regular',
     marginLeft: hp(1),
@@ -373,28 +416,21 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#000000',
   },
-  dayBtn: {
-    alignItems: 'center',
-    paddingVertical: hp(0.8),
-    borderRadius: 20,
-    paddingHorizontal: wp(3),
+  cardDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: hp(0.7),
   },
-  selectedDayBtn: {},
-  dayText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#1E64AC',
+  detailText: {
+    fontSize: 14,
+    color: '#374151',
   },
-  selectedDayText: {
-    fontFamily: 'Roboto-Regular',
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '800',
+  listContent: {
+    paddingBottom: hp(8),
   },
-  innerShadowContainer: {
-    backgroundColor: '#fff',
-    marginBottom: hp(1),
+  emptyText: {
+    textAlign: 'center',
+    marginTop: hp(2),
   },
 });
 

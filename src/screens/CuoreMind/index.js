@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,285 +7,272 @@ import {
   ScrollView,
   Image,
   RefreshControl,
-  Platform,
+  ActivityIndicator,
 } from 'react-native';
-import { color, hp, wp, Images } from '../../utilities';
-import images from '../../utilities/Images';
+import { hp, wp, Images } from '../../utilities';
 import GaugeMeter from '../../components/SpeedpMeter';
 import { useSelector, useDispatch } from 'react-redux';
 import { getMind } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// import MindTab from '../../components/MindTab';
-// import {Ionicons} from '@expo/vector-icons';
+
+const COLOR_SCHEMES = [
+  {
+    borderColor: '#3B82F6',
+    backgroundColor: '#D8E0E8',
+  },
+  {
+    borderColor: '#14B8A6',
+    backgroundColor: '#D8E0E7',
+  },
+  {
+    borderColor: '#A855F7',
+    backgroundColor: '#F0FDFA',
+  },
+  {
+    borderColor: '#06B6D4',
+    backgroundColor: '#ECFEFF',
+  },
+];
 
 const Mind = ({ navigation }) => {
-  const [refreshing, setRefreshing] = React.useState(false);
-  const userId = useSelector(state => state.auth.userId);
-
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    if (userId) {
-      dispatch(getMind(userId));
-    }
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 2000);
-  }, [dispatch, userId]);
-
   const dispatch = useDispatch();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const userId = useSelector(state => state.auth.userId);
   const { data, loading, error } = useSelector(state => state.mind);
   const role = useSelector(state => state.auth.role);
-  console.log('Mind data from Redux:', data);
 
   const morning = data?.data?.morningHarmony;
   const evening = data?.data?.quietMind;
 
-  const colorSchemes = [
-    {
-      borderColor: '#3B82F6', // blue
-      backgroundColor: '#D8E0E8',
+  useEffect(() => {
+    if (userId && !data) {
+      dispatch(getMind(userId));
+    }
+  }, [userId, dispatch, data]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      if (userId) {
+        await dispatch(getMind(userId));
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }, [dispatch, userId]);
+
+  const handleGoBack = useCallback(() => {
+    navigation.goBack();
+  }, [navigation]);
+
+  const handleReassess = useCallback(() => {
+    navigation.navigate('OnBoarding', {
+      STEP: 6,
+      screen: 'Reassess',
+      navigateTo: 'Mind',
+    });
+  }, [navigation]);
+
+  const handleCardPress = useCallback(
+    item => {
+      navigation.navigate('MindDetails', {
+        instructions: item?.instructions,
+        audio: item?.audioUrl,
+      });
     },
-    {
-      borderColor: '#14B8A6', // red
-      backgroundColor: '#D8E0E7', // light yellow
+    [navigation],
+  );
+
+  const renderActivityCard = useCallback(
+    (item, index) => {
+      const scheme = COLOR_SCHEMES[index % COLOR_SCHEMES.length];
+      return (
+        <TouchableOpacity
+          key={index}
+          onPress={() => handleCardPress(item)}
+          style={[
+            styles.activityCard,
+            {
+              borderWidth: 1.5,
+              borderColor: scheme.borderColor,
+              backgroundColor: scheme.backgroundColor,
+            },
+          ]}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.cardTitle}>{item?.title}</Text>
+          <Text style={styles.cardDesc}>{item?.subtitle}</Text>
+        </TouchableOpacity>
+      );
     },
-    {
-      borderColor: '#A855F7', // green
-      backgroundColor: '#F0FDFA', // light green
-    },
-    {
-      borderColor: '#06B6D4', // yellow
-      backgroundColor: '#ECFEFF', // light yellow
-    },
-  ];
+    [handleCardPress],
+  );
+
+  if (loading && !data) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1E64AC" />
+          <Text style={styles.loadingText}>Loading your mind data...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
+        <ApiErrorFallback
+          message="Unable to load mind data. Please try again."
+          onRetry={onRefresh}
+        />
+      </SafeAreaView>
+    );
+  }
 
   if (!morning && !evening) {
-    return <ApiErrorFallback message="No data available" onRetry={onRefresh} />;
+    return (
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
+        <ApiErrorFallback
+          message="No meditation data available at the moment."
+          onRetry={onRefresh}
+        />
+      </SafeAreaView>
+    );
   }
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
-      <View style={{ flex: 1 }}>
-        <View
-          style={{
-            backgroundColor: '#FFFFFF',
-            // paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(1),
-            // elevation: 2,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              // marginTop: Platform.OS == 'ios' && hp(3),
-              paddingHorizontal: hp(1),
-              alignItems: 'center',
-              marginBottom: hp(1),
-            }}
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            style={styles.backButton}
+            onPress={handleGoBack}
           >
-            <TouchableOpacity
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              style={{ paddingHorizontal: hp(1), marginTop: hp(1) }}
-              onPress={() => navigation.goBack()}
-            >
-              <Image
-                source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(3.5),
-                  width: wp(4),
-                  // marginTop: hp(),
-                  // marginLeft: Platform.OS == 'ios' ? hp(1) : hp(0.2),
-                }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-            <Text style={styles.title}>Sleep & Stress</Text>
+            <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Sleep & Stress</Text>
+        </View>
+      </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <View style={styles.scoreContainer}>
+          <View style={styles.scoreBox}>
+            <GaugeMeter
+              size={wp(32)}
+              value={data?.data?.sleepScore}
+              thickness={15}
+            />
+            <Text style={styles.scoreLabel}>Sleep Score</Text>
+          </View>
+          <View style={styles.scoreBox}>
+            <GaugeMeter
+              size={wp(32)}
+              value={data?.data?.stressScore}
+              thickness={15}
+            />
+            <Text style={styles.scoreLabel}>Stress Score</Text>
           </View>
         </View>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={styles.container}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
+
+        <TouchableOpacity
+          disabled={role === 'caregiver'}
+          onPress={handleReassess}
+          style={[
+            styles.reassessButton,
+            role === 'caregiver' && styles.reassessButtonDisabled,
+          ]}
+          activeOpacity={0.7}
         >
-          <View style={styles.scoreContainer}>
-            <View
-              style={[
-                styles.scoreBox,
-                // {
-                //   backgroundColor: 'red',
-                //   borderRadius: wp(2),
-                //   padding: hp(1.5),
-                // },
-              ]}
-            >
-              <GaugeMeter
-                size={wp(32)}
-                value={data?.data?.sleepScore}
-                thickness={15}
-              />
-              {/* <Text style={styles.scoreValue}>78</Text> */}
-              <Text style={styles.scoreLabel}>Sleep Score</Text>
-            </View>
-            <View style={styles.scoreBox}>
-              <GaugeMeter
-                size={wp(32)}
-                value={data?.data?.stressScore}
-                thickness={15}
-              />
-              {/* <Text style={styles.scoreValue}>78</Text> */}
-              <Text style={styles.scoreLabel}>Stress Score</Text>
-            </View>
-          </View>
+          <Image source={Images.EDIT} style={styles.editIcon} />
+          <Text style={styles.reassessText}>Re-assess</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            disabled={role == 'caregiver'}
-            onPress={() => {
-              const STEP = 6;
-              navigation.navigate('OnBoarding', {
-                STEP,
-                screen: 'Reassess',
-                navigateTo: 'Mind',
-              });
-            }}
-            style={styles.reassessButton}
-          >
-            <Image
-              source={Images.EDIT} // Replace with actual key in your `images` object
-              style={{
-                resizeMode: 'contain',
-                width: wp(4),
-                height: hp(4),
-                // marginLeft: hp(-1.8),
-                tintColor: 'white',
-              }}
-            />
-
-            <Text style={styles.reassessText}>Re-assess</Text>
-          </TouchableOpacity>
-
-          <View style={styles.reflectionCard}>
-            <Image
-              source={Images.BRAIN} // Replace with actual key in your `images` object
-              style={{
-                //   marginLeft: hp(3),
-                resizeMode: 'contain',
-                width: wp(4),
-                height: hp(2),
-                // marginLeft: hp(-1.8),
-                // tintColor: 'white',
-              }}
-            />
-            <View style={{ marginLeft: hp(2) }}>
-              <Text style={styles.reflectionTitle}>Mindful Reflections</Text>
-              <Text style={styles.reflectionQuote}>
-                Let go of what was. Surrender to what is. {'\n'}Have faith in
-                what will be.
-              </Text>
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', backgroundColor: '' }}>
-            <Image
-              source={Images.SUN} // Replace with actual key in your `images` object
-              style={{
-                //   marginLeft: hp(3),
-                resizeMode: 'contain',
-                width: wp(4),
-                height: hp(2),
-                marginLeft: hp(-1.8),
-                tintColor: 'white',
-              }}
-            />
-            <Text style={[styles.sectionTitle, {}]}>
-              {/* Morning Calm, Mental Clarity */}
-              ☀️ Morning Calm, Mental Clarity
+        <View style={styles.reflectionCard}>
+          <Image source={Images.BRAIN} style={styles.brainIcon} />
+          <View style={styles.reflectionContent}>
+            <Text style={styles.reflectionTitle}>Mindful Reflections</Text>
+            <Text style={styles.reflectionQuote}>
+              Let go of what was. Surrender to what is. {'\n'}Have faith in what
+              will be.
             </Text>
           </View>
-          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-            <ScrollView
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
-            >
-              {morning?.map((item, index) => {
-                const scheme = colorSchemes[index % colorSchemes.length];
-                return (
-                  <View key={index} style={styles.cardRow}>
-                    <TouchableOpacity
-                      onPress={() =>
-                        navigation.navigate('MindDetails', {
-                          instructions: item?.instructions,
-                          audio: item?.audioUrl,
-                        })
-                      }
-                      style={[
-                        styles.activityCard,
-                        {
-                          borderWidth: 1.5,
-                          borderColor: scheme.borderColor,
-                          backgroundColor: scheme.backgroundColor,
-                        },
-                      ]}
-                    >
-                      <Text style={styles.cardTitle}>{item?.title}</Text>
-                      <Text style={styles.cardDesc}>{item?.subtitle}</Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </ScrollView>
-          </ScrollView>
+        </View>
 
-          {/* <Card  title={'Body Scan'} subtitle={'Relax & ground yourself'} ></Card> */}
-
-          <Text style={styles.sectionTitle}>🌙 Quiet Mind, Restful Night</Text>
-          <ScrollView showsHorizontalScrollIndicator={false} horizontal={true}>
-            {evening?.map((item, index) => {
-              const scheme = colorSchemes[index % colorSchemes.length];
-              return (
-                // console.log('Morning Item:', item),
-                <View key={index} horizontal={true} style={styles.cardRow}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate('MindDetails', {
-                        instructions: item?.instructions,
-                        audio: item?.audioUrl,
-                      })
-                    }
-                    style={[
-                      styles.activityCard,
-                      {
-                        borderWidth: 1.5,
-                        borderColor: scheme.borderColor,
-                        backgroundColor: scheme.backgroundColor,
-                      },
-                    ]}
-                  >
-                    <Text style={styles.cardTitle}>{item?.title}</Text>
-                    <Text style={styles.cardDesc}>{item?.subtitle}</Text>
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
-          </ScrollView>
-
-          <Text style={styles.footerNote}>
-            Stick to one meditation for 21 days to unlock deeper benefits
+        <View style={styles.sectionHeader}>
+          <Image source={Images.SUN} style={styles.sectionIcon} />
+          <Text style={styles.sectionTitle}>
+            ☀️ Morning Calm, Mental Clarity
           </Text>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScroll}
+        >
+          {morning?.map((item, index) => renderActivityCard(item, index))}
         </ScrollView>
-        {/* <MindTab></MindTab> */}
-      </View>
+
+        <Text style={styles.sectionTitle}>🌙 Quiet Mind, Restful Night</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScroll}
+        >
+          {evening?.map((item, index) => renderActivityCard(item, index))}
+        </ScrollView>
+
+        <Text style={styles.footerNote}>
+          Stick to one meditation for 21 days to unlock deeper benefits
+        </Text>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: wp(4),
-    backgroundColor: '#F9FAFB',
+  safeArea: {
     flex: 1,
+    backgroundColor: 'white',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+  loadingText: {
+    fontFamily: 'Roboto-Regular',
+    marginTop: hp(2),
+    fontSize: 16,
+    color: '#4B5563',
+  },
+  headerContainer: {
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    paddingHorizontal: hp(1),
+    alignItems: 'center',
+    marginBottom: hp(1),
+  },
+  backButton: {
+    paddingHorizontal: hp(1),
+    marginTop: hp(1),
+  },
+  backIcon: {
+    resizeMode: 'contain',
+    height: hp(3.5),
+    width: wp(4),
   },
   title: {
     fontFamily: 'Roboto-Regular',
@@ -293,20 +280,16 @@ const styles = StyleSheet.create({
     marginLeft: hp(11),
     fontSize: 20,
     fontWeight: '400',
-    // marginBottom: hp(2),
     alignSelf: 'center',
     color: '#000000',
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(2),
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
   },
-  headerText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(5.5),
-    fontWeight: 'bold',
-    marginLeft: wp(2),
+  scrollContent: {
+    padding: wp(4),
+    paddingBottom: hp(8),
   },
   scoreContainer: {
     flexDirection: 'row',
@@ -315,19 +298,12 @@ const styles = StyleSheet.create({
   },
   scoreBox: {
     alignItems: 'center',
-    // paddingVertical: hp(3),
-    // marginTop: hp(30),
-  },
-  scoreValue: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(7),
-    fontWeight: 'bold',
-    color: 'blue',
   },
   scoreLabel: {
     fontFamily: 'Roboto-Regular',
     marginTop: hp(0.5),
     fontSize: wp(4),
+    color: '#374151',
   },
   reassessButton: {
     alignSelf: 'center',
@@ -335,10 +311,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#1E64AC',
-    // padding: hp(1.2),
+    paddingVertical: hp(0.5),
+    paddingHorizontal: wp(4),
     borderRadius: wp(2),
     marginVertical: hp(2),
-    width: wp(50),
+    minWidth: wp(50),
+  },
+  reassessButtonDisabled: {
+    opacity: 0.5,
+  },
+  editIcon: {
+    resizeMode: 'contain',
+    width: wp(4),
+    height: hp(4),
+    tintColor: 'white',
   },
   reassessText: {
     fontFamily: 'Roboto-Regular',
@@ -351,11 +337,19 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderColor: '#DEA1D7',
     flexDirection: 'row',
-    // justifyContent: 'space-around',
     backgroundColor: '#F2E3F2',
     padding: hp(1),
     borderRadius: wp(2),
     marginBottom: hp(2),
+  },
+  brainIcon: {
+    resizeMode: 'contain',
+    width: wp(4),
+    height: hp(2),
+  },
+  reflectionContent: {
+    marginLeft: hp(2),
+    flex: 1,
   },
   reflectionTitle: {
     fontFamily: 'Roboto-Regular',
@@ -366,10 +360,22 @@ const styles = StyleSheet.create({
   },
   reflectionQuote: {
     fontFamily: 'Roboto-Regular',
-    fontWeight: 400,
+    fontWeight: '400',
     fontSize: 15,
     color: '#374151',
     lineHeight: hp(2.5),
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: hp(1),
+  },
+  sectionIcon: {
+    resizeMode: 'contain',
+    width: wp(4),
+    height: hp(2),
+    marginLeft: hp(-1.8),
+    tintColor: 'white',
   },
   sectionTitle: {
     fontFamily: 'Roboto-Regular',
@@ -377,22 +383,19 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#1E64AC',
     marginBottom: hp(1),
+    marginLeft: hp(0.5),
+    marginTop: hp(2),
   },
-  cardRow: {
-    // backgroundColor: 'red',
-    // width: wp(50),
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: hp(2),
+  horizontalScroll: {
+    paddingRight: wp(4),
   },
   activityCard: {
-    flex: 1,
     backgroundColor: '#EAF5FF',
     padding: hp(1.5),
     height: hp(12),
     width: wp(50),
     borderRadius: wp(2),
-    marginHorizontal: wp(1),
+    marginRight: wp(2),
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -408,10 +411,9 @@ const styles = StyleSheet.create({
   },
   cardDesc: {
     fontFamily: 'Roboto-Regular',
-    marginTop: hp(1),
     fontWeight: '400',
     fontSize: 14,
-    marginTop: hp(2),
+    marginTop: hp(1),
     color: '#4B5563',
   },
   footerNote: {

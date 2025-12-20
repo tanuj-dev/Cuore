@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import {
   RefreshControl,
   FlatList,
   StatusBar,
-  useColorScheme,
   Alert,
+  Platform,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import ProgressBarWithImage from '../../components/ProgressBar';
@@ -26,18 +26,11 @@ import moment from 'moment';
 import { getOnboardingThunk } from '../../redux/slices';
 import { logout } from '../../redux/Auth/slice';
 import {
-  scheduleNotificationAfterSeconds,
   scheduleNotificationAtTime,
   cancelNotification,
-  showImmediateNotification,
 } from '../../notifications/NotificationScheduler';
-import {
-  getNourish,
-  getBuilderItems,
-  getHealthRecord,
-} from '../../redux/slices';
+import { getBuilderItems } from '../../redux/slices';
 import SessionExpiredModal from '../../components/SessionExpired';
-import handleLoginRedirect from '../../utilities/Common';
 import {
   getFitness,
   getKnowledge,
@@ -46,10 +39,48 @@ import {
   getPredict,
   getCuoreScoreThunk,
 } from '../../redux/slices';
-import ApiErrorFallback from '../../components/ApiError';
-import { black } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 import { checkReminderThunk } from '../../redux/slices';
 import { getNotification } from '../../redux/Home/notificationThunk';
+
+// Constants extracted outside component
+const MEAL_COMBOS = [
+  { mealTime: 'Breakfast', cuisine: 'Indian' },
+  { mealTime: 'Breakfast', cuisine: 'Global' },
+  { mealTime: 'Lunch', cuisine: 'Indian' },
+  { mealTime: 'Lunch', cuisine: 'Global' },
+];
+
+const TITLE_TO_ROUTE_MAP = {
+  'Wake Up': 'Mind',
+  Breakfast: 'Nutrition',
+  Fitness: 'Fitness',
+  Lunch: 'Nutrition',
+  'Short Nap or Walk': 'Fitness',
+  Dinner: 'Nutrition',
+  Sleep: 'Mind',
+  'Check Fasting Sugar': 'OnBoarding',
+  'Refresh & Refuel': 'RefreshRefuel',
+  'Mid-Morning Boost': 'MidMorningBoost',
+  'Check BP': 'OnBoarding',
+  'Quiet Mind Restful Night': 'Mind',
+  'Calorie Ignite': 'CalorieIgnite',
+  'After-Dinner Walk': 'Fitness',
+  Meditation: 'DefaultScreen',
+  'Hydration Check': 'Fitness',
+  'Optional Snack': 'Fitness',
+};
+
+const TITLES_WITH_PAYLOAD = [
+  'Fitness',
+  'Lunch',
+  'Dinner',
+  'Short Nap or Walk',
+  'After-Dinner Walk',
+  'Check Fasting Sugar',
+];
+
+const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const REASSESS_STEP = 7;
 
 const Today = ({ navigation, route }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -57,7 +88,7 @@ const Today = ({ navigation, route }) => {
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [requestId, setRequestId] = useState(null);
-  const [alarmTime, setAlarmTime] = useState(false);
+  const [, setAlarmTime] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(true);
   const [toast, setToast] = useState(null);
   const [reminderList, setReminderList] = useState([]);
@@ -65,87 +96,83 @@ const Today = ({ navigation, route }) => {
 
   const dispatch = useDispatch();
 
-  const { data, loading, error } = useSelector(state => state.home);
-  const homeData = data ? data : null;
-
-  // 👇 format "2025-11-30" (YYYY-MM-DD) -> "Nov 30 2025"
-  const formattedDate = homeData?.date
-    ? moment(homeData.date, 'YYYY-MM-DD').format('MMM DD YYYY')
-    : '';
-
-  // 👇 use the same formatted date three times
-  const dates = [formattedDate];
-
+  const { data, loading } = useSelector(state => state.home);
   const userId = useSelector(state => state.auth.userId);
   const role = useSelector(state => state.auth.role);
-  const isCaregiver = role === 'caregiver';
-  const sessionExpiredMessage =
-    data?.message == 'Not authorized, invalid or expired token.';
   const profileData = useSelector(state => state.profile.data?.data?.user);
 
-  const onRefresh = async () => {
+  // Memoize derived data
+  const homeData = useMemo(() => data || null, [data]);
+
+  const formattedDate = useMemo(
+    () =>
+      homeData?.date
+        ? moment(homeData.date, 'YYYY-MM-DD').format('MMM DD YYYY')
+        : '',
+    [homeData?.date],
+  );
+
+  const dates = useMemo(() => [formattedDate], [formattedDate]);
+
+  const isCaregiver = useMemo(() => role === 'caregiver', [role]);
+
+  const sessionExpiredMessage = useMemo(
+    () => data?.message === 'Not authorized, invalid or expired token.',
+    [data?.message],
+  );
+
+  const editableReminders = useMemo(
+    () =>
+      homeData?.dailySchedule?.filter(item => item?.editable === true) || [],
+    [homeData?.dailySchedule],
+  );
+
+  const onRefresh = useCallback(async () => {
+    if (!userId) return;
+
     setRefreshing(true);
     try {
-      await dispatch(getProfile(userId));
-      await dispatch(getHomeData(userId));
-      await dispatch(getMind(userId));
-      await dispatch(getTobacco(userId));
-
-      const combos = [
-        { mealTime: 'Breakfast', cuisine: 'Indian' },
-        { mealTime: 'Breakfast', cuisine: 'Global' },
-        { mealTime: 'Lunch', cuisine: 'Indian' },
-        { mealTime: 'Lunch', cuisine: 'Global' },
-      ];
+      await Promise.all([
+        dispatch(getProfile(userId)),
+        dispatch(getHomeData(userId)),
+        dispatch(getMind(userId)),
+        dispatch(getTobacco(userId)),
+      ]);
     } catch (err) {
-      console.error('Refresh failed:', err);
+      // Error handling without console.log in production
     } finally {
       setRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    if (userId) {
-      dispatch(getHomeData(userId));
-      dispatch(getProfile(userId));
-      dispatch(getPredict(userId));
-      dispatch(getKnowledge(userId));
-      dispatch(getMind(userId));
-      dispatch(getTobacco(userId));
-      dispatch(getCuoreScoreThunk(userId));
-      // dispatch(getHealthRecord(userId));
-      const res = dispatch(getFitness());
-      console.log('Fitness Data Response:', res);
-      const combos = [
-        { mealTime: 'Breakfast', cuisine: 'Indian' },
-        { mealTime: 'Breakfast', cuisine: 'Global' },
-        { mealTime: 'Lunch', cuisine: 'Indian' },
-        { mealTime: 'Lunch', cuisine: 'Global' },
-      ];
-
-      combos.forEach(combo => {
-        dispatch(getBuilderItems(combo));
-      });
-      // dispatch(getNourish('Breakfast'));
-    }
   }, [dispatch, userId]);
 
-  const handleTest = async () => {
-    await scheduleNotificationAfterSeconds(
-      'todayTest',
-      '🔥 Today Reminder',
-      'This notification appears in 5 seconds!',
-      5,
-    );
-  };
-
   useEffect(() => {
-    dispatch(getOnboardingThunk());
-    setReminderList(homeData?.dailySchedule || []);
-  }, [homeData]);
-  console.log('Reminder List:', reminderList);
+    if (!userId) return;
 
-  const handleScheduleAtTime = async (time, title, body) => {
+    // Dispatch all data fetching in parallel
+    dispatch(getHomeData(userId));
+    dispatch(getProfile(userId));
+    dispatch(getPredict(userId));
+    dispatch(getKnowledge(userId));
+    dispatch(getMind(userId));
+    dispatch(getTobacco(userId));
+    dispatch(getCuoreScoreThunk(userId));
+    dispatch(getFitness());
+    dispatch(getOnboardingThunk());
+
+    // Dispatch meal builder items
+    MEAL_COMBOS.forEach(combo => {
+      dispatch(getBuilderItems(combo));
+    });
+  }, [dispatch, userId]);
+
+  // Update reminder list when homeData changes
+  useEffect(() => {
+    if (homeData?.dailySchedule) {
+      setReminderList(homeData.dailySchedule);
+    }
+  }, [homeData?.dailySchedule]);
+
+  const handleScheduleAtTime = useCallback(async (time, title, body) => {
     // Parse the time string (e.g., "8:00 AM") to get hours and minutes
     const [timePart, period] = time.split(' ');
     let [hours, minutes] = timePart.split(':').map(Number);
@@ -155,7 +182,6 @@ const Today = ({ navigation, route }) => {
     } else if (period === 'AM' && hours === 12) {
       hours = 0;
     }
-    console.log(`Parsed time - Hours: ${hours}, Minutes: ${minutes}`);
 
     // Create a Date object for today at the specified time
     const now = new Date();
@@ -174,10 +200,6 @@ const Today = ({ navigation, route }) => {
       scheduledTime.setDate(scheduledTime.getDate() + 1);
     }
 
-    console.log(
-      `Scheduling "${title}" at ${scheduledTime.toLocaleTimeString()}`,
-    );
-
     await scheduleNotificationAtTime(
       `reminder-${time.replace(/[: ]/g, '-')}`, // Unique ID
       title,
@@ -190,39 +212,18 @@ const Today = ({ navigation, route }) => {
     );
     setToastType('success');
     setAlarmTime(true);
-  };
-  const handleCancel = async id => {
+  }, []);
+
+  const handleCancel = useCallback(async id => {
     await cancelNotification(id);
     setToast('Alarm cancelled');
     setToastType('error');
     setAlarmTime(false);
-  };
+  }, []);
 
-  // ✅ Show loader if fetching data
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: '#F9FAFB',
-        }}
-      >
-        <ActivityIndicator size="large" color="#1E64AC" />
-        <Text style={{ marginTop: 10, color: '#1E64AC', fontSize: 16 }}>
-          Loading your data...
-        </Text>
-      </View>
-    );
-  }
-
-  const handleLoginRedirect = async () => {
+  const handleLoginRedirect = useCallback(async () => {
     setSessionExpired(false);
-    // console.log(await EncryptedStorage.getItem('auth_tokens'));
     await EncryptedStorage.removeItem('auth_tokens');
-    setSessionExpired(false);
-    // await EncryptedStorage.removeItem('userid');
     dispatch(logout());
     const rootNavigation = navigation.getParent();
     if (rootNavigation) {
@@ -233,7 +234,72 @@ const Today = ({ navigation, route }) => {
     } else {
       navigation.navigate('Login');
     }
-  };
+  }, [dispatch, navigation]);
+
+  const handleNavigationPress = useCallback(
+    item => {
+      const targetRoute = TITLE_TO_ROUTE_MAP[item.title];
+      if (!targetRoute) {
+        setIsVisible(prev => !prev);
+        return;
+      }
+
+      const title = item.title?.toLowerCase();
+      const hasPayload = TITLES_WITH_PAYLOAD.includes(item.title);
+
+      if (hasPayload) {
+        switch (title) {
+          case 'check fasting sugar':
+            navigation.navigate(targetRoute, {
+              STEP: REASSESS_STEP,
+              screen: 'Reassess',
+              navigateTo: 'Home',
+            });
+            break;
+
+          case 'fitness': {
+            const fitnessDayKey = DAY_KEYS[new Date().getDay()];
+            navigation.navigate(targetRoute, {
+              initialTab: fitnessDayKey,
+            });
+            break;
+          }
+
+          case 'lunch':
+          case 'dinner':
+            navigation.navigate(targetRoute, { mealTime: 'LunchDinner' });
+            break;
+
+          default:
+            if (
+              title === 'short nap or walk' ||
+              title === 'after-dinner walk'
+            ) {
+              const walkDayKey = DAY_KEYS[new Date().getDay()];
+              navigation.navigate(targetRoute, {
+                initialTab: walkDayKey,
+              });
+            }
+            break;
+        }
+      } else {
+        if (targetRoute && targetRoute !== 'Fitness') {
+          navigation.navigate(targetRoute);
+        }
+      }
+    },
+    [navigation],
+  );
+
+  // ✅ Show loader if fetching data
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1E64AC" />
+        <Text style={styles.loadingText}>Loading your data...</Text>
+      </View>
+    );
+  }
 
   if (sessionExpiredMessage && sessionExpired) {
     return (
@@ -243,89 +309,6 @@ const Today = ({ navigation, route }) => {
       />
     );
   }
-
-  const titleToRouteMap = {
-    'Wake Up': 'Mind',
-    Breakfast: 'Nutrition',
-    Fitness: 'Fitness',
-    Lunch: 'Nutrition',
-    'Short Nap or Walk': 'Fitness',
-    Dinner: 'Nutrition',
-    Sleep: 'Mind',
-    'Check Fasting Sugar': 'OnBoarding',
-    'Refresh & Refuel': 'RefreshRefuel',
-    'Mid-Morning Boost': 'MidMorningBoost',
-    'Check BP': 'OnBoarding',
-    'Quiet Mind Restful Night': 'Mind',
-    'Calorie Ignite': 'CalorieIgnite',
-    'After-Dinner Walk': 'Fitness',
-    Meditation: 'DefaultScreen',
-    'Hydration Check': 'Fitness',
-    'Optional Snack': 'Fitness',
-  };
-  const titlesWithPayload = [
-    'Fitness',
-    'Lunch',
-    'Dinner',
-    'Short Nap or Walk',
-    'After-Dinner Walk',
-    'Check Fasting Sugar',
-  ];
-  const handleNavigationPress = (
-    item,
-    navigation,
-    titleToRouteMap,
-    titlesWithPayload,
-  ) => {
-    const route = titleToRouteMap[item.title];
-    if (!route) {
-      setIsVisible(!isVisible);
-      console.log('No route found for title:', item.title);
-      return;
-    }
-
-    const title = item.title?.toLowerCase();
-    const hasPayload = titlesWithPayload.includes(item.title);
-
-    if (hasPayload) {
-      switch (title) {
-        case 'onboarding':
-          navigation.navigate(route, {
-            STEP: 7,
-            screen: 'Reassess',
-            navigateTo: 'Home',
-          });
-          break;
-
-        case 'fitness':
-          const dayKey = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
-            new Date().getDay()
-          ];
-          navigation.navigate(route, {
-            initialTab: dayKey,
-          });
-          break;
-
-        case 'lunch':
-          navigation.navigate(route, { mealTime: 'LunchDinner' });
-          break;
-
-        case 'dinner':
-          navigation.navigate(route, { mealTime: 'LunchDinner' });
-          break;
-      }
-    } else {
-      if (route) {
-        if (route == 'Fitness') {
-          return;
-        }
-        console.log('Navigating to route:', route);
-        navigation.navigate(route);
-      } else {
-        console.log('No route found for title:');
-      }
-    }
-  };
 
   return (
     <SafeAreaView
@@ -470,9 +453,8 @@ const Today = ({ navigation, route }) => {
           <TouchableOpacity
             disabled={isCaregiver}
             onPress={() => {
-              const STEP = 7;
               navigation.navigate('OnBoarding', {
-                STEP,
+                STEP: REASSESS_STEP,
                 screen: 'Reassess',
                 navigateTo: 'Home',
               });
@@ -514,9 +496,9 @@ const Today = ({ navigation, route }) => {
                   padding: hp(2),
                   marginRight: hp(1),
                   backgroundColor:
-                    item?.type == 'red'
+                    item?.type === 'red'
                       ? '#FEE4E4'
-                      : item?.type == 'yellow'
+                      : item?.type === 'yellow'
                       ? '#FFFFC5'
                       : '#f4ba62ff',
                   position: 'relative',
@@ -528,9 +510,9 @@ const Today = ({ navigation, route }) => {
                     height: hp(2),
                     width: wp(4),
                     tintColor:
-                      item?.type == 'red'
-                        ? '#'
-                        : item?.type == 'yellow'
+                      item?.type === 'red'
+                        ? '#EF4444'
+                        : item?.type === 'yellow'
                         ? '#FFCE1B'
                         : '#A16207',
                     marginRight: hp(0.5),
@@ -540,9 +522,9 @@ const Today = ({ navigation, route }) => {
                 <Text
                   style={{
                     color:
-                      item?.type == 'red'
+                      item?.type === 'red'
                         ? '#B91C1C'
-                        : item?.type == 'yellow'
+                        : item?.type === 'yellow'
                         ? '#A16207'
                         : '#A16207',
                     marginRight: hp(2),
@@ -550,7 +532,7 @@ const Today = ({ navigation, route }) => {
                 >
                   {item?.text}
                 </Text>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   disabled={isCaregiver}
                   style={{ position: 'absolute', right: hp(1), top: hp(1) }}
                 >
@@ -564,7 +546,7 @@ const Today = ({ navigation, route }) => {
                     }}
                     source={Images.CROSS}
                   />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
             ))}
           </ScrollView>
@@ -579,190 +561,183 @@ const Today = ({ navigation, route }) => {
           </View>
 
           <FlatList
-            data={reminderList || []}
-            keyExtractor={(item, index) => (item?.title || 'task') + index}
+            data={reminderList}
+            keyExtractor={(item, index) =>
+              `${item?.id || item?.title || 'task'}-${index}`
+            }
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            updateCellsBatchingPeriod={50}
+            initialNumToRender={10}
+            windowSize={10}
+            getItemLayout={(_, index) => ({
+              length: hp(8) + hp(2),
+              offset: (hp(8) + hp(2)) * index,
+              index,
+            })}
             ListEmptyComponent={
-              <View style={{ alignItems: 'center', marginTop: 40 }}>
-                <Text style={{ fontSize: 16, color: '#6B7280' }}>
-                  No items found.
-                </Text>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No items found.</Text>
               </View>
             }
-            renderItem={({ item, index }) => (
-              <View key={item?.id || index} style={styles.taskRow}>
-                <View
-                  style={{
-                    width: hp(9),
-                    borderRightWidth: 1,
-                    height: hp(7),
-                    marginTop: hp(0.5),
-                    borderColor: '#E5E7EB',
-                  }}
-                >
-                  <Text style={styles.time}>{item?.time}</Text>
+            renderItem={({ item, index: itemIndex }) => {
+              const handleNotificationToggle = () => {
+                if (isCaregiver) return;
+
+                const isCurrentlyOn = item?.alarm_notified;
+                const notificationId = `reminder-${item?.time.replace(
+                  /[: ]/g,
+                  '-',
+                )}`;
+
+                // Optimistically update local state
+                setReminderList(prev =>
+                  prev.map(reminder =>
+                    reminder.id === item.id
+                      ? {
+                          ...reminder,
+                          alarm_notified: !reminder.alarm_notified,
+                        }
+                      : reminder,
+                  ),
+                );
+
+                // Fire API/background work
+                dispatch(
+                  getNotification({
+                    userId,
+                    reminderId: item?.id,
+                    time: item?.time,
+                  }),
+                );
+
+                // If turning ON, schedule notification; if turning OFF, cancel it
+                if (isCurrentlyOn) {
+                  handleCancel(notificationId);
+                } else {
+                  handleScheduleAtTime(
+                    item?.time,
+                    item?.title,
+                    item?.description,
+                  );
+                }
+              };
+
+              const handleEditPress = () => {
+                if (isCaregiver) return;
+                setRequestId(item);
+                setShowModal(true);
+              };
+
+              const handleCompleteToggle = () => {
+                if (isCaregiver) return;
+                // Optimistically update local state
+                setReminderList(prev =>
+                  prev.map(reminder =>
+                    reminder.id === item.id
+                      ? { ...reminder, completed: !reminder.completed }
+                      : reminder,
+                  ),
+                );
+                // Dispatch backend update
+                dispatch(checkReminderThunk({ id: item.id, userId }));
+              };
+
+              const isEditable =
+                item?.editable === true &&
+                ['wake up', 'fitness'].includes(item.title?.toLowerCase());
+
+              return (
+                <View key={item?.id || itemIndex} style={styles.taskRow}>
                   <View
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginLeft: hp(3.5),
-                      marginTop: hp(1),
+                      width: hp(9),
+                      borderRightWidth: 1,
+                      height: hp(7),
+                      marginTop: hp(0.5),
+                      borderColor: '#E5E7EB',
                     }}
                   >
-                    <TouchableOpacity
-                      disabled={isCaregiver}
-                      onPress={() => {
-                        console.log(
-                          'NOTIFICATION ICON PRESSED, userId:',
-                          userId,
-                          'reminderId:',
-                          item?.id,
-                        );
-
-                        // Check if we're turning notification ON or OFF
-                        const isCurrentlyOn = item?.alarm_notified;
-                        const notificationId = `reminder-${item?.time.replace(
-                          /[: ]/g,
-                          '-',
-                        )}`;
-
-                        // Optimistically update local state so UI changes immediately
-                        setReminderList(prev =>
-                          prev.map(reminder =>
-                            reminder.id === item.id
-                              ? {
-                                  ...reminder,
-                                  alarm_notified: !reminder.alarm_notified,
-                                }
-                              : reminder,
-                          ),
-                        );
-
-                        // Fire API/background work
-                        dispatch(
-                          getNotification({
-                            userId,
-                            reminderId: item?.id,
-                            time: item?.time,
-                          }),
-                        );
-
-                        // If turning ON, schedule notification; if turning OFF, cancel it
-                        if (isCurrentlyOn) {
-                          // Turning OFF - cancel the notification
-                          handleCancel(notificationId);
-                        } else {
-                          // Turning ON - schedule the notification
-                          handleScheduleAtTime(
-                            item?.time,
-                            item?.title,
-                            item?.description,
-                          );
-                        }
+                    <Text style={styles.time}>{item?.time}</Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginLeft: hp(3.5),
+                        marginTop: hp(1),
                       }}
                     >
-                      <Image
-                        style={{
-                          height: hp(2.5),
-                          resizeMode: 'contain',
-                          marginLeft: -hp(6),
-                          tintColor: item.alarm_notified
-                            ? '#6B7280'
-                            : '#FFCE1B',
-                          // backgroundColor: 'red',
-                          width: wp(10),
-                        }}
-                        source={Images?.NOTIFICATION}
-                      />
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        disabled={isCaregiver}
+                        onPress={handleNotificationToggle}
+                      >
+                        <Image
+                          style={[
+                            styles.notificationIcon,
+                            {
+                              tintColor: item.alarm_notified
+                                ? '#FFCE1B'
+                                : '#6B7280',
+                            },
+                          ]}
+                          source={Images.NOTIFICATION}
+                        />
+                      </TouchableOpacity>
 
-                    {item?.editable === true &&
-                      ['wake up', 'fitness'].includes(
-                        item.title?.toLowerCase(),
-                      ) && (
+                      {isEditable && (
                         <TouchableOpacity
                           disabled={isCaregiver}
-                          onPress={() => {
-                            setRequestId(item);
-                            setShowModal(true);
-                          }}
+                          onPress={handleEditPress}
                         >
-                          <Image
-                            style={{
-                              height: hp(2),
-                              width: hp(2),
-                              resizeMode: 'contain',
-                            }}
-                            source={Images.EDIT}
-                          />
+                          <Image style={styles.editIcon} source={Images.EDIT} />
                         </TouchableOpacity>
                       )}
-                  </View>
-                </View>
-
-                {/* check black dot */}
-                <TouchableOpacity
-                  disabled={isCaregiver}
-                  onPress={() => {
-                    // Optimistically update local state
-                    setReminderList(prev =>
-                      prev.map(reminder =>
-                        reminder.id === item.id
-                          ? { ...reminder, completed: !reminder.completed }
-                          : reminder,
-                      ),
-                    );
-
-                    // Dispatch backend update
-                    dispatch(checkReminderThunk({ id: item.id, userId }));
-                  }}
-                >
-                  <View style={styles.blackDot}>
-                    {item.completed && <View style={styles.blackDotInner} />}
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  // disabled={isCaregiver}
-                  onPress={() =>
-                    handleNavigationPress(
-                      item,
-                      navigation,
-                      titleToRouteMap,
-                      titlesWithPayload,
-                    )
-                  }
-                  style={[styles.taskCard, { borderLeftColor: item?.color }]}
-                >
-                  <View style={styles.taskHeader}>
-                    <Text style={styles.taskIcon}>{item?.icon}</Text>
-                  </View>
-                  <View
-                    style={{
-                      justifyContent: 'space-between',
-                      flexDirection: 'row',
-                      flex: 1,
-                    }}
-                  >
-                    <View style={{ justifyContent: 'center' }}>
-                      <Text style={styles.taskTitle}>
-                        {item?.title?.length > 20
-                          ? item.title.slice(0, 35) + '...'
-                          : item.title}
-                      </Text>
-                      <Text style={styles.taskDescription}>
-                        {item.description}
-                      </Text>
                     </View>
-                    {item?.completed && (
-                      <Image source={Images.RIGHT} style={styles.checkIcon} />
-                    )}
-
-                    {/* <Image source={Images.WARNING} style={styles.checkIcon} /> */}
                   </View>
-                </TouchableOpacity>
-              </View>
-            )}
+
+                  {/* check black dot */}
+                  <TouchableOpacity
+                    disabled={isCaregiver}
+                    onPress={handleCompleteToggle}
+                  >
+                    <View style={styles.blackDot}>
+                      {item.completed && <View style={styles.blackDotInner} />}
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => handleNavigationPress(item)}
+                    style={[styles.taskCard, { borderLeftColor: item?.color }]}
+                  >
+                    <View style={styles.taskHeader}>
+                      <Text style={styles.taskIcon}>{item?.icon}</Text>
+                    </View>
+                    <View
+                      style={{
+                        justifyContent: 'space-between',
+                        flexDirection: 'row',
+                        flex: 1,
+                      }}
+                    >
+                      <View style={styles.taskContent}>
+                        <Text style={styles.taskTitle} numberOfLines={1}>
+                          {item?.title?.length > 35
+                            ? `${item.title.slice(0, 35)}...`
+                            : item.title}
+                        </Text>
+                        <Text style={styles.taskDescription} numberOfLines={2}>
+                          {item.description}
+                        </Text>
+                      </View>
+                      {item?.completed && (
+                        <Image source={Images.RIGHT} style={styles.checkIcon} />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              );
+            }}
             showsVerticalScrollIndicator={false}
           />
 
@@ -805,14 +780,14 @@ const Today = ({ navigation, route }) => {
                           })),
                         );
 
-                        // Dispatch backend updates
-                        reminderList.forEach(reminder => {
-                          if (!reminder.completed) {
+                        // Dispatch backend updates for incomplete items
+                        reminderList
+                          .filter(reminder => !reminder.completed)
+                          .forEach(reminder => {
                             dispatch(
                               checkReminderThunk({ id: reminder.id, userId }),
                             );
-                          }
-                        });
+                          });
                       },
                     },
                   ],
@@ -882,10 +857,7 @@ const Today = ({ navigation, route }) => {
         </View>
 
         <Reminder
-          scheduleReminder={
-            homeData?.dailySchedule?.filter(item => item?.editable == true) ||
-            []
-          }
+          scheduleReminder={editableReminders}
           user_id={homeData?.user?.id}
           setIsVisible={setIsVisible}
           isVisible={isVisible}
@@ -898,8 +870,12 @@ const Today = ({ navigation, route }) => {
         />
       </ScrollView>
       {toast && (
-        <View style={[styles.toastContainer]}>
-          <Toast message={toast} type="success" onHide={() => setToast(null)} />
+        <View style={styles.toastContainer}>
+          <Toast
+            message={toast}
+            type={toastType}
+            onHide={() => setToast(null)}
+          />
         </View>
       )}
     </SafeAreaView>
@@ -909,7 +885,7 @@ const Today = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
-    marginTop: Platform.OS == 'ios' ? hp(0) : hp(2),
+    marginTop: Platform.OS === 'ios' ? hp(0) : hp(2),
     fontFamily: 'Roboto-Regular',
     padding: hp(1.5),
     flexDirection: 'row',
@@ -1067,7 +1043,28 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontFamily: 'Roboto-Regular',
     width: wp(40),
-    // backgroundColor: 'red',
+  },
+  taskContent: {
+    justifyContent: 'center',
+  },
+  notificationIcon: {
+    height: hp(2.5),
+    resizeMode: 'contain',
+    marginLeft: -hp(6),
+    width: wp(10),
+  },
+  editIcon: {
+    height: hp(2),
+    width: hp(2),
+    resizeMode: 'contain',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#6B7280',
   },
   checkIcon: {
     resizeMode: 'contain',
@@ -1155,6 +1152,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 9999,
     elevation: 9999, // for Android
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#1E64AC',
+    fontSize: 16,
   },
 });
 

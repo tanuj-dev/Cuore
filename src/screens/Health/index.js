@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+} from 'react';
 import {
   View,
   Text,
@@ -7,14 +13,11 @@ import {
   TouchableOpacity,
   ScrollView,
   FlatList,
-  PermissionsAndroid,
   Alert,
-  TextInput,
   ActivityIndicator,
   RefreshControl,
   Platform,
 } from 'react-native';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
@@ -22,9 +25,12 @@ import Share from 'react-native-share';
 import { hp, wp, Images } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
 import { getHealthRecord } from '../../redux/slices';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { updateLastConsulted } from '../../redux/Home/homeThunk';
-// import {Ionicons, MaterialIcons, Feather} from '@expo/vector-icons';
+
+// Constants
+const HIT_SLOP = { top: 20, bottom: 20, left: 20, right: 20 };
+const REASSESS_STEP_3 = 3;
+const REASSESS_STEP_7 = 7;
 const formatDate = date => {
   if (!date) return '';
   const d = new Date(date);
@@ -53,207 +59,35 @@ const formatDate = date => {
 
 const Health = ({ navigation }) => {
   const [profileImage, setProfileImage] = useState(null);
-
-  const [medications, setMedications] = useState(
-    'Amlopress, Metformin, Storvas, Ecosprin',
-  );
-  // const userId = useSelector(state => state.auth.userId);
-
-  const [date, setDate] = useState(new Date());
-  const [show, setShow] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const dispatch = useDispatch();
-
+  const [refreshing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [lastConsulted, setLastConsulted] = useState(new Date());
   const viewShotRef = useRef(null);
-
-  const requestCameraPermission = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          {
-            title: 'Camera Permission',
-            message: 'App needs access to your camera',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          },
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) {
-        console.warn(err);
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const requestStoragePermission = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-          {
-            title: 'Storage Permission',
-            message: 'App needs access to your storage',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          },
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) {
-        console.warn(err);
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const handleImagePicker = async type => {
-    const options = {
-      mediaType: 'photo',
-      quality: 1,
-      maxWidth: 500,
-      maxHeight: 500,
-    };
-
-    try {
-      if (type === 'camera') {
-        const hasPermission = await requestCameraPermission();
-        if (!hasPermission) {
-          Alert.alert(
-            'Permission required',
-            'Camera permission is needed to take photos',
-          );
-          return;
-        }
-        launchCamera(options, response => {
-          if (response.didCancel) {
-            console.log('User cancelled image picker');
-          } else if (response.error) {
-            console.log('ImagePicker Error: ', response.error);
-          } else if (response.assets && response.assets.length > 0) {
-            setProfileImage(response.assets[0].uri);
-            // return(response.assets[0].uri);
-          }
-        });
-      } else {
-        const hasPermission = await requestStoragePermission();
-        if (!hasPermission) {
-          Alert.alert(
-            'Permission required',
-            'Storage permission is needed to access photos',
-          );
-          return;
-        }
-        launchImageLibrary(options, response => {
-          if (response.didCancel) {
-            console.log('User cancelled image picker');
-          } else if (response.error) {
-            console.log('ImagePicker Error: ', response.error);
-          } else if (response.assets && response.assets.length > 0) {
-            setProfileImage(response.assets[0].uri);
-            // return(response.assets[0].uri);
-          }
-        });
-      }
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Failed to pick image');
-    }
-  };
-
-  const showImagePickerOptions = () => {
-    Alert.alert(
-      'Select Image',
-      'Choose an option',
-      [
-        {
-          text: 'Take Photo',
-          onPress: () => handleImagePicker('camera'),
-        },
-        {
-          text: 'Choose from Gallery',
-          onPress: () => handleImagePicker('gallery'),
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ],
-      { cancelable: true },
-    );
-  };
-
-  // const healthObservationsData = [
-  //   { parameter: 'Heart Rate', value: '78 bpm', status: '#22C55E' },
-  //   { parameter: 'Blood Pressure', value: '142/92 mmHg', status: '#EF4444' },
-  //   { parameter: 'Blood Sugar PP', value: '180 mg/dL', status: '#EF4444' },
-  //   { parameter: 'HbA1c', value: '7.2%', status: '#EAB308' },
-  //   { parameter: 'TG/HDL Ratio', value: '3.8', status: '#EAB308' },
-  //   { parameter: 'HsCRP', value: '2.8 mg/L', status: '#EAB308' },
-  //   { parameter: 'Lifestyle Score', value: '65%', status: '#EAB308' },
-  // ];
+  const dispatch = useDispatch();
 
   const healthObservations = useSelector(
     state => state.health?.data?.data?.data?.healthObservations,
   );
-  const healthRecords = useSelector(
-    state => state.health?.data?.data?.data?.healthRecords,
-  );
   const userId = useSelector(state => state.auth?.userId);
   const role = useSelector(state => state.auth?.role);
-  console.log('userId in Health screen:', userId);
   const profile = useSelector(state => state.health?.data?.data?.data?.profile);
   const loading = useSelector(state => state.health?.loading);
 
-  const onDateChange = async (event, selectedDate) => {
-    if (event.type === 'dismissed') {
-      setShowDatePicker(false);
-      return;
-    }
+  // Memoize derived data
+  const isCaregiver = useMemo(() => role === 'caregiver', [role]);
+  const medicationsText = useMemo(
+    () =>
+      Array.isArray(profile?.medications) && profile.medications.length > 0
+        ? profile.medications.join(', ')
+        : 'No medications listed',
+    [profile?.medications],
+  );
+  const smokerText = useMemo(
+    () => (profile?.smoker === 'Quit >6 months ago' ? 'Past Smoker' : 'Smoker'),
+    [profile?.smoker],
+  );
 
-    const currentDate = selectedDate || lastConsulted;
-    setLastConsulted(currentDate);
-    setShowDatePicker(false);
-
-    // Format date as YYYY-MM-DD
-    const formattedDate = currentDate.toISOString().split('T')[0];
-
-    const payload = {
-      lastConsultedDate: formattedDate,
-    };
-    console.log(userId, payload, '========');
-
-    // Dispatch with both userId (in URL) and payload (in body)
-    const res = await dispatch(updateLastConsulted({ userId, payload }));
-    console.log(res, 'res===');
-    if (res.payload.success) {
-    }
-  };
-
-  useEffect(() => {
-    if (userId) {
-      dispatch(getHealthRecord(userId));
-    }
-  }, [lastConsulted]);
-
-  useEffect(() => {
-    setMedications(profile?.medications.join(', '));
-    // setPastHistory(profile?.pastHO ? profile?.pastHO.join(', ') : '');
-  }, [profile]);
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#1E64AC" />
-      </View>
-    );
-  }
-  const getHealthObservationsData = observations => {
+  const getHealthObservationsData = useCallback(observations => {
     return [
       {
         parameter: 'Heart Rate',
@@ -305,13 +139,50 @@ const Health = ({ navigation }) => {
         status: observations?.lifestyleScore?.status,
       },
     ];
-  };
+  }, []);
 
-  const onRefresh = () => {
-    dispatch(getHealthRecord(userId));
-  };
+  const healthObservationsData = useMemo(
+    () => getHealthObservationsData(healthObservations),
+    [healthObservations, getHealthObservationsData],
+  );
 
-  const handleShareScreenshot = async () => {
+  const onDateChange = useCallback(
+    async (event, selectedDate) => {
+      if (event.type === 'dismissed') {
+        setShowDatePicker(false);
+        return;
+      }
+
+      const currentDate = selectedDate || lastConsulted;
+      setLastConsulted(currentDate);
+      setShowDatePicker(false);
+
+      // Format date as YYYY-MM-DD
+      const formattedDate = currentDate.toISOString().split('T')[0];
+
+      const payload = {
+        lastConsultedDate: formattedDate,
+      };
+
+      // Dispatch with both userId (in URL) and payload (in body)
+      await dispatch(updateLastConsulted({ userId, payload }));
+    },
+    [dispatch, userId, lastConsulted],
+  );
+
+  useEffect(() => {
+    if (userId) {
+      dispatch(getHealthRecord(userId));
+    }
+  }, [dispatch, userId, lastConsulted]);
+
+  const onRefresh = useCallback(() => {
+    if (userId) {
+      dispatch(getHealthRecord(userId));
+    }
+  }, [dispatch, userId]);
+
+  const handleShareScreenshot = useCallback(async () => {
     try {
       if (viewShotRef.current) {
         const uri = await viewShotRef.current.capture();
@@ -326,13 +197,39 @@ const Health = ({ navigation }) => {
         await Share.open(shareOptions);
       }
     } catch (error) {
-      console.error('Error sharing screenshot:', error);
       // User cancelled sharing - don't show error
       if (error.message !== 'User did not share') {
         Alert.alert('Error', 'Failed to share screenshot');
       }
     }
-  };
+  }, []);
+
+  const handleNavigateBack = useCallback(() => {
+    navigation.goBack();
+  }, [navigation]);
+
+  const handleNavigateToReassess = useCallback(
+    step => {
+      navigation.navigate('OnBoarding', {
+        STEP: step,
+        screen: 'Reassess',
+        navigateTo: 'Home',
+      });
+    },
+    [navigation],
+  );
+
+  const handleNavigateToHealthRecords = useCallback(() => {
+    navigation.navigate('HealthRecords');
+  }, [navigation]);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1E64AC" />
+      </View>
+    );
+  }
 
   return (
     <View edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
@@ -345,8 +242,8 @@ const Health = ({ navigation }) => {
           {/* Fixed Header - Always Visible */}
           <View style={styles.fixedHeader}>
             <TouchableOpacity
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              onPress={() => navigation.goBack()}
+              hitSlop={HIT_SLOP}
+              onPress={handleNavigateBack}
               style={styles.fixedButton}
             >
               <Image
@@ -363,8 +260,8 @@ const Health = ({ navigation }) => {
               <Text style={styles.fixedHeaderTitle}>Cuore Health</Text>
             </View>
             <TouchableOpacity
-              disabled={role == 'caregiver'}
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              disabled={isCaregiver}
+              hitSlop={HIT_SLOP}
               onPress={handleShareScreenshot}
               style={styles.fixedButton}
             >
@@ -412,10 +309,7 @@ const Health = ({ navigation }) => {
                     <View style={{ marginLeft: hp(3) }}>
                       <Text style={styles.name}>{profile?.name}</Text>
                       <Text style={styles.detail}>
-                        {profile?.age} years{' '}
-                        {profile?.smoker === 'Quit >6 months ago'
-                          ? 'Past Smoker'
-                          : 'Smoker'}
+                        {profile?.age} years {smokerText}
                       </Text>
                     </View>
                   </View>
@@ -433,15 +327,8 @@ const Health = ({ navigation }) => {
                       <Text style={styles.detail}>{profile?.pastHO}</Text>
                     </View>
                     <TouchableOpacity
-                      disabled={role == 'caregiver'}
-                      onPress={() => {
-                        const STEP = 3;
-                        navigation.navigate('OnBoarding', {
-                          STEP,
-                          screen: 'Reassess',
-                          navigateTo: 'Home',
-                        });
-                      }}
+                      disabled={isCaregiver}
+                      onPress={() => handleNavigateToReassess(REASSESS_STEP_3)}
                     >
                       <Image
                         source={Images.EDIT}
@@ -466,14 +353,9 @@ const Health = ({ navigation }) => {
                   >
                     <View style={{ flex: 1 }}>
                       <Text style={styles.sectionTitle}>Medications:</Text>
-                      <Text style={styles.detail}>
-                        {Array.isArray(profile?.medications) &&
-                        profile.medications.length > 0
-                          ? profile.medications.join(', ')
-                          : 'No medications listed'}
-                      </Text>
+                      <Text style={styles.detail}>{medicationsText}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <TouchableOpacity onPress={handleNavigateBack}>
                       <Image
                         source={Images.EDIT}
                         style={{
@@ -517,7 +399,7 @@ const Health = ({ navigation }) => {
 
                   {showDatePicker && (
                     <DateTimePicker
-                      disabled={role == 'caregiver'}
+                      disabled={isCaregiver}
                       value={lastConsulted}
                       mode="date"
                       display="default"
@@ -538,15 +420,8 @@ const Health = ({ navigation }) => {
                   >
                     <Text style={styles.sectionTitle}>Health Observations</Text>
                     <TouchableOpacity
-                      disabled={role == 'caregiver'}
-                      onPress={() => {
-                        const STEP = 7;
-                        navigation.navigate('OnBoarding', {
-                          STEP,
-                          screen: 'Reassess',
-                          navigateTo: 'Home',
-                        });
-                      }}
+                      disabled={isCaregiver}
+                      onPress={() => handleNavigateToReassess(REASSESS_STEP_7)}
                       style={styles.updateButton}
                     >
                       <Text style={styles.updateButtonText}>
@@ -594,8 +469,13 @@ const Health = ({ navigation }) => {
                     </Text>
                   </View>
                   <FlatList
-                    data={getHealthObservationsData(healthObservations)}
-                    keyExtractor={(item, index) => index.toString()}
+                    data={healthObservationsData}
+                    keyExtractor={(item, index) => `${item.parameter}-${index}`}
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={10}
+                    updateCellsBatchingPeriod={50}
+                    initialNumToRender={7}
+                    windowSize={10}
                     renderItem={({ item }) => (
                       <View
                         style={{
@@ -655,19 +535,17 @@ const Health = ({ navigation }) => {
                                 borderRadius: hp(4),
                                 backgroundColor: item.status,
                               }}
-                            ></View>
+                            />
                           </View>
                         </View>
                       </View>
                     )}
-                  ></FlatList>
+                  />
                 </View>
-
-                <Text></Text>
 
                 {/* Health Records */}
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('HealthRecords')}
+                  onPress={handleNavigateToHealthRecords}
                   style={styles.card}
                 >
                   <Text style={styles.sectionTitle}>Health Records</Text>
@@ -687,7 +565,7 @@ const Health = ({ navigation }) => {
                           resizeMode: 'contain',
                           borderRadius: 6,
                         }}
-                      ></Image>
+                      />
                     ) : (
                       <Image
                         source={Images.PRECRIPTION}
@@ -697,11 +575,7 @@ const Health = ({ navigation }) => {
                   </View>
 
                   <TouchableOpacity
-                    onPress={() => {
-                      const STEP = 10;
-                      navigation.navigate('HealthRecords');
-                    }}
-                    // onPress={showImagePickerOptions}
+                    onPress={handleNavigateToHealthRecords}
                     style={styles.button}
                   >
                     <Image
@@ -714,7 +588,6 @@ const Health = ({ navigation }) => {
                       }}
                       resizeMode="contain"
                     />
-                    {/* <Feather name="camera" size={18} color="white" /> */}
                     <Text style={styles.buttonText}> Add New Record*</Text>
                   </TouchableOpacity>
                   <Text style={styles.note}>
@@ -744,7 +617,7 @@ const Health = ({ navigation }) => {
                           marginHorizontal: hp(1),
                         }}
                         source={Images.NOTICE}
-                      ></Image>
+                      />
                       <Text
                         style={{
                           width: wp(45),
@@ -1046,6 +919,11 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: hp(0.5),
     fontFamily: 'Roboto-Regular',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
