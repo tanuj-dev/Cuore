@@ -9,18 +9,20 @@ import {
   Alert,
   Image,
   ScrollView,
+  Modal,
+  Platform,
 } from 'react-native';
-import FilePickerManager from 'react-native-file-picker';
-import { hp, wp, Images, color } from '../../utilities';
-import images from '../../utilities/Images';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import { hp, wp, Images } from '../../utilities';
 import ProfileHeader from '../../components/ProfileHeader';
-
 const HealthRecords = ({ navigation }) => {
   const [recordName, setRecordName] = useState('');
   const [recordDate, setRecordDate] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [isPrescription, setIsPrescription] = useState(false);
   const [selectedTab, setSelectedTab] = useState('Prescriptions');
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   const [records, setRecords] = useState([
     {
@@ -44,41 +46,105 @@ const HealthRecords = ({ navigation }) => {
   ]);
 
   const pickDocument = async () => {
+    // Use image library to select any file including PDFs and images
+    const options = {
+      mediaType: 'mixed', // Accepts both photos and videos, best we can do
+      quality: 1.0,
+      selectionLimit: 1,
+      includeBase64: false,
+    };
+
     try {
-      const options = {
-        title: 'Select File',
-        chooseFileButtonTitle: 'Select',
-        storageOptions: {
-          skipBackup: true,
-          path: 'downloads',
-        },
-      };
+      const result = await launchImageLibrary(options);
 
-      FilePickerManager.showFilePicker(options, response => {
-        console.log('Response:', response);
-
-        if (response.error) {
-          console.log('Error:', response.error);
-          Alert.alert('Error', response.error);
-        } else if (response.didCancel) {
-          console.log('User cancelled');
-        } else {
-          // For Android - response.uri contains the file path
-          // For iOS - response.uri is the file identifier
-          const fileUri = response.uri || response.path;
-          const fileName = response.fileName || response.name;
-
-          setSelectedFile({
-            uri: fileUri,
-            name: fileName,
-            type: response.type,
-            size: response.size,
-          });
-        }
-      });
+      if (result.didCancel) {
+        console.log('User cancelled file picker');
+      } else if (result.errorCode) {
+        console.log('File Picker Error:', result.errorMessage);
+        Alert.alert(
+          'Error',
+          result.errorMessage || 'Failed to open file picker',
+        );
+      } else if (result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        setSelectedFile({
+          uri: file.uri,
+          name: file.fileName || `document_${Date.now()}`,
+          type: file.type || 'application/octet-stream',
+          size: file.fileSize,
+        });
+      }
+      setShowUploadModal(false);
     } catch (err) {
-      console.log('Document picker error:', err);
-      Alert.alert('Error', 'Failed to open file picker');
+      console.log('File picker error:', err);
+      Alert.alert('Error', 'Failed to pick file');
+      setShowUploadModal(false);
+    }
+  };
+
+  const pickImageFromCamera = async () => {
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+      saveToPhotos: true,
+      includeBase64: false,
+    };
+
+    try {
+      const result = await launchCamera(options);
+
+      if (result.didCancel) {
+        console.log('User cancelled camera');
+      } else if (result.errorCode) {
+        console.log('Camera Error:', result.errorMessage);
+        Alert.alert('Error', result.errorMessage || 'Failed to open camera');
+      } else if (result.assets && result.assets.length > 0) {
+        const photo = result.assets[0];
+        setSelectedFile({
+          uri: photo.uri,
+          name: photo.fileName || `photo_${Date.now()}.jpg`,
+          type: photo.type,
+          size: photo.fileSize,
+        });
+      }
+      setShowUploadModal(false);
+    } catch (err) {
+      console.log('Camera error:', err);
+      Alert.alert('Error', 'Failed to open camera');
+      setShowUploadModal(false);
+    }
+  };
+
+  const pickImageFromGallery = async () => {
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+      selectionLimit: 1,
+      includeBase64: false,
+    };
+
+    try {
+      const result = await launchImageLibrary(options);
+
+      if (result.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (result.errorCode) {
+        console.log('Image Picker Error:', result.errorMessage);
+        Alert.alert('Error', result.errorMessage || 'Failed to open gallery');
+      } else if (result.assets && result.assets.length > 0) {
+        const photo = result.assets[0];
+        setSelectedFile({
+          uri: photo.uri,
+          name: photo.fileName || `image_${Date.now()}.jpg`,
+          type: photo.type,
+          size: photo.fileSize,
+        });
+      }
+      setShowUploadModal(false);
+    } catch (err) {
+      console.log('Gallery error:', err);
+      Alert.alert('Error', 'Failed to open gallery');
+      setShowUploadModal(false);
     }
   };
 
@@ -135,14 +201,16 @@ const HealthRecords = ({ navigation }) => {
               onChangeText={setRecordDate}
             />
 
-            <TouchableOpacity style={styles.uploadBox} onPress={pickDocument}>
+            <TouchableOpacity
+              style={styles.uploadBox}
+              onPress={() => setShowUploadModal(true)}
+            >
               <Image
                 source={Images.UPLOAD}
                 style={{
                   height: hp(4),
                   width: wp(7),
                   resizeMode: 'contain',
-                  // tintColor: '#000000',
                 }}
               />
               <Text
@@ -151,9 +219,7 @@ const HealthRecords = ({ navigation }) => {
                 Upload Record
               </Text>
               <Text style={styles.fileText}>
-                {selectedFile
-                  ? selectedFile.fileName || selectedFile.name
-                  : 'PNG, JPG, PDF up to 10MB'}
+                {selectedFile ? selectedFile.name : 'PNG, JPG, PDF up to 10MB'}
               </Text>
 
               <Text
@@ -293,6 +359,55 @@ const HealthRecords = ({ navigation }) => {
             )}
           />
         </View>
+
+        {/* Upload Options Modal */}
+        <Modal
+          visible={showUploadModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowUploadModal(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowUploadModal(false)}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Choose Upload Method</Text>
+
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={pickImageFromCamera}
+              >
+                <Image source={Images.CAMERA} style={styles.modalIcon} />
+                <Text style={styles.modalButtonText}>Take Photo</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={pickImageFromGallery}
+              >
+                <Image source={Images.EYE} style={styles.modalIcon} />
+                <Text style={styles.modalButtonText}>Choose from Gallery</Text>
+              </TouchableOpacity>
+
+              {/* <TouchableOpacity
+                style={styles.modalButton}
+                onPress={pickDocument}
+              >
+                <Image source={Images.UPLOAD} style={styles.modalIcon} />
+                <Text style={styles.modalButtonText}>Browse Files</Text>
+              </TouchableOpacity> */}
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowUploadModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </View>
     </ScrollView>
   );
@@ -368,13 +483,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     color: '#FFFFFF',
     fontWeight: '400',
-    color: '#FFFFFF',
   },
   activeText: {
     fontFamily: 'Roboto-Regular',
     color: '#FFFFFF',
-    fontWeight: '400',
-    fontWeight: 14,
+    fontWeight: '600',
+    fontSize: 14,
   },
   recordItem: {
     flexDirection: 'row',
@@ -402,5 +516,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
     color: '#374151',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    width: wp(85),
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  modalIcon: {
+    width: wp(6),
+    height: hp(3),
+    resizeMode: 'contain',
+    marginRight: 12,
+  },
+  modalButtonText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#374151',
+  },
+  cancelButton: {
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  cancelButtonText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
 });

@@ -663,17 +663,16 @@ const Today = ({ navigation, route }) => {
                     >
                       <Image
                         style={{
-                          height: hp(2),
+                          height: hp(2.5),
                           resizeMode: 'contain',
                           marginLeft: -hp(6),
+                          tintColor: item.alarm_notified
+                            ? '#6B7280'
+                            : '#FFCE1B',
                           // backgroundColor: 'red',
                           width: wp(10),
                         }}
-                        source={
-                          item?.alarm_notified
-                            ? Images?.NOTIFICATION
-                            : Images?.noNotification
-                        }
+                        source={Images?.NOTIFICATION}
                       />
                     </TouchableOpacity>
 
