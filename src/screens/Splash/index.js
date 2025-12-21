@@ -33,7 +33,7 @@ const Splash = () => {
           if (!access_token) {
             await EncryptedStorage.removeItem('auth_tokens');
             setTimeout(() => {
-              navigation.replace('Login');
+              // navigation.replace('Login');
             }, 3000);
             return;
           }
@@ -118,6 +118,8 @@ const styles = StyleSheet.create({
     height: wp(50),
     width: wp(50),
     marginBottom: hp(4),
+    justifyContent: 'center',
+    alignItems: 'center',
     // iOS shadow - applied to wrapper so it's not clipped
     shadowColor: '#000',
     shadowOffset: {
@@ -130,8 +132,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   logoWrapper: {
-    height: wp(50),
-    width: wp(50),
+    height: wp(35),
+    width: wp(35),
     borderRadius: wp(25),
     backgroundColor: '#fff',
     justifyContent: 'center',
@@ -142,13 +144,13 @@ const styles = StyleSheet.create({
   },
 
   centeredLogo: {
-    height: hp(70),
-    width: wp(70),
+    height: hp(50),
+    width: wp(50),
     resizeMode: 'contain',
   },
   title: {
     fontFamily: 'Roboto-Regular',
-    fontSize: hp(2.8),
+    fontSize: hp(2),
     fontWeight: '700',
     color: '#111827',
     textAlign: 'center',

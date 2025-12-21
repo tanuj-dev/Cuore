@@ -112,7 +112,8 @@ const Score = ({ navigation, route }) => {
       };
 
       const response = await dispatch(shareData(payload));
-      console.log(response.payload, 'response');
+      console.log(response, 'responseadsfas');
+      console.log(response.payload, 'responseta');
 
       // Check if response is successful and contains PDF data
       if (
@@ -146,6 +147,7 @@ const Score = ({ navigation, route }) => {
         Alert.alert('Error', 'Failed to generate PDF for sharing');
       }
     } catch (error) {
+      console.log(error, 'error');
       // User cancelled sharing - don't show error
       if (error.message !== 'User did not share') {
         console.error('Error sharing PDF:', error);
