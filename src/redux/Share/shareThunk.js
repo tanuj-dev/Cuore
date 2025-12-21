@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { postApiCall, getApiCall } from '../../utilities/Services';
+import { postApiCall, getApiCall, putApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
 
 export const shareData = createAsyncThunk(

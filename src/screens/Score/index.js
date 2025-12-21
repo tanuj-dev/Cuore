@@ -1,4 +1,4 @@
-import React, { use, useEffect, useRef } from 'react';
+import React, { use, useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   RefreshControl,
   Platform,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ViewShot from 'react-native-view-shot';
@@ -101,37 +102,59 @@ const Score = ({ navigation, route }) => {
   );
 
   const viewShotRef = useRef(null);
+  const [sharingLoading, setSharingLoading] = useState(false);
 
-  const handleShareScreenshot = async () => {
+  const handleShareScreenshot = useCallback(async () => {
     try {
-      // if (viewShotRef.current) {
-      //   // Capture only what's currently visible on screen (no scrolling)
-      //   const uri = await viewShotRef.current.capture();
-
-      //   const shareOptions = {
-      //     title: 'Cuore Score',
-      //     message: 'Check out my Cuore Score!',
-      //     url: uri,
-      //     type: 'image/jpeg',
-      //   };
-
-      //   await Share.open(shareOptions);
-      // }
-
+      setSharingLoading(true);
       const payload = {
         page: 'CUORE_SCORE',
       };
 
       const response = await dispatch(shareData(payload));
-      // await Alert.alert(response.data.message);
+      console.log(response.payload, 'response');
+
+      // Check if response is successful and contains PDF data
+      if (
+        response.payload &&
+        response.payload.success &&
+        response.payload.data
+      ) {
+        const pdfData = response.payload.data;
+
+        // Determine if pdfData is a URL string or an object with URL
+        let pdfUrl;
+        if (typeof pdfData === 'string') {
+          pdfUrl = pdfData;
+        } else if (pdfData.url) {
+          pdfUrl = pdfData.url;
+        } else if (pdfData.file) {
+          pdfUrl = pdfData.file;
+        } else {
+          pdfUrl = pdfData;
+        }
+
+        const shareOptions = {
+          title: 'Cuore Score',
+          message: 'Check out my Cuore Score!',
+          url: pdfUrl,
+          type: 'application/pdf',
+        };
+
+        await Share.open(shareOptions);
+      } else {
+        Alert.alert('Error', 'Failed to generate PDF for sharing');
+      }
     } catch (error) {
-      console.error('Error sharing screenshot:', error);
       // User cancelled sharing - don't show error
       if (error.message !== 'User did not share') {
-        Alert.alert('Error', 'Failed to share screenshot');
+        console.error('Error sharing PDF:', error);
+        Alert.alert('Error', 'Failed to share PDF');
       }
+    } finally {
+      setSharingLoading(false);
     }
-  };
+  }, [dispatch]);
 
   useEffect(() => {
     if (user_Id) {
@@ -484,6 +507,20 @@ const Score = ({ navigation, route }) => {
           </ScrollView>
         </View>
       </ViewShot>
+      {/* Loading overlay for PDF sharing */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={sharingLoading}
+        onRequestClose={() => setSharingLoading(false)}
+      >
+        <View style={styles.sharingLoaderOverlay}>
+          <View style={styles.sharingLoaderContainer}>
+            <ActivityIndicator size="large" color="#1E64AC" />
+            <Text style={styles.sharingLoaderText}>Generating PDF...</Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -875,6 +912,27 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#9CA3AF',
     fontFamily: 'Roboto-Regular',
+  },
+  sharingLoaderOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sharingLoaderContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: hp(1),
+    padding: hp(3),
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: wp(40),
+  },
+  sharingLoaderText: {
+    marginTop: hp(1.5),
+    fontSize: hp(1.8),
+    color: '#111827',
+    fontFamily: 'Roboto-Regular',
+    fontWeight: '500',
   },
 });
 

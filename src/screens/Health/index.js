@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
+  Modal,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ViewShot from 'react-native-view-shot';
@@ -63,6 +64,7 @@ const Health = ({ navigation }) => {
   const [refreshing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [lastConsulted, setLastConsulted] = useState(new Date());
+  const [sharingLoading, setSharingLoading] = useState(false);
   const viewShotRef = useRef(null);
   const dispatch = useDispatch();
 
@@ -185,32 +187,55 @@ const Health = ({ navigation }) => {
 
   const handleShareScreenshot = useCallback(async () => {
     try {
-      // if (viewShotRef.current) {
-      //   const uri = await viewShotRef.current.capture();
-
-      //   const shareOptions = {
-      //     title: 'Health Records',
-      //     message: 'Check out my health records!',
-      //     url: uri,
-      //     type: 'image/jpeg',
-      //   };
-
-      //   await Share.open(shareOptions);
-      // }
-
+      setSharingLoading(true);
       const payload = {
         page: 'CUORE_HEALTH',
       };
 
       const response = await dispatch(shareData(payload));
-      // await Alert.alert(response.data.message);
+      console.log(response.payload, 'response');
+
+      // Check if response is successful and contains PDF data
+      if (
+        response.payload &&
+        response.payload.success &&
+        response.payload.data
+      ) {
+        const pdfData = response.payload.data;
+
+        // Determine if pdfData is a URL string or an object with URL
+        let pdfUrl;
+        if (typeof pdfData === 'string') {
+          pdfUrl = pdfData;
+        } else if (pdfData.url) {
+          pdfUrl = pdfData.url;
+        } else if (pdfData.file) {
+          pdfUrl = pdfData.file;
+        } else {
+          pdfUrl = pdfData;
+        }
+
+        const shareOptions = {
+          title: 'Health Records',
+          message: 'Check out my health records!',
+          url: pdfUrl,
+          type: 'application/pdf',
+        };
+
+        await Share.open(shareOptions);
+      } else {
+        Alert.alert('Error', 'Failed to generate PDF for sharing');
+      }
     } catch (error) {
       // User cancelled sharing - don't show error
       if (error.message !== 'User did not share') {
-        Alert.alert('Error', 'Failed to share screenshot');
+        console.error('Error sharing PDF:', error);
+        Alert.alert('Error', 'Failed to share PDF');
       }
+    } finally {
+      setSharingLoading(false);
     }
-  }, []);
+  }, [dispatch]);
 
   const handleNavigateBack = useCallback(() => {
     navigation.goBack();
@@ -733,6 +758,20 @@ const Health = ({ navigation }) => {
           </ScrollView>
         </View>
       </ViewShot>
+      {/* Loading overlay for PDF sharing */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={sharingLoading}
+        onRequestClose={() => setSharingLoading(false)}
+      >
+        <View style={styles.sharingLoaderOverlay}>
+          <View style={styles.sharingLoaderContainer}>
+            <ActivityIndicator size="large" color="#1E64AC" />
+            <Text style={styles.sharingLoaderText}>Generating PDF...</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -932,6 +971,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sharingLoaderOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sharingLoaderContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: hp(1),
+    padding: hp(3),
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: wp(40),
+  },
+  sharingLoaderText: {
+    marginTop: hp(1.5),
+    fontSize: hp(1.8),
+    color: '#111827',
+    fontFamily: 'Roboto-Regular',
+    fontWeight: '500',
   },
 });
 
