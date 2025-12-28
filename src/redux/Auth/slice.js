@@ -11,6 +11,7 @@ const initialState = {
   role: null,
   loading: false,
   error: null,
+  sessionExpired: false,
 };
 
 const authSlice = createSlice({
@@ -32,6 +33,9 @@ const authSlice = createSlice({
     logout: state => {
       Object.assign(state, initialState);
     },
+    setSessionExpired: (state, action) => {
+      state.sessionExpired = action.payload;
+    },
   },
   extraReducers: builder => {
     builder
@@ -47,6 +51,8 @@ const authSlice = createSlice({
           expires_in,
           new_user,
           role,
+          paymentStatus,
+          onboardingStatus,
         } = action.payload.data || {};
 
         state.accessToken = access_token;
@@ -57,6 +63,8 @@ const authSlice = createSlice({
         state.role = role || null;
         state.loading = false;
         state.error = null;
+        state.paymentStatus = paymentStatus;
+        state.onboardingStatus = onboardingStatus;
       })
       .addCase(verifyOtp.rejected, (state, action) => {
         state.loading = false;
@@ -99,7 +107,7 @@ const userDataInitialState = {
   user: null, // will hold user info after login/signup
 };
 
-export const { logout, setUserData } = authSlice.actions;
+export const { logout, setUserData, setSessionExpired } = authSlice.actions;
 export const { resetCreateAccount } = createAccountSlice.actions;
 
 // export default userDataSlice.reducer;

@@ -75,7 +75,20 @@ const Profile = ({ navigation }) => {
   const role = useSelector(state => state.auth.role);
   const isCaregiver = role === 'caregiver';
   const [refreshing, setRefreshing] = useState(false);
-  const groupedSections = profileOptions.reduce((acc, item) => {
+
+  // Filter out items that caregivers shouldn't see
+  const filteredOptions = profileOptions.filter(item => {
+    if (isCaregiver) {
+      return (
+        item.title !== 'Select Persona' &&
+        item.title !== 'Delete Account' &&
+        item.title !== 'Renew Subscription'
+      );
+    }
+    return true;
+  });
+
+  const groupedSections = filteredOptions.reduce((acc, item) => {
     if (!acc[item.section]) acc[item.section] = [];
     acc[item.section].push(item);
     return acc;
@@ -101,11 +114,6 @@ const Profile = ({ navigation }) => {
 
       {items.map((item, index) => (
         <TouchableOpacity
-          disabled={
-            item.title === 'Select Persona' ||
-            item.title === 'Delete Account' ||
-            (item.title === 'Renew Subscription' && role == 'caregiver')
-          }
           onPress={() => {
             const route = routeMap[item.title]; // Corrected here
 

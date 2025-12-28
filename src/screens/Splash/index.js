@@ -33,7 +33,7 @@ const Splash = () => {
           if (!access_token) {
             await EncryptedStorage.removeItem('auth_tokens');
             setTimeout(() => {
-              // navigation.replace('Login');
+              navigation.replace('Login');
             }, 3000);
             return;
           }
@@ -81,8 +81,10 @@ const Splash = () => {
           </View>
         </View>
 
-        <Text style={styles.title}>Your Everyday Health Companion</Text>
-        <Text style={styles.subtitle}>
+        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
+          Your Everyday Health Companion
+        </Text>
+        <Text style={styles.subtitle} numberOfLines={1} adjustsFontSizeToFit>
           Small Steps. Smart Guidance. Better Health
         </Text>
 
@@ -156,14 +158,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: hp(1.5),
     letterSpacing: 0.5,
+    paddingHorizontal: wp(2),
   },
   subtitle: {
     fontFamily: 'Roboto-Regular',
     fontSize: hp(1.8),
     color: '#4B5563',
     textAlign: 'center',
-    lineHeight: hp(2.5),
-    paddingHorizontal: wp(5),
+    paddingHorizontal: wp(2),
   },
   loaderContainer: {
     marginTop: hp(4),

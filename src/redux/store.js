@@ -20,6 +20,7 @@ import {
   tobaccoSlice,
 } from './Explore/slice';
 import { predictSlice } from './Predict/slice';
+
 const store = configureStore({
   reducer: {
     auth: authSlices.auth,
@@ -40,6 +41,19 @@ const store = configureStore({
     health: getHealth.reducer,
     doctors: doctorsSlice.reducer,
   },
+  // Enable Redux DevTools in development
+  devTools: __DEV__,
 });
+
+// Log initial store state
+console.log('🏪 Redux Store Initialized');
+console.log('📦 Initial State:', store.getState());
+
+// Subscribe to store changes for debugging
+if (__DEV__) {
+  store.subscribe(() => {
+    console.log('🔄 Store Updated:', store.getState());
+  });
+}
 
 export default store;

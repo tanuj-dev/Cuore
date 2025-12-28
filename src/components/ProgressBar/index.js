@@ -30,7 +30,14 @@ const ProgressBarWithImage = ({ navigation, data }) => {
   return (
     <TouchableOpacity
       onPress={() => {
-        navigation.navigate('Score'), { navigateTo: 'Home' };
+        const params = { navigateTo: 'Home', screen: 'Score' };
+        console.log('Navigating to Score with params:', params);
+        // Navigate to root Score screen, not the nested one
+        const rootNavigation =
+          navigation.getParent()?.getParent() ||
+          navigation.getParent() ||
+          navigation;
+        rootNavigation.navigate('Score', params);
       }}
       style={styles.container}
     >

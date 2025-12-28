@@ -2,6 +2,13 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+// Set REACT_NATIVE_NODE_MODULES_DIR and REACT_NATIVE_WORKLETS_NODE_MODULES_DIR for react-native-reanimated
+// This must be set BEFORE the react block to ensure it's available when react-native-reanimated evaluates
+// Use absolute path to avoid path resolution issues
+def projectRoot = rootProject.projectDir.parentFile
+ext.REACT_NATIVE_NODE_MODULES_DIR = file("${projectRoot}/node_modules/react-native")
+ext.REACT_NATIVE_WORKLETS_NODE_MODULES_DIR = file("${projectRoot}/node_modules/react-native-worklets")
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -25,7 +32,11 @@ react {
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
-    // nodeExecutableAndArgs = ["node"]
+    // Try to find node in common locations, fallback to just 'node' if in PATH
+    def nodeExecutable = System.getenv("NODE_BINARY") ?: 
+                         (new File("/opt/homebrew/bin/node").exists() ? "/opt/homebrew/bin/node" : 
+                         (new File("/usr/local/bin/node").exists() ? "/usr/local/bin/node" : "node"))
+    nodeExecutableAndArgs = [nodeExecutable]
     //
     //   The command to run when bundling. By default is 'bundle'
     // bundleCommand = "ram-bundle"

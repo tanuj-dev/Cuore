@@ -1,4 +1,10 @@
-import React, { use, useEffect, useRef, useState, useCallback } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from 'react';
 import {
   View,
   Text,
@@ -8,101 +14,113 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Platform,
   Alert,
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
-import { hp, wp, Images, color } from '../../utilities';
+import { hp, wp, Images } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
 import { getCuoreScoreThunk, getOnboardingThunk } from '../../redux/slices';
 import { shareData } from '../../redux/slices';
 import GaugeMeter from '../../components/SpeedpMeter';
 import Loader from '../../components/Loader';
 
-// import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
 const Score = ({ navigation, route }) => {
-  console.log(
-    useSelector(state => state.onboarding),
-    'onboarding state',
-  );
-  const screen = route.params?.screen;
-  const navigateTo = route.params?.navigateTo;
-  console.log(route, 'route params');
-
-  const convertVitalsToArray = vitals => {
-    const result = [];
-
-    if (vitals?.blood_pressure) {
-      result.push({
-        label: 'Resting BP',
-        value: vitals.blood_pressure.current,
-        target: vitals.blood_pressure.target,
-        status: vitals.blood_pressure.status.lower,
-      });
-    }
-
-    if (vitals?.blood_sugar) {
-      result.push({
-        label: 'Blood Sugar (Fasting)',
-        value: vitals.blood_sugar.fasting?.value,
-        target: vitals.blood_sugar.fasting?.target,
-        status: vitals.blood_sugar.fasting.status,
-      });
-      result.push({
-        label: 'Blood Sugar (After Meal)',
-        value: vitals.blood_sugar.after_meal?.value,
-        target: vitals.blood_sugar.after_meal?.target || '—',
-        status: vitals.blood_sugar.after_meal.status,
-      });
-      result.push({
-        label: 'A1C',
-        value: vitals.blood_sugar.A1C?.value,
-        target: vitals.blood_sugar.A1C?.target,
-        status: vitals?.blood_sugar.A1C.status,
-      });
-    }
-
-    if (vitals?.body_fat) {
-      result.push({
-        label: 'Body Fat',
-        value: `${vitals.body_fat?.value}${vitals.body_fat?.unit}`,
-        target: `${vitals.body_fat?.target}${vitals.body_fat?.unit}`,
-        status: vitals.body_fat.status,
-      });
-    }
-
-    if (vitals?.cholesterol?.tg_hdl_ratio) {
-      result.push({
-        label: 'Cholesterol (TG/HDL)',
-        value: vitals.cholesterol?.tg_hdl_ratio?.value,
-        target: vitals.cholesterol?.tg_hdl_ratio?.target,
-        status: vitals?.cholesterol?.tg_hdl_ratio?.status,
-      });
-    }
-
-    return result;
-  };
-
   const dispatch = useDispatch();
+  const navigateTo = route.params?.navigateTo;
 
-  const user_Id = useSelector(state => state.auth?.userId);
-  const role = useSelector(state => state.auth?.role);
-  const loading = useSelector(state => state.cuoreScore?.loading);
-  const health_metrics = useSelector(
-    state => state.cuoreScore?.data?.health_metrics,
-  );
-  const date = useSelector(state => state.cuoreScore?.data?.current_date);
+  // Combine selectors for better performance
+  const { userId, role } = useSelector(state => ({
+    userId: state.auth?.userId,
+    role: state.auth?.role,
+  }));
+
+  const { loading, health_metrics, date } = useSelector(state => ({
+    loading: state.cuoreScore?.loading,
+    health_metrics: state.cuoreScore?.data?.health_metrics,
+    date: state.cuoreScore?.data?.current_date,
+  }));
 
   const hasDiabetes = useSelector(
     state => state.onboardingdata?.data?.data?.o3Data?.hasDiabetes,
   );
-
+  const paymentStatus = useSelector(state => state.auth?.paymentStatus);
   const viewShotRef = useRef(null);
   const [sharingLoading, setSharingLoading] = useState(false);
+
+  // Memoize vitals conversion
+  const convertVitalsToArray = useCallback(vitals => {
+    if (!vitals) return [];
+
+    const result = [];
+
+    if (vitals.blood_pressure) {
+      result.push({
+        label: 'Resting BP',
+        value: vitals.blood_pressure.current,
+        target: vitals.blood_pressure.target,
+        status: vitals.blood_pressure.status?.lower,
+      });
+    }
+
+    if (vitals.blood_sugar) {
+      if (vitals.blood_sugar.fasting) {
+        result.push({
+          label: 'Blood Sugar (Fasting)',
+          value: vitals.blood_sugar.fasting.value,
+          target: vitals.blood_sugar.fasting.target,
+          status: vitals.blood_sugar.fasting.status,
+        });
+      }
+      if (vitals.blood_sugar.after_meal) {
+        result.push({
+          label: 'Blood Sugar (After Meal)',
+          value: vitals.blood_sugar.after_meal.value,
+          target: vitals.blood_sugar.after_meal.target || '—',
+          status: vitals.blood_sugar.after_meal.status,
+        });
+      }
+      if (vitals.blood_sugar.A1C) {
+        result.push({
+          label: 'A1C',
+          value: vitals.blood_sugar.A1C.value,
+          target: vitals.blood_sugar.A1C.target,
+          status: vitals.blood_sugar.A1C.status,
+        });
+      }
+    }
+
+    if (vitals.body_fat) {
+      result.push({
+        label: 'Body Fat',
+        value: `${vitals.body_fat.value}${vitals.body_fat.unit || ''}`,
+        target: `${vitals.body_fat.target}${vitals.body_fat.unit || ''}`,
+        status: vitals.body_fat.status,
+      });
+    }
+
+    if (vitals.cholesterol?.tg_hdl_ratio) {
+      result.push({
+        label: 'Cholesterol (TG/HDL)',
+        value: vitals.cholesterol.tg_hdl_ratio.value,
+        target: vitals.cholesterol.tg_hdl_ratio.target,
+        status: vitals.cholesterol.tg_hdl_ratio.status,
+      });
+    }
+
+    return result;
+  }, []);
+
+  // Memoize filtered vitals
+  const filteredVitals = useMemo(() => {
+    const vitals = convertVitalsToArray(health_metrics?.vitals);
+    return vitals.filter(
+      item =>
+        item.value !== undefined && item.value !== null && item.value !== '',
+    );
+  }, [health_metrics?.vitals, convertVitalsToArray]);
 
   const handleShareScreenshot = useCallback(async () => {
     try {
@@ -112,8 +130,6 @@ const Score = ({ navigation, route }) => {
       };
 
       const response = await dispatch(shareData(payload));
-      console.log(response, 'responseadsfas');
-      console.log(response.payload, 'responseta');
 
       // Check if response is successful and contains PDF data
       if (
@@ -147,10 +163,8 @@ const Score = ({ navigation, route }) => {
         Alert.alert('Error', 'Failed to generate PDF for sharing');
       }
     } catch (error) {
-      console.log(error, 'error');
       // User cancelled sharing - don't show error
       if (error.message !== 'User did not share') {
-        console.error('Error sharing PDF:', error);
         Alert.alert('Error', 'Failed to share PDF');
       }
     } finally {
@@ -159,15 +173,34 @@ const Score = ({ navigation, route }) => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (user_Id) {
-      dispatch(getCuoreScoreThunk(user_Id));
+    if (userId) {
+      dispatch(getCuoreScoreThunk(userId));
       dispatch(getOnboardingThunk());
     }
-  }, [dispatch, user_Id]); // ✅ Added dependencies
+  }, [dispatch, userId]);
 
-  console.log(user_Id, 'user_Id');
-  console.log(health_metrics, 'health_metrics');
-  // console.log(hasDiabetes, 'hasDiabetes');
+  const handleRefresh = useCallback(() => {
+    if (userId) {
+      dispatch(getCuoreScoreThunk(userId));
+    }
+  }, [dispatch, userId]);
+
+  const handleContinue = useCallback(() => {
+    if (paymentStatus === 'completed') {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
+    } else {
+      navigation.navigate('Checkout');
+    }
+  }, [navigation, navigateTo]);
+
+  const handleReassess = useCallback(() => {
+    navigation.navigate('OnBoarding', {
+      screen: 'Reassess',
+    });
+  }, [navigation]);
 
   // if (health_metrics == undefined) {
   //   return (
@@ -207,61 +240,40 @@ const Score = ({ navigation, route }) => {
   //   );
   // }
   if (loading) {
-    <Loader />;
+    return <Loader />;
   }
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ViewShot
         ref={viewShotRef}
         options={{ format: 'jpg', quality: 0.9 }}
-        style={{ flex: 1 }}
+        style={styles.viewShot}
         collapsable={false}
       >
-        <View style={{ flex: 1 }}>
+        <View style={styles.viewShotContent}>
           {/* Fixed Header - Non-scrollable */}
           <View style={styles.fixedHeader}>
-            <View style={{ backgroundColor: '#FFFFFF', elevation: 1 }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  // padding: hp(1),
-                  paddingTop: hp(2),
-                  paddingHorizontal: hp(2),
-                }}
-              >
+            <View style={styles.headerContainer}>
+              <View style={styles.headerTopRow}>
                 <TouchableOpacity>
                   <Text style={styles.date}>{date || ''}</Text>
                 </TouchableOpacity>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
+                <View style={styles.headerIconsRow}>
                   <TouchableOpacity
-                    disabled={role == 'caregiver'}
+                    disabled={role === 'caregiver'}
                     hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                     onPress={handleShareScreenshot}
                   >
                     <Image
                       source={Images.SHARE_4}
-                      style={{
-                        resizeMode: 'contain',
-                        height: hp(2),
-                        tintColor: 'black',
-                      }}
+                      style={styles.shareIcon}
                       resizeMode="contain"
                     />
                   </TouchableOpacity>
                   <Image
                     source={Images.UNCLE}
-                    style={{
-                      width: wp(9),
-                      resizeMode: 'cover',
-                      height: hp(3),
-                    }}
+                    style={styles.profileIcon}
                     resizeMode="contain"
                   />
                 </View>
@@ -277,16 +289,13 @@ const Score = ({ navigation, route }) => {
 
           <ScrollView
             refreshControl={
-              <RefreshControl
-                refreshing={loading}
-                onRefresh={() => dispatch(getCuoreScoreThunk(user_Id))}
-              />
+              <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
             }
             style={styles.container}
             nestedScrollEnabled={true}
             showsVerticalScrollIndicator={true}
           >
-            <View style={{ backgroundColor: '#F9FAFB' }}>
+            <View style={styles.scrollContent}>
               <View style={styles.scoreCard}>
                 <GaugeMeter value={Math.round(health_metrics?.health_score)} />
                 {/* <Text
@@ -304,15 +313,8 @@ const Score = ({ navigation, route }) => {
                 <Text style={styles.timeToTarget}>
                   Estimated Time to Target
                 </Text>
-                <View style={{ flexDirection: 'row' }}>
-                  <Text
-                    style={{
-                      fontFamily: 'Roboto-Regular',
-                      fontSize: 17,
-                      color: '#1E64AC',
-                      fontWeight: '500',
-                    }}
-                  >
+                <View style={styles.timeToTargetRow}>
+                  <Text style={styles.timeToTargetValue}>
                     {Math.round(
                       health_metrics?.estimated_time_to_target?.value,
                     )}
@@ -324,24 +326,14 @@ const Score = ({ navigation, route }) => {
                 </View>
 
                 <TouchableOpacity
-                  disabled={role == 'caregiver'}
-                  onPress={() =>
-                    navigation.navigate('OnBoarding', {
-                      screen: 'Reassess',
-                    })
-                  }
+                  disabled={role === 'caregiver'}
+                  onPress={handleReassess}
                   style={styles.reassessButton}
                 >
                   <Image
-                    source={Images.EDIT} // Replace with actual key in your `images` object
-                    style={{
-                      resizeMode: 'contain',
-                      height: hp(2),
-                      width: wp(6),
-                      tintColor: '#FFFFFF',
-
-                      // marginLeft: hp(2),
-                    }}
+                    source={Images.EDIT}
+                    style={styles.reassessIcon}
+                    resizeMode="contain"
                   />
 
                   <Text style={styles.reassessText}>Re-assess</Text>
@@ -394,45 +386,21 @@ const Score = ({ navigation, route }) => {
                   value={`${health_metrics?.recommended?.exercise?.value} min`}
                 />
               </View>
-              <View
-                style={{
-                  marginTop: hp(2),
-                  // marginHorizontal: hp(1.5),
-                  elevation: 0.5,
-                  // padding: hp(2),
-                  paddingVertical: hp(2),
-                  margin: hp(1.5),
-                  backgroundColor: 'white',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 4,
-                  borderRadius: hp(1),
-                }}
-              >
-                {convertVitalsToArray(health_metrics?.vitals)
-                  .filter(
-                    item =>
-                      item.value !== undefined &&
-                      item.value !== null &&
-                      item.value !== '',
-                  )
-                  .map((item, index) => (
-                    <View
-                      key={index}
-                      style={{ marginVertical: index === 2 ? hp(2) : 0 }}
-                    >
-                      <VitalCard
-                        data={item.health_metrics?.vitals}
-                        label={item.label}
-                        value={item.value}
-                        target={item.target}
-                        color={item.status}
-                        colorCode={'red'}
-                        hasDiabetes={hasDiabetes}
-                      />
-                    </View>
-                  ))}
+              <View style={styles.vitalsContainer}>
+                {filteredVitals.map((item, index) => (
+                  <View
+                    key={`${item.label}-${index}`}
+                    style={styles.vitalItemWrapper}
+                  >
+                    <VitalCard
+                      label={item.label}
+                      value={item.value}
+                      target={item.target}
+                      color={item.status}
+                      hasDiabetes={hasDiabetes}
+                    />
+                  </View>
+                ))}
 
                 <View style={styles.focusRow}>
                   <Text style={styles.focusLabel}>Main Focus</Text>
@@ -447,59 +415,10 @@ const Score = ({ navigation, route }) => {
                 </View>
               </View>
 
-              <View
-                style={{
-                  backgroundColor: 'white',
-                  margin: hp(2),
-                  marginBottom: hp(6),
-                  // marginVertical: hp(1),
-                  marginTop: hp(2),
-                  borderRadius: hp(1),
-                  paddingVertical: hp(1),
-                  elevation: 1,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 4,
-                  // paddingBottom: hp(2),
-                }}
-              >
+              <View style={styles.continueContainer}>
                 <TouchableOpacity
-                  disabled={role == 'caregiver'}
-                  onPress={() => {
-                    // navigation.reset({
-                    //   index: 0,
-                    //   routes: [
-                    //     {
-                    //       name: 'Home',
-                    //       state: {
-                    //         index: 2, // Explore tab index
-                    //         routes: [
-                    //           { name: 'Today' },
-                    //           { name: 'Explore' },
-                    //           { name: 'Predict' },
-                    //           { name: 'Chat' },
-                    //           { name: 'Profile' },
-                    //         ],
-                    //       },
-                    //     },
-                    //   ],
-                    // });
-
-                    if (navigateTo == 'Home') {
-                      navigation.reset({
-                        index: 0,
-                        routes: [{ name: 'Home' }],
-                      });
-                    } else if (navigateTo == 'Mind') {
-                      navigation.reset({
-                        index: 0,
-                        routes: [{ name: 'Home' }],
-                      });
-                    } else {
-                      navigation.navigate('Checkout');
-                    }
-                  }}
+                  disabled={role === 'caregiver'}
+                  onPress={handleContinue}
                   style={styles.continueButton}
                 >
                   <Text style={styles.continueText}>Continue</Text>
@@ -527,31 +446,16 @@ const Score = ({ navigation, route }) => {
   );
 };
 
-const InfoCard = ({ label, value, subText, png }) => (
+const InfoCard = React.memo(({ label, value, subText, png }) => (
   <View style={styles.infoCard}>
     <Text style={styles.infoLabel}>{label}</Text>
     <Text style={styles.infoValue}>{value}</Text>
 
     {subText && (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginTop: hp(0.5),
-        }}
-      >
-        <Image
-          source={png} // Replace with actual key in your `images` object
-          style={{
-            resizeMode: 'contain',
-            height: hp(3),
-            width: wp(4),
-            tintColor: '#FF8D10',
-            marginRight: hp(0.5),
-          }}
-        />
+      <View style={styles.infoSubContainer}>
+        <Image source={png} style={styles.infoSubIcon} resizeMode="contain" />
         <Text style={styles.infoSub}>
-          {label == 'Metabolic Age'
+          {label === 'Metabolic Age'
             ? subText?.toString().startsWith('-')
               ? subText
               : `+${subText}`
@@ -560,128 +464,42 @@ const InfoCard = ({ label, value, subText, png }) => (
       </View>
     )}
   </View>
-);
-const getVitalColor = (label, value, target, hasDiabetes) => {
-  switch (label) {
-    case 'Resting BP': {
-      const [systolic, diastolic] = value.split('/').map(Number);
-      const total = systolic + diastolic;
-
-      if (total < 180) return 'orange';
-      if (total <= 200) return 'green';
-      if (total <= 220) return 'orange';
-      return 'red';
-    }
-
-    case 'Blood Sugar (Fasting)': {
-      if (hasDiabetes) {
-        if (value < 100) return 'red';
-        if (value <= 139) return 'green';
-        if (value <= 170) return 'orange';
-        return 'red';
-      } else {
-        if (value < 100) return 'green';
-        if (value <= 125) return 'orange'; // ✅ handles 140–170
-        return 'red';
-      }
-    }
-
-    case 'Blood Sugar (After Meal)': {
-      if (hasDiabetes) {
-        if (value < 130) return 'red';
-        if (value <= 169) return 'green';
-        if (value <= 220) return 'orange';
-        return 'red';
-      } else {
-        if (value < 140) return 'green';
-        if (value <= 200) return 'orange';
-        return 'red';
-      }
-    }
-
-    case 'Cholesterol (TG/HDL)':
-      if (value < 2.8) return 'green';
-      if (value <= 4.0) return 'orange';
-      return 'red';
-
-    case 'Body Fat': {
-      const cleanValue = parseFloat(String(value).replace('%', ''));
-      const cleanTarget = parseFloat(String(target).replace('%', ''));
-
-      if (isNaN(cleanValue) || isNaN(cleanTarget) || cleanTarget === 0) {
-        console.warn('Invalid Body Fat values:', value, target);
-        return 'red';
-      }
-
-      const diff = Math.abs(cleanValue - cleanTarget);
-      const percentageDiff = (diff / cleanTarget) * 100;
-      console.log(diff, 'diff');
-      console.log(percentageDiff.toFixed(2), '% difference');
-
-      if (percentageDiff < 5) return 'green';
-      if (percentageDiff <= 15) return 'orange';
-      return 'red';
-    }
-
-    default:
-      return 'gray'; // fallback
-  }
-};
-
-const VitalCard = ({
-  label,
-  value,
-  target,
-  colorCode,
-  hint,
-  hasDiabetes,
-  color,
-}) => {
-  console.log(label, value, target, 'vital card props');
-  const barColor = getVitalColor(label, value, target, hasDiabetes);
+));
+const VitalCard = React.memo(({ label, value, target, hasDiabetes, color }) => {
   return (
     <View style={styles.vitalCard}>
       {label && (
         <View style={styles.vitalRow}>
-          <View
-            style={{
-              width: wp(25),
-              // backgroundColor: 'yellow',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text
-              style={[
-                styles.vitalLabel,
-                { marginTop: hint == '' ? hp(2) : hp(0) },
-              ]}
-            >
-              {label}
-            </Text>
+          <View style={styles.vitalLabelContainer}>
+            <Text style={styles.vitalLabel}>{label}</Text>
           </View>
-          <View
-            style={{
-              // backgroundColor: 'red',
-              width: wp(20),
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+          <View style={styles.vitalValueContainer}>
             <Text style={styles.vitalValue}>{value}</Text>
           </View>
-          <View style={{ flexDirection: 'row', width: hp(22) }}>
+          <View style={styles.vitalTargetContainer}>
             <View style={[styles.vitalBar, { backgroundColor: color }]} />
-
             <Text style={styles.vitalTarget}>{target}</Text>
           </View>
         </View>
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  viewShot: {
+    flex: 1,
+  },
+  viewShotContent: {
+    flex: 1,
+  },
+  scrollContent: {
+    backgroundColor: '#F9FAFB',
+  },
   container: { flex: 1, backgroundColor: '#fff', marginTop: hp(9) },
   fixedHeader: {
     position: 'absolute',
@@ -692,22 +510,32 @@ const styles = StyleSheet.create({
     elevation: 1000,
     backgroundColor: '#FFFFFF',
   },
+  headerContainer: {
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: hp(2),
+    paddingHorizontal: hp(2),
+  },
+  headerIconsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   header: {
-    // padding: wp(4),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    // paddingBottom: hp(2),
   },
   date: {
     fontFamily: 'Roboto-Regular',
     fontSize: wp(3.5),
     color: '#6B7280',
-    // marginBottom: hp(3),
   },
   title: {
     fontFamily: 'Roboto-Regular',
-    // marginLeft: hp(-4),
     fontSize: wp(5),
     fontWeight: '400',
     marginTop: hp(-3),
@@ -715,8 +543,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginLeft: hp(5),
   },
+  shareIcon: {
+    resizeMode: 'contain',
+    height: hp(2),
+    tintColor: 'black',
+  },
+  profileIcon: {
+    width: wp(9),
+    height: hp(3),
+  },
   avatarWrapper: {},
   avatar: { width: wp(10), height: wp(10), borderRadius: wp(5) },
+  timeToTargetRow: {
+    flexDirection: 'row',
+  },
+  timeToTargetValue: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 17,
+    color: '#1E64AC',
+    fontWeight: '500',
+  },
+  reassessIcon: {
+    resizeMode: 'contain',
+    height: hp(2),
+    width: wp(6),
+    tintColor: '#FFFFFF',
+  },
 
   scoreCard: {
     backgroundColor: '#FFFFFF',
@@ -820,6 +672,60 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FF8D10',
     fontWeight: '400',
+  },
+  infoSubContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: hp(0.5),
+  },
+  infoSubIcon: {
+    resizeMode: 'contain',
+    height: hp(3),
+    width: wp(4),
+    tintColor: '#FF8D10',
+    marginRight: hp(0.5),
+  },
+  vitalsContainer: {
+    marginTop: hp(2),
+    paddingVertical: hp(2),
+    margin: hp(1.5),
+    backgroundColor: 'white',
+    elevation: 0.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderRadius: hp(1),
+  },
+  vitalItemWrapper: {
+    marginVertical: 0,
+  },
+  vitalLabelContainer: {
+    width: wp(25),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vitalValueContainer: {
+    width: wp(20),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vitalTargetContainer: {
+    flexDirection: 'row',
+    width: hp(22),
+  },
+  continueContainer: {
+    backgroundColor: 'white',
+    margin: hp(2),
+    marginBottom: hp(6),
+    marginTop: hp(2),
+    borderRadius: hp(1),
+    paddingVertical: hp(1),
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   vitalCard: {

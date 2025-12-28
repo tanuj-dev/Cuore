@@ -90,6 +90,7 @@ const OtpScreen = () => {
         new_user,
         onboardingStatus,
         role,
+        paymentStatus,
       } = result?.data;
 
       const tokenPayload = {
@@ -100,6 +101,7 @@ const OtpScreen = () => {
         newUser: new_user,
         onboardingStatus: onboardingStatus,
         role: role,
+        paymentStatus: paymentStatus,
       };
 
       // ✅ Save token securely
