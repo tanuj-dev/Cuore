@@ -1,12 +1,11 @@
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   Image,
   Modal,
+  Platform,
 } from 'react-native';
 import React from 'react';
 import { hp, wp, Images } from '../../utilities';
@@ -15,7 +14,14 @@ const PaymentConfirmation = ({
   navigation,
   paymentSuccessModalVisible,
   setPaymentSuccessModalVisible,
+  paymentData,
 }) => {
+  // Extract last 4 digits from payment ID for display
+  const getLastFourDigits = str => {
+    if (!str) return '****';
+    return str.slice(-4);
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -26,10 +32,9 @@ const PaymentConfirmation = ({
       <View style={styles.modalOverlay}>
         <View
           style={{
-            marginTop: Platform.OS == 'ios' && hp(2),
+            marginTop: Platform.OS === 'ios' && hp(2),
             flexDirection: 'row',
             backgroundColor: '#FFFFFF',
-            // paddingTop: hp(6),
             height: hp(15),
             elevation: 1,
             alignItems: 'center',
@@ -88,19 +93,20 @@ const PaymentConfirmation = ({
               color: '#4B5563',
             }}
           >
-            Payment Successful.
+            {paymentData?.plan
+              ? `${paymentData.plan.title} Plan - ${paymentData.plan.duration}`
+              : 'Subscription activated'}
           </Text>
           <View
             style={{
               height: 1,
               backgroundColor: '#E5E7EB',
-              //   borderWidth: 1,
               width: '100%',
               marginTop: hp(2),
             }}
-          ></View>
+          />
 
-          <View style={{ marginTop: hp(1.5) }}>
+          <View style={{ marginTop: hp(1.5), width: '100%' }}>
             <View
               style={{
                 flexDirection: 'row',
@@ -126,7 +132,9 @@ const PaymentConfirmation = ({
                   color: '#000000',
                 }}
               >
-                TXN123456789
+                {paymentData?.transactionId
+                  ? `***${getLastFourDigits(paymentData.transactionId)}`
+                  : 'TXN***'}
               </Text>
             </View>
             <View
@@ -155,7 +163,7 @@ const PaymentConfirmation = ({
                   color: '#000000',
                 }}
               >
-                ₹1699.00
+                ₹{paymentData?.amount ? paymentData.amount.toFixed(2) : '0.00'}
               </Text>
             </View>
             <View
@@ -183,7 +191,7 @@ const PaymentConfirmation = ({
                   color: '#000000',
                 }}
               >
-                **** 3456
+                Razorpay
               </Text>
             </View>
           </View>
@@ -192,13 +200,11 @@ const PaymentConfirmation = ({
         {/* button */}
 
         <TouchableOpacity
-          onPress={
-            () =>
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Home' }],
-              })
-            // setPaymentSuccessModalVisible(!paymentSuccessModalVisible)
+          onPress={() =>
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Home' }],
+            })
           }
           style={{
             alignItems: 'center',

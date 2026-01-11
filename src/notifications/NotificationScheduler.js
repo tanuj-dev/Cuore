@@ -15,7 +15,19 @@ export async function scheduleNotificationAfterMinutes(
       id,
       title,
       body,
-      android: { channelId: 'health-schedule', smallIcon: 'ic_launcher' },
+      data: {
+        screen: 'Today', // Navigate to Today screen on press
+      },
+      android: {
+        channelId: 'health-schedule',
+        smallIcon: 'ic_launcher',
+        pressAction: {
+          id: 'default',
+        },
+      },
+      ios: {
+        categoryId: 'default',
+      },
     },
     trigger,
   );
@@ -37,7 +49,19 @@ export async function scheduleNotificationAfterSeconds(
       id,
       title,
       body,
-      android: { channelId: 'health-schedule', smallIcon: 'ic_launcher' },
+      data: {
+        screen: 'Today', // Navigate to Today screen on press
+      },
+      android: {
+        channelId: 'health-schedule',
+        smallIcon: 'ic_launcher',
+        pressAction: {
+          id: 'default',
+        },
+      },
+      ios: {
+        categoryId: 'default',
+      },
     },
     trigger,
   );
@@ -49,7 +73,18 @@ export async function showImmediateNotification(title, body) {
   await notifee.displayNotification({
     title,
     body,
-    android: { channelId: 'health-schedule' },
+    data: {
+      screen: 'Today', // Navigate to Today screen on press
+    },
+    android: {
+      channelId: 'health-schedule',
+      pressAction: {
+        id: 'default',
+      },
+    },
+    ios: {
+      categoryId: 'default',
+    },
   });
 }
 
@@ -109,9 +144,18 @@ export async function scheduleNotificationAtTime(
       id,
       title,
       body,
+      data: {
+        screen: 'Today', // Navigate to Today screen on press
+      },
       android: {
         channelId: 'health-schedule',
         smallIcon: 'ic_launcher', // make sure this icon exists in android/app/src/main/res/
+        pressAction: {
+          id: 'default',
+        },
+      },
+      ios: {
+        categoryId: 'default',
       },
     },
     trigger,

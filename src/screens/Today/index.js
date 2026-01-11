@@ -10,7 +10,6 @@ import {
   RefreshControl,
   FlatList,
   StatusBar,
-  Alert,
   Platform,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
@@ -41,6 +40,7 @@ import {
 } from '../../redux/slices';
 import { checkReminderThunk } from '../../redux/slices';
 import { getNotification } from '../../redux/Home/notificationThunk';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 // Constants extracted outside component
 const MEAL_COMBOS = [
@@ -93,8 +93,10 @@ const Today = ({ navigation, route }) => {
   const [toast, setToast] = useState(null);
   const [reminderList, setReminderList] = useState([]);
   const [toastType, setToastType] = useState('success');
+  const [loadingTaskId, setLoadingTaskId] = useState(null);
 
   const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
 
   const { data, loading } = useSelector(state => state.home);
   const userId = useSelector(state => state.auth.userId);
@@ -315,6 +317,7 @@ const Today = ({ navigation, route }) => {
       edges={['top']}
       style={{ flex: 1, backgroundColor: '#F9FAFB' }}
     >
+      {AlertComponent}
       <StatusBar barStyle="dark-content" backgroundColor="#000" />
       {/* <View style={styles.floatingText}>
         <TouchableOpacity disabled={isCaregiver} onPress={() => setIsVisible(true)}>
@@ -367,7 +370,7 @@ const Today = ({ navigation, route }) => {
               <Text
                 style={{
                   fontSize: 12.5,
-                  fontWeight: '800',
+                  fontFamily: 'Roboto-ExtraBold',
                   color: '#2951a8',
                   marginLeft: 4,
                   textAlign: 'center',
@@ -397,7 +400,7 @@ const Today = ({ navigation, route }) => {
               <Text
                 style={{
                   fontSize: 12.5,
-                  fontWeight: '800',
+                  fontFamily: 'Roboto-ExtraBold',
                   color: '#9e4043',
                   textAlign: 'center',
                   marginLeft: 4,
@@ -629,8 +632,12 @@ const Today = ({ navigation, route }) => {
                 setShowModal(true);
               };
 
-              const handleCompleteToggle = () => {
+              const handleCompleteToggle = async () => {
                 if (isCaregiver) return;
+
+                // Set loading state for this specific task
+                setLoadingTaskId(item.id);
+
                 // Optimistically update local state
                 setReminderList(prev =>
                   prev.map(reminder =>
@@ -639,8 +646,30 @@ const Today = ({ navigation, route }) => {
                       : reminder,
                   ),
                 );
+
                 // Dispatch backend update
-                dispatch(checkReminderThunk({ id: item.id, userId }));
+                try {
+                  await dispatch(
+                    checkReminderThunk({
+                      id: item.id,
+                      userId,
+                      body: { complete: !item.completed },
+                    }),
+                  ).unwrap();
+                } catch (error) {
+                  // Revert optimistic update on error
+                  setReminderList(prev =>
+                    prev.map(reminder =>
+                      reminder.id === item.id
+                        ? { ...reminder, completed: item.completed }
+                        : reminder,
+                    ),
+                  );
+                  console.error('Failed to update task:', error);
+                } finally {
+                  // Clear loading state
+                  setLoadingTaskId(null);
+                }
               };
 
               const isEditable =
@@ -698,11 +727,19 @@ const Today = ({ navigation, route }) => {
 
                   {/* check black dot */}
                   <TouchableOpacity
-                    disabled={isCaregiver}
+                    disabled={
+                      isCaregiver ||
+                      loadingTaskId === item.id ||
+                      loadingTaskId === 'all'
+                    }
                     onPress={handleCompleteToggle}
                   >
                     <View style={styles.blackDot}>
-                      {item.completed && <View style={styles.blackDotInner} />}
+                      {loadingTaskId === item.id || loadingTaskId === 'all' ? (
+                        <ActivityIndicator size="small" color="#1E64AC" />
+                      ) : (
+                        item.completed && <View style={styles.blackDotInner} />
+                      )}
                     </View>
                   </TouchableOpacity>
 
@@ -751,7 +788,7 @@ const Today = ({ navigation, route }) => {
             }}
           >
             <TouchableOpacity
-              disabled={isCaregiver}
+              disabled={isCaregiver || loadingTaskId === 'all'}
               style={[
                 styles.checkAll,
                 {
@@ -761,50 +798,74 @@ const Today = ({ navigation, route }) => {
                 },
               ]}
               onPress={() => {
-                Alert.alert(
-                  'Confirm',
-                  'Are you sure you want to check off all tasks?',
-                  [
-                    {
-                      text: 'Cancel',
-                      style: 'cancel',
-                    },
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        // Optimistically mark all as completed
+                const allCompleted = reminderList.every(item => item.completed);
+                const actionText = allCompleted
+                  ? 'Are you sure you want to uncheck all tasks?'
+                  : 'Are you sure you want to check off all tasks?';
+
+                alert('Confirm', actionText, [
+                  {
+                    text: 'Cancel',
+                    style: 'cancel',
+                  },
+                  {
+                    text: 'OK',
+                    onPress: async () => {
+                      // Set loading state for all tasks
+                      setLoadingTaskId('all');
+
+                      // Optimistically update all tasks
+                      const newCompletedState = !allCompleted;
+                      setReminderList(prev =>
+                        prev.map(reminder => ({
+                          ...reminder,
+                          completed: newCompletedState,
+                        })),
+                      );
+
+                      try {
+                        await dispatch(
+                          checkReminderThunk({
+                            id: reminderList.id,
+                            userId,
+                            body: {
+                              completeAll: true,
+                              complete: newCompletedState,
+                            },
+                          }),
+                        ).unwrap();
+                      } catch (error) {
+                        // Revert optimistic update on error
                         setReminderList(prev =>
                           prev.map(reminder => ({
                             ...reminder,
-                            completed: true,
+                            completed: allCompleted,
                           })),
                         );
-
-                        // Dispatch backend updates for incomplete items
-                        reminderList
-                          .filter(reminder => !reminder.completed)
-                          .forEach(reminder => {
-                            dispatch(
-                              checkReminderThunk({ id: reminder.id, userId }),
-                            );
-                          });
-                      },
+                        console.error('Failed to update all tasks:', error);
+                      } finally {
+                        // Clear loading state
+                        setLoadingTaskId(null);
+                      }
                     },
-                  ],
-                );
+                  },
+                ]);
               }}
             >
-              {reminderList.every(item => item.completed) && (
-                <Text style={{ color: '#FFFFFF', fontSize: 12 }}>✔</Text>
+              {loadingTaskId === 'all' ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                reminderList.every(item => item.completed) && (
+                  <Text style={{ color: '#FFFFFF', fontSize: 12 }}>✔</Text>
+                )
               )}
             </TouchableOpacity>
 
             <Text
               style={{
-                fontFamily: 'Roboto-Regular',
+                fontFamily: 'Roboto-Medium',
                 color: '#4B5563',
                 fontSize: 15,
-                fontWeight: '400',
               }}
             >
               Check Off All Tasks
@@ -826,10 +887,9 @@ const Today = ({ navigation, route }) => {
           <Image source={Images.FIRE} />
           <Text
             style={{
-              fontFamily: 'Roboto-Regular',
+              fontFamily: 'Roboto-SemiBold',
               color: '#1E64AC',
               fontSize: 15,
-              fontWeight: '400',
             }}
           >
             {homeData?.streak}-Day Streak
@@ -839,7 +899,6 @@ const Today = ({ navigation, route }) => {
               fontFamily: 'Roboto-Regular',
               color: '#1E64AC',
               fontSize: 15,
-              fontWeight: '400',
             }}
           >
             Maintain your progress,{' '}
@@ -849,10 +908,9 @@ const Today = ({ navigation, route }) => {
               fontFamily: 'Roboto-Regular',
               color: '#1E64AC',
               fontSize: 15,
-              fontWeight: '400',
             }}
           >
-            log today’s tasks by 12:30 AM
+            log today's tasks by 12:30 AM
           </Text>
         </View>
 
@@ -886,16 +944,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
     marginTop: Platform.OS === 'ios' ? hp(0) : hp(2),
-    fontFamily: 'Roboto-Regular',
     padding: hp(1.5),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   username: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Roboto-ExtraBold',
     fontSize: 17,
-    fontWeight: '800',
     color: '#4B5563',
   },
   userIcon: {
@@ -918,12 +974,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginHorizontal: hp(2),
   },
-  activeTab: { fontWeight: '500', fontSize: 16, color: '#1E64AC' },
-  inactiveTab: { fontSize: 16, color: '#9CA3AF' },
+  activeTab: { fontFamily: 'Roboto-SemiBold', fontSize: 16, color: '#1E64AC' },
+  inactiveTab: { fontFamily: 'Roboto-Regular', fontSize: 16, color: '#9CA3AF' },
   alert: {
     fontFamily: 'Roboto-Regular',
     color: 'red',
-    fontWeight: '400',
     marginLeft: -hp(2), // textAlign: 'center',
     marginVertical: 8,
   },
@@ -935,8 +990,7 @@ const styles = StyleSheet.create({
   },
   progressTitle: {
     // marginLeft: hp(1),
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '800',
+    fontFamily: 'Roboto-ExtraBold',
     color: '#18202B',
     alignSelf: 'center',
     textAlign: 'center',
@@ -944,6 +998,7 @@ const styles = StyleSheet.create({
   quote: {
     // fontStyle: fontFamily: 'Roboto-Regular', 'italic',
     backgroundColor: '#F9ECF7',
+    fontFamily: 'Roboto-Medium',
     color: '#1E64AC',
     fontSize: 15,
     padding: hp(1.8),
@@ -959,7 +1014,7 @@ const styles = StyleSheet.create({
     padding: hp(0.5),
   },
   consult: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Roboto-Medium',
     marginLeft: -hp(3),
     // backgroundColor: '#FEEAEA',
     padding: 8,
@@ -968,7 +1023,7 @@ const styles = StyleSheet.create({
     color: '#B91C1C',
   },
   reassess: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Roboto-Medium',
     marginLeft: -hp(3),
     // backgroundColor: '#fff3cd',
     padding: 8,
@@ -985,8 +1040,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   sectionTitle: {
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '450',
+    fontFamily: 'Roboto-SemiBold',
     fontSize: 16,
     color: '#1E64AC',
   },
@@ -1003,7 +1057,6 @@ const styles = StyleSheet.create({
   time: {
     fontFamily: 'Roboto-Regular',
     width: 62,
-    fontWeight: '400',
     color: '#6B7280',
   },
   taskCard: {
@@ -1031,8 +1084,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   taskTitle: {
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '400',
+    fontFamily: 'Roboto-Medium',
     fontSize: 15,
     color: '#9CA3AF',
     width: wp(43),
@@ -1041,7 +1093,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     color: '#9CA3AF',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Roboto-Light',
     width: wp(40),
   },
   taskContent: {
@@ -1064,6 +1116,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+    fontFamily: 'Roboto-Regular',
     color: '#6B7280',
   },
   checkIcon: {
@@ -1095,8 +1148,8 @@ const styles = StyleSheet.create({
   },
   floatingTextLabel: {
     fontSize: 14,
+    fontFamily: 'Roboto-SemiBold',
     color: '#1E64AC',
-    fontWeight: '600',
     textAlign: 'center',
   },
   checkAll: {
@@ -1161,6 +1214,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
+    fontFamily: 'Roboto-Medium',
     color: '#1E64AC',
     fontSize: 16,
   },

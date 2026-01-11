@@ -7,11 +7,11 @@ import {
 
 export const checkReminderThunk = createAsyncThunk(
   'reminders/check',
-  async ({ id, userId }, { rejectWithValue }) => {
+  async ({ id, userId, body }, { rejectWithValue }) => {
     console.log(id, userId, 'payload in thunk');
     try {
       const endpoint = `/api/v1/timeline/${userId}/complete/${id}`;
-      const response = await putApiCall(endpoint);
+      const response = await putApiCall(endpoint, body);
       return response.data;
     } catch (error) {
       return rejectWithValue(

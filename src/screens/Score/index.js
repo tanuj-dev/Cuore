@@ -186,7 +186,7 @@ const Score = ({ navigation, route }) => {
   }, [dispatch, userId]);
 
   const handleContinue = useCallback(() => {
-    if (paymentStatus === 'completed') {
+    if (paymentStatus === 'completed' || paymentStatus === 'waived') {
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
@@ -423,6 +423,50 @@ const Score = ({ navigation, route }) => {
                 >
                   <Text style={styles.continueText}>Continue</Text>
                 </TouchableOpacity>
+              </View>
+              <View style={[styles.card, { flexDirection: 'row' }]}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center' }}
+                  ></View>
+                </View>
+
+                <Image
+                  style={{
+                    marginRight: hp(1),
+                    height: hp(1.5),
+                    width: hp(2),
+                    resizeMode: 'contain',
+                    marginHorizontal: hp(1),
+                  }}
+                  source={Images.NOTICE}
+                />
+
+                <Text>
+                  This score summarizes lifestyle and health trends for
+                  awareness only and is not intended for diagnosis, treatment,
+                  or medical decision-making.
+                </Text>
+
+                {/* <Text style={styles.bold}>History: </Text>
+                         
+              
+                          <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
+                          <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+                            Diabetes on metformin   Hypertension (HTN) on Cardace
+                          </Text>
+              
+                          <Text style={[styles.label, {marginTop: hp(1)}]}>
+                            <Text style={styles.bold}>Labs:</Text>
+                          </Text>
+                          <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+                            RBS: 230
+                          </Text> */}
               </View>
             </View>
           </ScrollView>
@@ -841,6 +885,19 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontFamily: 'Roboto-Regular',
     fontWeight: '500',
+  },
+
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: hp(2),
+    marginVertical: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    justifyContent: 'center',
+    marginHorizontal: hp(1.5),
   },
 });
 

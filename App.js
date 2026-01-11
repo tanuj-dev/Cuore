@@ -11,6 +11,7 @@ import ReduxDebugger from './src/components/ReduxDebugger';
 import { Common } from './src/utilities';
 import { setSessionExpired, logout } from './src/redux/Auth/slice';
 import EncryptedStorage from 'react-native-encrypted-storage';
+import notifee, { EventType } from '@notifee/react-native';
 
 // Navigation ref to access navigation from outside components
 export const navigationRef = React.createRef();
@@ -86,8 +87,49 @@ const AppContent = () => {
       setIsConnected(state.isConnected ?? false);
     });
 
+    // Handle notification press events (foreground)
+    const unsubscribeNotification = notifee.onForegroundEvent(
+      ({ type, detail }) => {
+        if (type === EventType.PRESS) {
+          console.log(
+            '📱 Notification pressed (foreground):',
+            detail.notification,
+          );
+          // Navigate to home page (Today screen)
+          if (navigationRef.current) {
+            navigationRef.current.navigate('Today');
+          }
+        }
+      },
+    );
+
+    // Handle notification press events (background/killed state)
+    notifee.onBackgroundEvent(async ({ type, detail }) => {
+      if (type === EventType.PRESS) {
+        console.log(
+          '📱 Notification pressed (background):',
+          detail.notification,
+        );
+        // Navigation will happen when app opens
+      }
+    });
+
+    // Check if app was opened from a notification (background/killed state)
+    notifee.getInitialNotification().then(initialNotification => {
+      if (initialNotification) {
+        console.log('📱 App opened from notification:', initialNotification);
+        // Navigate to home page after navigation is ready
+        setTimeout(() => {
+          if (navigationRef.current) {
+            navigationRef.current.navigate('Today');
+          }
+        }, 500);
+      }
+    });
+
     return () => {
       unsubscribeNetInfo();
+      unsubscribeNotification();
     };
   }, [checkConnectivity, dispatch]);
 

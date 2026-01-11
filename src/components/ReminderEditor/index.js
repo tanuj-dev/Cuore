@@ -14,6 +14,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 import { editReminderThunk } from '../../redux/slices';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const ReminderEditor = ({
   showModal,
@@ -30,6 +31,7 @@ const ReminderEditor = ({
 
   const dispatch = useDispatch();
   const userId = useSelector(state => state?.auth?.userId);
+  const { alert, AlertComponent } = useCustomAlert();
 
   // ✅ safe fallbacks if parent did not pass these props
   const safeSetExistingReminder =
@@ -104,75 +106,83 @@ const ReminderEditor = ({
   };
 
   return (
-    <Modal
-      visible={showModal}
-      transparent
-      animationType="slide"
-      onRequestClose={() => setShowModal(false)}
-    >
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressOut={() => setShowModal(false)}
-        style={styles.overlay}
+    <>
+      {AlertComponent}
+      <Modal
+        visible={showModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowModal(false)}
       >
-        <View style={styles.bottomSheet}>
-          <Text style={styles.title}>Edit Reminder</Text>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPressOut={() => setShowModal(false)}
+          style={styles.overlay}
+        >
+          <View style={styles.bottomSheet}>
+            <Text style={styles.title}>Edit Reminder</Text>
 
-          <TouchableOpacity
-            style={styles.input}
-            onPress={() => setShowTimePicker(true)}
-          >
-            <Text style={styles.timeText}>
-              {time.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.input}
+              onPress={() => setShowTimePicker(true)}
+            >
+              <Text style={styles.timeText}>
+                {time.toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+            </TouchableOpacity>
 
-          {showTimePicker && (
-            <DateTimePicker
-              value={time}
-              mode="time"
-              is24Hour={true}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onTimeSelected}
-            />
-          )}
-
-          <TextInput
-            placeholder="Reminder text"
-            value={reminderText}
-            onChangeText={text => {
-              if (text.length <= 20) {
-                setReminderText(text);
-                setError('');
-              } else {
-                setError('Reminder must be 20 characters or less');
-              }
-            }}
-            style={styles.input}
-          />
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleChange}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>Save Changes</Text>
+            {showTimePicker && (
+              <View style={styles.datePickerWrapper}>
+                <DateTimePicker
+                  value={time}
+                  mode="time"
+                  is24Hour={true}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onTimeSelected}
+                  textColor="#000000"
+                  themeVariant="light"
+                />
+              </View>
             )}
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    </Modal>
+
+            <TextInput
+              placeholder="Reminder text"
+              value={reminderText}
+              onChangeText={text => {
+                if (text.length <= 20) {
+                  setReminderText(text);
+                  setError('');
+                } else {
+                  setError('Reminder must be 20 characters or less');
+                }
+              }}
+              style={styles.input}
+            />
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleChange}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>Save Changes</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 };
 
 export default ReminderEditor;
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -214,4 +224,12 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 16 },
   errorText: { fontSize: 12, color: '#EF4444', marginBottom: 10 },
+  datePickerWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    marginBottom: 16,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
 });

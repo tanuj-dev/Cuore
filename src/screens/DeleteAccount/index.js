@@ -4,18 +4,105 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   Image,
-  Linking,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 // import { Ionicons } from '@expo/vector-icons';
 import { hp, wp, Images } from '../../utilities'; // your responsive helpers
 import ProfileHeader from '../../components/ProfileHeader';
+import { useDispatch, useSelector } from 'react-redux';
+import { deleteAccountThunk } from '../../redux/Auth/authThunk';
+import { logout } from '../../redux/Auth/slice';
+import EncryptedStorage from 'react-native-encrypted-storage';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const DeleteAccount = ({ navigation }) => {
+  const [deleteText, setDeleteText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const dispatch = useDispatch();
+  const userId = useSelector(state => state.auth.userId);
+  const { alert, AlertComponent } = useCustomAlert();
+
+  const handleDeleteAccount = () => {
+    console.log('🔴 Delete button pressed');
+    console.log('🔴 Delete text entered:', deleteText);
+    console.log('🔴 User ID:', userId);
+
+    // Step 1: Verify user typed "DELETE"
+    if (deleteText.trim().toUpperCase() !== 'DELETE') {
+      alert(
+        'Verification Required',
+        'Please type "DELETE" exactly to confirm account deletion.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+
+    // Step 2: Show confirmation alert
+    alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => console.log('🟢 User cancelled deletion'),
+        },
+        {
+          text: 'Yes, Delete',
+          style: 'destructive',
+          onPress: () => callDeleteAPI(),
+        },
+      ],
+    );
+  };
+
+  const callDeleteAPI = async () => {
+    console.log('🔴 Calling delete API...');
+    setIsDeleting(true);
+
+    try {
+      const result = await dispatch(deleteAccountThunk(userId)).unwrap();
+
+      console.log('✅ Delete API Success:', result);
+
+      // Clear local storage
+      await EncryptedStorage.clear();
+
+      // Dispatch logout to clear Redux state
+      dispatch(logout());
+
+      // Show success message
+      alert('Account Deleted', 'Your account has been successfully deleted.', [
+        {
+          text: 'OK',
+          onPress: () => {
+            console.log('🔵 Navigating to Login screen');
+            // Navigate to Login screen and reset navigation stack
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          },
+        },
+      ]);
+    } catch (error) {
+      console.error('❌ Delete API Error:', error);
+
+      setIsDeleting(false);
+
+      alert(
+        'Delete Failed',
+        error?.message || 'Failed to delete account. Please try again later.',
+        [{ text: 'OK' }],
+      );
+    }
+  };
+
   return (
     <View>
+      {AlertComponent}
       <ProfileHeader navigation={navigation} title="Delete Account" />
 
       <View style={styles.container}>
@@ -91,10 +178,22 @@ const DeleteAccount = ({ navigation }) => {
           placeholder="Type DELETE"
           placeholderTextColor={'#6B7280'}
           style={styles.input}
-        ></TextInput>
+          value={deleteText}
+          onChangeText={setDeleteText}
+          editable={!isDeleting}
+          autoCapitalize="characters"
+        />
 
-        <TouchableOpacity style={styles.continueBtn}>
-          <Text style={styles.continueText}>Delete Account</Text>
+        <TouchableOpacity
+          style={[styles.continueBtn, isDeleting && styles.continueBtnDisabled]}
+          onPress={handleDeleteAccount}
+          disabled={isDeleting}
+        >
+          {isDeleting ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Text style={styles.continueText}>Delete Account</Text>
+          )}
         </TouchableOpacity>
         <Text
           style={{
@@ -143,6 +242,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: hp(4),
+  },
+  continueBtnDisabled: {
+    backgroundColor: '#FCA5A5',
+    opacity: 0.6,
   },
   continueText: {
     fontFamily: 'Roboto-Regular',

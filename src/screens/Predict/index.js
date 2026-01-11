@@ -382,6 +382,50 @@ const Predict = ({ navigation }) => {
             <Image style={styles.footerIcon} source={Images.DOCTOR_PROFILE} />
             <Text style={styles.footerText}>Cuore Health</Text>
           </TouchableOpacity>
+          <View style={[styles.card1, { flexDirection: 'row' }]}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center' }}
+              ></View>
+            </View>
+
+            <Image
+              style={{
+                marginRight: hp(1),
+                height: hp(1.5),
+                width: hp(2),
+                resizeMode: 'contain',
+                marginHorizontal: hp(1),
+              }}
+              source={Images.NOTICE}
+            />
+
+            <Text>
+              These predictions estimate possible trends in vitals based on past
+              data and lifestyle patterns, for awareness only—not for diagnosis
+              or treatment
+            </Text>
+
+            {/* <Text style={styles.bold}>History: </Text>
+                         
+              
+                          <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
+                          <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+                            Diabetes on metformin   Hypertension (HTN) on Cardace
+                          </Text>
+              
+                          <Text style={[styles.label, {marginTop: hp(1)}]}>
+                            <Text style={styles.bold}>Labs:</Text>
+                          </Text>
+                          <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+                            RBS: 230
+                          </Text> */}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -590,6 +634,18 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#f2f2f2',
     borderRadius: 6,
+  },
+  card1: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: hp(2),
+    marginVertical: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    justifyContent: 'center',
+    marginHorizontal: hp(1.5),
   },
 });
 

@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
   ScrollView,
   FlatList,
-  Alert,
   ActivityIndicator,
   RefreshControl,
   Platform,
@@ -28,6 +27,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { getHealthRecord } from '../../redux/slices';
 import { updateLastConsulted } from '../../redux/Home/homeThunk';
 import { shareData } from '../../redux/slices';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 // Constants
 const HIT_SLOP = { top: 20, bottom: 20, left: 20, right: 20 };
@@ -67,6 +67,7 @@ const Health = ({ navigation }) => {
   const [sharingLoading, setSharingLoading] = useState(false);
   const viewShotRef = useRef(null);
   const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
 
   const healthObservations = useSelector(
     state => state.health?.data?.data?.data?.healthObservations,
@@ -224,18 +225,18 @@ const Health = ({ navigation }) => {
 
         await Share.open(shareOptions);
       } else {
-        Alert.alert('Error', 'Failed to generate PDF for sharing');
+        alert('Error', 'Failed to generate PDF for sharing');
       }
     } catch (error) {
       // User cancelled sharing - don't show error
       if (error.message !== 'User did not share') {
         console.error('Error sharing PDF:', error);
-        Alert.alert('Error', 'Failed to share PDF');
+        alert('Error', 'Failed to share PDF');
       }
     } finally {
       setSharingLoading(false);
     }
-  }, [dispatch]);
+  }, [dispatch, alert]);
 
   const handleNavigateBack = useCallback(() => {
     navigation.goBack();
@@ -266,6 +267,7 @@ const Health = ({ navigation }) => {
 
   return (
     <View edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+      {AlertComponent}
       <ViewShot
         ref={viewShotRef}
         options={{ format: 'jpg', quality: 0.9 }}
@@ -431,13 +433,17 @@ const Health = ({ navigation }) => {
                   </View>
 
                   {showDatePicker && (
-                    <DateTimePicker
-                      disabled={isCaregiver}
-                      value={lastConsulted}
-                      mode="date"
-                      display="default"
-                      onChange={onDateChange}
-                    />
+                    <View style={styles.datePickerWrapper}>
+                      <DateTimePicker
+                        disabled={isCaregiver}
+                        value={lastConsulted}
+                        mode="date"
+                        display="default"
+                        onChange={onDateChange}
+                        textColor="#000000"
+                        themeVariant="light"
+                      />
+                    </View>
                   )}
                 </View>
 
@@ -658,8 +664,8 @@ const Health = ({ navigation }) => {
                           color: '#6B7280',
                         }}
                       >
-                        Accuracy depends on clarity and legibility of
-                        handwriting.
+                        Feature currently in test mode — accuracy not yet
+                        validated
                       </Text>
                     </View>
                   </View>
@@ -736,6 +742,64 @@ const Health = ({ navigation }) => {
                   >
                     You may have a 52% chance of developing diabetes and early
                     kidney issues within the next 4 years.
+                  </Text>
+
+                  {/* <Text style={styles.bold}>History: </Text>
+           
+
+            <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
+            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+              Diabetes on metformin   Hypertension (HTN) on Cardace
+            </Text>
+
+            <Text style={[styles.label, {marginTop: hp(1)}]}>
+              <Text style={styles.bold}>Labs:</Text>
+            </Text>
+            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
+              RBS: 230
+            </Text> */}
+                </View>
+                <View style={[styles.card, { flexDirection: 'row' }]}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    {/* <Text style={styles.sectionTitle}>
+                      Disease Progression Risk
+                    </Text> */}
+                    <View
+                      style={{ flexDirection: 'row', alignItems: 'center' }}
+                    >
+                      {/* <Image
+                  style={{
+                    height: hp(1.5),
+                    width: hp(2),
+                    resizeMode: 'contain',
+                    marginHorizontal: hp(1),
+                  }}
+                  source={Images.NOTICE}></Image> */}
+                      {/* <Text style={{width: wp(45), fontSize: 12, color: '#6B7280'}}>
+                  Accuracy depends on clarity and legibility of handwriting.
+                </Text> */}
+                    </View>
+                  </View>
+
+                  <Image
+                    style={{
+                      marginRight: hp(1),
+                      height: hp(1.5),
+                      width: hp(2),
+                      resizeMode: 'contain',
+                      marginHorizontal: hp(1),
+                    }}
+                    source={Images.NOTICE}
+                  />
+
+                  <Text>
+                    Cuore Health summarizes your health records over time using
+                    AI, for awareness only—not for diagnosis or treatment
                   </Text>
 
                   {/* <Text style={styles.bold}>History: </Text>
@@ -891,6 +955,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#1E64AC',
     paddingVertical: hp(1),
+    paddingHorizontal: hp(1),
     width: hp(12),
     borderRadius: hp(1),
   },
@@ -992,6 +1057,14 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontFamily: 'Roboto-Regular',
     fontWeight: '500',
+  },
+  datePickerWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    marginTop: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
 });
 

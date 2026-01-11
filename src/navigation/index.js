@@ -78,6 +78,7 @@ function BottomTabNavigator() {
   return (
     <SafeAreaView
       style={{
+        // paddingTop: Platform.OS === 'android' ? 35 : 0,
         flex: 1,
         backgroundColor: Platform.OS === 'android' ? 'black' : 'white',
       }}
@@ -249,47 +250,52 @@ function TodayStack() {
 
 export default function Navigator() {
   return (
-    <Stack.Navigator
-      initialRouteName="Splash"
-      screenOptions={{ headerShown: false }}
+    <SafeAreaView
+      edges={Platform.OS === 'android' ? ['top'] : ['none']}
+      style={{ flex: 1, backgroundColor: 'white' }}
     >
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="Signup" component={Signup} />
-      <Stack.Screen name="OtpScreen" component={OtpScreen} />
-      <Stack.Screen name="NewAccount" component={NewAccount} />
-      <Stack.Screen name="Splash" component={Splash} />
-      <Stack.Screen name="OnBoarding" component={OnBoarding} />
-      <Stack.Screen name="Score" component={Score} />
-      <Stack.Screen name="Home" component={BottomTabNavigator} />
-      <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
-      <Stack.Screen name="Checkout" component={Checkout} />
-      <Stack.Screen name="Tobacco" component={Tobacco} />
-      <Stack.Screen name="Mind" component={Mind} />
-      <Stack.Screen name="Fitness" component={Fitness} />
-      <Stack.Screen name="FitnessDetails" component={FitnessDetails} />
-      <Stack.Screen name="MindDetails" component={MindDetails} />
-      <Stack.Screen name="EditProfile" component={EditProfile} />
-      <Stack.Screen name="EditCaregiver" component={EditCaregive} />
-      <Stack.Screen name="EditDoctor" component={EditDoctor} />
-      <Stack.Screen name="SelectPersona" component={SelectPersona} />
-      <Stack.Screen name="HealthRecords" component={HealthRecords} />
-      <Stack.Screen name="Support" component={Support} />
-      <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
-      <Stack.Screen name="TermsAndConditions" component={TermsAndCondtion} />
-      <Stack.Screen name="RenewSubscription" component={RenewSubscription} />
-      <Stack.Screen name="CuoreKnowledge" component={CuoreKnowledge} />
-      <Stack.Screen name="KnowledgeDetails" component={KnowledgeDetails} />
-      <Stack.Screen name="Nutrition" component={Nutrition} />
-      <Stack.Screen name="CalorieIgnite" component={CalorieIgnite} />
-      <Stack.Screen name="MidMorningBoost" component={MidMorningBoost} />
-      <Stack.Screen name="RefreshRefuel" component={RefreshRefuel} />
-      <Stack.Screen name="MealBuilder" component={MealBuilder} />
-      <Stack.Screen name="MealBuilder1" component={MealBuilder1} />
-      <Stack.Screen name="MealBuilder2" component={MealBuilder2} />
-      <Stack.Screen name="Recipe" component={Recipe} />
-      <Stack.Screen name="Doctor" component={Doctor} />
-      <Stack.Screen name="Health" component={Health} />
-      <Stack.Screen name="ScoreMeter" component={ScoreMeter} />
-    </Stack.Navigator>
+      <Stack.Navigator
+        initialRouteName="Splash"
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Signup" component={Signup} />
+        <Stack.Screen name="OtpScreen" component={OtpScreen} />
+        <Stack.Screen name="NewAccount" component={NewAccount} />
+        <Stack.Screen name="Splash" component={Splash} />
+        <Stack.Screen name="OnBoarding" component={OnBoarding} />
+        <Stack.Screen name="Score" component={Score} />
+        <Stack.Screen name="Home" component={BottomTabNavigator} />
+        <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
+        <Stack.Screen name="Checkout" component={Checkout} />
+        <Stack.Screen name="Tobacco" component={Tobacco} />
+        <Stack.Screen name="Mind" component={Mind} />
+        <Stack.Screen name="Fitness" component={Fitness} />
+        <Stack.Screen name="FitnessDetails" component={FitnessDetails} />
+        <Stack.Screen name="MindDetails" component={MindDetails} />
+        <Stack.Screen name="EditProfile" component={EditProfile} />
+        <Stack.Screen name="EditCaregiver" component={EditCaregive} />
+        <Stack.Screen name="EditDoctor" component={EditDoctor} />
+        <Stack.Screen name="SelectPersona" component={SelectPersona} />
+        <Stack.Screen name="HealthRecords" component={HealthRecords} />
+        <Stack.Screen name="Support" component={Support} />
+        <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
+        <Stack.Screen name="TermsAndConditions" component={TermsAndCondtion} />
+        <Stack.Screen name="RenewSubscription" component={RenewSubscription} />
+        <Stack.Screen name="CuoreKnowledge" component={CuoreKnowledge} />
+        <Stack.Screen name="KnowledgeDetails" component={KnowledgeDetails} />
+        <Stack.Screen name="Nutrition" component={Nutrition} />
+        <Stack.Screen name="CalorieIgnite" component={CalorieIgnite} />
+        <Stack.Screen name="MidMorningBoost" component={MidMorningBoost} />
+        <Stack.Screen name="RefreshRefuel" component={RefreshRefuel} />
+        <Stack.Screen name="MealBuilder" component={MealBuilder} />
+        <Stack.Screen name="MealBuilder1" component={MealBuilder1} />
+        <Stack.Screen name="MealBuilder2" component={MealBuilder2} />
+        <Stack.Screen name="Recipe" component={Recipe} />
+        <Stack.Screen name="Doctor" component={Doctor} />
+        <Stack.Screen name="Health" component={Health} />
+        <Stack.Screen name="ScoreMeter" component={ScoreMeter} />
+      </Stack.Navigator>
+    </SafeAreaView>
   );
 }

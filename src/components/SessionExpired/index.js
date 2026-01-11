@@ -49,7 +49,7 @@ const SessionExpiredModal = ({ visible, onLogin }) => {
 
         {/* Bottom area with overlay and sheet */}
         <View style={styles.bottomArea}>
-          <View style={styles.overlay} />
+          {/* <View style={styles.overlay} /> */}
           <Animated.View
             style={[
               styles.bottomSheet,

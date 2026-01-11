@@ -18,7 +18,6 @@ import {
 import Toast from '../../components/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { Images, hp, wp, Color } from '../../utilities';
 import color from '../../utilities/Color';
 import images from '../../utilities/Images';
@@ -273,34 +272,37 @@ const CreateAccountScreen = () => {
 
           {/* Terms Checkbox */}
           <View style={styles.checkboxContainer}>
-            <BouncyCheckbox
-              size={20}
-              fillColor="#9CA3AF"
-              unfillColor="#FFFFFF"
-              textComponent={
-                <Text style={styles.checkboxLabel}>
-                  I have read and agree to the{' '}
-                  <Text
-                    style={styles.link}
-                    onPress={() => Linking.openURL('https://example.com/terms')}
-                  >
-                    Terms and Conditions
-                  </Text>{' '}
-                  and{' '}
-                  <Text
-                    style={styles.link}
-                    onPress={() =>
-                      Linking.openURL('https://example.com/privacy')
-                    }
-                  >
-                    Privacy Policy
-                  </Text>
-                  .
-                </Text>
-              }
-              isChecked={isChecked}
-              onPress={checked => setIsChecked(checked)}
-            />
+            <TouchableOpacity
+              style={styles.customCheckbox}
+              onPress={() => setIsChecked(!isChecked)}
+              activeOpacity={0.7}
+            >
+              <View
+                style={[
+                  styles.checkboxBox,
+                  isChecked && styles.checkboxBoxChecked,
+                ]}
+              >
+                {isChecked && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+            </TouchableOpacity>
+            <Text style={styles.checkboxLabel}>
+              I have read and agree to the{' '}
+              <Text
+                style={styles.link}
+                onPress={() => Linking.openURL('https://example.com/terms')}
+              >
+                Terms and Conditions
+              </Text>{' '}
+              and{' '}
+              <Text
+                style={styles.link}
+                onPress={() => Linking.openURL('https://example.com/privacy')}
+              >
+                Privacy Policy
+              </Text>
+              .
+            </Text>
           </View>
 
           {/* Verify Button */}
@@ -361,6 +363,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     backgroundColor: '#fff',
     fontFamily: 'Roboto-Regular',
+    placeholderTextColor: '#6B7280',
   },
   infoText: {
     fontSize: hp(1.5),
@@ -372,6 +375,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: hp(2),
+  },
+  customCheckbox: {
+    marginRight: wp(2),
+  },
+  checkboxBox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#9CA3AF',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxBoxChecked: {
+    backgroundColor: '#9CA3AF',
+    borderColor: '#9CA3AF',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   checkboxLabel: {
     flex: 1,

@@ -108,7 +108,9 @@ const FitnessDetails = ({ navigation, route }) => {
         <View style={styles.videoContainer}>
           <Video
             source={{
-              uri: 'https://www.shutterstock.com/shutterstock/videos/1054650107/preview/stock-footage-humor-in-sports-fat-african-american-lazy-guy-resting-on-couch-while-his-clumsy-funny-friend-doing.mp4',
+              uri:
+                data?.videoUrl ||
+                'https://www.shutterstock.com/shutterstock/videos/1054650107/preview/stock-footage-humor-in-sports-fat-african-american-lazy-guy-resting-on-couch-while-his-clumsy-funny-friend-doing.mp4',
             }}
             style={styles.video}
             controls

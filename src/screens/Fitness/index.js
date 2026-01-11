@@ -67,8 +67,17 @@ const Fitness = ({ navigation, route }) => {
   const fitnessData = data?.schedule;
 
   const onChangeTime = useCallback((event, selectedTime) => {
-    setShowTimePicker(false);
-    if (selectedTime) setTime(selectedTime);
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+    }
+    if (selectedTime) {
+      setTime(selectedTime);
+      if (Platform.OS === 'ios') {
+        setShowTimePicker(false);
+      }
+    } else if (event.type === 'dismissed') {
+      setShowTimePicker(false);
+    }
   }, []);
 
   const handleUpdateTime = useCallback(async () => {
@@ -191,13 +200,17 @@ const Fitness = ({ navigation, route }) => {
           </TouchableOpacity>
 
           {showTimePicker && (
-            <DateTimePicker
-              mode="time"
-              value={time}
-              is24Hour={false}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onChangeTime}
-            />
+            <View style={styles.datePickerContainer}>
+              <DateTimePicker
+                mode="time"
+                value={time}
+                is24Hour={false}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={onChangeTime}
+                textColor="#000000"
+                themeVariant="light"
+              />
+            </View>
           )}
         </View>
 
@@ -353,6 +366,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '400',
     fontSize: 14,
+  },
+  datePickerContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    marginTop: hp(1),
+    padding: wp(2),
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   innerShadowContainer: {
     backgroundColor: '#fff',

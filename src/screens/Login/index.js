@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import { sendOtp, loginCaregiverThunk } from '../../redux/slices';
 import Toast from '../../components/Toast';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const Login = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -22,6 +22,7 @@ const Login = ({ navigation }) => {
   const [toast, setToast] = useState(null);
 
   const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
 
   const handleSendOtp = async () => {
     // ✅ Validate phone number
@@ -42,7 +43,7 @@ const Login = ({ navigation }) => {
         sendOtp({ phone: `+91${phoneNumber}`, role }),
       ).unwrap();
 
-      console.log('OTP sent:', result);
+      console.log('OTP sent========================:', result);
       navigation.navigate('OtpScreen', {
         phone: phoneNumber,
         role,
@@ -51,24 +52,17 @@ const Login = ({ navigation }) => {
         testOtp: result.testOtp,
       });
     } catch (err) {
-      console.log('OTP failed:', err.message);
+      console.log('OTP failed:<=====', err.message);
 
-      if (err.message === 'Unknown error') {
-        Alert.alert(
-          'Error',
-          'Network error. Please check your connection and try again.',
-        );
+      if (err.message) {
+        alert('Error', err.message);
       } else {
-        Alert.alert(
-          'Error',
-          err.message || 'Failed to send OTP. Please try again.',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.navigate('NewAccount'),
-            },
-          ],
-        );
+        alert('Error', err.message || 'Failed to send OTP. Please try again.', [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('NewAccount'),
+          },
+        ]);
       }
     } finally {
       setLoading(false);
@@ -77,6 +71,7 @@ const Login = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {AlertComponent}
       <Image source={Images.APP_LOGO} style={styles.logo} />
       <Text style={styles.loginText}>
         Log in with your registered mobile number

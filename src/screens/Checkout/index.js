@@ -4,12 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   Image,
-  //   CheckBox,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const plans = [
   {
@@ -43,31 +44,34 @@ const plans = [
 ];
 
 const Checkout = ({ navigation }) => {
-  const [selectedPlan, setSelectedPlan] = useState('Progress');
-  const [promoCode, setPromoCode] = useState('');
-  const [autoRenew, setAutoRenew] = useState(false);
-  const [selectPaymentMethod, setSelectPaymentMethod] = useState('Credit');
-  const [enableAutoRenewal, setEnableAutoRenewal] = useState(false);
-  const GST = 0.18;
+  const [selectedPlan] = useState('Thrive');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const { alert, AlertComponent } = useCustomAlert();
 
   const selected = plans.find(p => p.title === selectedPlan);
+  const GST = 0.18;
   const gstAmount = selected.newPrice * GST;
   const totalAmount = selected.newPrice + gstAmount;
 
+  const handleCheckout = () => {
+    setIsProcessingPayment(true);
+
+    setTimeout(() => {
+      setIsProcessingPayment(false);
+      alert('Checkout', 'Payment flow will be added later. UI only for now.');
+    }, 1200);
+  };
+
   return (
     <ScrollView>
-      <View
-        style={{ backgroundColor: '#FFFFFF', paddingTop: hp(2), elevation: 1 }}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-          }}
-        >
+      {AlertComponent}
+
+      {/* Header */}
+      <View style={{ backgroundColor: '#FFFFFF', paddingTop: hp(2) }}>
+        <View style={{ flexDirection: 'row' }}>
           <TouchableOpacity
             style={{
-              hitSlop: { top: 20, bottom: 20, left: 20, right: 20 },
-              marginTop: Platform.OS == 'ios' && hp(7),
+              marginTop: Platform.OS === 'ios' ? hp(7) : 0,
               marginBottom: hp(2),
             }}
             onPress={() => navigation.goBack()}
@@ -75,381 +79,108 @@ const Checkout = ({ navigation }) => {
             <Image
               source={Images.BACK_BUTTON}
               style={{
-                resizeMode: 'contain',
                 height: hp(3.5),
                 width: wp(4),
                 marginLeft: hp(2),
-                tintColor: '#000000',
+                tintColor: '#000',
               }}
               resizeMode="contain"
             />
           </TouchableOpacity>
+
           <Text style={styles.title}>Checkout</Text>
         </View>
-        <View style={{ marginBottom: hp(1) }}>
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              textAlign: 'center',
-              fontSize: 15,
-              fontWeight: '400',
-              color: '#000000',
-              marginHorizontal: hp(2),
-            }}
-          >
-            Remote supervision is billed separately by the doctor, & does not
-            include consultation
-          </Text>
-        </View>
+
+        <Text style={styles.notice}>
+          Remote supervision is billed separately by the doctor, & does not
+          include consultation
+        </Text>
       </View>
 
       <View style={styles.container}>
-        <Text style={styles.sectionTitle}>Select Plan</Text>
-        <View style={styles.planContainer}>
-          {plans.map(plan => (
-            <TouchableOpacity
-              key={plan.title}
-              style={[
-                styles.planBox,
-                selectedPlan === plan.title && styles.selectedBox,
-              ]}
-              onPress={() => setSelectedPlan(plan.title)}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                }}
-              >
-                <Text style={styles.planTitle}>{plan.title}</Text>
-                <Text style={styles.discount}>🔻{plan.discount} OFF</Text>
-              </View>
-
-              <Text style={styles.planSubtitle}>{plan.subtitle}</Text>
-              <Text style={styles.planDuration}>Duration: {plan.duration}</Text>
-              <Text style={styles.priceOld}>₹{plan.oldPrice}</Text>
-              <Text style={styles.priceNew}>Now ₹{plan.newPrice}</Text>
-              <Text style={styles.dailyPrice}>~{plan.daily}</Text>
-            </TouchableOpacity>
-          ))}
+        {/* Offer */}
+        <View style={styles.offerBanner}>
+          <Text style={styles.offerText}>Launch Offer · Ends 31 March</Text>
         </View>
 
+        {/* Plan */}
+        <View style={styles.selectedPlanCard}>
+          <Text style={styles.selectedPlanTitle}>{selected.title}</Text>
+          <Text style={styles.selectedPlanSubtitle}>{selected.subtitle}</Text>
+          <Text style={styles.selectedPlanDuration}>
+            Duration: {selected.duration}
+          </Text>
+
+          <View style={styles.priceRow}>
+            <Text style={styles.priceOld}>₹{selected.oldPrice}</Text>
+            <Text style={styles.priceNew}>₹{selected.newPrice} / year</Text>
+          </View>
+        </View>
+
+        {/* Payment Method */}
         <Text style={styles.sectionTitle}>Payment Method</Text>
-        <View style={styles.paymentMethods}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity
-              onPress={() => setSelectPaymentMethod('Credit')}
-              style={{
-                height: hp(2.5),
-                width: wp(5),
-                borderWidth: 1,
-                borderRadius: hp(2),
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <View
-                style={{
-                  height: hp(1.5),
-                  width: wp(3),
-                  borderRadius: hp(4),
-                  backgroundColor:
-                    selectPaymentMethod === 'Credit' ? '#000000' : '',
-                }}
-              ></View>
-            </TouchableOpacity>
-            <Image
-              source={Images.CREDIT}
-              style={{
-                resizeMode: 'contain',
-                height: hp(2),
-                width: wp(4.5),
-                marginHorizontal: hp(1),
-              }}
-            />
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '400',
-                color: '#000000',
-              }}
-            >
-              Credit/Debit Card
-            </Text>
+        <View style={styles.paymentMethodCard}>
+          <View style={styles.paymentOption}>
+            <View style={styles.radioSelected}>
+              <View style={styles.radioInner} />
+            </View>
+            <Text style={styles.cardIcon}>💳</Text>
+            <Text style={styles.paymentMethodText}>Credit/Debit Card</Text>
           </View>
 
-          {/* paypa; */}
-
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: hp(1),
-              alignItems: 'center',
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => setSelectPaymentMethod('PayPal')}
-              style={{
-                height: hp(2.5),
-                width: wp(5),
-                borderWidth: 1,
-                borderRadius: hp(2),
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <View
-                style={{
-                  height: hp(1.5),
-                  width: wp(3),
-                  borderRadius: hp(4),
-                  backgroundColor:
-                    selectPaymentMethod == 'PayPal' ? '#000000' : '#FFFFFF',
-                }}
-              ></View>
-            </TouchableOpacity>
-            <Image
-              source={Images.PAYPAL}
-              style={{
-                resizeMode: 'contain',
-                height: hp(2),
-                width: wp(4.5),
-                marginHorizontal: hp(1),
-              }}
-            />
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '400',
-                color: '#000000',
-              }}
-            >
-              PayPal
-            </Text>
+          <View style={[styles.paymentOption, { marginTop: hp(1.5) }]}>
+            <View style={styles.radioUnselected} />
+            <Text style={styles.upiIcon}>📱</Text>
+            <Text style={styles.paymentMethodText}>UPI</Text>
           </View>
         </View>
 
+        {/* Order Summary */}
         <Text style={styles.sectionTitle}>Order Summary</Text>
+
         <View style={styles.summaryBox}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginBottom: hp(3),
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '400',
-                color: '#000000',
-              }}
-            >
-              Subscription: {selected.title}
-            </Text>
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '400',
-                color: '#000000',
-              }}
-            >
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryText}>{selected.title}</Text>
+            <Text style={styles.summaryText}>
               ₹{(selected.newPrice - gstAmount).toFixed(2)}
             </Text>
           </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              paddingVertical: hp(2.5),
-              borderTopWidth: 1,
-              borderBottomWidth: 1,
-              borderColor: '#E5E7EB',
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '400',
-                color: '#000000',
-              }}
-            >
-              GST 18%:{' '}
-            </Text>
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '400',
-                color: '#000000',
-              }}
-            >
-              ₹{gstAmount.toFixed(2)}
-            </Text>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryText}>GST 18%</Text>
+            <Text style={styles.summaryText}>₹{gstAmount.toFixed(2)}</Text>
           </View>
 
-          <View style={styles.promoBox}>
-            <TextInput
-              style={styles.promoInput}
-              placeholder="Promo Code"
-              value={promoCode}
-              onChangeText={setPromoCode}
-            />
-            <TouchableOpacity style={styles.applyButton}>
-              <Text style={styles.applyText}>Apply</Text>
-            </TouchableOpacity>
-          </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginTop: hp(0.5),
-              borderTopWidth: 1,
-              paddingTop: hp(1),
-              borderColor: '#E5E7EB',
-            }}
-          >
-            <Text style={styles.total}>Total: </Text>
-            <Text style={styles.total}> ₹{totalAmount.toFixed(2)}</Text>
+          <View style={[styles.summaryRow, styles.totalRow]}>
+            <Text style={styles.totalText}>Total</Text>
+            <Text style={styles.totalText}>₹{totalAmount.toFixed(2)}</Text>
           </View>
         </View>
 
-        <View style={styles.checkboxRow}>
-          <TouchableOpacity
-            onPress={() => setEnableAutoRenewal(!enableAutoRenewal)}
-            style={{
-              height: hp(2.5),
-              width: wp(5),
-              borderWidth: 1,
-              borderRadius: hp(0.7),
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <View
-              style={{
-                height: hp(1.5),
-                width: wp(3),
-                borderRadius: hp(4),
-                backgroundColor:
-                  enableAutoRenewal == true ? '#000000' : '#FFFFFF',
-              }}
-            ></View>
-          </TouchableOpacity>
-          <Text style={styles.checkboxText}>Enable auto-renewal</Text>
-        </View>
-
+        {/* Checkout Button */}
         <TouchableOpacity
-          onPress={() => navigation.navigate('PaymentDetails')}
-          activeOpacity={0.9}
+          onPress={handleCheckout}
           style={styles.checkoutButton}
+          disabled={isProcessingPayment}
         >
-          <Image
-            source={Images.LOCK}
-            style={{
-              resizeMode: 'contain',
-              height: hp(2),
-              width: wp(3),
-              marginRight: hp(1),
-              //   marginLeft: hp(-1.8),
-              //   tintColor: '#00e0000',
-            }}
-            resizeMode="contain"
-          />
-          <Text style={styles.checkoutText}> Secure Checkout</Text>
+          {isProcessingPayment ? (
+            <>
+              <ActivityIndicator color="#fff" />
+              <Text style={styles.checkoutText}> Processing...</Text>
+            </>
+          ) : (
+            <>
+              <Image source={Images.LOCK} style={styles.lockIcon} />
+              <Text style={styles.checkoutText}>Secure Checkout</Text>
+            </>
+          )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: hp(2),
-          }}
-        >
-          <Image
-            source={Images.SECURE}
-            style={{
-              resizeMode: 'contain',
-              height: hp(2),
-              width: wp(4),
-              marginRight: hp(0.5),
-            }}
-            resizeMode="contain"
-          />
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 14,
-              color: 'black',
-            }}
-          >
-            {' '}
-            Secure Checkout
-          </Text>
-        </TouchableOpacity>
-
-        <Text
-          style={{
-            marginTop: hp(10),
-            fontSize: 18,
-            fontWeight: '400',
-            color: '#000000',
-            fontFamily: 'Roboto-Regular',
-          }}
-        >
-          FAQ
-        </Text>
-        <TouchableOpacity style={styles.faqSection}>
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 14,
-              fontWeight: '400',
-              color: '#000000',
-            }}
-          >
-            Does remote supervision include consultation?
-          </Text>
-          <Image
-            source={Images.DOWN}
-            style={{
-              resizeMode: 'contain',
-              height: hp(2),
-              width: wp(4),
-              marginRight: hp(0.5),
-            }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.faqSection, { marginBottom: hp(22) }]}>
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 14,
-              fontWeight: '400',
-              color: '#000000',
-            }}
-          >
-            Is there a refund policy?
-          </Text>
-          <Image
-            source={Images.DOWN}
-            style={{
-              resizeMode: 'contain',
-              height: hp(2),
-              width: wp(4),
-              marginRight: hp(0.5),
-            }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
+        {/* SSL */}
+        <View style={styles.sslBadge}>
+          <Image source={Images.SECURE} style={styles.secureIcon} />
+          <Text style={styles.sslText}>Secure SSL Encryption</Text>
+        </View>
       </View>
     </ScrollView>
   );
@@ -574,14 +305,6 @@ const styles = StyleSheet.create({
     // marginTop: hp(-1),
     // alignSelf: 'center',
   },
-  paymentMethods: {
-    marginBottom: hp(2),
-    backgroundColor: '#FFFFFF',
-    padding: hp(2),
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: hp(1),
-  },
   summaryBox: {
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
@@ -622,7 +345,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: hp(2),
   },
-  checkboxText: { marginLeft: 8, marginLeft: hp(1) },
+  checkboxText: {
+    marginLeft: hp(1),
+    fontFamily: 'Roboto-Regular',
+    fontSize: 14,
+    color: '#000000',
+  },
   checkoutButton: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -630,12 +358,169 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E64AC',
     padding: hp(1.5),
     borderRadius: hp(0.5),
-    alignItems: 'center',
+  },
+  checkoutButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+    opacity: 0.7,
   },
   checkoutText: {
     color: '#fff',
     fontSize: hp(2),
     fontFamily: 'Roboto-Regular',
+  },
+  offerBanner: {
+    backgroundColor: '#F3F4F6',
+    padding: hp(1.5),
+    borderRadius: 8,
+    marginBottom: hp(2),
+    alignItems: 'center',
+  },
+  offerText: {
+    fontFamily: 'Roboto-Medium',
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  selectedPlanCard: {
+    backgroundColor: '#FFFFFF',
+    padding: hp(2.5),
+    borderRadius: 12,
+    marginBottom: hp(3),
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  selectedPlanTitle: {
+    fontFamily: 'Roboto-Bold',
+    fontSize: 20,
+    color: '#1E64AC',
+    marginBottom: hp(0.5),
+  },
+  selectedPlanSubtitle: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: hp(1.5),
+  },
+  selectedPlanDuration: {
+    fontFamily: 'Roboto-Medium',
+    fontSize: 14,
+    color: '#374151',
+    marginBottom: hp(1),
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  paymentMethodCard: {
+    backgroundColor: '#FFFFFF',
+    padding: hp(2),
+    borderRadius: 12,
+    marginBottom: hp(3),
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  paymentOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  radioSelected: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#1E64AC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: hp(1),
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#1E64AC',
+  },
+  radioUnselected: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    marginRight: hp(1),
+  },
+  cardIcon: {
+    fontSize: 20,
+    marginRight: hp(1),
+  },
+  upiIcon: {
+    fontSize: 20,
+    marginRight: hp(1),
+  },
+  paymentMethodText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 15,
+    color: '#374151',
+  },
+  orderSummaryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: hp(1.5),
+  },
+  dropdownIcon: {
+    width: 16,
+    height: 16,
+    // tintColor: '#6B7280',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: hp(1.5),
+  },
+  summaryText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 14,
+    color: '#374151',
+  },
+  totalRow: {
+    borderTopWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingTop: hp(1.5),
+    marginTop: hp(0.5),
+  },
+  totalText: {
+    fontFamily: 'Roboto-Bold',
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  lockIcon: {
+    width: 16,
+    height: 16,
+    marginRight: hp(1),
+    // tintColor: '#',
+  },
+  sslBadge: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: hp(2),
+    marginBottom: hp(4),
+  },
+  secureIcon: {
+    width: 16,
+    height: 16,
+    marginRight: hp(0.5),
+    // tintColor: '#6B7280',
+  },
+  sslText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 13,
+    color: '#6B7280',
   },
   ssl: {
     fontFamily: 'Roboto-Regular',

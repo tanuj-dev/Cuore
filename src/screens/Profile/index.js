@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Alert,
   RefreshControl,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
@@ -18,6 +17,7 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 import { resetCreateAccount } from '../../redux/Auth/slice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getProfile } from '../../redux/slices';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const profileOptions = [
   {
@@ -71,6 +71,7 @@ const profileOptions = [
 
 const Profile = ({ navigation }) => {
   const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
   // Group the options by section
   const role = useSelector(state => state.auth.role);
   const isCaregiver = role === 'caregiver';
@@ -114,6 +115,7 @@ const Profile = ({ navigation }) => {
 
       {items.map((item, index) => (
         <TouchableOpacity
+          disabled={item.title === 'Select Persona' ? true : false}
           onPress={() => {
             const route = routeMap[item.title]; // Corrected here
 
@@ -131,14 +133,28 @@ const Profile = ({ navigation }) => {
             source={item.icon}
             style={[
               styles.itemIcon,
-              { tintColor: item.title === 'Logout' ? '#FF3D00' : '#000000' },
+              {
+                tintColor:
+                  item.title === 'Logout'
+                    ? '#FF3D00'
+                    : item.title === 'Select Persona'
+                    ? '#6B7280'
+                    : '#000000',
+              },
             ]}
             resizeMode="contain"
           />
           <Text
             style={[
               styles.itemText,
-              { color: item.title === 'Logout' ? '#FF3D00' : '#000000' },
+              {
+                color:
+                  item.title === 'Logout'
+                    ? '#FF3D00'
+                    : item.title === 'Select Persona'
+                    ? '#6B7280'
+                    : '#000000',
+              },
             ]}
           >
             {item?.title}
@@ -156,7 +172,7 @@ const Profile = ({ navigation }) => {
   );
 
   const handleLogout = async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
+    alert('Logout', 'Are you sure you want to logout?', [
       {
         text: 'Cancel',
         style: 'cancel',
@@ -209,6 +225,7 @@ const Profile = ({ navigation }) => {
   };
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+      {AlertComponent}
       <ScrollView
         refreshControl={
           <RefreshControl

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { postApiCall } from '../../utilities/Services';
+import { postApiCall, deleteApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
 
 export const sendOtp = createAsyncThunk(
@@ -37,6 +37,7 @@ export const sendOtp = createAsyncThunk(
       if (status === 200 || status === 202) {
         console.log('[sendOtp] OTP accepted by server');
         return {
+          data,
           success: true,
           reLogin: false,
           message,
@@ -139,6 +140,28 @@ export const verifyCaregiverThunk = createAsyncThunk(
       }
     } catch (error) {
       console.log('verifyCaregiver ERROR:', error);
+      return rejectWithValue(
+        error?.response?.data || { message: 'Something went wrong' },
+      );
+    }
+  },
+);
+export const deleteAccountThunk = createAsyncThunk(
+  'auth/deleteAccount',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await deleteApiCall(
+        EndPoints.DELETEACCOUNT + `/${userId}`,
+      );
+      if (response?.status === 200) {
+        return response.data;
+      } else {
+        return rejectWithValue(
+          response?.data || { message: 'Failed to delete account' },
+        );
+      }
+    } catch (error) {
+      console.log('DELETEACCOUNT ERROR:', error);
       return rejectWithValue(
         error?.response?.data || { message: 'Something went wrong' },
       );

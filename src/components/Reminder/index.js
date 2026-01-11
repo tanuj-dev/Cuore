@@ -1,4 +1,4 @@
-import React, { use, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Switch,
   Image,
-  FlatList,
   ActivityIndicator,
 } from 'react-native';
 import Modal from 'react-native-modal';
@@ -222,7 +221,9 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               <View key={item.id || index.toString()} style={styles.entryCard}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.entryText}>
-                    {item.title == 'Medication' ? item.description : item.title}
+                    {item.title === 'Medication'
+                      ? item.description
+                      : item.title}
                   </Text>
                   <Text style={styles.entrySubtext}>{item.time}</Text>
                 </View>
@@ -280,6 +281,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
           <TextInput
             placeholder="Enter reminder"
             style={styles.input}
+            placeholderTextColor="#6B7280"
             value={reminderText}
             onChangeText={setReminderText}
           />
@@ -290,7 +292,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.dateTimeInput}
               onPress={() => setShowDatePicker(!showDatePicker)}
             >
-              <Text style={{ color: date ? '#000' : '#888' }}>
+              <Text
+                style={{
+                  color: date ? '#000' : '#888',
+                  fontFamily: 'Roboto-Regular',
+                }}
+              >
                 {date ? formatDisplayDate(date) : 'Start Date'}
               </Text>
               <Image
@@ -304,27 +311,40 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.dateTimeInput}
               onPress={() => setShowTimePicker(!showTimePicker)}
             >
-              <Text style={{ color: time ? '#000' : '#888' }}>
+              <Text
+                style={{
+                  color: time ? '#000' : '#888',
+                  fontFamily: 'Roboto-Regular',
+                }}
+              >
                 {time ? formatTime(time) : 'Current Time'}
               </Text>
               <Image source={Images.CLOCK} style={{ width: 18, height: 18 }} />
             </TouchableOpacity>
           </View>
           {showDatePicker && (
-            <DateTimePicker
-              value={date || new Date()}
-              mode="date"
-              display="spinner"
-              onChange={handleDateChange}
-            />
+            <View style={styles.datePickerWrapper}>
+              <DateTimePicker
+                value={date || new Date()}
+                mode="date"
+                display="spinner"
+                onChange={handleDateChange}
+                textColor="#000000"
+                themeVariant="light"
+              />
+            </View>
           )}
           {showTimePicker && (
-            <DateTimePicker
-              value={time || new Date()}
-              mode="time"
-              display="spinner"
-              onChange={handleTimeChange}
-            />
+            <View style={styles.datePickerWrapper}>
+              <DateTimePicker
+                value={time || new Date()}
+                mode="time"
+                display="spinner"
+                onChange={handleTimeChange}
+                textColor="#000000"
+                themeVariant="light"
+              />
+            </View>
           )}
           {/* Repeat & End Repeat */}
           {/* Repeat */}
@@ -333,10 +353,16 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.pickerinput}
               onPress={() => setShowPicker(!showPicker)}
             >
-              <Text style={{ color: '#000' }}>Repeat</Text>
+              <Text style={{ color: '#000', fontFamily: 'Roboto-Regular' }}>
+                Repeat
+              </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text
-                  style={{ fontSize: 14, fontWeight: '500', color: '#6B7280' }}
+                  style={{
+                    fontSize: 14,
+                    fontFamily: 'Roboto-Medium',
+                    color: '#6B7280',
+                  }}
                 >
                   {repeat}
                 </Text>
@@ -368,10 +394,16 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.pickerinput}
               onPress={() => setShowEndPicker(!showEndPicker)}
             >
-              <Text style={{ color: '#000' }}>End Repeat</Text>
+              <Text style={{ color: '#000', fontFamily: 'Roboto-Regular' }}>
+                End Repeat
+              </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text
-                  style={{ fontSize: 14, fontWeight: '500', color: '#6B7280' }}
+                  style={{
+                    fontSize: 14,
+                    fontFamily: 'Roboto-Medium',
+                    color: '#6B7280',
+                  }}
                 >
                   {endRepeat}
                 </Text>
@@ -435,10 +467,15 @@ const styles = StyleSheet.create({
     padding: 20,
     height: '90%',
   },
-  title: { fontSize: 18, fontWeight: '500', marginBottom: 15, color: '#000' },
+  title: {
+    fontSize: 18,
+    fontFamily: 'Roboto-Medium',
+    marginBottom: 15,
+    color: '#000',
+  },
   subtitle: {
     fontSize: 16,
-    fontWeight: '400',
+    fontFamily: 'Roboto-Regular',
     marginVertical: 10,
     color: '#000',
   },
@@ -450,8 +487,17 @@ const styles = StyleSheet.create({
     padding: 12,
     marginVertical: 5,
   },
-  entryText: { fontSize: 14, fontWeight: '500', color: '#000' },
-  entrySubtext: { fontSize: 13, color: '#4B5563', marginTop: 4 },
+  entryText: {
+    fontSize: 14,
+    fontFamily: 'Roboto-Medium',
+    color: '#000',
+  },
+  entrySubtext: {
+    fontSize: 13,
+    fontFamily: 'Roboto-Regular',
+    color: '#4B5563',
+    marginTop: 4,
+  },
   iconButton: { paddingHorizontal: 8 },
   divider: {
     borderBottomWidth: 1,
@@ -466,8 +512,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     fontSize: 14,
+    fontFamily: 'Roboto-Regular',
+    color: '#000',
+    placeholderTextColor: '#red',
   },
-  infoText: { fontSize: 12, color: '#6B7280', marginTop: 4 },
+  infoText: {
+    fontSize: 12,
+    fontFamily: 'Roboto-Regular',
+    color: '#6B7280',
+    marginTop: 4,
+  },
   dateTimeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -484,7 +538,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   switchRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  switchLabel: { marginLeft: 8, fontSize: 14 },
+  switchLabel: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontFamily: 'Roboto-Regular',
+    color: '#4B5563',
+  },
   addButton: {
     marginTop: 20,
     alignSelf: 'center',
@@ -493,7 +552,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 40,
   },
-  addButtonText: { color: '#fff', fontSize: 15, fontWeight: '500' },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontFamily: 'Roboto-Medium',
+  },
   pickercontainer: { marginVertical: 20 },
   pickerinput: {
     flexDirection: 'row',
@@ -508,6 +571,21 @@ const styles = StyleSheet.create({
     marginBottom: 100,
     backgroundColor: '#F9FAFB',
     borderRadius: 6,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontFamily: 'Roboto-Regular',
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  datePickerWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    marginVertical: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
 });
 
