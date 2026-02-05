@@ -17,6 +17,7 @@ import {
   RefreshControl,
   Platform,
   Modal,
+  TextInput,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ViewShot from 'react-native-view-shot';
@@ -24,7 +25,7 @@ import Share from 'react-native-share';
 
 import { hp, wp, Images } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
-import { getHealthRecord } from '../../redux/slices';
+import { getHealthRecord, updateAISummary } from '../../redux/slices';
 import { updateLastConsulted } from '../../redux/Home/homeThunk';
 import { shareData } from '../../redux/slices';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
@@ -60,11 +61,19 @@ const formatDate = date => {
 };
 
 const Health = ({ navigation }) => {
-  const [profileImage, setProfileImage] = useState(null);
   const [refreshing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [lastConsulted, setLastConsulted] = useState(new Date());
   const [sharingLoading, setSharingLoading] = useState(false);
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
+  const [isEditingMode, setIsEditingMode] = useState(false);
+  const [editedSummary, setEditedSummary] = useState({
+    past_history: '',
+    medications: '',
+    labs: '',
+    imaging: '',
+  });
+  const [isSaving, setIsSaving] = useState(false);
   const viewShotRef = useRef(null);
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -72,12 +81,24 @@ const Health = ({ navigation }) => {
   const healthObservations = useSelector(
     state => state.health?.data?.data?.data?.healthObservations,
   );
+  const healtRecords = useSelector(
+    state => state.health?.data?.data?.data?.healthRecords,
+  );
   const userId = useSelector(state => state.auth?.userId);
   const role = useSelector(state => state.auth?.role);
   const profile = useSelector(state => state.health?.data?.data?.data?.profile);
   const loading = useSelector(state => state.health?.loading);
+  const profileImage = useSelector(
+    state =>
+      state?.profile?.data?.data?.user?.photo_url ||
+      state?.profile?.data?.data?.user?.photoUrl,
+  );
 
   // Memoize derived data
+  const profileImageSource = profileImage
+    ? { uri: profileImage }
+    : Images.UNCLE;
+
   const isCaregiver = useMemo(() => role === 'caregiver', [role]);
   const medicationsText = useMemo(
     () =>
@@ -242,6 +263,84 @@ const Health = ({ navigation }) => {
     navigation.goBack();
   }, [navigation]);
 
+  // Initialize edited summary when entering edit mode
+  const handleEnterEditMode = useCallback(() => {
+    setEditedSummary({
+      past_history: healtRecords?.summary?.past_history?.join(', ') || '',
+      medications: healtRecords?.summary?.medications?.join(', ') || '',
+      labs: healtRecords?.summary?.labs?.join(', ') || '',
+      imaging: healtRecords?.summary?.imaging?.join(', ') || '',
+    });
+    setIsEditingMode(true);
+  }, [healtRecords]);
+
+  // Cancel edit mode
+  const handleCancelEdit = useCallback(() => {
+    setIsEditingMode(false);
+    setEditedSummary({
+      past_history: '',
+      medications: '',
+      labs: '',
+      imaging: '',
+    });
+  }, []);
+
+  // Update a specific field in the edited summary
+  const handleUpdateField = useCallback((field, value) => {
+    setEditedSummary(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
+
+  // Save edited summary
+  const handleSaveSummary = useCallback(async () => {
+    try {
+      setIsSaving(true);
+
+      // Convert comma-separated strings to arrays
+      const summaryData = {
+        past_history: editedSummary.past_history
+          .split(',')
+          .map(item => item.trim())
+          .filter(item => item.length > 0),
+        medications: editedSummary.medications
+          .split(',')
+          .map(item => item.trim())
+          .filter(item => item.length > 0),
+        labs: editedSummary.labs
+          .split(',')
+          .map(item => item.trim())
+          .filter(item => item.length > 0),
+        imaging: editedSummary.imaging
+          .split(',')
+          .map(item => item.trim())
+          .filter(item => item.length > 0),
+      };
+
+      const response = await dispatch(
+        updateAISummary({
+          userId,
+          summary: summaryData,
+        }),
+      ).unwrap();
+
+      if (response?.success) {
+        alert('Success', 'Summary updated successfully');
+        setIsEditingMode(false);
+        // Refresh health records
+        dispatch(getHealthRecord(userId));
+      } else {
+        alert('Error', response?.message || 'Failed to update summary');
+      }
+    } catch (error) {
+      console.error('Error saving summary:', error);
+      alert('Error', error?.message || 'Failed to update summary');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [dispatch, userId, editedSummary, alert]);
+
   const handleNavigateToReassess = useCallback(
     step => {
       navigation.navigate('OnBoarding', {
@@ -334,17 +433,19 @@ const Health = ({ navigation }) => {
                   {/* Name + Age + Smoker */}
                   <View style={styles.row}>
                     <Image
-                      source={Images.UNCLE}
+                      source={profileImageSource}
                       style={{
-                        resizeMode: 'contain',
+                        resizeMode: 'cover',
                         height: hp(5),
                         width: wp(12),
+                        borderRadius: wp(6),
                       }}
                     />
+
                     <View style={{ marginLeft: hp(3) }}>
                       <Text style={styles.name}>{profile?.name}</Text>
                       <Text style={styles.detail}>
-                        {profile?.age} years {smokerText}
+                        {profile?.age} years {profile?.smoker}
                       </Text>
                     </View>
                   </View>
@@ -593,24 +694,13 @@ const Health = ({ navigation }) => {
                       borderStyle: 'dotted',
                       borderWidth: 1,
                       padding: hp(1),
+                      backgroundColor: '#F9FAFB',
                     }}
                   >
-                    {profileImage ? (
-                      <Image
-                        source={{ uri: profileImage }}
-                        style={{
-                          width: '100%',
-                          height: 150,
-                          resizeMode: 'contain',
-                          borderRadius: 6,
-                        }}
-                      />
-                    ) : (
-                      <Image
-                        source={Images.PRECRIPTION}
-                        style={styles.recordImage}
-                      />
-                    )}
+                    <Image
+                      source={Images.PRECRIPTION}
+                      style={styles.recordImage}
+                    />
                   </View>
 
                   <TouchableOpacity
@@ -620,6 +710,7 @@ const Health = ({ navigation }) => {
                     <Image
                       source={Images.CAMERA} // Replace with actual key in your `images` object
                       style={{
+                        tintColor: 'white',
                         resizeMode: 'contain',
                         height: hp(2.5),
                         width: hp(4),
@@ -627,7 +718,10 @@ const Health = ({ navigation }) => {
                       }}
                       resizeMode="contain"
                     />
-                    <Text style={styles.buttonText}> Add New Record*</Text>
+                    <Text style={styles.buttonText}>
+                      {' '}
+                      Add / View Health Records
+                    </Text>
                   </TouchableOpacity>
                   <Text style={styles.note}>
                     * By uploading health records, you agree to our medical
@@ -638,76 +732,307 @@ const Health = ({ navigation }) => {
 
                 {/* Summary of Records */}
                 <View style={styles.card}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}
+                  <TouchableOpacity
+                    onPress={() => setIsSummaryExpanded(!isSummaryExpanded)}
+                    activeOpacity={0.7}
                   >
-                    <Text style={styles.sectionTitle}>Summary of Records</Text>
                     <View
-                      style={{ flexDirection: 'row', alignItems: 'center' }}
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
                     >
-                      <Image
-                        style={{
-                          height: hp(1.5),
-                          width: hp(2),
-                          resizeMode: 'contain',
-                          marginHorizontal: hp(1),
-                        }}
-                        source={Images.NOTICE}
-                      />
-                      <Text
-                        style={{
-                          width: wp(45),
-                          fontSize: 12,
-                          color: '#6B7280',
-                        }}
-                      >
-                        Feature currently in test mode — accuracy not yet
-                        validated
+                      <Text style={styles.sectionTitle}>
+                        Summary of Records
                       </Text>
+                      <View
+                        style={{ flexDirection: 'row', alignItems: 'center' }}
+                      >
+                        <Image
+                          style={{
+                            height: hp(2),
+                            width: hp(2),
+                            resizeMode: 'contain',
+                            marginLeft: hp(1),
+                            transform: [
+                              { rotate: isSummaryExpanded ? '180deg' : '0deg' },
+                            ],
+                          }}
+                          source={Images.DOWN}
+                        />
+                      </View>
                     </View>
-                  </View>
+                  </TouchableOpacity>
 
-                  <Text style={styles.bold}>History: </Text>
-                  <Text
+                  {/* Credit Text */}
+                  {/* <Text
                     style={{
-                      fontSize: 14,
-                      fontWeight: '400',
-                      color: '#4B5563',
+                      fontSize: 12,
+                      color: '#6B7280',
+                      marginTop: hp(1),
+                      fontStyle: 'italic',
                     }}
                   >
-                    Cholecystectomy (Gallbladder removal)   Left thigh fracture
-                  </Text>
+                    Powered by AI - Summary generated from your health records
+                  </Text> */}
 
-                  <Text style={[styles.bold, { marginTop: hp(1) }]}>
-                    Medications:
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '400',
-                      color: '#4B5563',
-                    }}
-                  >
-                    Diabetes on metformin   Hypertension (HTN) on Cardace
-                  </Text>
+                  {isSummaryExpanded && (
+                    <View style={{ marginTop: hp(2) }}>
+                      {isEditingMode ? (
+                        // Edit Mode - Show TextInputs
+                        <View>
+                          {/* Past History Input */}
+                          <View style={{ marginBottom: hp(2) }}>
+                            <Text style={styles.bold}>History:</Text>
+                            <TextInput
+                              style={styles.editInput}
+                              value={editedSummary.past_history}
+                              onChangeText={text =>
+                                handleUpdateField('past_history', text)
+                              }
+                              placeholder="Enter history items separated by commas"
+                              placeholderTextColor="#9CA3AF"
+                              multiline
+                            />
+                          </View>
 
-                  <Text style={[styles.label, { marginTop: hp(1) }]}>
-                    <Text style={styles.bold}>Labs:</Text>
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '400',
-                      color: '#4B5563',
-                    }}
-                  >
-                    RBS: 230
-                  </Text>
+                          {/* Medications Input */}
+                          <View style={{ marginBottom: hp(2) }}>
+                            <Text style={styles.bold}>Medications:</Text>
+                            <TextInput
+                              style={styles.editInput}
+                              value={editedSummary.medications}
+                              onChangeText={text =>
+                                handleUpdateField('medications', text)
+                              }
+                              placeholder="Enter medications separated by commas"
+                              placeholderTextColor="#9CA3AF"
+                              multiline
+                            />
+                          </View>
+
+                          {/* Labs Input */}
+                          <View style={{ marginBottom: hp(2) }}>
+                            <Text style={styles.bold}>Labs:</Text>
+                            <TextInput
+                              style={styles.editInput}
+                              value={editedSummary.labs}
+                              onChangeText={text =>
+                                handleUpdateField('labs', text)
+                              }
+                              placeholder="Enter lab results separated by commas"
+                              placeholderTextColor="#9CA3AF"
+                              multiline
+                            />
+                          </View>
+
+                          {/* Imaging Input */}
+                          <View style={{ marginBottom: hp(2) }}>
+                            <Text style={styles.bold}>Imaging:</Text>
+                            <TextInput
+                              style={styles.editInput}
+                              value={editedSummary.imaging}
+                              onChangeText={text =>
+                                handleUpdateField('imaging', text)
+                              }
+                              placeholder="Enter imaging results separated by commas"
+                              placeholderTextColor="#9CA3AF"
+                              multiline
+                            />
+                          </View>
+
+                          {/* Save and Cancel Buttons */}
+                          <View style={{ flexDirection: 'row', gap: hp(1) }}>
+                            <TouchableOpacity
+                              style={{
+                                flex: 1,
+                                backgroundColor: '#10B981',
+                                borderRadius: 8,
+                                paddingVertical: hp(1.5),
+                                alignItems: 'center',
+                              }}
+                              onPress={handleSaveSummary}
+                              disabled={isSaving}
+                              activeOpacity={0.8}
+                            >
+                              {isSaving ? (
+                                <ActivityIndicator
+                                  color="#FFFFFF"
+                                  size="small"
+                                />
+                              ) : (
+                                <Text
+                                  style={{
+                                    color: '#FFFFFF',
+                                    fontSize: 14,
+                                    fontWeight: '600',
+                                  }}
+                                >
+                                  Save Changes
+                                </Text>
+                              )}
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              style={{
+                                flex: 1,
+                                backgroundColor: '#6B7280',
+                                borderRadius: 8,
+                                paddingVertical: hp(1.5),
+                                alignItems: 'center',
+                              }}
+                              onPress={handleCancelEdit}
+                              disabled={isSaving}
+                              activeOpacity={0.8}
+                            >
+                              <Text
+                                style={{
+                                  color: '#FFFFFF',
+                                  fontSize: 14,
+                                  fontWeight: '600',
+                                }}
+                              >
+                                Cancel
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      ) : (
+                        // View Mode - Show Data
+                        <View>
+                          {/* Past History */}
+                          {healtRecords?.summary?.past_history &&
+                            Array.isArray(healtRecords.summary.past_history) &&
+                            healtRecords.summary.past_history.length > 0 && (
+                              <View>
+                                <Text style={styles.bold}>History: </Text>
+                                <Text
+                                  style={{
+                                    fontSize: 14,
+                                    fontWeight: '400',
+                                    color: '#4B5563',
+                                    marginTop: hp(0.5),
+                                  }}
+                                >
+                                  {healtRecords.summary.past_history.join(
+                                    '   ',
+                                  )}
+                                </Text>
+                              </View>
+                            )}
+
+                          {/* Medications */}
+                          {healtRecords?.summary?.medications &&
+                            Array.isArray(healtRecords.summary.medications) &&
+                            healtRecords.summary.medications.length > 0 && (
+                              <View style={{ marginTop: hp(1) }}>
+                                <Text style={styles.bold}>Medications:</Text>
+                                <Text
+                                  style={{
+                                    fontSize: 14,
+                                    fontWeight: '400',
+                                    color: '#4B5563',
+                                    marginTop: hp(0.5),
+                                  }}
+                                >
+                                  {healtRecords.summary.medications.join('   ')}
+                                </Text>
+                              </View>
+                            )}
+
+                          {/* Labs */}
+                          {healtRecords?.summary?.labs &&
+                            Array.isArray(healtRecords.summary.labs) &&
+                            healtRecords.summary.labs.length > 0 && (
+                              <View style={{ marginTop: hp(1) }}>
+                                <Text style={styles.bold}>Labs:</Text>
+                                <Text
+                                  style={{
+                                    fontSize: 14,
+                                    fontWeight: '400',
+                                    color: '#4B5563',
+                                    marginTop: hp(0.5),
+                                  }}
+                                >
+                                  {healtRecords.summary.labs.join('   ')}
+                                </Text>
+                              </View>
+                            )}
+
+                          {/* Imaging */}
+                          {healtRecords?.summary?.imaging &&
+                            Array.isArray(healtRecords.summary.imaging) &&
+                            healtRecords.summary.imaging.length > 0 && (
+                              <View style={{ marginTop: hp(1) }}>
+                                <Text style={styles.bold}>Imaging:</Text>
+                                <Text
+                                  style={{
+                                    fontSize: 14,
+                                    fontWeight: '400',
+                                    color: '#4B5563',
+                                    marginTop: hp(0.5),
+                                  }}
+                                >
+                                  {healtRecords.summary.imaging.join('   ')}
+                                </Text>
+                              </View>
+                            )}
+
+                          {/* Show message if no data */}
+                          {(!healtRecords?.summary ||
+                            ((!healtRecords.summary.past_history ||
+                              healtRecords.summary.past_history.length === 0) &&
+                              (!healtRecords.summary.medications ||
+                                healtRecords.summary.medications.length ===
+                                0) &&
+                              (!healtRecords.summary.labs ||
+                                healtRecords.summary.labs.length === 0) &&
+                              (!healtRecords.summary.imaging ||
+                                healtRecords.summary.imaging.length ===
+                                0))) && (
+                              <Text
+                                style={{
+                                  fontSize: 14,
+                                  fontWeight: '400',
+                                  color: '#6B7280',
+                                  fontStyle: 'italic',
+                                  marginTop: hp(1),
+                                }}
+                              >
+                                No summary data available
+                              </Text>
+                            )}
+
+                          {/* Edit Button */}
+                          <TouchableOpacity
+                            style={{
+                              backgroundColor: '#3B82F6',
+                              borderRadius: 8,
+                              paddingVertical: hp(1.5),
+                              paddingHorizontal: wp(4),
+                              marginTop: hp(2),
+                              alignItems: 'center',
+                            }}
+                            onPress={handleEnterEditMode}
+                            activeOpacity={0.8}
+                          >
+                            <Text
+                              style={{
+                                color: '#FFFFFF',
+                                fontSize: 14,
+                                fontWeight: '600',
+                              }}
+                            >
+                              Edit Summary
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  )}
                 </View>
-                <View style={styles.card}>
+                {/* <View style={styles.card}>
                   <View
                     style={{
                       flexDirection: 'row',
@@ -720,17 +1045,7 @@ const Health = ({ navigation }) => {
                     <View
                       style={{ flexDirection: 'row', alignItems: 'center' }}
                     >
-                      {/* <Image
-                  style={{
-                    height: hp(1.5),
-                    width: hp(2),
-                    resizeMode: 'contain',
-                    marginHorizontal: hp(1),
-                  }}
-                  source={Images.NOTICE}></Image> */}
-                      {/* <Text style={{width: wp(45), fontSize: 12, color: '#6B7280'}}>
-                  Accuracy depends on clarity and legibility of handwriting.
-                </Text> */}
+                    
                     </View>
                   </View>
                   <Text
@@ -744,21 +1059,8 @@ const Health = ({ navigation }) => {
                     kidney issues within the next 4 years.
                   </Text>
 
-                  {/* <Text style={styles.bold}>History: </Text>
-           
-
-            <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
-            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
-              Diabetes on metformin   Hypertension (HTN) on Cardace
-            </Text>
-
-            <Text style={[styles.label, {marginTop: hp(1)}]}>
-              <Text style={styles.bold}>Labs:</Text>
-            </Text>
-            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
-              RBS: 230
-            </Text> */}
-                </View>
+             
+                </View> */}
                 <View style={[styles.card, { flexDirection: 'row' }]}>
                   <View
                     style={{
@@ -1065,6 +1367,19 @@ const styles = StyleSheet.create({
     padding: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+  },
+  editInput: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: hp(1.5),
+    fontSize: 14,
+    color: '#1F2937',
+    fontFamily: 'Roboto-Regular',
+    minHeight: hp(8),
+    textAlignVertical: 'top',
+    marginTop: hp(0.5),
   },
 });
 

@@ -79,10 +79,15 @@ const $http = axios.create({
 
 // Store reference to session expired callback
 let sessionExpiredCallback = null;
+let failedQueue = [];
 
 const setSessionExpiredCallback = callback => {
   sessionExpiredCallback = callback;
 };
+
+
+
+
 
 const createInterceptors = instan => {
   instan.interceptors.request.use(
@@ -109,8 +114,10 @@ const createInterceptors = instan => {
       );
       return response;
     },
-    error => {
+    async error => {
       console.log('INTERCEPTOR RESPONSE ERROR:', error);
+
+      const originalRequest = error.config;
 
       // Check for 401 Unauthorized or token expired errors
       if (error.response) {
@@ -124,11 +131,9 @@ const createInterceptors = instan => {
           message.toLowerCase().includes('invalid token') ||
           message.toLowerCase().includes('not authorized')
         ) {
-          console.log('Session expired detected:', status, message);
-          // Trigger session expired callback if set
-          if (sessionExpiredCallback) {
-            sessionExpiredCallback();
-          }
+          console.log('Token expired detected:', status, message);
+
+          // Token refresh logic removed - no automatic refresh
         }
       }
 
@@ -200,7 +205,7 @@ const getNetworkState = async () => {
 const subscribeToNetworkChanges = callback => {
   if (typeof callback !== 'function') {
     console.warn('subscribeToNetworkChanges: callback must be a function');
-    return () => {};
+    return () => { };
   }
 
   return NetInfo.addEventListener(callback);

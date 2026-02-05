@@ -39,12 +39,24 @@ const Splash = () => {
           }
 
           if (parsed.onboardingStatus !== 'complete') {
-            console.log('Onboarding not complete, navigating to Onboarding');
+            console.log('Onboarding not complete, navigating to Login');
             setTimeout(() => {
               navigation.replace('Login');
             }, 3000);
+            return;
+          }
+
+          // Onboarding is complete, now check payment status
+          dispatch(setUserData(parsed));
+
+          if (parsed.paymentStatus === 'pending') {
+            console.log('Payment pending, navigating to Checkout');
+            setTimeout(() => {
+              navigation.replace('Checkout');
+            }, 3000);
           } else {
-            dispatch(setUserData(parsed));
+            // Payment completed/waived or no payment status - navigate to Home
+            console.log('Payment status:', parsed.paymentStatus, '- navigating to Home');
             setTimeout(() => {
               navigation.replace('Home');
             }, 3000);

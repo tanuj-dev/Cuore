@@ -15,11 +15,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { verifyOtp, sendOtp } from '../../redux/slices';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import Endpoints from '../../utilities/Endpoints';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const OtpScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
 
   const loading = useSelector(state => state.auth.loading);
 
@@ -75,12 +77,6 @@ const OtpScreen = () => {
         }),
       ).unwrap();
       console.log('OTP verified:', result);
-      if (result?.data?.role === 'caregiver') {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Home' }],
-        });
-      }
 
       const {
         access_token,
@@ -89,9 +85,9 @@ const OtpScreen = () => {
         expires_in,
         new_user,
         onboardingStatus,
-        role,
+        role: userRole,
         paymentStatus,
-      } = result?.data;
+      } = result?.data || {};
 
       const tokenPayload = {
         accessToken: access_token,
@@ -100,7 +96,7 @@ const OtpScreen = () => {
         expiresIn: expires_in,
         newUser: new_user,
         onboardingStatus: onboardingStatus,
-        role: role,
+        role: userRole,
         paymentStatus: paymentStatus,
       };
 
@@ -115,24 +111,59 @@ const OtpScreen = () => {
       const storedToken = await EncryptedStorage.getItem('auth_tokens');
       console.log('Retrieved token from storage:', JSON.parse(storedToken));
 
-      if (onboardingStatus === 'complete') {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Home' }],
-        });
-      } else if (result?.data?.role === 'caregiver') {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Home' }],
-        });
-      } else {
+      // Determine navigation based on user status
+      // Priority order: 1. Onboarding status, 2. Caregiver check, 3. Payment status
+      
+      // Step 1: Check onboardingStatus first
+      if (onboardingStatus !== 'complete') {
+        // Check if user is caregiver with incomplete onboarding
+        if (userRole === 'caregiver') {
+          // Show popup message for caregivers - they can't complete onboarding
+          alert(
+            'Onboarding Pending',
+            "You can't proceed ahead because onboarding is pending and caregiver can't onboard.",
+          );
+          return;
+        }
+        // For regular users, navigate to onboarding
         navigation.reset({
           index: 0,
           routes: [{ name: 'OnBoarding' }],
         });
+        return;
       }
+
+      // Step 2: Onboarding is complete, now check paymentStatus
+      if (paymentStatus === 'pending') {
+        // Payment pending - redirect to checkout (for both caregivers and regular users)
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Checkout' }],
+        });
+        return;
+      }
+
+      // Step 3: If payment is completed/waived and onboarding is complete, go to Home
+      if (
+        paymentStatus === 'completed' ||
+        paymentStatus === 'waived'
+      ) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+        return;
+      }
+
+      // Default fallback - navigate to Home
+      console.warn('Unexpected user state - navigating to Home as fallback');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
     } catch (err) {
       console.log('OTP verification failed:', err.message);
+      // You might want to show an error alert here
     }
   };
 
@@ -155,6 +186,7 @@ const OtpScreen = () => {
 
   return (
     <View style={styles.container}>
+      {AlertComponent}
       <TouchableOpacity
         hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
         style={styles.backArrow}

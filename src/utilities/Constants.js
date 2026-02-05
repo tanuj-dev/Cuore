@@ -7,7 +7,7 @@ let API_VERSION_2 = 'api/2.0';
 
 let MAIN_URL = MAIN_URL_QA_A2;
 
-let BASE_URL = 'https://cuore-backend-1.onrender.com';
+let BASE_URL = 'https://cuore-backend-47918528-0531-42f2-b756-49be6a3fc69a.lowcloud.co';
 let BASE_URL_V2 = MAIN_URL + API_VERSION_2;
 
 let IS_PRODUCTION = MAIN_URL === MAIN_URL_PRODUCTION ? true : false;

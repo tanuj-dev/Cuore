@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Image,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import { sendOtp, loginCaregiverThunk } from '../../redux/slices';
@@ -108,6 +109,7 @@ const Login = ({ navigation }) => {
 
         <View style={styles.inputContainer}>
           <View style={styles.countryCodeContainer}>
+            <Text style={styles.flagEmoji}>🇮🇳</Text>
             <Text style={styles.countryCode}>+91</Text>
           </View>
           <TextInput
@@ -158,6 +160,17 @@ const Login = ({ navigation }) => {
             <Text style={styles.verifyText}>Verify</Text>
           )}
         </TouchableOpacity>
+
+        <Text style={styles.termsText}>
+          By clicking, I accept the{' '}
+          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://cuore.health/terms')}>
+            Terms & Conditions
+          </Text>
+          {' '}and{' '}
+          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://cuore.health/privacy')}>
+            Privacy
+          </Text>
+        </Text>
       </View>
     </View>
   );
@@ -232,6 +245,12 @@ const styles = StyleSheet.create({
   },
   countryCodeContainer: {
     marginRight: wp(2),
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  flagEmoji: {
+    fontSize: hp(2.5),
+    marginRight: wp(1),
   },
   countryCode: {
     fontFamily: 'Roboto-Regular',
@@ -255,7 +274,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: hp(1.7),
     color: '#4B5563',
-    marginBottom: hp(3),
+    marginBottom: hp(1.5),
+  },
+  termsText: {
+    fontFamily: 'Roboto-Regular',
+    textAlign: 'center',
+    fontSize: hp(1.4),
+    color: '#6B7280',
+    marginBottom: hp(2),
+    marginTop: hp(1),
+    lineHeight: hp(2),
+  },
+  termsLink: {
+    color: '#1E64AC',
+    textDecorationLine: 'underline',
   },
   signupLink: {
     fontFamily: 'Roboto-Regular',

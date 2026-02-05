@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
+import EncryptedStorage from 'react-native-encrypted-storage';
 import { postApiCall, deleteApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
+import Constants from '../../utilities/Constants';
 
 export const sendOtp = createAsyncThunk(
   'auth/sendOtp',
@@ -168,3 +171,4 @@ export const deleteAccountThunk = createAsyncThunk(
     }
   },
 );
+

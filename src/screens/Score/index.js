@@ -239,6 +239,13 @@ const Score = ({ navigation, route }) => {
   //     </View>
   //   );
   // }
+
+
+  const profileImage = useSelector(state => state?.profile?.data?.data?.user?.photo_url || state?.profile?.data?.data?.user?.photoUrl);
+  const profileImageSource = profileImage
+    ? { uri: profileImage }
+    : Images.UNCLE;
+
   if (loading) {
     return <Loader />;
   }
@@ -272,7 +279,7 @@ const Score = ({ navigation, route }) => {
                     />
                   </TouchableOpacity>
                   <Image
-                    source={Images.UNCLE}
+                    source={profileImageSource}
                     style={styles.profileIcon}
                     resizeMode="contain"
                   />
@@ -336,7 +343,7 @@ const Score = ({ navigation, route }) => {
                     resizeMode="contain"
                   />
 
-                  <Text style={styles.reassessText}>Re-assess</Text>
+                  <Text style={styles.reassessText}>Re-assess monthly</Text>
                 </TouchableOpacity>
                 <Text style={styles.reassessNote}>
                   As your health evolves, so should your plan Re-assess monthly
@@ -593,8 +600,10 @@ const styles = StyleSheet.create({
     tintColor: 'black',
   },
   profileIcon: {
-    width: wp(9),
-    height: hp(3),
+    resizeMode: 'contain',
+    width: wp(7),
+    height: hp(3.5),
+    borderRadius: wp(40),
   },
   avatarWrapper: {},
   avatar: { width: wp(10), height: wp(10), borderRadius: wp(5) },

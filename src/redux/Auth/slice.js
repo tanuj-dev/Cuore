@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { verifyOtp } from './verifyOtpThunk';
-import { createAccountThunk } from './authThunk';
+import { createAccountThunk, refreshTokenThunk } from './authThunk';
 
 const initialState = {
   accessToken: null,

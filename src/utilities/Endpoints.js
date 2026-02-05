@@ -21,6 +21,13 @@ const Endpoints = {
   LOGINCAREGIVER: '/api/v1/auth/caregiver/otp/request',
   SHARE_DATA: '/api/v1/share/report',
   DELETEACCOUNT: '/api/v1/users',
+  UPLOAD_PHOTO: '/api/analyze-records', // AI summary endpoint - FormData: userId (text), files (file)
+  EDIT_AI_SUMMARY: '/api/update-analysis',
+  GET_PRESCRIPTION: '/api/get-prescriptions',
+  EDIT_FILENAME: '/api/edit-filename', // PUT /api/edit-filename/:recordId - body: { fileName }
+  DELETE_RECORD: '/api/delete-record', // DELETE /api/delete-record/:recordId
+  REFRESH_TOKEN: '/api/v1/auth/refresh-token',
+  DISMISS_ALERT: '/api/v1/timeline', // PUT /api/v1/timeline/:userId/dismiss-alert/:alertId
 };
 
 export default Endpoints;

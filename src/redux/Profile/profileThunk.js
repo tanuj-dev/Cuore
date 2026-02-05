@@ -8,6 +8,7 @@ export const updateProfile = createAsyncThunk(
     try {
       const endpoint = `/api/v1/users/${userId}/profile`;
 
+      // profileData can be either FormData (with image) or regular object (without image)
       const res = await putApiCall(endpoint, profileData);
       const data = res?.data;
 

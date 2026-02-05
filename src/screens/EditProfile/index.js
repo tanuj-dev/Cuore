@@ -11,6 +11,8 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +20,7 @@ import { hp, wp, Images } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateProfile, getProfile } from './../../redux/slices';
 import ToastMessage from '../../components/Toast';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+
 
 const EditProfile = ({ navigation }) => {
   const [userName, setUserName] = useState('M. Johnson');
@@ -27,6 +29,7 @@ const EditProfile = ({ navigation }) => {
   const [toastType, setToastType] = useState('success');
   const [profileImage, setProfileImage] = useState(null);
   const [isEditing, setIsEditing] = useState(false); // ✅ single edit mode toggle
+  const [isLoading, setIsLoading] = useState(false); // ✅ loading state for save
 
   const dispatch = useDispatch();
   const userID = useSelector(state => state.auth.userId);
@@ -39,6 +42,16 @@ const EditProfile = ({ navigation }) => {
         ? userProfile.phone.slice(3)
         : userProfile.phone,
     );
+    // Set existing profile photo if available (check both field names)
+    const photoUrl = userProfile?.photo_url || userProfile?.photoUrl;
+    if (photoUrl) {
+      console.log('Setting profile image from Redux:', photoUrl);
+      console.log('Full userProfile object:', JSON.stringify(userProfile, null, 2));
+      setProfileImage(photoUrl);
+    } else {
+      console.log('No photo URL found in userProfile');
+      console.log('userProfile keys:', userProfile ? Object.keys(userProfile) : 'userProfile is null');
+    }
   }, [userProfile]);
 
   // 🔐 Camera & storage permissions
@@ -67,11 +80,29 @@ const EditProfile = ({ navigation }) => {
   const requestStoragePermission = async () => {
     if (Platform.OS === 'android') {
       try {
+        const androidVersion = Platform.Version;
+        let permission;
+        
+        // Android 13+ uses READ_MEDIA_IMAGES
+        if (androidVersion >= 33) {
+          permission = PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES;
+        } else {
+          // Android 12 and below use READ_EXTERNAL_STORAGE
+          permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+        }
+        
+        // Check if permission is already granted
+        const checkResult = await PermissionsAndroid.check(permission);
+        if (checkResult) {
+          return true;
+        }
+        
+        // Request permission
         const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          permission,
           {
-            title: 'Storage Permission',
-            message: 'App needs access to your storage',
+            title: 'Gallery Permission',
+            message: 'This app needs access to your gallery to select profile photos.',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
@@ -79,11 +110,11 @@ const EditProfile = ({ navigation }) => {
         );
         return granted === PermissionsAndroid.RESULTS.GRANTED;
       } catch (err) {
-        console.warn(err);
+        console.warn('Storage permission error:', err);
         return false;
       }
     }
-    return true;
+    return true; // iOS handles permissions automatically
   };
 
   const handleImagePicker = async type => {
@@ -113,8 +144,20 @@ const EditProfile = ({ navigation }) => {
         const hasPermission = await requestStoragePermission();
         if (!hasPermission) {
           Alert.alert(
-            'Permission required',
-            'Storage permission is needed to access photos',
+            'Permission Required',
+            'Gallery permission is needed to select photos. Please enable it in your device settings.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Settings', 
+                onPress: () => {
+                  // On Android, you can open app settings
+                  if (Platform.OS === 'android') {
+                    Linking.openSettings();
+                  }
+                }
+              },
+            ],
           );
           return;
         }
@@ -166,11 +209,47 @@ const EditProfile = ({ navigation }) => {
       return;
     }
 
+    setIsLoading(true); // Start loading
+
     const userId = userID;
-    const payload = {
-      display_name: userName.trim(),
-      phone: `+91${userMobile.trim()}`,
-    };
+    let payload;
+
+    // Check if profileImage is a local file (needs upload) or a URL (already uploaded)
+    const isLocalFile = profileImage && (
+      profileImage.startsWith('file://') || 
+      profileImage.startsWith('/') ||
+      !profileImage.startsWith('http')
+    );
+
+    // If profileImage exists and is a local file, create FormData (for image upload)
+    if (profileImage && isLocalFile) {
+      const formData = new FormData();
+      
+      // Add text fields as form data
+      formData.append('display_name', userName.trim());
+      formData.append('phone', `+91${userMobile.trim()}`);
+      
+      // Add image file - backend expects field name 'profileImage'
+      const imageFile = {
+        uri: Platform.OS === 'ios' 
+          ? profileImage.replace('file://', '') 
+          : profileImage,
+        type: 'image/jpeg',
+        name: `profile_${Date.now()}.jpg`,
+      };
+      formData.append('profileImage', imageFile);
+      
+      payload = formData;
+      console.log('📤 Uploading profile with image via FormData');
+      console.log('📤 FormData fields:', ['display_name', 'phone', 'profileImage']);
+    } else {
+      // No new image or image is already a URL - send as regular JSON object
+      payload = {
+        display_name: userName.trim(),
+        phone: `+91${userMobile.trim()}`,
+      };
+      console.log('📤 Updating profile without new image via JSON');
+    }
 
     try {
       const resultAction = await dispatch(
@@ -181,6 +260,7 @@ const EditProfile = ({ navigation }) => {
         setToastMessage('Profile updated successfully!');
         setToastType('success');
         setIsEditing(false); // exit edit mode
+        setProfileImage(null); // Clear local image state
         dispatch(getProfile(userId)); // refresh profile data
       } else {
         const errorMessage =
@@ -192,6 +272,8 @@ const EditProfile = ({ navigation }) => {
       console.error('Profile update error:', error);
       setToastMessage('Something went wrong. Please try again.');
       setToastType('error');
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
@@ -341,14 +423,25 @@ const EditProfile = ({ navigation }) => {
                 }}
               >
                 <TouchableOpacity onPress={showImagePickerOptions}>
-                  {profileImage ? (
+                  {profileImage || userProfile?.photo_url || userProfile?.photoUrl ? (
                     <Image
-                      source={{ uri: profileImage }}
+                      key={profileImage || userProfile?.photo_url || userProfile?.photoUrl}
+                      source={{ 
+                        uri: (profileImage || userProfile?.photo_url || userProfile?.photoUrl)?.trim()
+                      }}
                       style={{
                         width: wp(13),
                         height: wp(13),
                         borderRadius: wp(10),
                         resizeMode: 'cover',
+                      }}
+                      onError={(error) => {
+                        console.log('Image load error:', error.nativeEvent?.error || error);
+                        const imageUri = profileImage || userProfile?.photo_url || userProfile?.photoUrl;
+                        console.log('Failed to load image URI:', imageUri);
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully');
                       }}
                     />
                   ) : (
@@ -396,11 +489,19 @@ const EditProfile = ({ navigation }) => {
                   <TouchableOpacity
                     style={[
                       styles.saveBtn,
-                      { backgroundColor: isEditing ? '#1E64AC' : '#1E64AC' },
+                      { 
+                        backgroundColor: isEditing ? '#1E64AC' : '#1E64AC',
+                        opacity: isLoading ? 0.7 : 1,
+                      },
                     ]}
                     onPress={handleEditOrSave}
+                    disabled={isLoading}
                   >
-                    <Text style={styles.saveText}>{'Save Changes'}</Text>
+                    {isLoading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.saveText}>{'Save Changes'}</Text>
+                    )}
                   </TouchableOpacity>
                 )}
 
@@ -408,6 +509,7 @@ const EditProfile = ({ navigation }) => {
                   <TouchableOpacity
                     style={styles.cancelBtn}
                     onPress={handleCancel}
+                    disabled={isLoading}
                   >
                     <Text style={styles.cancelText}>Cancel</Text>
                   </TouchableOpacity>

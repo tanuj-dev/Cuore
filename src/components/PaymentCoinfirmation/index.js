@@ -163,7 +163,12 @@ const PaymentConfirmation = ({
                   color: '#000000',
                 }}
               >
-                ₹{paymentData?.amount ? paymentData.amount.toFixed(2) : '0.00'}
+                ₹{paymentData?.amount 
+                  ? (typeof paymentData.amount === 'number' 
+                      ? paymentData.amount 
+                      : parseFloat(paymentData.amount) || 0
+                    ).toFixed(2)
+                  : '0.00'}
               </Text>
             </View>
             <View

@@ -11,6 +11,7 @@ import { createAccountThunk } from './Auth/authThunk';
 import { getOnboardingThunk } from './OnBoardng/onBoardingThunk';
 import { createReassessment } from './OnBoardng/onBoardingThunk';
 import { getHomeData, getHealthRecord } from './Home/homeThunk';
+import { updateAISummary } from './Home/updateSummaryThunk';
 import { setReminder } from './Home/setReminderThunk';
 // import { updateReminderTime } from './Home/updateTime';
 import { getCuoreScoreThunk } from './OnBoardng/onBoardingThunk';
@@ -33,6 +34,8 @@ import { checkReminderThunk } from './Home/checkReminderThunk';
 import { searchBuilderThunk } from './Nutrition/thunk';
 import { getNotification } from './Home/notificationThunk';
 import { shareData } from './Share/shareThunk';
+import { editFilename } from './uploadPhoto/editFilenameThunk';
+import { deleteRecord } from './uploadPhoto/deleteRecordThunk';
 
 export {
   sendOtp,
@@ -69,4 +72,7 @@ export {
   searchDoctors,
   getNotification,
   shareData,
+  updateAISummary,
+  editFilename,
+  deleteRecord,
 };

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useMemo, useCallback } from 'react';
 import { hp, wp, Images } from '../../utilities';
+import { useSelector } from 'react-redux';
 
 // Constants
 const MODULES = [
@@ -64,12 +65,10 @@ const ROUTE_MAP = {
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const Explore = ({ navigation }) => {
-  // Memoize current day key
   const currentDayKey = useMemo(() => {
     return DAY_KEYS[new Date().getDay()];
   }, []);
 
-  // Handle module press with useCallback for performance
   const handleModulePress = useCallback(
     item => {
       const route = ROUTE_MAP[item.title];
@@ -94,12 +93,10 @@ const Explore = ({ navigation }) => {
     [navigation, currentDayKey],
   );
 
-  // Handle health button press
   const handleHealthPress = useCallback(() => {
     navigation.navigate('Health');
   }, [navigation]);
 
-  // Render module item
   const renderItem = useCallback(
     ({ item }) => (
       <TouchableOpacity
@@ -107,7 +104,7 @@ const Explore = ({ navigation }) => {
         style={styles.card}
         activeOpacity={0.7}
       >
-        <Image source={item.image} style={styles.image} resizeMode="contain" />
+        <Image source={item.image} style={styles.image} />
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.subtitle}>{item.subtitle}</Text>
       </TouchableOpacity>
@@ -115,19 +112,35 @@ const Explore = ({ navigation }) => {
     [handleModulePress],
   );
 
-  // Key extractor
   const keyExtractor = useCallback(
-    (item, index) => item.id?.toString() ?? index.toString(),
+    item => item.id.toString(),
     [],
   );
 
-  // Render list header
+  // ✅ PROFILE IMAGE FROM REDUX
+  const profileImage = useSelector(
+    state =>
+      state?.profile?.data?.data?.user?.photo_url ||
+      state?.profile?.data?.data?.user?.photoUrl
+  );
+
+  // ✅ SAFE IMAGE SOURCE
+  const profileImageSource = profileImage
+    ? { uri: profileImage }
+    : Images.UNCLE;
+
   const renderListHeader = useCallback(
     () => (
       <View style={styles.headerContainer}>
         <View style={styles.logoContainer}>
           <Image source={Images.APP_LOGO} style={styles.logo} />
-          <Image source={Images.UNCLE} style={styles.logoRight} />
+
+          {/* ✅ FIXED PROFILE IMAGE */}
+          <Image
+            source={profileImageSource}
+            style={styles.logoRight}
+            resizeMode="cover"
+          />
         </View>
 
         <View style={styles.healthSection}>
@@ -139,7 +152,6 @@ const Explore = ({ navigation }) => {
             <Image
               source={Images.DOCTOR_PROFILE}
               style={styles.doctorIcon}
-              resizeMode="contain"
             />
             <Text style={styles.heading}>Cuore Health</Text>
           </TouchableOpacity>
@@ -148,7 +160,7 @@ const Explore = ({ navigation }) => {
         </View>
       </View>
     ),
-    [handleHealthPress],
+    [handleHealthPress, profileImageSource],
   );
 
   return (
@@ -193,10 +205,9 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   logoRight: {
-    width: wp(20),
-    height: hp(4),
-    resizeMode: 'contain',
-    marginLeft: hp(25),
+    width: 40,
+    height: 40,
+    borderRadius: 20, // 👈 profile look
   },
   healthSection: {
     alignItems: 'center',
@@ -213,9 +224,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D1D5DB',
     ...Platform.select({
-      android: {
-        elevation: 4,
-      },
+      android: { elevation: 4 },
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -227,19 +236,14 @@ const styles = StyleSheet.create({
   doctorIcon: {
     height: hp(2.5),
     width: wp(6),
-    resizeMode: 'contain',
   },
   heading: {
-    fontFamily: 'Roboto-Regular',
     fontSize: 16,
-    fontWeight: '400',
     color: '#4B5563',
     marginLeft: wp(1),
   },
   subheading: {
-    fontFamily: 'Roboto-Regular',
     fontSize: 14,
-    fontWeight: '400',
     color: '#6B7280',
     marginTop: hp(1),
     textAlign: 'center',
@@ -259,35 +263,19 @@ const styles = StyleSheet.create({
     borderRadius: wp(3),
     padding: wp(4),
     alignItems: 'center',
-    ...Platform.select({
-      android: {
-        elevation: 1,
-      },
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
-      },
-    }),
   },
   image: {
     width: wp(38),
     height: hp(12),
-    resizeMode: 'contain',
     marginBottom: hp(1.2),
   },
   title: {
-    fontFamily: 'Roboto-Regular',
     fontSize: 15,
-    fontWeight: '400',
     color: '#000000',
     textAlign: 'center',
   },
   subtitle: {
-    fontFamily: 'Roboto-Regular',
     fontSize: 11,
-    fontWeight: '400',
     color: '#6B7280',
     textAlign: 'center',
     marginTop: hp(0.5),

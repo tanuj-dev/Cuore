@@ -13,6 +13,7 @@ import { setSessionExpired, logout } from './src/redux/Auth/slice';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import notifee, { EventType } from '@notifee/react-native';
 
+
 // Navigation ref to access navigation from outside components
 export const navigationRef = React.createRef();
 
@@ -78,6 +79,8 @@ const AppContent = () => {
 
     // Initialize Notifee for notifications
     initializeNotifee();
+
+    // Token refresh initialization removed - no automatic refresh needed
 
     // Check initial connectivity
     checkConnectivity();

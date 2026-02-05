@@ -262,11 +262,28 @@ const Profile = ({ navigation }) => {
           <View style={{ padding: wp(4) }}>
             {/* User profile card */}
             <TouchableOpacity
-              disabled={role == 'caregiver'}
+              disabled={role === 'caregiver'}
               onPress={() => navigation.navigate('EditProfile')}
               style={styles.profileCard}
             >
-              <Image source={Images.UNCLE} style={styles.profileImage} />
+              {userProfile?.user?.photo_url || userProfile?.user?.photoUrl ? (
+                <Image
+                  key={userProfile?.user?.photo_url || userProfile?.user?.photoUrl}
+                  source={{ 
+                    uri: (userProfile?.user?.photo_url || userProfile?.user?.photoUrl)?.trim()
+                  }}
+                  style={[styles.profileImage, { borderRadius: wp(6) }]}
+                  onError={(error) => {
+                    console.log('Profile image load error:', error.nativeEvent?.error || error);
+                    console.log('Failed to load image URI:', userProfile?.user?.photo_url || userProfile?.user?.photoUrl);
+                  }}
+                  onLoad={() => {
+                    console.log('Profile image loaded successfully');
+                  }}
+                />
+              ) : (
+                <Image source={Images.UNCLE} style={styles.profileImage} />
+              )}
               <Text style={styles.name}>{userProfile?.user?.display_name}</Text>
               <Image source={Images.RIGHT_ARROW} style={styles.profileArrow} />
             </TouchableOpacity>

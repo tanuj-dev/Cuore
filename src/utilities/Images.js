@@ -95,7 +95,7 @@ const images = {
   CALANDER: require('../assets/images/calander.png'),
   DELETE: require('../assets/images/delete.png'),
   EYE: require('../assets/images/eye.png'),
-  PRECRIPTION: require('../assets/images/precription.png'),
+  PRECRIPTION: require('../assets/images/upload.png'), // Temporarily using upload icon
   RENEW_SUBSCRIPTION: require('../assets/images/renewsubscription.png'),
   SELECT_PERSONA: require('../assets/images/selectpersona.png'),
   DELETE_ACCOUNT: require('../assets/images/deleteaccount.png'),
@@ -119,6 +119,13 @@ const images = {
   CUORE: require('../assets/images/cuore.png'),
 
   // DM7: require('../assets/images/dm7.png'),
+
+  // Payment Icons
+  APPLE_PAY: require('../assets/images/applepay.png'),
+  CREDIT_CARD: require('../assets/images/creditcard.png'),
+
+  // Additional Icons
+  CAMERA: require('../assets/images/camera.png'),
 };
 
 export default images;

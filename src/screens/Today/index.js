@@ -40,6 +40,7 @@ import {
 } from '../../redux/slices';
 import { checkReminderThunk } from '../../redux/slices';
 import { getNotification } from '../../redux/Home/notificationThunk';
+import { dismissAlert } from '../../redux/Home/homeThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 // Constants extracted outside component
@@ -68,6 +69,7 @@ const TITLE_TO_ROUTE_MAP = {
   Meditation: 'DefaultScreen',
   'Hydration Check': 'Fitness',
   'Optional Snack': 'Fitness',
+  'Your Daily Health Win': 'Tobacco',
 };
 
 const TITLES_WITH_PAYLOAD = [
@@ -113,6 +115,31 @@ const Today = ({ navigation, route }) => {
         : '',
     [homeData?.date],
   );
+
+  // Handle dismiss alert
+  const handleDismissAlert = useCallback(async ({ userId, alertId }) => {
+    if (!userId || !alertId) {
+      console.log('Missing userId or alertId', { userId, alertId });
+      return;
+    }
+
+    try {
+      console.log('Dismissing alert:', alertId, 'for user:', userId);
+      const result = await dispatch(dismissAlert({ userId, alertId })).unwrap();
+
+      if (result.success) {
+        console.log('Alert dismissed successfully');
+        setToast('Alert dismissed successfully');
+        setToastType('success');
+        // Optionally refresh home data to update UI
+        dispatch(getHomeData(userId));
+      }
+    } catch (error) {
+      console.log('Error dismissing alert:', error);
+      setToast(error.message || 'Failed to dismiss alert');
+      setToastType('error');
+    }
+  }, [userId, dispatch]);
 
   const dates = useMemo(() => [formattedDate], [formattedDate]);
 
@@ -209,6 +236,7 @@ const Today = ({ navigation, route }) => {
       hours,
       minutes,
     );
+    console.log(scheduledTime, 'helo there hello');
     setToast(
       `we will notify you at ${moment(scheduledTime).format('hh:mm A')}`,
     );
@@ -271,6 +299,9 @@ const Today = ({ navigation, route }) => {
           case 'dinner':
             navigation.navigate(targetRoute, { mealTime: 'LunchDinner' });
             break;
+          case 'your daily health win':
+            navigation.navigate(targetRoute, { title: 'Tobacco' })
+
 
           default:
             if (
@@ -502,8 +533,8 @@ const Today = ({ navigation, route }) => {
                     item?.type === 'red'
                       ? '#FEE4E4'
                       : item?.type === 'yellow'
-                      ? '#FFFFC5'
-                      : '#f4ba62ff',
+                        ? '#FFFFC5'
+                        : '#f4ba62ff',
                   position: 'relative',
                 }}
               >
@@ -516,8 +547,8 @@ const Today = ({ navigation, route }) => {
                       item?.type === 'red'
                         ? '#EF4444'
                         : item?.type === 'yellow'
-                        ? '#FFCE1B'
-                        : '#A16207',
+                          ? '#FFCE1B'
+                          : '#A16207',
                     marginRight: hp(0.5),
                   }}
                   source={Images.WARNING}
@@ -528,14 +559,15 @@ const Today = ({ navigation, route }) => {
                       item?.type === 'red'
                         ? '#B91C1C'
                         : item?.type === 'yellow'
-                        ? '#A16207'
-                        : '#A16207',
+                          ? '#A16207'
+                          : '#A16207',
                     marginRight: hp(2),
                   }}
                 >
                   {item?.text}
                 </Text>
-                {/* <TouchableOpacity
+                <TouchableOpacity
+                  onPress={() => handleDismissAlert({ userId, alertId: item.alertId })}
                   disabled={isCaregiver}
                   style={{ position: 'absolute', right: hp(1), top: hp(1) }}
                 >
@@ -549,7 +581,7 @@ const Today = ({ navigation, route }) => {
                     }}
                     source={Images.CROSS}
                   />
-                </TouchableOpacity> */}
+                </TouchableOpacity>
               </View>
             ))}
           </ScrollView>
@@ -598,9 +630,9 @@ const Today = ({ navigation, route }) => {
                   prev.map(reminder =>
                     reminder.id === item.id
                       ? {
-                          ...reminder,
-                          alarm_notified: !reminder.alarm_notified,
-                        }
+                        ...reminder,
+                        alarm_notified: !reminder.alarm_notified,
+                      }
                       : reminder,
                   ),
                 );

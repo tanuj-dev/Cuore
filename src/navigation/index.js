@@ -1,22 +1,18 @@
 import React from 'react';
 import {
   View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
   Image,
   Platform,
 } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 
 import images from '../utilities/Images';
-import { hp, wp } from '../utilities';
 
 // Screens
 import Login from '../screens/Login';
@@ -30,7 +26,6 @@ import ScoreMeter from '../screens/ScoreMeter';
 import Today from '../screens/Today';
 import Predict from '../screens/Predict';
 import Explore from '../screens/Explore';
-import Chat from '../screens/Chat';
 import Profile from '../screens/Profile';
 import Tobacco from '../screens/CuoreTobacco';
 import Mind from '../screens/CuoreMind';
@@ -60,39 +55,40 @@ import MealBuilder2 from '../screens/MealBuilder2';
 import Recipe from '../screens/Recipe';
 import Doctor from '../screens/Doctor';
 import Health from '../screens/Health';
-import { ExploreStack } from './ExploreStack';
 import Search from '../screens/Search/search';
+
+import { ExploreStack } from './ExploreStack';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+/* -------------------- BOTTOM TABS -------------------- */
 function BottomTabNavigator() {
   const insets = useSafeAreaInsets();
-  console.log('Safe area insets:', insets);
-  // 🔹 Detect navigation mode:
-  // Gesture navigation devices have a bottom inset > 0.
-  // 3-button navigation phones usually have bottom inset == 0.
-  const extraMarginBottom =
-    Platform.OS === 'android' && insets.bottom === (0 || 48) ? 44 : 0;
+
+  // ✅ PROFILE IMAGE FROM REDUX
+  const profileImage = useSelector(
+    state =>
+      state?.profile?.data?.data?.user?.photo_url ||
+      state?.profile?.data?.data?.user?.photoUrl
+  );
+
+  const profileImageSource = profileImage
+    ? { uri: profileImage }
+    : images.PROFILE;
 
   return (
     <SafeAreaView
-      style={{
-        // paddingTop: Platform.OS === 'android' ? 35 : 0,
-        flex: 1,
-        backgroundColor: Platform.OS === 'android' ? 'black' : 'white',
-      }}
-      edges={[Platform.OS === 'android' ? 'bottom' : 'none']}
+      style={{ flex: 1, backgroundColor: 'white' }}
+      edges={['bottom']}
     >
       <Tab.Navigator
         screenOptions={{
-          tabBarStyle: {
-            // 🔹 Add bottom margin only for Android 3-button navigation
-            // marginBottom: extraMarginBottom,
-            height: 70,
-            marginBottom: Platform.OS === 'ios' ? 5 : null,
-          },
           headerShown: false,
+          tabBarStyle: {
+            height: 50,
+            marginBottom: Platform.OS === 'ios' ? 0 : 0,
+          },
           tabBarActiveTintColor: '#1E64AC',
         }}
       >
@@ -113,11 +109,11 @@ function BottomTabNavigator() {
             ),
           }}
         />
+
         <Tab.Screen
           name="Explore"
           component={ExploreStack}
           options={{
-            unmountOnBlur: true,
             tabBarIcon: ({ color, size }) => (
               <Image
                 source={images.EXPLORE}
@@ -131,11 +127,11 @@ function BottomTabNavigator() {
             ),
           }}
         />
+
         <Tab.Screen
           name="Predict"
           component={PredictStack}
           options={{
-            unmountOnBlur: true,
             tabBarIcon: ({ color, size }) => (
               <Image
                 source={images.PREDICT}
@@ -149,11 +145,11 @@ function BottomTabNavigator() {
             ),
           }}
         />
+
         <Tab.Screen
           name="Chat"
           component={Support}
           options={{
-            unmountOnBlur: true,
             tabBarIcon: ({ color, size }) => (
               <Image
                 source={images.CHAT}
@@ -167,22 +163,30 @@ function BottomTabNavigator() {
             ),
           }}
         />
+
+        {/* ✅ PROFILE TAB WITH USER IMAGE */}
         <Tab.Screen
           name="Profile"
           component={ProfileStack}
           options={{
-            unmountOnBlur: true,
-            tabBarIcon: ({ color, size }) => (
-              <Image
-                source={images.PROFILE}
+            tabBarIcon: ({ focused }) => (
+              <View
                 style={{
-                  width: size,
-                  height: 30,
-                  borderRadius: 20,
-                  tintColor: color,
-                  resizeMode: 'contain',
+                  borderWidth: focused ? 2 : 0,
+                  borderColor: '#1E64AC',
+                  borderRadius: 18,
+                  padding: 2,
                 }}
-              />
+              >
+                <Image
+                  source={profileImageSource}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                  }}
+                />
+              </View>
             ),
           }}
         />
@@ -191,7 +195,8 @@ function BottomTabNavigator() {
   );
 }
 
-// 🔹 Stacks
+/* -------------------- STACKS -------------------- */
+
 function ProfileStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -216,7 +221,6 @@ function PredictStack() {
       <Stack.Screen name="Predict" component={Predict} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
       <Stack.Screen name="Health" component={Health} />
-      {/* <Stack.Screen name="OnBoarding" component={OnBoarding} /> */}
       <Stack.Screen name="Score" component={Score} />
     </Stack.Navigator>
   );
@@ -228,9 +232,8 @@ function TodayStack() {
       <Stack.Screen name="TodayMain" component={Today} />
       <Stack.Screen name="CalorieIgnite" component={CalorieIgnite} />
       <Stack.Screen name="MidMorningBoost" component={MidMorningBoost} />
-      <Stack.Screen name="RefrestRefuel" component={RefreshRefuel} />
+      <Stack.Screen name="RefreshRefuel" component={RefreshRefuel} />
       <Stack.Screen name="Health" component={Health} />
-      {/* <Stack.Screen name="OnBoarding" component={OnBoarding} /> */}
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
       <Stack.Screen name="Score" component={Score} />
       <Stack.Screen name="Nutrition" component={Nutrition} />
@@ -238,22 +241,21 @@ function TodayStack() {
       <Stack.Screen name="Fitness" component={Fitness} />
       <Stack.Screen name="FitnessDetails" component={FitnessDetails} />
       <Stack.Screen name="MindDetails" component={MindDetails} />
-      <Stack.Screen name="RefreshRefuel" component={RefreshRefuel} />
       <Stack.Screen name="MealBuilder" component={MealBuilder} />
       <Stack.Screen name="MealBuilder1" component={MealBuilder1} />
       <Stack.Screen name="MealBuilder2" component={MealBuilder2} />
       <Stack.Screen name="Recipe" component={Recipe} />
       <Stack.Screen name="Search" component={Search} />
+      <Stack.Screen name="Tobacco" component={Tobacco} />
     </Stack.Navigator>
   );
 }
 
+/* -------------------- ROOT NAVIGATOR -------------------- */
+
 export default function Navigator() {
   return (
-    <SafeAreaView
-      edges={Platform.OS === 'android' ? ['top'] : ['none']}
-      style={{ flex: 1, backgroundColor: 'white' }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{ headerShown: false }}
@@ -264,8 +266,9 @@ export default function Navigator() {
         <Stack.Screen name="NewAccount" component={NewAccount} />
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="OnBoarding" component={OnBoarding} />
-        <Stack.Screen name="Score" component={Score} />
         <Stack.Screen name="Home" component={BottomTabNavigator} />
+        <Stack.Screen name="Score" component={Score} />
+        <Stack.Screen name="ScoreMeter" component={ScoreMeter} />
         <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
         <Stack.Screen name="Checkout" component={Checkout} />
         <Stack.Screen name="Tobacco" component={Tobacco} />
@@ -273,28 +276,10 @@ export default function Navigator() {
         <Stack.Screen name="Fitness" component={Fitness} />
         <Stack.Screen name="FitnessDetails" component={FitnessDetails} />
         <Stack.Screen name="MindDetails" component={MindDetails} />
-        <Stack.Screen name="EditProfile" component={EditProfile} />
-        <Stack.Screen name="EditCaregiver" component={EditCaregive} />
-        <Stack.Screen name="EditDoctor" component={EditDoctor} />
-        <Stack.Screen name="SelectPersona" component={SelectPersona} />
-        <Stack.Screen name="HealthRecords" component={HealthRecords} />
-        <Stack.Screen name="Support" component={Support} />
-        <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
-        <Stack.Screen name="TermsAndConditions" component={TermsAndCondtion} />
-        <Stack.Screen name="RenewSubscription" component={RenewSubscription} />
         <Stack.Screen name="CuoreKnowledge" component={CuoreKnowledge} />
         <Stack.Screen name="KnowledgeDetails" component={KnowledgeDetails} />
-        <Stack.Screen name="Nutrition" component={Nutrition} />
-        <Stack.Screen name="CalorieIgnite" component={CalorieIgnite} />
-        <Stack.Screen name="MidMorningBoost" component={MidMorningBoost} />
-        <Stack.Screen name="RefreshRefuel" component={RefreshRefuel} />
-        <Stack.Screen name="MealBuilder" component={MealBuilder} />
-        <Stack.Screen name="MealBuilder1" component={MealBuilder1} />
-        <Stack.Screen name="MealBuilder2" component={MealBuilder2} />
-        <Stack.Screen name="Recipe" component={Recipe} />
         <Stack.Screen name="Doctor" component={Doctor} />
         <Stack.Screen name="Health" component={Health} />
-        <Stack.Screen name="ScoreMeter" component={ScoreMeter} />
       </Stack.Navigator>
     </SafeAreaView>
   );

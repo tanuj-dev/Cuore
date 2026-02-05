@@ -105,7 +105,7 @@ const CreateAccountScreen = () => {
         Alert.alert(
           'Account Created',
           resultAction.payload?.message ||
-            'Account created successfully. Please verify OTP.',
+          'Account created successfully. Please verify OTP.',
           [
             {
               text: 'OK',
@@ -131,7 +131,7 @@ const CreateAccountScreen = () => {
         Alert.alert(
           'Error',
           resultAction.payload?.message ||
-            'Failed to create account. Please try again.',
+          'Failed to create account. Please try again.',
         );
       }
     } catch (error) {
@@ -287,21 +287,20 @@ const CreateAccountScreen = () => {
               </View>
             </TouchableOpacity>
             <Text style={styles.checkboxLabel}>
-              I have read and agree to the{' '}
+              By clicking, I accept the{' '}
               <Text
                 style={styles.link}
-                onPress={() => Linking.openURL('https://example.com/terms')}
+                onPress={() => Linking.openURL('https://cuore.health/terms')}
               >
-                Terms and Conditions
-              </Text>{' '}
-              and{' '}
-              <Text
-                style={styles.link}
-                onPress={() => Linking.openURL('https://example.com/privacy')}
-              >
-                Privacy Policy
+                Terms & Conditions
               </Text>
-              .
+              {' '}and{' '}
+              <Text
+                style={styles.link}
+                onPress={() => Linking.openURL('https://cuore.health/privacy')}
+              >
+                Privacy
+              </Text>
             </Text>
           </View>
 

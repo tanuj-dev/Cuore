@@ -57,3 +57,61 @@ export const updateLastConsulted = createAsyncThunk(
     }
   },
 );
+
+export const dismissAlert = createAsyncThunk(
+  'home/dismissAlert',
+  async ({ userId, alertId }, { rejectWithValue }) => {
+    console.log('[dismissAlert] Attempting to dismiss alert with ID:', alertId, 'for user:', userId);
+
+    // Validate parameters
+    if (!userId) {
+      console.log('[dismissAlert] Error: userId is missing or invalid');
+      return rejectWithValue('User ID is required');
+    }
+
+    if (!alertId) {
+      console.log('[dismissAlert] Error: alertId is missing or invalid');
+      return rejectWithValue('Alert ID is required');
+    }
+
+    // Check if parameters are valid types
+    if (typeof userId !== 'string' && typeof userId !== 'number') {
+      console.log('[d\\ismissAlert] Error: userId is not a valid type:', typeof userId);
+      return rejectWithValue('Invalid user ID format');
+    }
+    if (typeof alertId !== 'string' && typeof alertId !== 'number') {
+      console.log('[dismissAlert] Error: alertId is not a valid type:', typeof alertId);
+      return rejectWithValue('Invalid alert ID format');
+    }
+
+    try {
+      console.log('[dismissAlert] Making API call to endpoint:', `/api/v1/timeline/${userId}/dismiss-alert`);
+      console.log('[dismissAlert] Sending alertId in body:', { alertId });
+
+      const endpoint = `/api/v1/timeline/${userId}/dismiss-alert`;
+      const response = await postApiCall(endpoint, { alertId });
+
+      console.log('[dismissAlert] API Response Status:', response?.status);
+      console.log('[dismissAlert] API Response Data:', response?.data);
+
+      if (response?.status === 200) {
+        console.log('[dismissAlert] Alert dismissed successfully');
+        return { alertId, success: true };
+      } else {
+        console.log('[dismissAlert] API returned non-200 status:', response?.status);
+        return rejectWithValue(
+          response?.data?.message || response?.data || 'Failed to dismiss alert'
+        );
+      }
+    } catch (error) {
+      console.log('[dismissAlert] Network/API Error:', error);
+      console.log('[dismissAlert] Error response:', error.response);
+      return rejectWithValue(
+        error.response?.data?.message ||
+        error.response?.data ||
+        error.message ||
+        'Failed to dismiss alert due to network error'
+      );
+    }
+  }
+);

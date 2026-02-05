@@ -93,12 +93,12 @@ const convertToChartData = ({ graph, history }) => {
     datasets: chartDatasets.length
       ? chartDatasets
       : [
-          {
-            data: Array(labels.length).fill(0),
-            color: () => '#ccc',
-            label: 'No Data',
-          },
-        ],
+        {
+          data: Array(labels.length).fill(0),
+          color: () => '#ccc',
+          label: 'No Data',
+        },
+      ],
   };
 };
 
@@ -283,7 +283,7 @@ const Predict = ({ navigation }) => {
                   </Text>
                   <View style={styles.switchContainer}>
                     <TouchableOpacity
-                      hitSlop={HIT_SLOP}
+                      // hitSlop={HIT_SLOP}
                       onPress={() => handleToggleShowData(item?.title)}
                       style={styles.showDataButton}
                     >
@@ -318,24 +318,24 @@ const Predict = ({ navigation }) => {
                   renderDotContent={
                     isShowDataVisible
                       ? ({ x, y, index: dotIndex, indexData }) => {
-                          if (indexData === null || indexData === undefined) {
-                            return null;
-                          }
-                          return (
-                            <Text
-                              key={`chart-${dotIndex}-dot-${indexData}`}
-                              style={[
-                                styles.dotText,
-                                {
-                                  left: x - 10,
-                                  top: y - 15,
-                                },
-                              ]}
-                            >
-                              {Math.round(indexData)}
-                            </Text>
-                          );
+                        if (indexData === null || indexData === undefined) {
+                          return null;
                         }
+                        return (
+                          <Text
+                            key={`chart-${dotIndex}-dot-${indexData}`}
+                            style={[
+                              styles.dotText,
+                              {
+                                left: x - 10,
+                                top: y - 15,
+                              },
+                            ]}
+                          >
+                            {Math.round(indexData)}
+                          </Text>
+                        );
+                      }
                       : undefined
                   }
                   withShadow={false}

@@ -10,122 +10,81 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import images from '../../utilities/Images';
 import { hp, wp } from '../../utilities';
+import { useSelector } from 'react-redux';
+
+const IMAGE_SIZE = hp(3);
+const PROGRESS_BAR_WIDTH = 300;
 
 const ProgressBarWithImage = ({ navigation, data }) => {
-  console.log('ProgressBar data:', data);
   const progress = data?.periods?.[0]?.value || 0;
-  const progressBarWidth = 300;
   const animatedLeft = useRef(new Animated.Value(0)).current;
 
+  // ✅ profile image
+  const profileImage = useSelector(
+    state =>
+      state?.profile?.data?.data?.user?.photo_url ||
+      state?.profile?.data?.data?.user?.photoUrl
+  );
+
+  const profileImageSource = profileImage
+    ? { uri: profileImage }
+    : images.UNCLE;
+
   useEffect(() => {
-    const targetLeft = (progress / 100) * progressBarWidth;
+    const targetLeft =
+      (progress / 100) * (PROGRESS_BAR_WIDTH - IMAGE_SIZE);
 
     Animated.timing(animatedLeft, {
       toValue: targetLeft,
-      duration: 1000,
+      duration: 800,
       useNativeDriver: false,
     }).start();
-  }, [progress]);
+  }, [progress, animatedLeft]);
 
   return (
     <TouchableOpacity
-      onPress={() => {
-        const params = { navigateTo: 'Home', screen: 'Score' };
-        console.log('Navigating to Score with params:', params);
-        // Navigate to root Score screen, not the nested one
-        const rootNavigation =
-          navigation.getParent()?.getParent() ||
-          navigation.getParent() ||
-          navigation;
-        rootNavigation.navigate('Score', params);
-      }}
       style={styles.container}
+      activeOpacity={0.9}
+      onPress={() => navigation.navigate('Score')}
     >
+      {/* Labels */}
       <View style={styles.labelRow}>
         <Text style={styles.label}>
-          {data?.periods[0].programTimeline.startMonth}
+          {data?.periods?.[0]?.programTimeline?.startMonth}
         </Text>
-        {/* <Text style={styles.label}>Dec '24</Text> */}
         <Text style={styles.label}>
-          {data?.periods[0].programTimeline.targetMonth}
+          {data?.periods?.[0]?.programTimeline?.targetMonth}
         </Text>
       </View>
 
+      {/* Progress bar */}
       <View style={{ alignItems: 'center' }}>
         <View style={styles.progressContainer}>
           <LinearGradient
             colors={['#d5393c', '#f0b323', '#30c96d']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={[styles.progressBar, { width: progressBarWidth }]}
+            style={[styles.progressBar, { width: PROGRESS_BAR_WIDTH }]}
           />
         </View>
 
+        {/* ✅ SINGLE animated indicator */}
         <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: hp(2.5),
-            zIndex: 1000,
-            elevation: 5,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            backgroundColor: '#FFFFFF',
-            borderRadius: hp(5),
-            padding: hp(0.5),
-            left: animatedLeft,
-          }}
+          style={[
+            styles.indicatorContainer,
+            { left: animatedLeft },
+          ]}
         >
-          <TouchableOpacity onPress={() => navigation.navigate('Score')}>
-            <Image
-              source={images.UNCLE}
-              style={{
-                height: hp(3),
-                width: hp(3),
-                borderRadius: hp(3),
-                resizeMode: 'cover',
-              }}
-            />
-          </TouchableOpacity>
+          <Image
+            source={profileImageSource}
+            style={styles.profileImage}
+          />
+          <Text style={styles.percentText}>
+            {Math.round(progress)}%
+          </Text>
         </Animated.View>
 
-        <Animated.View
-          style={{
-            flexDirection: 'row',
-            position: 'absolute',
-            bottom: hp(2.5),
-            alignItems: 'center',
-            zIndex: 1000,
-            height: hp(4),
-            width: hp(6),
-            borderRadius: hp(5),
-            padding: hp(0.5),
-            left: animatedLeft,
-            top: hp(2),
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Score')}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginLeft: hp(0),
-            }}
-          >
-            {/* <Image
-              source={images.FLAG}
-              style={{
-                width: 14,
-                height: 14,
-                marginRight: 4,
-                resizeMode: 'contain',
-              }}
-            /> */}
-            <Text style={styles.percentText}>{Math.round(progress)}%</Text>
-          </TouchableOpacity>
-        </Animated.View>
-
+        {/* Percent row */}
         <View style={styles.percentRow}>
           <Text style={styles.percentText}>0%</Text>
           <Text style={styles.percentText}>{data?.goal}</Text>
@@ -147,34 +106,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: hp(2),
   },
   label: {
-    fontFamily: 'Roboto-Regular',
-    color: '#4B5563',
     fontSize: 14,
     fontWeight: '600',
+    color: '#4B5563',
   },
   progressContainer: {
-    position: 'relative',
     height: 12,
     borderRadius: 6,
     overflow: 'hidden',
-    justifyContent: 'center',
   },
   progressBar: {
     height: 12,
     borderRadius: 6,
   },
-  profileImage: {
-    right: -13,
-    resizeMode: 'contain',
+  indicatorContainer: {
     position: 'absolute',
-    margin: 0,
-    width: hp(3.5),
-    height: hp(3.5),
-    borderRadius: 20,
+    top: -hp(2),
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: IMAGE_SIZE,
+    height: IMAGE_SIZE,
+    borderRadius: IMAGE_SIZE / 2,
     borderWidth: 2,
-    borderColor: 'white',
-    bottom: -9,
-    zIndex: 100,
+    borderColor: '#FFF',
+    backgroundColor: '#FFF',
   },
   percentRow: {
     flexDirection: 'row',
@@ -183,15 +139,10 @@ const styles = StyleSheet.create({
     width: wp(80),
   },
   percentText: {
-    fontFamily: 'Roboto-Regular',
     fontSize: 14,
-    color: '#4B5563',
     fontWeight: '600',
-  },
-  centerIndicator: {
-    marginHorizontal: hp(12),
-    flexDirection: 'row',
-    alignItems: 'center',
+    color: '#4B5563',
+    marginTop: 4,
   },
 });
 
