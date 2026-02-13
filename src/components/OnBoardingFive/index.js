@@ -132,7 +132,7 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
           style={styles.timeButton}
           onPress={() => setShowTimePicker(true)}
         >
-          <Text style={{ fontFamily: 'Roboto-Regular', fontSize: wp(4) }}>
+          <Text style={{ fontFamily: 'Poppins-Regular', fontSize: wp(4) }}>
             {formatTime(time)}
           </Text>
           <Image
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     width: '100%',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#E2E8F0',
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
@@ -264,16 +264,16 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   question: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: wp(3.6),
-    fontWeight: '450',
+    
     marginTop: hp(2),
     marginBottom: hp(2),
     color: color.QUESTION_COLOR,
   },
   note: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3),
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13, letterSpacing: 0.1,
     color: color.NOTE_COLOR,
     marginBottom: hp(1),
   },
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     height: wp(4.5),
     borderRadius: wp(2.25),
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
+    borderColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3),
@@ -297,13 +297,13 @@ const styles = StyleSheet.create({
     width: wp(2.5),
     height: wp(2.5),
     borderRadius: wp(1.25),
-    backgroundColor: '#007bff',
+    backgroundColor: '#11418A',
   },
   checkbox: {
     width: wp(4.5),
     height: wp(4.5),
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
+    borderColor: '#E2E8F0',
     borderRadius: hp(3),
     marginRight: wp(3),
     justifyContent: 'center',
@@ -312,12 +312,12 @@ const styles = StyleSheet.create({
   checkboxTick: {
     width: wp(2.5),
     height: wp(2.5),
-    backgroundColor: '#007bff',
+    backgroundColor: '#11418A',
     borderRadius: hp(2),
   },
   optionText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.5),
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14, letterSpacing: 0.2,
     color: color.ANSWER_COLOR,
     flex: 1,
   },
@@ -330,8 +330,8 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   dropdownText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.5),
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14, letterSpacing: 0.2,
     color: '#555',
   },
   dayRow: {
@@ -349,35 +349,35 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   selectedDayChip: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#11418A',
   },
   dayText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: wp(3.2),
     color: '#333',
   },
   selectedDayText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     color: '#fff',
   },
   errorText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: wp(3.2),
     color: '#DC2626',
     marginTop: hp(0.5),
   },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#11418A',
     paddingVertical: hp(1.8),
     borderRadius: wp(2.5),
     alignItems: 'center',
     marginBottom: hp(3),
   },
   buttonText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     color: '#fff',
-    fontSize: wp(4),
-    fontWeight: '600',
+    fontSize: 15, letterSpacing: 0.3,
+    
   },
   datePickerWrapper: {
     backgroundColor: '#FFFFFF',

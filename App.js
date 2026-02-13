@@ -40,9 +40,14 @@ const AppContent = () => {
 
   const checkConnectivity = useCallback(async () => {
     try {
-      // Use network utility to check connection
-      const connected = await Common.checkNetworkConnection();
-      setIsConnected(connected);
+      const hasNetwork = await Common.checkNetworkConnection();
+      if (!hasNetwork) {
+        setIsConnected(false);
+        return;
+      }
+      // Verify actual internet (not just interface up) so modal only dismisses when we can reach the web
+      const hasInternet = await Common.checkInternetConnectivity(4000);
+      setIsConnected(hasInternet);
     } catch (error) {
       console.warn('Error checking connectivity:', error);
       setIsConnected(false);

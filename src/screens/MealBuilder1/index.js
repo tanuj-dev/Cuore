@@ -10,6 +10,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 import LimitExceededModal from '../../components/LimitExceedModa';
@@ -116,11 +117,12 @@ const MealBuilder1 = ({ navigation, route }) => {
   };
 
   return (
-    <ScrollView style={{}}>
+    <ScrollView style={styles.scroll}>
       <ImageBackground
         style={styles.backgroundImage}
         source={Images.BACKGROUND_IMAGE_NUTRITION}
       >
+        <View style={styles.headerOverlay} />
         <TouchableOpacity
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           onPress={() => navigation.goBack()}
@@ -133,172 +135,58 @@ const MealBuilder1 = ({ navigation, route }) => {
           <Text style={styles.title}>Cuore MealBuilder</Text>
         </View>
 
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: hp(2),
-            paddingHorizontal: hp(4),
-            alignItems: 'center',
-          }}
-        >
-          <View>
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '400',
-                color: '#171615',
-              }}
-            >
+        <View style={styles.headerRow}>
+          <View style={styles.headerRowLeft}>
+            <Text style={styles.itemsSelectedText} numberOfLines={1}>
               {selectedItems.length} items selected
             </Text>
           </View>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {selectedItems.length > maxAllowed && (
-              <>
-                <Image
-                  style={[styles.backButton, { marginRight: hp(1) }]}
-                  source={Images.WARNING}
-                />
-                <Text
-                  style={{
-                    fontFamily: 'Roboto-Regular',
-                    fontSize: 14,
-                    fontWeight: '400',
-                    color: '#DF3938',
-                  }}
-                >
-                  max 4 allowed
-                </Text>
-              </>
-            )}
-          </View>
+          {selectedItems.length > maxAllowed && (
+            <View style={styles.warningRow}>
+              <Image
+                style={styles.warningIcon}
+                source={Images.WARNING}
+              />
+              <Text style={styles.warningText}>max 4 allowed</Text>
+            </View>
+          )}
         </View>
       </ImageBackground>
 
       {selectedItems.length === 0 ? (
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: hp(50),
-          }}
-        >
-          <Image
-            source={Images.EMPTY_CART}
-            style={{
-              resizeMode: 'stretch',
-              // tintColor: '#6B7280',
-              height: hp(20),
-              width: hp(20),
-              marginBottom: hp(2),
-            }}
-          />
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: '500',
-              color: '#6B7280',
-            }}
-          >
-            No items selected.
-          </Text>
+        <View style={styles.emptyState}>
+          <Image source={Images.EMPTY_CART} style={styles.emptyImage} />
+          <Text style={styles.emptyText}>No items selected.</Text>
         </View>
       ) : null}
 
-      <View style={{ flex: 1, backgroundColor: '#F9FAFB', padding: wp(4) }}>
+      <View style={styles.contentWrap}>
         <FlatList
           data={selectedItems}
-          keyExtractor={item => item.id}
+          keyExtractor={(item, index) => String(item?.id ?? item?.dishname ?? index)}
           renderItem={({ item }) => (
-            // console.log('Rendering item:', item),
-            <View
-              style={{
-                marginHorizontal: hp(1),
-                backgroundColor: '#FFFFFF',
-                padding: hp(1.5),
-                borderRadius: hp(1),
-                marginVertical: hp(0.5),
-                elevation: 2, // Android
-                shadowColor: '#000', // iOS
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View
-                  style={{
-                    height: hp(1.5),
-                    width: hp(1.5),
-                    borderRadius: hp(1),
-                    backgroundColor: 'red',
-                    marginRight: wp(3),
-                  }}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '400',
-                      color: '#000000',
-                    }}
-                  >
-                    {item?.dishname}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: hp(1.6),
-                      color: '#6B7280',
-                      marginTop: hp(0.5),
-                    }}
-                  >
-                    {item?.calories} cal
-                  </Text>
+            <View style={styles.dishCard}>
+              <View style={styles.dishRow}>
+                <View style={styles.dishDot} />
+                <View style={styles.dishInfo}>
+                  <Text style={styles.dishName}>{item?.dishname}</Text>
+                  <Text style={styles.dishCal}>{item?.calories} cal</Text>
                 </View>
               </View>
 
-              {/* increment decrement button */}
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginTop: hp(2),
-                  marginLeft: hp(2.5),
-                }}
-              >
+              <View style={styles.portionRow}>
                 <TouchableOpacity
                   onPress={() => decrement(item?.id)}
-                  style={{
-                    height: hp(3),
-                    width: hp(3),
-                    borderRadius: hp(2),
-                    backgroundColor: '#eee',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+                  style={styles.portionBtn}
                 >
-                  <Text style={{ fontSize: hp(2) }}>-</Text>
+                  <Text style={styles.portionBtnText}>−</Text>
                 </TouchableOpacity>
-                <Text style={{ marginHorizontal: wp(2), fontSize: hp(2) }}>
-                  {item.count}
-                </Text>
+                <Text style={styles.countText}>{item.count}</Text>
                 <TouchableOpacity
                   onPress={() => increment(item.id)}
-                  style={{
-                    height: hp(3),
-                    width: hp(3),
-                    borderRadius: hp(2),
-                    backgroundColor: '#eee',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+                  style={styles.portionBtn}
                 >
-                  <Text style={{ fontSize: hp(1.5) }}>+</Text>
+                  <Text style={styles.portionBtnText}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -306,35 +194,17 @@ const MealBuilder1 = ({ navigation, route }) => {
         />
 
         {selectedItems?.length > 0 && (
-          <View
-            style={{
-              padding: hp(2),
-              borderTopWidth: 1,
-              borderColor: '#ddd',
-              marginTop: hp(1),
-              alignItems: 'flex-end',
-            }}
-          >
-            <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
-              Total Calories:{' '}
-              <Text style={{ fontWeight: 'bold' }}>{totalCalories}</Text>
+          <View style={styles.summaryBox}>
+            <Text style={styles.summaryText}>
+              Total Calories: <Text style={styles.summaryBold}>{totalCalories}</Text>
             </Text>
             {totalCalories > TargetCalories && (
-              <Text
-                style={{ fontSize: 14, fontWeight: '400', color: '#DC2626' }}
-              >
+              <Text style={styles.extraText}>
                 Extra: {totalCalories - TargetCalories} calories
               </Text>
             )}
             {selectedItems?.length < 2 && (
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '400',
-                  color: '#DC2626',
-                  marginTop: hp(0.5),
-                }}
-              >
+              <Text style={styles.noteText}>
                 Note: Balance your meal by adding more dishes
               </Text>
             )}
@@ -344,29 +214,13 @@ const MealBuilder1 = ({ navigation, route }) => {
         {selectedItems?.length > 0 && (
           <TouchableOpacity
             onPress={handleAdjustPortions}
-            style={{
-              backgroundColor: '#1E64AC',
-              marginHorizontal: wp(20),
-              marginTop: hp(2),
-              padding: hp(1.5),
-              alignItems: 'center',
-              borderRadius: hp(1),
-              // marginBtom: hp(20),
-            }}
+            style={styles.adjustButton}
+            disabled={loading}
           >
             {loading ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Text
-                style={{
-                  fontFamily: 'Roboto-Regular',
-                  fontSize: 14,
-                  fontWeight: '500',
-                  color: '#FFFFFF',
-                }}
-              >
-                Adjust Portions
-              </Text>
+              <Text style={styles.adjustButtonText}>Adjust Portions</Text>
             )}
           </TouchableOpacity>
         )}
@@ -380,32 +234,210 @@ const MealBuilder1 = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1, backgroundColor: '#F8FAFC' },
   backgroundImage: {
-    height: hp(20),
-    padding: hp(2),
+    height: hp(24),
+    paddingHorizontal: wp(4),
+    paddingTop: Platform.OS === 'ios' ? hp(2) : hp(1),
+    paddingBottom: hp(2),
     borderBottomWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
+  },
+  headerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
   },
   headerContainer: {
-    marginTop: Platform.OS == 'ios' && hp(4),
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   backButton: {
-    marginTop: Platform.OS == 'ios' ? hp(0) : hp(1),
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),
   },
   titleContainer: {
     alignItems: 'center',
-    marginTop: hp(2),
+    marginTop: hp(0.5),
   },
   title: {
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontWeight: '400',
-    fontFamily: 'Roboto-Regular',
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: hp(2),
+    paddingHorizontal: hp(1),
+  },
+  headerRowLeft: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: wp(2),
+  },
+  itemsSelectedText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  warningRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  warningIcon: {
+    width: wp(5),
+    height: hp(2.5),
+    marginRight: wp(1.5),
+    resizeMode: 'contain',
+  },
+  warningText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#DC2626',
+    letterSpacing: 0.2,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: hp(50),
+  },
+  emptyImage: {
+    resizeMode: 'contain',
+    height: hp(20),
+    width: hp(20),
+    marginBottom: hp(2),
+  },
+  emptyText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16,
+    color: '#64748B',
+    letterSpacing: 0.2,
+  },
+  contentWrap: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    padding: wp(4),
+    paddingBottom: hp(6),
+  },
+  dishCard: {
+    marginHorizontal: hp(1),
+    backgroundColor: '#FFFFFF',
+    padding: hp(2),
+    borderRadius: 12,
+    marginVertical: hp(0.75),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    ...(Platform.OS === 'android' && { elevation: 1 }),
+  },
+  dishRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dishDot: {
+    height: hp(1.5),
+    width: hp(1.5),
+    borderRadius: hp(0.75),
+    backgroundColor: 'red',
+    marginRight: wp(3),
+  },
+  dishInfo: { flex: 1 },
+  dishName: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  dishCal: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 4,
+    letterSpacing: 0.2,
+  },
+  portionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: hp(1.5),
+    marginLeft: hp(0.5),
+  },
+  portionBtn: {
+    height: hp(3.5),
+    width: hp(3.5),
+    borderRadius: hp(1.75),
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  portionBtnText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 18,
+    color: '#11418A',
+  },
+  countText: {
+    fontFamily: 'Poppins-Medium',
+    marginHorizontal: wp(3),
+    fontSize: 16,
+    color: '#1E293B',
+  },
+  summaryBox: {
+    padding: hp(2),
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
+    marginTop: hp(1),
+    alignItems: 'flex-end',
+  },
+  summaryText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#475569',
+    letterSpacing: 0.2,
+  },
+  summaryBold: {
+    fontFamily: 'Poppins-Medium',
+    color: '#1E293B',
+  },
+  extraText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#DC2626',
+    marginTop: 4,
+    letterSpacing: 0.2,
+  },
+  noteText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#DC2626',
+    marginTop: hp(0.5),
+    letterSpacing: 0.2,
+  },
+  adjustButton: {
+    backgroundColor: '#11418A',
+    marginHorizontal: wp(10),
+    marginTop: hp(2),
+    paddingVertical: hp(1.5),
+    alignItems: 'center',
+    borderRadius: 12,
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    ...(Platform.OS === 'android' && { elevation: 2 }),
+  },
+  adjustButtonText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
 });
 

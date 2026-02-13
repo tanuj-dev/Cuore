@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Image,
-  Platform,
-} from 'react-native';
+import { View, Image, Platform } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
@@ -70,7 +66,7 @@ function BottomTabNavigator() {
   const profileImage = useSelector(
     state =>
       state?.profile?.data?.data?.user?.photo_url ||
-      state?.profile?.data?.data?.user?.photoUrl
+      state?.profile?.data?.data?.user?.photoUrl,
   );
 
   const profileImageSource = profileImage
@@ -89,7 +85,7 @@ function BottomTabNavigator() {
             height: 50,
             marginBottom: Platform.OS === 'ios' ? 0 : 0,
           },
-          tabBarActiveTintColor: '#1E64AC',
+          tabBarActiveTintColor: '#11418A',
         }}
       >
         <Tab.Screen
@@ -129,7 +125,7 @@ function BottomTabNavigator() {
         />
 
         <Tab.Screen
-          name="Predict"
+          name="Trend"
           component={PredictStack}
           options={{
             tabBarIcon: ({ color, size }) => (
@@ -173,7 +169,7 @@ function BottomTabNavigator() {
               <View
                 style={{
                   borderWidth: focused ? 2 : 0,
-                  borderColor: '#1E64AC',
+                  borderColor: '#11418A',
                   borderRadius: 18,
                   padding: 2,
                 }}

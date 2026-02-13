@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,57 +6,24 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Platform,
 } from 'react-native';
-import Tts from 'react-native-tts';
-import { hp, wp } from '../../utilities';
-import { Play, Pause, StopCircle, Images } from 'lucide-react-native'; // Optional icon lib
-// import {  } from 'react-native-svg';
-import images from '../../utilities/Images';
+import { hp, wp, Images } from '../../utilities';
 
 const Recipe = ({ navigation, route }) => {
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  console.log('Route params in Recipe screen:', route.params);
-  const { recipeData } = route.params;
-  console.log('Recipe Data:', recipeData);
+  const recipeData = route?.params?.recipeData;
   const { ingredients, instructions } = recipeData || {};
-
-  // console.log('Received recipe data:', recipeData);
 
   if (!recipeData || recipeData.message === 'Recipe not found.') {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: 24,
-          backgroundColor: '#F9FAFB',
-        }}
-      >
+      <View style={styles.emptyScreen}>
         <Image
-          source={Images.EMPTY_STATE_ICON} // Replace with your own image or icon
-          style={{ width: 120, height: 120, marginBottom: 20 }}
+          source={Images.EMPTY_CART}
+          style={styles.emptyImage}
           resizeMode="contain"
         />
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: '600',
-            color: '#195d9dff',
-            marginBottom: 8,
-          }}
-        >
-          No recipe found
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: '#6B7280',
-            textAlign: 'center',
-            lineHeight: 20,
-            fontFamily: 'Roboto-Regular',
-          }}
-        >
+        <Text style={styles.emptyTitle}>No recipe found</Text>
+        <Text style={styles.emptyMessage}>
           We couldn’t find a recipe for this particular dish. Please try another
           one or check back later.
         </Text>
@@ -64,68 +31,22 @@ const Recipe = ({ navigation, route }) => {
     );
   }
 
-  const onSpeak = () => {
-    Tts.stop();
-    setIsSpeaking(true);
-    Tts.speak('Let me tell you how to make Rava Upma.');
-    recipeSteps.forEach(step => Tts.speak(step));
-  };
-
-  const onPause = () => {
-    Tts.pause();
-    setIsSpeaking(false);
-  };
-
-  const onStop = () => {
-    Tts.stop();
-    setIsSpeaking(false);
-  };
-
   return (
-    <ScrollView style={{ backgroundColor: '#F3F4F6' }}>
-      <View style={{ flex: 1, backgroundColor: '' }}>
-        <View style={{ backgroundColor: '#F3F4F6', padding: hp(2) }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginTop: Platform.OS == 'ios' ? hp(4) : hp(1.5),
-              //   paddingHorizontal: hp(1),
-            }}
+    <ScrollView style={styles.scroll}>
+      <View style={styles.screen}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
           >
-            <TouchableOpacity
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              onPress={() => navigation.goBack()}
-            >
-              <Image
-                style={{
-                  height: hp(3),
-                  width: wp(4),
-                  resizeMode: 'contain',
-                  tintColor: '#000000',
-                }}
-                source={images.BACK_BUTTON}
-              ></Image>
-            </TouchableOpacity>
-
-            {/* <Image
-              style={{
-                height: hp(3),
-                width: wp(4),
-                resizeMode: 'contain',
-                tintColor: '#1E64AC',
-              }}
-              source={images.SHARE_4}
-            ></Image> */}
-          </View>
-
-          {/* Controls */}
+            <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
+          </TouchableOpacity>
         </View>
         <View style={styles.container}>
           <Text style={styles.measurements}>
             1 katori = 150ml, 1 Cup = 200ml, 1 Bowl = 300ml
           </Text>
-          {/* Instructions */}
           <View style={styles.card}>
             <View>
               <View style={styles.recipeHeader}>
@@ -149,11 +70,10 @@ const Recipe = ({ navigation, route }) => {
 
               <Text style={styles.sectionTitle}>Ingredients:</Text>
 
-              {/* ingredients  */}
               {ingredients?.map((item, index) => (
                 <View key={`ingredient-${index}`} style={styles.ingredientRow}>
                   <View
-                    key={`substep-${index}-${item.name}`}
+                    key={`substep-${index}-${item?.name}`}
                     style={styles.stepRow}
                   >
                     <View style={styles.stepBadge}>
@@ -166,9 +86,7 @@ const Recipe = ({ navigation, route }) => {
                 </View>
               ))}
             </View>
-            <Text style={[styles.sectionTitle, { marginTop: hp(3) }]}>
-              Instructions:
-            </Text>
+            <Text style={styles.sectionTitleSpaced}>Instructions:</Text>
             {instructions?.map((step, index) => (
               <View key={`step-${index}`} style={styles.stepSection}>
                 {step?.heading?.toLowerCase() !== 'instructions' && (
@@ -196,53 +114,103 @@ const Recipe = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  screen: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: hp(2),
+    marginTop: Platform.OS === 'ios' ? hp(4) : hp(1.5),
+    backgroundColor: '#F8FAFC',
+  },
+  backButton: {
+    paddingVertical: hp(0.5),
+  },
+  backIcon: {
+    height: hp(3.5),
+    width: wp(4),
+    resizeMode: 'contain',
+    tintColor: '#1E293B',
+  },
+  emptyScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: wp(6),
+    backgroundColor: '#F8FAFC',
+  },
+  emptyImage: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
+    marginBottom: 8,
+    letterSpacing: 0.2,
+  },
+  emptyMessage: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 22,
+    letterSpacing: 0.2,
+  },
   container: {
     padding: wp(4),
-    backgroundColor: '#F3F4F6',
+    paddingBottom: hp(6),
+    backgroundColor: '#F8FAFC',
     flex: 1,
-  },
-  title: {
-    marginTop: hp(2.4),
-    fontSize: 20,
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '400',
-    textAlign: 'left',
-    color: '#FFFFFF',
-    // marginBottom: hp(1),
   },
   measurements: {
     textAlign: 'center',
     fontSize: 14,
-    fontWeight: '800',
-    fontFamily: 'Roboto-Regular',
-    color: '#4B5563',
-    // marginBottom: hp(2),
-    // fontWeight: '400',
+    fontFamily: 'Poppins-Medium',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   card: {
     padding: wp(4),
     backgroundColor: '#FFFFFF',
-    borderRadius: wp(2),
+    borderRadius: 12,
     marginTop: hp(2),
     borderLeftWidth: 4,
-    borderColor: '#1E64AC',
+    borderLeftColor: '#11418A',
+    borderTopWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
     shadowRadius: 4,
-    elevation: 1,
+    ...(Platform.OS === 'android' && { elevation: 1 }),
   },
   sectionTitle: {
-    // marginBottom: hp(5),
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
     marginBottom: hp(2),
-    fontFamily: 'Roboto-Regular',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
-
+  sectionTitleSpaced: {
+    fontSize: 15,
+    fontFamily: 'Poppins-Medium',
+    marginBottom: hp(2),
+    marginTop: hp(3),
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
   stepSection: {
     marginBottom: hp(3),
   },
@@ -250,101 +218,91 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: hp(3),
   },
-
   recipeTitle: {
     fontSize: 22,
-    fontWeight: '700',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#1E293B',
     textAlign: 'center',
     marginBottom: hp(1),
+    letterSpacing: 0.2,
   },
-
   timeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: wp(10),
     marginTop: hp(1),
   },
-
   timeBadge: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F1F5F9',
     paddingVertical: hp(1),
     paddingHorizontal: wp(4),
-    borderRadius: wp(2),
+    borderRadius: 10,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-
   timeLabel: {
     fontSize: 12,
-    color: '#1E64AC',
-    fontWeight: '600',
+    fontFamily: 'Poppins-Regular',
+    color: '#11418A',
     marginBottom: hp(0.5),
+    letterSpacing: 0.2,
   },
-
   timeValue: {
     fontSize: 14,
+    fontFamily: 'Poppins-Medium',
     color: '#1E293B',
-    fontWeight: '500',
+    letterSpacing: 0.2,
   },
-
   stepHeading: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1E64AC',
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
     marginBottom: hp(1),
-    fontFamily: 'Roboto-Regular',
+    letterSpacing: 0.2,
   },
-
   stepRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: hp(1.5),
   },
-
   stepBadge: {
-    backgroundColor: '#4c8dcfff',
-    borderRadius: wp(10),
+    backgroundColor: '#11418A',
+    borderRadius: 20,
     paddingHorizontal: wp(2),
     paddingVertical: hp(0.5),
     marginRight: wp(2),
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   stepBadgeText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontFamily: 'Poppins-Medium',
     fontSize: 10,
+    letterSpacing: 0.2,
   },
-
   stepText: {
     flex: 1,
     fontSize: 14.5,
-    color: '#4b6184ff',
-    fontFamily: 'Roboto-Regular',
-    lineHeight: 20,
+    fontFamily: 'Poppins-Regular',
+    color: '#475569',
+    lineHeight: 22,
+    letterSpacing: 0.2,
+    minWidth: 0,
   },
   ingredientRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: hp(1),
   },
-
-  dot: {
-    fontSize: 16,
-    color: '#17AD8D',
-    marginRight: wp(2),
-    lineHeight: 20,
-  },
-
   ingredientText: {
     fontSize: 14.5,
-    fontFamily: 'Roboto-Regular',
-    color: '#4b6184ff',
-    fontWeight: '400',
-    lineHeight: 20,
-    flexShrink: 1,
+    fontFamily: 'Poppins-Regular',
+    color: '#475569',
+    lineHeight: 22,
+    flex: 1,
+    minWidth: 0,
+    letterSpacing: 0.2,
   },
 });
 

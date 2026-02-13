@@ -109,7 +109,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
           style={styles.timeButton}
           onPress={() => setShowTimePicker(true)}
         >
-          <Text style={{ fontFamily: 'Roboto-Regular', fontSize: wp(4) }}>
+          <Text style={{ fontFamily: 'Poppins-Regular', fontSize: wp(4) }}>
             {formatTime(time)}
           </Text>
           <Image
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     width: '100%',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#E2E8F0',
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
@@ -208,9 +208,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   cardTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: wp(3.8),
-    fontWeight: '450',
+    
     color: color.QUESTION_COLOR,
     marginTop: hp(2),
     marginBottom: hp(1),
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     height: wp(4.5),
     borderRadius: wp(2.25),
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
+    borderColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3),
@@ -234,19 +234,19 @@ const styles = StyleSheet.create({
     width: wp(2.5),
     height: wp(2.5),
     borderRadius: wp(1.25),
-    backgroundColor: '#007bff',
+    backgroundColor: '#11418A',
   },
   radioLabel: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.5),
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14, letterSpacing: 0.2,
     color: color.ANSWER_COLOR,
   },
   timeInput: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderColor: '#D1D5DB',
+    borderColor: '#E2E8F0',
     borderWidth: 1,
     borderRadius: wp(2),
     paddingHorizontal: wp(4),
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
   },
   subHint: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: wp(3.2),
     color: color.NOTE_COLOR,
     marginBottom: hp(1),

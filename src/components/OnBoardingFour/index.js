@@ -85,18 +85,18 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   question: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.5),
-    fontWeight: '450',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14, letterSpacing: 0.2,
+    
     marginBottom: hp(2),
     color: '#111827',
   },
   note: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     // marginTop: 40,
-    fontSize: wp(3),
-    fontWeight: '400',
-    color: '#6B7280',
+    fontSize: 13, letterSpacing: 0.1,
+    
+    color: '#64748B',
   },
   optionRow: {
     flexDirection: 'row',
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     height: wp(4.5),
     borderRadius: wp(2.25),
     borderWidth: 1.5,
-    borderColor: '#888',
+    borderColor: '#CBD5E1',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3),
@@ -117,25 +117,25 @@ const styles = StyleSheet.create({
     width: wp(2.5),
     height: wp(2.5),
     borderRadius: wp(1.25),
-    backgroundColor: '#007bff',
+    backgroundColor: '#11418A',
   },
   optionText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.5),
-    color: '#374151',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14, letterSpacing: 0.2,
+    color: '#475569',
     flex: 1,
   },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#11418A',
     paddingVertical: hp(1.8),
     borderRadius: wp(2.5),
     alignItems: 'center',
     marginBottom: hp(3),
   },
   buttonText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     color: '#fff',
-    fontSize: wp(4),
-    fontWeight: '600',
+    fontSize: 15, letterSpacing: 0.3,
+    
   },
 });

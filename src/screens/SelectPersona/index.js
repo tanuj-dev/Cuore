@@ -38,7 +38,7 @@ const SelectPersona = ({ navigation }) => {
   };
 
   return (
-    <View>
+    <View style={styles.screen}>
       <ProfileHeader navigation={navigation} title="Select Persona" />
 
       <View style={styles.container}>
@@ -54,24 +54,13 @@ const SelectPersona = ({ navigation }) => {
             onPress={() => setSelectedRole(role.id)}
           >
             <View style={styles.radioWrapper}>
-              <View
-                style={{
-                  height: hp(2.5),
-                  width: wp(5),
-                  borderWidth: 1,
-                  borderRadius: hp(2),
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+              <View style={styles.radioOuter}>
                 <View
-                  style={{
-                    height: hp(1.5),
-                    width: wp(3),
-                    borderRadius: hp(4),
-                    backgroundColor: selectedRole === role.id ? '#1E64AC' : '',
-                  }}
-                ></View>
+                  style={[
+                    styles.radioInner,
+                    selectedRole === role.id && styles.radioInnerSelected,
+                  ]}
+                />
               </View>
               <View style={styles.roleText}>
                 <Text style={styles.roleTitle}>{role.title}</Text>
@@ -90,62 +79,90 @@ const SelectPersona = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
   container: {
     padding: wp(5),
     margin: wp(4),
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    height: hp(80),
+    minHeight: hp(80),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   heading: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontWeight: '400',
     marginBottom: hp(2),
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   roleCard: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
     padding: wp(4),
     marginBottom: hp(2),
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   selectedCard: {
-    borderColor: '#1c5fd4',
-    backgroundColor: '#f0f6ff',
+    borderColor: '#11418A',
+    backgroundColor: '#F1F5F9',
   },
   radioWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  roleText: { fontFamily: 'Roboto-Regular', marginLeft: wp(3), flex: 1 },
+  radioOuter: {
+    height: hp(2.5),
+    width: wp(5),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: hp(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioInner: {
+    height: hp(1.5),
+    width: wp(3),
+    borderRadius: hp(4),
+    backgroundColor: 'transparent',
+  },
+  radioInnerSelected: {
+    backgroundColor: '#11418A',
+  },
+  roleText: {
+    fontFamily: 'Poppins-Regular',
+    marginLeft: wp(3),
+    flex: 1,
+  },
   roleTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    fontWeight: '400',
-    color: '#000000',
+    color: '#1E293B',
     marginBottom: 4,
+    letterSpacing: 0.2,
   },
   roleDesc: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    fontWeight: '400',
-    color: '#6B7280',
+    color: '#64748B',
+    letterSpacing: 0.2,
   },
   continueBtn: {
-    backgroundColor: '#1E64AC',
+    backgroundColor: '#11418A',
     paddingVertical: hp(1.8),
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
     marginTop: hp(6),
   },
   continueText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '400',
+    letterSpacing: 0.2,
   },
 });
 

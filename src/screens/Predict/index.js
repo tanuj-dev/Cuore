@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { wp, hp, Images } from '../../utilities';
@@ -27,7 +28,6 @@ const TITLE_TO_STEP_MAP = {
   Cholesterol: 7,
   'Lifestyle Metrics': 5,
 };
-const HIT_SLOP = { top: 50, bottom: 50, left: 50, right: 50 };
 
 const chartConfig = {
   // transparent: false,
@@ -93,12 +93,12 @@ const convertToChartData = ({ graph, history }) => {
     datasets: chartDatasets.length
       ? chartDatasets
       : [
-        {
-          data: Array(labels.length).fill(0),
-          color: () => '#ccc',
-          label: 'No Data',
-        },
-      ],
+          {
+            data: Array(labels.length).fill(0),
+            color: () => '#ccc',
+            label: 'No Data',
+          },
+        ],
   };
 };
 
@@ -181,49 +181,29 @@ const Predict = ({ navigation }) => {
   // }
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <View style={styles.headerContainer}>
+        {loading && <Loader />}
+        <View style={styles.headerContent}>
+          <Text style={styles.header}>Trend</Text>
+        </View>
+      </View>
       <ScrollView
         refreshControl={
           <RefreshControl
             title="Pull to refresh..."
             refreshing={loading || refreshing}
             onRefresh={onRefresh}
+            tintColor="#11418A"
           />
         }
-        style={{ backgroundColor: '#FFFFFF' }}
+        style={styles.scrollView}
       >
-        <View
-          style={{ padding: hp(1.5), backgroundColor: '#FFFFFF', elevation: 1 }}
-        >
-          {loading && <Loader />}
-          <View
-            style={{
-              // marginTop: Platform.OS == 'ios' ? hp(6) : hp(3),
-
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={styles.header}>Predict</Text>
-            {/* <Image
-              source={Images.SHARE_4}
-              style={{
-                width: hp(2),
-                height: hp(2),
-                marginLeft: hp(10),
-                tintColor: '#000000',
-              }}
-              resizeMode="contain"
-            /> */}
-          </View>
-        </View>
-
         <View style={styles.container}>
           <View style={styles.tipBox}>
             <Text style={styles.tipText}>
-              Entering your lifestyle and health data on time improves
-              prediction accuracy.
+              The projected line extends recent data trends for visualization
+              purposes only. It is not a medical prediction.
             </Text>
           </View>
 
@@ -254,7 +234,7 @@ const Predict = ({ navigation }) => {
                             : styles.inactiveText
                         }
                       >
-                        Predict
+                        Trend
                       </Text>
                     </TouchableOpacity>
 
@@ -311,31 +291,31 @@ const Predict = ({ navigation }) => {
                 <LineChart
                   key={item?.title}
                   data={chartData}
-                  width={wp(87)}
+                  width={wp(82)}
                   height={hp(25)}
                   chartConfig={chartConfig}
                   withDots
                   renderDotContent={
                     isShowDataVisible
                       ? ({ x, y, index: dotIndex, indexData }) => {
-                        if (indexData === null || indexData === undefined) {
-                          return null;
+                          if (indexData === null || indexData === undefined) {
+                            return null;
+                          }
+                          return (
+                            <Text
+                              key={`chart-${dotIndex}-dot-${indexData}`}
+                              style={[
+                                styles.dotText,
+                                {
+                                  left: x - 10,
+                                  top: y - 15,
+                                },
+                              ]}
+                            >
+                              {Math.round(indexData)}
+                            </Text>
+                          );
                         }
-                        return (
-                          <Text
-                            key={`chart-${dotIndex}-dot-${indexData}`}
-                            style={[
-                              styles.dotText,
-                              {
-                                left: x - 10,
-                                top: y - 15,
-                              },
-                            ]}
-                          >
-                            {Math.round(indexData)}
-                          </Text>
-                        );
-                      }
                       : undefined
                   }
                   withShadow={false}
@@ -365,10 +345,10 @@ const Predict = ({ navigation }) => {
                 </View>
                 {item.title === 'Cuore Score' && (
                   <View>
-                    <Text style={[styles.hintText, styles.warningText]}>
+                    {/* <Text style={[styles.hintText, styles.warningText]}>
                       ⚠️ note that the predicted values are represented by
                       lighter lines.
-                    </Text>
+                    </Text> */}
                   </View>
                 )}
               </View>
@@ -382,30 +362,10 @@ const Predict = ({ navigation }) => {
             <Image style={styles.footerIcon} source={Images.DOCTOR_PROFILE} />
             <Text style={styles.footerText}>Cuore Health</Text>
           </TouchableOpacity>
-          <View style={[styles.card1, { flexDirection: 'row' }]}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}
-            >
-              <View
-                style={{ flexDirection: 'row', alignItems: 'center' }}
-              ></View>
-            </View>
+          <View style={styles.card1}>
+            <Image style={styles.noticeIcon} source={Images.NOTICE} />
 
-            <Image
-              style={{
-                marginRight: hp(1),
-                height: hp(1.5),
-                width: hp(2),
-                resizeMode: 'contain',
-                marginHorizontal: hp(1),
-              }}
-              source={Images.NOTICE}
-            />
-
-            <Text>
+            <Text style={styles.disclaimerText}>
               These predictions estimate possible trends in vitals based on past
               data and lifestyle patterns, for awareness only—not for diagnosis
               or treatment
@@ -433,119 +393,164 @@ const Predict = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollView: {
+    backgroundColor: '#F8FAFC',
+  },
+  headerContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: hp(2),
+    paddingVertical: hp(2),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#F9FAFB',
+    padding: hp(2),
+    backgroundColor: '#F8FAFC',
   },
   header: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 20,
-    fontWeight: '400',
-    // marginLeft: hp(17),
-    color: '#000000',
-    // marginBottom: 16,
+    fontFamily: 'Poppins-Medium',
+    fontSize: 22,
+    color: '#1E293B',
+    letterSpacing: -0.5,
   },
   tipBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: hp(0.5),
-    padding: hp(2.3),
-    marginBottom: 20,
+    backgroundColor: '#DBEAFE',
+    borderRadius: 16,
+    padding: hp(2.5),
+    marginBottom: hp(2.5),
     width: wp(90),
-    elevation: 2,
+    borderWidth: 1.5,
+    borderColor: '#93C5FD',
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 2 },
+    }),
   },
   tipText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     textAlign: 'center',
-    color: '#1E64AC',
-    fontWeight: '400',
-    fontSize: 16,
+    color: '#1E40AF',
+    fontSize: 14.5,
+    lineHeight: 22,
+    letterSpacing: 0.2,
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: hp(1),
-    padding: 10,
-    marginBottom: 20,
+    borderRadius: 16,
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(2),
+    marginBottom: hp(2.5),
     width: wp(90),
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 10,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 4 },
+    }),
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: hp(1.5),
   },
   title: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1E64AC',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16.5,
+    color: '#1E293B',
+    letterSpacing: -0.3,
   },
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   button: {
-    backgroundColor: '#1E64AC',
-    paddingHorizontal: 10,
-    paddingVertical: hp(0.3),
-    borderRadius: hp(0.5),
-    shadowColor: 'rgba(130, 121, 121, 1)',
-    shadowOpacity: 3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 2,
-    elevation: 14,
+    backgroundColor: '#11418A',
+    paddingHorizontal: hp(1.5),
+    paddingVertical: hp(0.8),
+    borderRadius: 10,
+    shadowColor: '#11418A',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 4 },
+    }),
   },
   buttonText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
-    fontWeight: '400',
-    fontSize: 14,
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
   footerButton: {
     alignItems: 'center',
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     paddingHorizontal: hp(3),
-    paddingVertical: hp(1.5),
-    // padding: 12,
-    borderRadius: hp(3),
+    paddingVertical: hp(1.8),
+    borderRadius: 16,
     marginTop: hp(3),
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderWidth: 1.5,
+    borderColor: '#BFDBFE',
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 3 },
+    }),
   },
   footerText: {
-    fontFamily: 'Roboto-Regular',
-    color: '#4B5563',
-    fontWeight: '400',
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
     fontSize: 16,
+    letterSpacing: -0.2,
   },
   hintText: {
-    fontSize: 14,
-    fontWeight: '400',
-    fontFamily: 'Roboto-Regular',
-    color: '#4B5563',
+    fontSize: 13,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    letterSpacing: 0.1,
   },
   showDataButton: {
-    borderWidth: 0.5,
-    borderColor: '#9CA3AF',
-    height: hp(2),
-    width: wp(4),
-    borderRadius: hp(0.3),
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    height: hp(2.2),
+    width: wp(4.5),
+    borderRadius: 6,
     marginRight: hp(1),
+    backgroundColor: '#F8FAFC',
   },
   showDataIcon: {
     resizeMode: 'cover',
     height: hp(2.2),
-    width: wp(4),
-    borderRadius: hp(0.3),
+    width: wp(4.5),
+    borderRadius: 6,
   },
   showDataText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 12.5,
+    color: '#475569',
+    letterSpacing: 0.1,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -555,20 +560,22 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     width: wp(4),
     height: hp(2.2),
-    marginRight: hp(1),
+    marginRight: hp(0.8),
     tintColor: 'white',
   },
   dotText: {
     position: 'absolute',
-    color: '#000',
-    fontSize: 10,
-    fontWeight: '600',
-    // backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 2,
+    color: '#1E293B',
+    fontSize: 10.5,
+    fontFamily: 'Poppins-Medium',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 5,
     textAlign: 'center',
-    minWidth: 30,
+    minWidth: 32,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   legendContainer: {
     width: '100%',
@@ -576,7 +583,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     flexDirection: 'row',
     gap: hp(2),
-    marginVertical: hp(1),
+    marginVertical: hp(1.5),
+    paddingHorizontal: hp(0.5),
   },
   legendItem: {
     flexDirection: 'row',
@@ -584,51 +592,72 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   legendDot: {
-    height: hp(1.5),
-    width: hp(1.5),
-    marginRight: hp(1),
+    height: hp(1.8),
+    width: hp(1.8),
+    marginRight: hp(0.8),
     borderRadius: hp(5),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 1 },
+    }),
   },
   warningText: {
     textAlign: 'center',
-    color: '#1E64AC',
+    color: '#11418A',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    letterSpacing: 0.1,
   },
   footerIcon: {
     resizeMode: 'contain',
-    width: wp(4),
-    height: hp(2),
-    marginRight: hp(1),
+    width: wp(5),
+    height: hp(2.5),
+    marginRight: hp(1.2),
+    tintColor: '#11418A',
   },
   tabContainer: {
     flexDirection: 'row',
-    marginBottom: 15,
+    marginBottom: hp(2),
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: hp(0.5),
   },
   tab: {
-    // flex: 1,
-    padding: 12,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    backgroundColor: '#9CA3AF',
-    borderColor: 'transparent',
     paddingHorizontal: hp(3.5),
-    paddingVertical: hp(0.3),
-    marginRight: 10,
+    paddingVertical: hp(1.2),
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: 'transparent',
+    marginHorizontal: hp(0.3),
   },
   activeTab: {
-    backgroundColor: '#1E64AC',
-    borderColor: '#007AFF', // Blue underline
-    borderRadius: hp(0.5),
+    backgroundColor: '#11418A',
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 3 },
+    }),
   },
   activeText: {
     fontSize: 14,
-    color: 'white',
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   inactiveText: {
     fontSize: 14,
-    color: 'white',
+    fontFamily: 'Poppins-Medium',
+    color: '#64748B',
+    letterSpacing: 0.1,
   },
   content: {
     padding: 10,
@@ -636,16 +665,39 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   card1: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: hp(2),
-    marginVertical: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 16,
+    padding: hp(2.5),
+    marginVertical: hp(1),
+    borderWidth: 1.5,
+    borderColor: '#FDE68A',
+    shadowColor: '#F59E0B',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
     justifyContent: 'center',
     marginHorizontal: hp(1.5),
+    flexDirection: 'row',
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 2 },
+    }),
+  },
+  noticeIcon: {
+    marginRight: hp(1.5),
+    height: hp(2.2),
+    width: hp(2.2),
+    resizeMode: 'contain',
+    tintColor: '#D97706',
+    marginTop: hp(0.3),
+  },
+  disclaimerText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    color: '#92400E',
+    lineHeight: 20,
+    flex: 1,
+    letterSpacing: 0.1,
   },
 });
 

@@ -9,10 +9,16 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		18D5E5112F2C6FE000183BAE /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 18D5E5102F2C6FE000183BAE /* StoreKit.framework */; };
+		254CE764BA51468389F3EE90 /* Poppins-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC9264D655A44D58B2E73DB9 /* Poppins-Medium.ttf */; };
 		6446B810C28F11D211345965 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		6BC879863351761BD74D14E4 /* libPods-Cuore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CACD3D3F4A8BDEBF3EFEA76 /* libPods-Cuore.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		C330A65CFADC4B73BC48634B /* Poppins-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DC3CF90218E345C4AC834B64 /* Poppins-Bold.ttf */; };
+		D503FCC5D24D4670800EA1CC /* Poppins-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D90CECF1B914449C9CB9F779 /* Poppins-ExtraBold.ttf */; };
+		D74B9E24F5554091BFB46FFE /* Poppins-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C9A74A6A93BF415DB4AA7EF6 /* Poppins-Light.ttf */; };
+		DB05F4C06344457DB23121C3 /* Poppins-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C7687247F17E4F6FAF7EC6A6 /* Poppins-SemiBold.ttf */; };
+		EE737F3667604A6EA51DB2DA /* Poppins-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9EAA359ECB39462FA5E51DB3 /* Poppins-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,7 +31,13 @@
 		3CACD3D3F4A8BDEBF3EFEA76 /* libPods-Cuore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Cuore.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Cuore/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = Cuore/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		9EAA359ECB39462FA5E51DB3 /* Poppins-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Regular.ttf"; path = "../src/assets/fonts/Poppins-Regular.ttf"; sourceTree = "<group>"; };
+		AC9264D655A44D58B2E73DB9 /* Poppins-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Medium.ttf"; path = "../src/assets/fonts/Poppins-Medium.ttf"; sourceTree = "<group>"; };
+		C7687247F17E4F6FAF7EC6A6 /* Poppins-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-SemiBold.ttf"; path = "../src/assets/fonts/Poppins-SemiBold.ttf"; sourceTree = "<group>"; };
+		C9A74A6A93BF415DB4AA7EF6 /* Poppins-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Light.ttf"; path = "../src/assets/fonts/Poppins-Light.ttf"; sourceTree = "<group>"; };
+		D90CECF1B914449C9CB9F779 /* Poppins-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-ExtraBold.ttf"; path = "../src/assets/fonts/Poppins-ExtraBold.ttf"; sourceTree = "<group>"; };
 		D942F6765536415AB3B02B60 /* Pods-Cuore.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Cuore.release.xcconfig"; path = "Target Support Files/Pods-Cuore/Pods-Cuore.release.xcconfig"; sourceTree = "<group>"; };
+		DC3CF90218E345C4AC834B64 /* Poppins-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Bold.ttf"; path = "../src/assets/fonts/Poppins-Bold.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -64,6 +76,20 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		48BEDAA212914C2389E88010 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				C9A74A6A93BF415DB4AA7EF6 /* Poppins-Light.ttf */,
+				AC9264D655A44D58B2E73DB9 /* Poppins-Medium.ttf */,
+				D90CECF1B914449C9CB9F779 /* Poppins-ExtraBold.ttf */,
+				9EAA359ECB39462FA5E51DB3 /* Poppins-Regular.ttf */,
+				DC3CF90218E345C4AC834B64 /* Poppins-Bold.ttf */,
+				C7687247F17E4F6FAF7EC6A6 /* Poppins-SemiBold.ttf */,
+			);
+			name = Resources;
+			path = "";
+			sourceTree = "<group>";
+		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
@@ -79,6 +105,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				48BEDAA212914C2389E88010 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -165,6 +192,12 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				6446B810C28F11D211345965 /* PrivacyInfo.xcprivacy in Resources */,
+				D74B9E24F5554091BFB46FFE /* Poppins-Light.ttf in Resources */,
+				254CE764BA51468389F3EE90 /* Poppins-Medium.ttf in Resources */,
+				D503FCC5D24D4670800EA1CC /* Poppins-ExtraBold.ttf in Resources */,
+				EE737F3667604A6EA51DB2DA /* Poppins-Regular.ttf in Resources */,
+				C330A65CFADC4B73BC48634B /* Poppins-Bold.ttf in Resources */,
+				DB05F4C06344457DB23121C3 /* Poppins-SemiBold.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -195,13 +228,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Cuore/Pods-Cuore-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Cuore/Pods-Cuore-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -216,13 +245,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Cuore/Pods-Cuore-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Cuore/Pods-Cuore-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -271,7 +296,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = JMS43MWJJW;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Cuore/Info.plist;
@@ -300,7 +325,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = JMS43MWJJW;
 				INFOPLIST_FILE = Cuore/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;

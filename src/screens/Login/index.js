@@ -9,6 +9,7 @@ import {
   Image,
   ActivityIndicator,
   Linking,
+  Platform,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import { sendOtp, loginCaregiverThunk } from '../../redux/slices';
@@ -163,11 +164,17 @@ const Login = ({ navigation }) => {
 
         <Text style={styles.termsText}>
           By clicking, I accept the{' '}
-          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://cuore.health/terms')}>
+          <Text
+            style={styles.termsLink}
+            onPress={() => Linking.openURL('https://cuore.health/terms')}
+          >
             Terms & Conditions
-          </Text>
-          {' '}and{' '}
-          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://cuore.health/privacy')}>
+          </Text>{' '}
+          and{' '}
+          <Text
+            style={styles.termsLink}
+            onPress={() => Linking.openURL('https://cuore.health/privacy')}
+          >
             Privacy
           </Text>
         </Text>
@@ -181,129 +188,166 @@ export default Login;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: hp(10),
+    backgroundColor: '#FFFFFF',
+    // marginTop: hp(8),
     paddingHorizontal: wp(6),
   },
   logo: {
-    width: wp(25),
-    height: hp(5),
+    width: wp(30),
+    height: hp(6),
     resizeMode: 'contain',
     alignSelf: 'center',
-    marginBottom: hp(2),
+    marginBottom: hp(2.5),
   },
   loginText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
-    fontSize: hp(1.8),
-    color: '#4B5563',
-    marginBottom: hp(3),
+    fontSize: 15,
+    color: '#64748B',
+    marginBottom: hp(3.5),
+    letterSpacing: 0.2,
   },
   card: {
-    backgroundColor: 'white',
-    padding: hp(2),
-    borderRadius: hp(1),
+    backgroundColor: '#FFFFFF',
+    padding: hp(2.5),
+    borderRadius: 16,
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    ...Platform.select({
+      android: { elevation: 2 },
+      ios: { elevation: 5 },
+    }),
   },
   switchTabs: {
     flexDirection: 'row',
-    backgroundColor: '#E9ECEF',
-    borderRadius: hp(1),
-    marginBottom: hp(2),
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    marginBottom: hp(2.5),
+    padding: hp(0.4),
   },
   activeTab: {
     flex: 1,
-    backgroundColor: '#1E64AC',
-    paddingVertical: hp(1.2),
-    borderRadius: hp(1),
+    backgroundColor: '#11418A',
+    paddingVertical: hp(1.4),
+    borderRadius: 10,
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    ...Platform.select({
+      android: { elevation: 2 },
+      ios: { elevation: 3 },
+    }),
   },
   inactiveTab: {
     flex: 1,
-    paddingVertical: hp(1.2),
+    paddingVertical: hp(1.4),
   },
   activeTabText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
     textAlign: 'center',
-    fontWeight: '600',
-    fontSize: hp(1.8),
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
   inactiveTabText: {
-    fontFamily: 'Roboto-Regular',
-    color: '#9CA3AF',
+    fontFamily: 'Poppins-Regular',
+    color: '#94A3B8',
     textAlign: 'center',
-    fontWeight: '600',
-    fontSize: hp(1.8),
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
   inputContainer: {
     flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    borderRadius: hp(1),
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(1),
-    marginBottom: hp(1.5),
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: wp(3.5),
+    paddingVertical: Platform.OS === 'ios' ? hp(1.5) : hp(1),
+    marginBottom: hp(2),
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
   countryCodeContainer: {
-    marginRight: wp(2),
+    marginRight: wp(2.5),
     flexDirection: 'row',
     alignItems: 'center',
+    paddingRight: wp(2.5),
+    borderRightWidth: 1,
+    borderRightColor: '#E2E8F0',
   },
   flagEmoji: {
     fontSize: hp(2.5),
-    marginRight: wp(1),
+    marginRight: wp(1.5),
   },
   countryCode: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: hp(2),
-    color: '#6B7280',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   phoneInput: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     flex: 1,
-    fontSize: hp(2),
-    color: '#6B7280',
+    fontSize: 15,
+    color: '#1E293B',
+    letterSpacing: 0.3,
   },
   errorText: {
-    fontSize: hp(1.6),
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
     color: '#EF4444',
     marginBottom: hp(1),
     marginLeft: wp(2),
   },
   signupText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
-    fontSize: hp(1.7),
-    color: '#4B5563',
-    marginBottom: hp(1.5),
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: hp(2),
+    letterSpacing: 0.2,
   },
   termsText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
-    fontSize: hp(1.4),
-    color: '#6B7280',
-    marginBottom: hp(2),
-    marginTop: hp(1),
-    lineHeight: hp(2),
+    fontSize: 12,
+    color: '#94A3B8',
+    marginBottom: hp(1),
+    marginTop: hp(1.5),
+    lineHeight: 18,
+    letterSpacing: 0.1,
   },
   termsLink: {
-    color: '#1E64AC',
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
     textDecorationLine: 'underline',
   },
   signupLink: {
-    fontFamily: 'Roboto-Regular',
-    color: '#1E64AC',
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
+    letterSpacing: 0.2,
   },
   verifyButton: {
-    backgroundColor: '#1E64AC',
-    borderRadius: hp(1),
-    paddingVertical: hp(1.8),
+    backgroundColor: '#11418A',
+    borderRadius: 12,
+    paddingVertical: hp(2),
     alignItems: 'center',
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    ...Platform.select({
+      android: { elevation: 3 },
+      ios: { elevation: 5 },
+    }),
   },
   verifyText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
-    fontSize: hp(2),
-    fontWeight: '600',
+    fontSize: 16,
+    letterSpacing: 0.5,
   },
 });

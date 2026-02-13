@@ -26,7 +26,7 @@ const ToastMessage = ({ message, type = 'info', onHide, top }) => {
   }, [slideAnim, onHide]);
 
   const backgroundColor =
-    type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#3B82F6';
+    type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#11418A';
 
   return (
     <Animated.View
@@ -52,16 +52,22 @@ const styles = StyleSheet.create({
     top: 40,
     left: width * 0.1,
     right: width * 0.1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 12,
     zIndex: 9999,
     elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   text: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 14,
     textAlign: 'center',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
+    letterSpacing: 0.2,
+    lineHeight: 20,
   },
 });

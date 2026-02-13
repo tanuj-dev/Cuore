@@ -1,99 +1,79 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
   Image,
+  useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import RenderHTML from 'react-native-render-html';
 
 const KnowledgeDetails = ({ navigation, route }) => {
-  const { details } = route.params || {};
-  const [selectedOption, setSelectedOption] = useState(null);
-
-  const handleOptionSelect = option => {
-    setSelectedOption(option);
-  };
+  const { details } = route?.params || {};
+  const { width } = useWindowDimensions();
+  const detailsHtml =
+    typeof details === 'string' ? details : '<p>No content available.</p>';
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView edges={['top']} style={styles.screen}>
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: hp() }}
+        style={styles.scroll}
+        contentContainerStyle={styles.listContent}
       >
-        <View style={{ backgroundColor: '#F9FAFB' }}>
-          {/* Header */}
-          <View
-            style={{
-              flexDirection: 'row',
-              backgroundColor: '#FFFFFF',
-              paddingVertical: hp(1.5),
-              // elevation: 2,
-              alignItems: 'center',
-            }}
-          >
+        <View style={styles.contentWrap}>
+          <View style={styles.headerRow}>
             <TouchableOpacity
               hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              style={{ paddingHorizontal: hp(2) }}
+              style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Image
-                source={Images.BACK_BUTTON}
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(3),
-                  width: wp(4),
-                }}
-              />
+              <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
             </TouchableOpacity>
           </View>
 
-          {/* Content */}
           <View style={styles.container}>
             <RenderHTML
-              source={{ html: details }}
+              contentWidth={width}
+              source={{ html: detailsHtml }}
               tagsStyles={{
                 p: {
                   fontSize: 14,
-                  color: '#4B5563',
-                  lineHeight: 20,
+                  color: '#475569',
+                  lineHeight: 22,
+                  fontFamily: 'Poppins-Regular',
                 },
-                ul: {
-                  paddingLeft: 20,
-                  marginBottom: 10,
-                },
-                ol: {
-                  paddingLeft: 20,
-                  marginBottom: 10,
-                },
+                ul: { paddingLeft: 20, marginBottom: 10 },
+                ol: { paddingLeft: 20, marginBottom: 10 },
                 li: {
                   marginBottom: 6,
                   fontSize: 14,
-                  color: '#4B5563',
+                  color: '#475569',
+                  fontFamily: 'Poppins-Regular',
                 },
                 strong: {
-                  fontWeight: 'bold',
-                  color: '#111827',
+                  fontFamily: 'Poppins-Medium',
+                  color: '#1E293B',
                 },
                 em: {
                   fontStyle: 'italic',
-                  color: '#6B7280',
+                  color: '#64748B',
+                  fontFamily: 'Poppins-Regular',
                 },
                 h1: {
                   fontSize: 22,
-                  fontWeight: '700',
+                  fontFamily: 'Poppins-Medium',
                   marginBottom: 12,
-                  color: '#ed7d31',
+                  color: '#11418A',
                 },
                 h3: {
                   fontSize: 16,
-                  fontWeight: '600',
+                  fontFamily: 'Poppins-Medium',
                   marginBottom: 8,
-                  color: '#1F2937',
+                  color: '#1E293B',
                 },
               }}
             />
@@ -105,78 +85,113 @@ const KnowledgeDetails = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scroll: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: hp(6),
+  },
+  contentWrap: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(2),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    ...(Platform.OS === 'android' && { elevation: 0.5 }),
+  },
+  backButton: {
+    paddingHorizontal: hp(1),
+  },
+  backIcon: {
+    resizeMode: 'contain',
+    height: hp(3.5),
+    width: wp(4),
+  },
   container: {
     padding: wp(5),
   },
   title: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
     marginTop: hp(3),
-    fontWeight: '400',
-    color: '#1E64AC',
+    color: '#11418A',
     marginBottom: hp(3),
+    letterSpacing: 0.2,
   },
   paragraph: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
-    fontWeight: '400',
+    color: '#475569',
     marginBottom: hp(1.5),
+    letterSpacing: 0.2,
   },
   quizContainer: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F1F5F9',
     padding: wp(4),
-    borderRadius: wp(2),
+    borderRadius: 12,
     marginTop: hp(2),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   quizTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    fontWeight: '400',
-    color: '#000000',
+    color: '#1E293B',
     marginBottom: hp(2),
+    letterSpacing: 0.2,
   },
   quizQuestion: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    fontWeight: '400',
     marginBottom: hp(1.5),
+    letterSpacing: 0.2,
   },
   option: {
     padding: wp(3),
-    backgroundColor: '#EFF6FF',
-    borderRadius: wp(2),
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
     marginBottom: hp(1),
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
   },
   selectedOption: {
     padding: wp(3),
-    backgroundColor: '#e0f2fe',
-    borderRadius: wp(2),
+    backgroundColor: '#E0F2FE',
+    borderRadius: 10,
     marginBottom: hp(1),
     borderWidth: 2,
-    borderColor: '#3b82f6',
+    borderColor: '#11418A',
   },
   correctOption: {
     padding: wp(3),
-    backgroundColor: '#dcfce7',
-    borderRadius: wp(2),
+    backgroundColor: '#DCFCE7',
+    borderRadius: 10,
     marginBottom: hp(1),
     borderWidth: 1,
-    borderColor: '#22c55e',
+    borderColor: '#22C55E',
   },
   incorrectOption: {
     padding: wp(3),
-    backgroundColor: '#fee2e2',
-    borderRadius: wp(2),
+    backgroundColor: '#FEE2E2',
+    borderRadius: 10,
     marginBottom: hp(1),
     borderWidth: 1,
-    borderColor: '#ef4444',
+    borderColor: '#EF4444',
   },
   optionText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: wp(3.6),
+    letterSpacing: 0.2,
   },
 });
 

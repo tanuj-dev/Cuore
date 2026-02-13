@@ -23,6 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from '../../components/Toast';
 import moment from 'moment';
 import { getOnboardingThunk } from '../../redux/slices';
+import { Fonts } from '../../utilities';
 import { logout } from '../../redux/Auth/slice';
 import {
   scheduleNotificationAtTime,
@@ -108,6 +109,16 @@ const Today = ({ navigation, route }) => {
   // Memoize derived data
   const homeData = useMemo(() => data || null, [data]);
 
+  // Manage alerts locally to avoid re-renders
+  const [localAlerts, setLocalAlerts] = useState([]);
+
+  // Update local alerts when homeData changes
+  useEffect(() => {
+    if (data?.alerts) {
+      setLocalAlerts(data.alerts);
+    }
+  }, [data?.alerts]);
+
   const formattedDate = useMemo(
     () =>
       homeData?.date
@@ -117,29 +128,46 @@ const Today = ({ navigation, route }) => {
   );
 
   // Handle dismiss alert
-  const handleDismissAlert = useCallback(async ({ userId, alertId }) => {
-    if (!userId || !alertId) {
-      console.log('Missing userId or alertId', { userId, alertId });
-      return;
-    }
+  const handleDismissAlert = useCallback(
+    async ({ userId, alertId, itemIndex }) => {
+      if (!userId || !alertId) {
+        console.log('Missing userId or alertId', { userId, alertId });
+        return;
+      }
 
-    try {
-      console.log('Dismissing alert:', alertId, 'for user:', userId);
-      const result = await dispatch(dismissAlert({ userId, alertId })).unwrap();
+      try {
+        // Optimistically remove the alert from UI by updating local state
+        if (itemIndex !== undefined && localAlerts.length > 0) {
+          // Create a new array excluding the alert at the given index
+          const updatedAlerts = localAlerts.filter(
+            (_, idx) => idx !== itemIndex,
+          );
+          // Update local alerts state to immediately reflect the change
+          setLocalAlerts(updatedAlerts);
+        }
 
-      if (result.success) {
-        console.log('Alert dismissed successfully');
-        setToast('Alert dismissed successfully');
-        setToastType('success');
-        // Optionally refresh home data to update UI
+        console.log('Dismissing alert:', alertId, 'for user:', userId);
+        const result = await dispatch(
+          dismissAlert({ userId, alertId }),
+        ).unwrap();
+
+        if (result.success) {
+          console.log('Alert dismissed successfully');
+          setToast('Alert dismissed successfully');
+          setToastType('success');
+          // Don't refresh the whole page - the optimistic update already handled the UI
+          // Just keep the local state updated
+        }
+      } catch (error) {
+        console.log('Error dismissing alert:', error);
+        setToast(error.message || 'Failed to dismiss alert');
+        setToastType('error');
+        // If API fails, refresh data to revert any optimistic changes
         dispatch(getHomeData(userId));
       }
-    } catch (error) {
-      console.log('Error dismissing alert:', error);
-      setToast(error.message || 'Failed to dismiss alert');
-      setToastType('error');
-    }
-  }, [userId, dispatch]);
+    },
+    [dispatch, localAlerts],
+  );
 
   const dates = useMemo(() => [formattedDate], [formattedDate]);
 
@@ -300,8 +328,8 @@ const Today = ({ navigation, route }) => {
             navigation.navigate(targetRoute, { mealTime: 'LunchDinner' });
             break;
           case 'your daily health win':
-            navigation.navigate(targetRoute, { title: 'Tobacco' })
-
+            navigation.navigate(targetRoute, { title: 'Tobacco' });
+            break;
 
           default:
             if (
@@ -328,7 +356,7 @@ const Today = ({ navigation, route }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1E64AC" />
+        <ActivityIndicator size="large" color="#11418A" />
         <Text style={styles.loadingText}>Loading your data...</Text>
       </View>
     );
@@ -346,15 +374,10 @@ const Today = ({ navigation, route }) => {
   return (
     <SafeAreaView
       edges={['top']}
-      style={{ flex: 1, backgroundColor: '#F9FAFB' }}
+      style={{ flex: 1, backgroundColor: '#F8FAFC' }}
     >
       {AlertComponent}
-      <StatusBar barStyle="dark-content" backgroundColor="#000" />
-      {/* <View style={styles.floatingText}>
-        <TouchableOpacity disabled={isCaregiver} onPress={() => setIsVisible(true)}>
-          <Image source={Images.PLUS} style={styles.addIcon} />
-        </TouchableOpacity>
-      </View> */}
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       <ScrollView
         nestedScrollEnabled
@@ -363,9 +386,10 @@ const Today = ({ navigation, route }) => {
             title="Pull to refresh..."
             refreshing={refreshing}
             onRefresh={onRefresh}
+            tintColor="#11418A"
           />
         }
-        scrollEventThrottle={16} // 🟢 ensures frequent updates
+        scrollEventThrottle={16}
         style={styles.container}
       >
         <View style={styles.header}>
@@ -374,71 +398,30 @@ const Today = ({ navigation, route }) => {
               ? `Hi, ${profileData.display_name.split(' ')[0]}`
               : 'User'}
           </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}
-          >
+          <View style={styles.headerButtonsContainer}>
             <TouchableOpacity
               disabled={isCaregiver}
               onPress={() => setIsVisible(true)}
-              style={[
-                styles.updateButton,
-                {
-                  flexDirection: 'row',
-                  marginHorizontal: wp(2),
-                  paddingHorizontal: wp(1),
-                  backgroundColor: '#f0f6ff',
-                  // width: wp(35),
-                },
-              ]}
+              style={styles.addReminderButton}
+              activeOpacity={0.8}
             >
-              <Image
-                source={Images.ADD}
-                style={[styles.userIcon, { height: hp(1.5), width: hp(1.5) }]}
-              />
-              <Text
-                style={{
-                  fontSize: 12.5,
-                  fontFamily: 'Roboto-ExtraBold',
-                  color: '#2951a8',
-                  marginLeft: 4,
-                  textAlign: 'center',
-                }}
-              >
-                Add{'\n'}Reminder
-              </Text>
+              <View style={styles.buttonIconWrapper}>
+                <Image source={Images.ADD} style={styles.addIcon} />
+              </View>
+              <Text style={styles.addReminderText}>Add{'\n'}Reminder</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              // disabled={isCaregiver}
-              style={[
-                styles.updateButton,
-                {
-                  flexDirection: 'row',
-                  marginHorizontal: wp(2),
-                  paddingHorizontal: wp(1),
-                  backgroundColor: '#f7edee',
-                  // width: wp(35),
-                },
-              ]}
+              style={styles.healthButton}
               onPress={() => navigation.navigate('Health')}
+              activeOpacity={0.8}
             >
-              <Image
-                source={Images.DOCTOR_PROFILE}
-                style={[styles.userIcon, { tintColor: '#9e4043' }]}
-              />
-              <Text
-                style={{
-                  fontSize: 12.5,
-                  fontFamily: 'Roboto-ExtraBold',
-                  color: '#9e4043',
-                  textAlign: 'center',
-                  marginLeft: 4,
-                }}
-              >
-                Cuore{'\n'}Health
-              </Text>
+              <View style={styles.buttonIconWrapper}>
+                <Image
+                  source={Images.DOCTOR_PROFILE}
+                  style={styles.healthIcon}
+                />
+              </View>
+              <Text style={styles.healthButtonText}>Cuore{'\n'}Health</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -493,16 +476,9 @@ const Today = ({ navigation, route }) => {
                 navigateTo: 'Home',
               });
             }}
-            style={[styles.updateButton, { backgroundColor: '#f1fcfb' }]}
+            style={styles.biomarkerButton}
           >
-            <Text
-              style={[
-                styles.progressTitle,
-                { color: '#376858', fontSize: 12.5 },
-              ]}
-            >
-              Update{'\n'}Biomarkers
-            </Text>
+            <Text style={styles.biomarkerButtonText}>Update{'\n'}Readings</Text>
           </TouchableOpacity>
         </View>
 
@@ -511,7 +487,7 @@ const Today = ({ navigation, route }) => {
           navigation={navigation}
         />
 
-        <View style={{ paddingHorizontal: hp(3) }}>
+        <View style={{ paddingHorizontal: hp(2.5) }}>
           <Text style={styles.quote}>
             {homeData?.motivationalMessage || '“Your health is your wealth.”'}
           </Text>
@@ -520,7 +496,7 @@ const Today = ({ navigation, route }) => {
         {/* Alerts Horizontal Scroll */}
         <View style={styles.warnings}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {homeData?.alerts?.map(item => (
+            {localAlerts.map((item, index) => (
               <View
                 key={item.id}
                 style={{
@@ -533,8 +509,8 @@ const Today = ({ navigation, route }) => {
                     item?.type === 'red'
                       ? '#FEE4E4'
                       : item?.type === 'yellow'
-                        ? '#FFFFC5'
-                        : '#f4ba62ff',
+                      ? '#FFFFC5'
+                      : '#f4ba62ff',
                   position: 'relative',
                 }}
               >
@@ -547,8 +523,8 @@ const Today = ({ navigation, route }) => {
                       item?.type === 'red'
                         ? '#EF4444'
                         : item?.type === 'yellow'
-                          ? '#FFCE1B'
-                          : '#A16207',
+                        ? '#FFCE1B'
+                        : '#A16207',
                     marginRight: hp(0.5),
                   }}
                   source={Images.WARNING}
@@ -559,15 +535,21 @@ const Today = ({ navigation, route }) => {
                       item?.type === 'red'
                         ? '#B91C1C'
                         : item?.type === 'yellow'
-                          ? '#A16207'
-                          : '#A16207',
+                        ? '#A16207'
+                        : '#A16207',
                     marginRight: hp(2),
                   }}
                 >
                   {item?.text}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => handleDismissAlert({ userId, alertId: item.alertId })}
+                  onPress={() =>
+                    handleDismissAlert({
+                      userId,
+                      alertId: item.alertId,
+                      itemIndex: index,
+                    })
+                  }
                   disabled={isCaregiver}
                   style={{ position: 'absolute', right: hp(1), top: hp(1) }}
                 >
@@ -630,9 +612,9 @@ const Today = ({ navigation, route }) => {
                   prev.map(reminder =>
                     reminder.id === item.id
                       ? {
-                        ...reminder,
-                        alarm_notified: !reminder.alarm_notified,
-                      }
+                          ...reminder,
+                          alarm_notified: !reminder.alarm_notified,
+                        }
                       : reminder,
                   ),
                 );
@@ -768,7 +750,7 @@ const Today = ({ navigation, route }) => {
                   >
                     <View style={styles.blackDot}>
                       {loadingTaskId === item.id || loadingTaskId === 'all' ? (
-                        <ActivityIndicator size="small" color="#1E64AC" />
+                        <ActivityIndicator size="small" color="#11418A" />
                       ) : (
                         item.completed && <View style={styles.blackDotInner} />
                       )}
@@ -825,7 +807,7 @@ const Today = ({ navigation, route }) => {
                 styles.checkAll,
                 {
                   backgroundColor: reminderList.every(item => item.completed)
-                    ? '#1E64AC'
+                    ? '#11418A'
                     : 'transparent',
                 },
               ]}
@@ -893,56 +875,18 @@ const Today = ({ navigation, route }) => {
               )}
             </TouchableOpacity>
 
-            <Text
-              style={{
-                fontFamily: 'Roboto-Medium',
-                color: '#4B5563',
-                fontSize: 15,
-              }}
-            >
-              Check Off All Tasks
-            </Text>
+            <Text style={styles.checkAllText}>Check Off All Tasks</Text>
           </View>
         </View>
 
         {/* Streak Section */}
-        <View
-          style={{
-            alignItems: 'center',
-            marginVertical: hp(3),
-            backgroundColor: 'white',
-            paddingVertical: hp(2),
-            marginHorizontal: hp(1),
-            elevation: 1,
-          }}
-        >
-          <Image source={Images.FIRE} />
-          <Text
-            style={{
-              fontFamily: 'Roboto-SemiBold',
-              color: '#1E64AC',
-              fontSize: 15,
-            }}
-          >
-            {homeData?.streak}-Day Streak
+        <View style={styles.streakContainer}>
+          <Image source={Images.FIRE} style={styles.fireIcon} />
+          <Text style={styles.streakTitle}>
+            {homeData?.streak}-Day Streak 🔥
           </Text>
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              color: '#1E64AC',
-              fontSize: 15,
-            }}
-          >
-            Maintain your progress,{' '}
-          </Text>
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              color: '#1E64AC',
-              fontSize: 15,
-            }}
-          >
-            log today's tasks by 12:30 AM
+          <Text style={styles.streakSubtitle}>
+            Maintain your progress,{'\n'}log today's tasks by 12:30 AM
           </Text>
         </View>
 
@@ -973,18 +917,21 @@ const Today = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: {
-    marginTop: Platform.OS === 'ios' ? hp(0) : hp(2),
-    padding: hp(1.5),
+    marginTop: Platform.OS === 'ios' ? hp(0) : hp(1),
+    paddingHorizontal: hp(2),
+    paddingVertical: hp(1.5),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
   username: {
-    fontFamily: 'Roboto-ExtraBold',
-    fontSize: 17,
-    color: '#4B5563',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 18,
+    color: '#1E293B',
+    letterSpacing: -0.4,
   },
   userIcon: {
     // elevation: 1,
@@ -998,46 +945,80 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    // marginVertical: 16,
-    backgroundColor: '#F9FAFB',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    // paddingBottom: 8,
-    paddingVertical: 8,
-    marginHorizontal: hp(2),
+    backgroundColor: '#F8FAFC',
+    borderBottomWidth: 2,
+    borderBottomColor: '#E2E8F0',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: hp(2),
   },
-  activeTab: { fontFamily: 'Roboto-SemiBold', fontSize: 16, color: '#1E64AC' },
-  inactiveTab: { fontFamily: 'Roboto-Regular', fontSize: 16, color: '#9CA3AF' },
+  activeTab: { fontFamily: 'Poppins-Medium', fontSize: 16, color: '#11418A' },
+  inactiveTab: { fontFamily: 'Poppins-Medium', fontSize: 16, color: '#94A3B8' },
   alert: {
-    fontFamily: 'Roboto-Regular',
-    color: 'red',
-    marginLeft: -hp(2), // textAlign: 'center',
+    fontFamily: 'Poppins-Medium',
+    color: '#DC2626',
+    fontSize: 14,
+    marginLeft: -hp(2),
     marginVertical: 8,
   },
   progressContainer: {
-    padding: hp(1),
+    paddingHorizontal: hp(2),
+    paddingVertical: hp(1.8),
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: hp(1.3),
+    alignItems: 'center',
+    marginVertical: hp(1.5),
+    marginHorizontal: hp(2),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 2 },
+    }),
   },
   progressTitle: {
-    // marginLeft: hp(1),
-    fontFamily: 'Roboto-ExtraBold',
-    color: '#18202B',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 17,
+    color: '#1E293B',
     alignSelf: 'center',
     textAlign: 'center',
+    letterSpacing: -0.4,
+  },
+  biomarkerButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: hp(1.8),
+    borderRadius: hp(1.2),
+    borderWidth: 1.5,
+    borderColor: '#A7F3D0',
+  },
+  biomarkerButtonText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 11.5,
+    color: '#047857',
+    textAlign: 'center',
+    lineHeight: 14,
+  },
+  quoteContainer: {
+    paddingHorizontal: hp(2.5),
+    marginVertical: hp(1.5),
   },
   quote: {
-    // fontStyle: fontFamily: 'Roboto-Regular', 'italic',
-    backgroundColor: '#F9ECF7',
-    fontFamily: 'Roboto-Medium',
-    color: '#1E64AC',
+    backgroundColor: '#F5F3FF',
+    fontFamily: 'Poppins-Medium',
+    color: '#7C3AED',
     fontSize: 15,
-    padding: hp(1.8),
-    borderLeftWidth: 3,
-    borderRadius: 8,
-    marginVertical: hp(1.5),
-    borderColor: '#7D767C',
+    padding: hp(2),
+    borderLeftWidth: 4,
+    borderRadius: 12,
+    borderColor: '#9333EA',
+    lineHeight: 22,
+    fontStyle: 'italic',
   },
   warnings: {
     marginVertical: 10,
@@ -1046,37 +1027,32 @@ const styles = StyleSheet.create({
     padding: hp(0.5),
   },
   consult: {
-    fontFamily: 'Roboto-Medium',
+    fontFamily: 'Poppins-Medium',
     marginLeft: -hp(3),
-    // backgroundColor: '#FEEAEA',
     padding: 8,
-    fontSize: 15,
-    // borderRadius: 6,
-    color: '#B91C1C',
+    fontSize: 14,
+    color: '#DC2626',
   },
   reassess: {
-    fontFamily: 'Roboto-Medium',
+    fontFamily: 'Poppins-Medium',
     marginLeft: -hp(3),
-    // backgroundColor: '#fff3cd',
     padding: 8,
-    // borderRadius: 6,
-    fontSize: 15,
-    color: '#A16207',
-    // marginTop: 6,
+    fontSize: 14,
+    color: '#F59E0B',
   },
   sectionHeader: {
     paddingHorizontal: hp(2),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: hp(2),
   },
   sectionTitle: {
-    fontFamily: 'Roboto-SemiBold',
-    fontSize: 16,
-    color: '#1E64AC',
+    fontFamily: 'Poppins-Medium',
+    fontSize: Platform.OS === 'ios' ? 16 : 18,
+    color: '#1E293B',
+    letterSpacing: -0.5,
   },
-  addIcon: { width: hp(4), height: hp(4), resizeMode: 'contain' },
   taskRow: {
     // backgroundColor: 'red',
     // marginBottom: hp(2),
@@ -1087,25 +1063,28 @@ const styles = StyleSheet.create({
   },
 
   time: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
     width: 62,
-    color: '#6B7280',
+    color: '#64748B',
+    letterSpacing: -0.2,
   },
   taskCard: {
-    elevation: 1,
     flex: 1,
-    height: hp(8),
-    borderLeftWidth: 2,
-    // paddingLeft: 12,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 10,
+    minHeight: hp(8.5),
+    borderLeftWidth: 3,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: hp(1.5),
     flexDirection: 'row',
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    // marginLeft: hp(2),
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 8,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 3 },
+    }),
   },
   taskHeader: { flexDirection: 'row', alignItems: 'center' },
   taskIcon: {
@@ -1116,17 +1095,19 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   taskTitle: {
-    fontFamily: 'Roboto-Medium',
+    fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#9CA3AF',
+    color: '#334155',
     width: wp(43),
+    letterSpacing: -0.2,
   },
   taskDescription: {
-    marginTop: 4,
-    fontSize: 12,
-    color: '#9CA3AF',
-    fontFamily: 'Roboto-Light',
+    marginTop: 5,
+    fontSize: 13,
+    color: '#64748B',
+    fontFamily: 'Poppins-Regular',
     width: wp(40),
+    lineHeight: 18,
   },
   taskContent: {
     justifyContent: 'center',
@@ -1148,8 +1129,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    fontFamily: 'Roboto-Regular',
-    color: '#6B7280',
+    fontFamily: 'Poppins-Medium',
+    color: '#94A3B8',
   },
   checkIcon: {
     resizeMode: 'contain',
@@ -1180,8 +1161,8 @@ const styles = StyleSheet.create({
   },
   floatingTextLabel: {
     fontSize: 14,
-    fontFamily: 'Roboto-SemiBold',
-    color: '#1E64AC',
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
     textAlign: 'center',
   },
   checkAll: {
@@ -1213,21 +1194,105 @@ const styles = StyleSheet.create({
     borderRadius: hp(2),
     backgroundColor: '#000000',
   },
+  headerButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(2),
+  },
+  addReminderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(2.5),
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#BFDBFE',
+    shadowColor: '#11418A',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 3 },
+    }),
+  },
+  healthButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(2.5),
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#FECACA',
+    shadowColor: '#DC2626',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 3 },
+    }),
+  },
+  buttonIconWrapper: {
+    width: hp(3.5),
+    height: hp(3.5),
+    borderRadius: hp(1.75),
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(1.5),
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 2 },
+    }),
+  },
+  addIcon: {
+    height: hp(2),
+    width: hp(2),
+    tintColor: '#11418A',
+  },
+  healthIcon: {
+    height: hp(2),
+    width: hp(2),
+    tintColor: '#DC2626',
+  },
+  addReminderText: {
+    fontSize: 11.5,
+    fontFamily: 'Poppins-Medium',
+    color: '#1E40AF',
+    textAlign: 'center',
+    lineHeight: 14,
+    letterSpacing: -0.2,
+  },
+  healthButtonText: {
+    fontSize: 11.5,
+    fontFamily: 'Poppins-Medium',
+    color: '#DC2626',
+    textAlign: 'center',
+    lineHeight: 14,
+    letterSpacing: -0.2,
+  },
   updateButton: {
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     paddingVertical: hp(1),
-    // paddingHorizontal: hp(2),
-    paddingLeft: hp(1),
-    paddingRight: hp(1),
-    // width: hp(12),
+    paddingHorizontal: hp(1),
     borderRadius: hp(1),
-    elevation: 10,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 3 },
+    }),
   },
   toastContainer: {
     position: 'absolute',
@@ -1245,10 +1310,50 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   loadingText: {
-    marginTop: 10,
-    fontFamily: 'Roboto-Medium',
-    color: '#1E64AC',
+    marginTop: hp(2),
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
     fontSize: 16,
+  },
+  checkAllText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#334155',
+    letterSpacing: -0.2,
+  },
+  streakContainer: {
+    alignItems: 'center',
+    marginVertical: hp(2.5),
+    marginHorizontal: hp(2),
+    backgroundColor: '#FEF9C3',
+    paddingVertical: hp(3),
+    borderRadius: 16,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 4 },
+    }),
+  },
+  fireIcon: {
+    marginBottom: hp(1),
+  },
+  streakTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 24,
+    color: '#78350F',
+    letterSpacing: -0.6,
+    marginBottom: 6,
+  },
+  streakSubtitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#92400E',
+    textAlign: 'center',
+    paddingHorizontal: hp(2.5),
+    lineHeight: 20,
   },
 });
 

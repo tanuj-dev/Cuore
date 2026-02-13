@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Sound from 'react-native-sound';
-import { hp, wp, color, Images } from '../../utilities';
+import { hp, wp, Images } from '../../utilities';
 import RenderHTML from 'react-native-render-html';
 import { useWindowDimensions } from 'react-native';
 
 const MindDetails = ({ navigation, route }) => {
-  const { instructions, audio } = route.params;
+  const { instructions, audio, title } = route.params;
   const { width } = useWindowDimensions();
 
   const [sound, setSound] = useState(null);
@@ -90,57 +90,41 @@ const MindDetails = ({ navigation, route }) => {
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      style={{ flex: 1, backgroundColor: 'white' }}
+      style={styles.scroll}
     >
       <View style={styles.container}>
         {/* Header */}
-        <View style={{ elevation: 1, backgroundColor: '#FFFFFF' }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              paddingHorizontal: hp(1),
-              marginTop: Platform.OS === 'ios' ? hp(3) : 0,
-              paddingTop: hp(2),
-            }}
-          >
+        <View style={styles.headerWrapper}>
+          <View style={styles.header}>
             <TouchableOpacity
               hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              style={{ paddingHorizontal: hp(1), marginTop: hp(3) }}
+              style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Image
-                source={Images.BACK_BUTTON}
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(3.5),
-                  width: wp(4),
-                }}
-              />
+              <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
             </TouchableOpacity>
-            <Text style={styles.title}>Deep Breathing</Text>
+            <Text style={styles.title} numberOfLines={1}>
+              {title || ''}
+            </Text>
+            <View style={styles.headerSpacer} />
           </View>
         </View>
 
-        <View style={{ padding: hp(1.5) }}>
+        <View style={styles.content}>
           {/* Audio Box */}
           <View style={styles.videoBox}>
             <View style={styles.videoControls}>
               <TouchableOpacity onPress={handlePlayPause}>
                 <Image
                   source={isPlaying ? Images.PAUSE : Images.PLAY}
-                  style={{
-                    resizeMode: 'contain',
-                    height: hp(3),
-                    width: wp(5),
-                    tintColor: '#000000',
-                  }}
+                  style={styles.playIcon}
                 />
               </TouchableOpacity>
             </View>
 
-            <View style={{ width: '100%', marginTop: hp(2) }}>
+            <View style={styles.sliderRow}>
               <Slider
-                style={{ width: '100%', height: 20 }}
+                style={styles.slider}
                 minimumValue={0}
                 maximumValue={audioDuration}
                 step={1}
@@ -153,18 +137,13 @@ const MindDetails = ({ navigation, route }) => {
                   }
                   setIsSeeking(false);
                 }}
-                minimumTrackTintColor="black"
-                maximumTrackTintColor="white"
-                thumbTintColor="black"
+                minimumTrackTintColor="#11418A"
+                maximumTrackTintColor="#E2E8F0"
+                thumbTintColor="#11418A"
               />
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Text>{formatTime(currentTime)}</Text>
-                <Text>{formatTime(audioDuration)}</Text>
+              <View style={styles.timeRow}>
+                <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
+                <Text style={styles.timeText}>{formatTime(audioDuration)}</Text>
               </View>
             </View>
           </View>
@@ -179,41 +158,38 @@ const MindDetails = ({ navigation, route }) => {
                 p: {
                   marginBottom: 10,
                   fontSize: 14,
-                  color: '#4B5563',
-                  lineHeight: 20,
+                  color: '#475569',
+                  lineHeight: 22,
+                  fontFamily: 'Poppins-Regular',
                 },
-                ul: {
-                  paddingLeft: 20,
-                  marginBottom: 10,
-                },
-                ol: {
-                  paddingLeft: 20,
-                  marginBottom: 10,
-                },
+                ul: { paddingLeft: 20, marginBottom: 10 },
+                ol: { paddingLeft: 20, marginBottom: 10 },
                 li: {
                   marginBottom: 6,
                   fontSize: 14,
-                  color: '#4B5563',
+                  color: '#475569',
+                  fontFamily: 'Poppins-Regular',
                 },
                 strong: {
-                  fontWeight: 'bold',
-                  color: '#111827',
+                  fontFamily: 'Poppins-Medium',
+                  color: '#1E293B',
                 },
                 em: {
                   fontStyle: 'italic',
-                  color: '#6B7280',
+                  color: '#64748B',
+                  fontFamily: 'Poppins-Regular',
                 },
                 h1: {
                   fontSize: 22,
-                  fontWeight: '700',
+                  fontFamily: 'Poppins-Medium',
                   marginBottom: 12,
-                  color: 'rgb(237, 125, 49)',
+                  color: '#11418A',
                 },
                 h3: {
                   fontSize: 16,
-                  fontWeight: '600',
+                  fontFamily: 'Poppins-Medium',
                   marginBottom: 8,
-                  color: '#1F2937',
+                  color: '#1E293B',
                 },
               }}
             />
@@ -227,30 +203,62 @@ const MindDetails = ({ navigation, route }) => {
 export default MindDetails;
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#F8FAFC',
+  },
+  headerWrapper: {
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: hp(1),
+    paddingTop: Platform.OS === 'ios' ? hp(3) : hp(1.5),
+    paddingBottom: hp(2),
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  backIcon: {
+    resizeMode: 'contain',
+    height: hp(3.5),
+    width: wp(4),
+    tintColor: '#000000',
   },
   title: {
-    fontFamily: 'Roboto-Regular',
-    marginTop: hp(3),
-    marginLeft: hp(10),
+    flex: 1,
+    fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    fontWeight: '400',
-    marginBottom: hp(2),
-    textAlign: 'center',
     color: '#000000',
+    textAlign: 'center',
+    letterSpacing: 0.2,
+    paddingHorizontal: 8,
+  },
+  headerSpacer: {
+    width: 44,
+  },
+  content: {
+    padding: hp(1.5),
   },
   videoBox: {
     alignItems: 'center',
-    backgroundColor: '#E0D1DE',
-    borderRadius: hp(1),
+    backgroundColor: '#F1E8EF',
+    borderRadius: 12,
     padding: hp(2),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    ...(Platform.OS === 'android' && { elevation: 0.5 }),
     marginBottom: hp(2),
     height: hp(20),
   },
@@ -262,18 +270,47 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginBottom: hp(1),
   },
+  playIcon: {
+    resizeMode: 'contain',
+    height: hp(3),
+    width: wp(5),
+    tintColor: '#11418A',
+  },
+  sliderRow: {
+    width: '100%',
+    marginTop: hp(2),
+  },
+  slider: {
+    width: '100%',
+    height: 24,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  timeText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#64748B',
+    letterSpacing: 0.2,
+  },
   descriptionBox: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     padding: hp(2),
-    borderRadius: hp(1),
-    borderLeftWidth: 3,
-    borderLeftColor: '#E1AEDA',
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#11418A',
+    borderTopWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
   },
   descriptionText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#4B5563',
+    color: '#475569',
     marginBottom: hp(1.5),
-    fontWeight: '400',
+    letterSpacing: 0.2,
   },
 });

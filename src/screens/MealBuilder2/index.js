@@ -9,6 +9,7 @@ import {
   ImageBackground,
   Image,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 import { getRecipe } from '../../redux/slices';
@@ -32,26 +33,30 @@ const MealBuilder2 = ({ navigation, route }) => {
   const [adjustedPortions, setAdjustedPortions] = useState(data || []);
 
   const handleRecipePress = async recipeId => {
-    console.log('Recipe ID:', recipeId);
-    const recipe = recipeId;
+    if (!recipeId) return;
     try {
       setLoading(true);
-      const res = await dispatch(getRecipe(recipe)).unwrap();
+      const res = await dispatch(getRecipe(recipeId)).unwrap();
       setLoading(false);
-      navigation.navigate('Recipe', { recipeData: res });
+      if (res) {
+        navigation.navigate('Recipe', { recipeData: res });
+      } else {
+        navigation.navigate('Recipe', { recipeData: null });
+      }
     } catch (error) {
       setLoading(false);
       console.error('Failed to fetch recipe:', error);
-      // Optionally show a toast or alert here
+      navigation.navigate('Recipe', { recipeData: null });
     }
   };
 
   return (
-    <ScrollView style={{}}>
+    <ScrollView style={styles.scroll}>
       <ImageBackground
         style={styles.backgroundImage}
         source={Images.BACKGROUND_IMAGE_NUTRITION}
       >
+        <View style={styles.headerOverlay} />
         <TouchableOpacity
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           onPress={() => navigation.goBack()}
@@ -64,113 +69,39 @@ const MealBuilder2 = ({ navigation, route }) => {
           <Text style={styles.title}>Cuore MealBuilder</Text>
         </View>
 
-        <View
+        <TouchableOpacity
           onPress={() => navigation.navigate('Recipe')}
-          style={{
-            backgroundColor: '#326FAA',
-            width: hp(20),
-            alignItems: 'center',
-            alignSelf: 'center',
-            marginTop: hp(1),
-            padding: hp(1),
-            borderRadius: hp(1),
-          }}
+          style={styles.badge}
+          activeOpacity={0.8}
         >
-          <Text style={{ fontSize: 14, fontWeight: '500', color: '#FFFFFF' }}>
-            My Custom Meal
-          </Text>
-        </View>
+          <Text style={styles.badgeText}>My Custom Meal</Text>
+        </TouchableOpacity>
       </ImageBackground>
 
-      <View style={{ flex: 1, backgroundColor: '#F9FAFB', padding: wp(4) }}>
+      <View style={styles.contentWrap}>
         <FlatList
           data={data}
-          keyExtractor={item => item.id}
+          keyExtractor={(item, index) => String(item?.id ?? item?.name ?? index)}
           renderItem={({ item }) => {
-            const originalName = item?.name; // "1 tbsp Coconut Chutney"
-            const newServingSize = item?.newServingSizeString; // "1.75 tbsp"
-            const updatedName = originalName.replace(
-              /^\d+(\.\d+)?\s*\w+/,
-              newServingSize,
-            );
+            const newServingSize = item?.newServingSizeString;
 
             return (
               <TouchableOpacity
                 onPress={() => handleRecipePress(item?.recipeLink)}
-                style={{
-                  marginHorizontal: hp(1),
-                  backgroundColor: '#FFFFFF',
-                  padding: hp(3),
-                  borderRadius: hp(1),
-                  marginVertical: hp(0.5),
-                  elevation: 1,
-                  shadowColor: '#000',
-                  shadowOpacity: 0.1,
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowRadius: 2,
-                  // elevation: 2,
-                }}
+                style={styles.itemCard}
+                activeOpacity={0.7}
               >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  <View
-                    style={{
-                      height: hp(2),
-                      width: hp(2),
-                      borderRadius: hp(1),
-                      // margin: hp(1),
-                      backgroundColor: 'red',
-                      // backgroundColor: tagColors[item.tag],
-                      marginRight: wp(3),
-                      // paddingVertical: hp(0.5),
-                    }}
-                  />
-                  <View
-                    style={{
-                      flex: 1,
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <View>
-                      <Text
-                        style={{
-                          fontFamily: 'Roboto-Regular',
-                          fontSize: 15,
-                          fontWeight: '400',
-                          color: '#000000',
-                        }}
-                      >
-                        {newServingSize}
-                      </Text>
-                      <Text
-                        style={{
-                          fontFamily: 'Roboto-Regular',
-                          fontSize: 14,
-                          color: '#6B7280',
-                        }}
-                      >
-                        {item?.adjustedCalories} cal
-                      </Text>
-                    </View>
-                    <Image
-                      style={{
-                        height: hp(2),
-                        width: wp(4),
-                        resizeMode: 'contain',
-                        // position: 'absolute',
-                        // left: hp(37),
-                      }}
-                      source={Images.RIGHT_ARROW}
-                    ></Image>
+                <View style={styles.itemRow}>
+                  <View style={styles.itemDot} />
+                  <View style={styles.itemContent}>
+                    <Text style={styles.servingText}>{newServingSize}</Text>
+                    <Text style={styles.calText}>{item?.adjustedCalories} cal</Text>
                   </View>
+                  <Image
+                    style={styles.arrowIcon}
+                    source={Images.RIGHT_ARROW}
+                  />
                 </View>
-
-                {/* increment decrement button */}
               </TouchableOpacity>
             );
           }}
@@ -180,44 +111,16 @@ const MealBuilder2 = ({ navigation, route }) => {
           onPress={() =>
             navigation.navigate('MealBuilder', { mealTime: 'Breakfast' })
           }
-          style={{
-            backgroundColor: '#1E64AC',
-            marginHorizontal: wp(20),
-            marginTop: hp(2),
-            padding: hp(1.5),
-            alignItems: 'center',
-            borderRadius: hp(1),
-            // marginBottom: hp(20),
-          }}
+          style={styles.clearButton}
         >
           {loading ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 16,
-                fontWeight: '500',
-                color: '#FFFFFF',
-              }}
-            >
-              Clear Selection
-            </Text>
+            <Text style={styles.clearButtonText}>Clear Selection</Text>
           )}
         </TouchableOpacity>
-        <Text
-          style={{
-            marginTop: hp(2),
-            fontSize: 12,
-            color: '#6B7280',
-            width: wp(90),
-            alignSelf: 'center',
-            textAlign: 'center',
-            // fontFamily: 'Roboto-Regular',
-            // lineHeight: 16,
-            marginBottom: hp(10),
-          }}
-        >
+
+        <Text style={styles.noteText}>
           Note: {selectedItems?.message}
         </Text>
       </View>
@@ -226,31 +129,134 @@ const MealBuilder2 = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1, backgroundColor: '#F8FAFC' },
   backgroundImage: {
-    height: hp(20),
-    padding: hp(2),
+    height: hp(24),
+    paddingHorizontal: wp(4),
+    paddingTop: Platform.OS === 'ios' ? hp(2) : hp(1),
+    paddingBottom: hp(2),
     borderBottomWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
+  },
+  headerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
   },
   headerContainer: {
-    marginTop: Platform.OS == 'ios' && hp(5),
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   backButton: {
-    marginTop: Platform.OS == 'ios' ? hp(0) : hp(1),
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),
   },
   titleContainer: {
     alignItems: 'center',
-    marginTop: hp(1),
+    marginTop: hp(0.5),
   },
   title: {
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontWeight: '400',
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  badge: {
+    backgroundColor: '#11418A',
+    alignSelf: 'center',
+    marginTop: hp(1.5),
+    paddingVertical: hp(1),
+    paddingHorizontal: hp(2),
+    borderRadius: 10,
+  },
+  badgeText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
+  contentWrap: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    padding: wp(4),
+    paddingBottom: hp(10),
+  },
+  itemCard: {
+    marginHorizontal: hp(1),
+    backgroundColor: '#FFFFFF',
+    padding: hp(2),
+    borderRadius: 12,
+    marginVertical: hp(0.75),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    ...(Platform.OS === 'android' && { elevation: 1 }),
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemDot: {
+    height: hp(2),
+    width: hp(2),
+    borderRadius: hp(1),
+    backgroundColor: 'red',
+    marginRight: wp(3),
+  },
+  itemContent: {
+    flex: 1,
+  },
+  servingText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  calText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#64748B',
+    marginTop: 4,
+    letterSpacing: 0.2,
+  },
+  arrowIcon: {
+    height: hp(2),
+    width: wp(4),
+    resizeMode: 'contain',
+  },
+  clearButton: {
+    backgroundColor: '#11418A',
+    marginHorizontal: wp(10),
+    marginTop: hp(2),
+    paddingVertical: hp(1.5),
+    alignItems: 'center',
+    borderRadius: 12,
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    ...(Platform.OS === 'android' && { elevation: 2 }),
+  },
+  clearButtonText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  noteText: {
+    fontFamily: 'Poppins-Regular',
+    marginTop: hp(2),
+    fontSize: 12,
+    color: '#64748B',
+    width: wp(90),
+    alignSelf: 'center',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: hp(10),
+    letterSpacing: 0.2,
   },
 });
 

@@ -25,32 +25,29 @@ const NetworkError = ({ onRetry }) => {
   }, [slideAnim]);
 
   const handleRetry = useCallback(async () => {
+    if (!onRetry) return;
     setIsChecking(true);
+
+    const stopChecking = () => setIsChecking(false);
+
+    // Safety: never leave loader on longer than 12s (e.g. if a check hangs)
+    const safetyTimeout = setTimeout(stopChecking, 12000);
+
     try {
-      // Use network utility to check both network connection and internet connectivity
+      // Give the OS time to update NetInfo after user reconnects (reduces "stuck" when tapping right after turning WiFi on)
+      await new Promise(r => setTimeout(r, 800));
+
       const networkConnected = await Common.checkNetworkConnection();
 
       if (networkConnected) {
-        // Also verify actual internet access
-        const internetAccessible = await Common.checkInternetConnectivity(3000);
-
-        if (internetAccessible && onRetry) {
-          await onRetry();
-        } else if (onRetry) {
-          // Network connected but no internet - still call onRetry to update state
-          await onRetry();
-        }
-      } else if (onRetry) {
-        // No network connection - call onRetry to update state
-        await onRetry();
+        await Common.checkInternetConnectivity(5000);
       }
+      await onRetry();
     } catch (error) {
       console.warn('Error checking connectivity in NetworkError:', error);
-      // Still call onRetry to update state
-      if (onRetry) {
-        await onRetry();
-      }
+      await onRetry();
     } finally {
+      clearTimeout(safetyTimeout);
       setIsChecking(false);
     }
   }, [onRetry]);
@@ -91,7 +88,7 @@ const NetworkError = ({ onRetry }) => {
               {isChecking ? (
                 <ActivityIndicator
                   size="large"
-                  color="#1E64AC"
+                  color="#11418A"
                   style={styles.loader}
                 />
               ) : (
@@ -181,7 +178,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(2),
   },
   button: {
-    backgroundColor: '#1E64AC',
+    backgroundColor: '#11418A',
     paddingVertical: hp(1.5),
     paddingHorizontal: wp(8),
     borderRadius: hp(1),

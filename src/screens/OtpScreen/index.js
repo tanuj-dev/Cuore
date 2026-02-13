@@ -198,7 +198,7 @@ const OtpScreen = () => {
             resizeMode: 'contain',
             height: hp(3.5),
             width: wp(4),
-            tintColor: '#000000',
+            tintColor: '#1E293B',
           }}
         />
       </TouchableOpacity>
@@ -246,7 +246,7 @@ const OtpScreen = () => {
       >
         <View style={styles.resendContainer}>
           {loader ? (
-            <ActivityIndicator color="#1E64AC" />
+            <ActivityIndicator color="#11418A" />
           ) : (
             <>
               <Image
@@ -269,68 +269,89 @@ const OtpScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: wp(6),
     paddingTop: hp(3),
   },
   backArrow: {
-    marginTop: Platform.OS === 'ios' ? hp(2) : 0,
+    marginTop: Platform.OS === 'ios' ? hp(2) : hp(1),
     marginBottom: hp(3),
+    padding: hp(0.5),
   },
   title: {
     marginTop: hp(7),
-    fontSize: hp(2.4),
-    fontWeight: '600',
+    fontSize: 24,
+    fontFamily: 'Poppins-Medium',
     textAlign: 'center',
     marginBottom: hp(3),
+    color: '#1E293B',
+    letterSpacing: -0.3,
   },
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: hp(2),
+    marginBottom: hp(2.5),
+    gap: wp(2),
   },
   otpInput: {
-    width: wp(12),
-    height: wp(12),
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: wp(2),
+    flex: 1,
+    maxWidth: wp(14),
+    height: wp(14),
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
     textAlign: 'center',
-    fontSize: hp(2),
-    backgroundColor: '#fff',
+    fontSize: 22,
+    fontFamily: 'Poppins-Medium',
+    color: '#1E293B',
+    backgroundColor: '#F8FAFC',
+    letterSpacing: 2,
   },
   subtitle: {
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
-    fontSize: hp(1.6),
-    color: '#6B7280',
+    fontSize: 14,
+    color: '#64748B',
     marginBottom: hp(3),
+    lineHeight: 20,
+    letterSpacing: 0.2,
   },
   submitButton: {
-    backgroundColor: '#1E64AC',
-    paddingVertical: hp(1.6),
-    borderRadius: wp(2),
+    backgroundColor: '#11418A',
+    paddingVertical: hp(2),
+    borderRadius: 12,
     alignItems: 'center',
     marginBottom: hp(2),
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   submitText: {
     color: '#FFFFFF',
-    fontSize: hp(2),
-    fontWeight: '600',
+    fontSize: 16,
+    fontFamily: 'Poppins-Medium',
+    letterSpacing: 0.5,
   },
   timerText: {
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
-    color: '#6B7280',
+    fontSize: 13,
+    color: '#64748B',
     marginBottom: hp(1),
+    letterSpacing: 0.2,
   },
   resendContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: hp(1),
   },
   resendText: {
-    color: '#1E64AC',
-    fontWeight: '500',
-    fontSize: hp(1.8),
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
+    fontSize: 15,
+    letterSpacing: 0.3,
   },
 });
 

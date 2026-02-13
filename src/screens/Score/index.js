@@ -17,10 +17,95 @@ import {
   Alert,
   Modal,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
 import { hp, wp, Images } from '../../utilities';
+
+const MEDICAL_REFERENCES = [
+  {
+    intro:
+      "Cuore's score, trend summaries, and lifestyle guidance are formed by widely cited public health guidance and cardiometabolic research. The sources below support the general guideline ranges and health recommendations referenced within the app.",
+  },
+  {
+    section: 'Body Mass Index (BMI) Classification',
+    links: [
+      { title: 'CDC – About BMI', url: 'https://www.cdc.gov/bmi' },
+      {
+        title: 'NIH – BMI Classification',
+        url: 'https://www.nhlbi.nih.gov/health/educational/lose_wt/BMI/bmi_tbl.htm',
+      },
+    ],
+    note: '(BMI categories are general population references. Individual risk interpretation may vary.)',
+  },
+  {
+    section: 'Calorie & Energy Balance Estimation',
+    links: [
+      {
+        title:
+          'National Institutes of Health (NHLBI) – Healthy Weight & Energy Balance',
+        url: 'https://www.nhlbi.nih.gov/health/educational/lose_wt',
+      },
+    ],
+    note: '(Calorie guidance is derived from standard resting metabolic rate and energy balance estimation methods.)',
+  },
+  {
+    section: 'Physical Activity Guidance',
+    links: [
+      {
+        title: 'American Heart Association – Physical Activity Recommendations',
+        url: 'https://www.heart.org/en/healthy-living/fitness/fitness-basics/aha-recs-for-physical-activity-in-adults',
+      },
+    ],
+  },
+  {
+    section: 'Blood Pressure Classification & Risk Context',
+    links: [
+      {
+        title: 'American Heart Association – High Blood Pressure',
+        url: 'https://www.heart.org/en/health-topics/high-blood-pressure',
+      },
+    ],
+  },
+  {
+    section: 'Blood Glucose & Diabetes Risk Context',
+    links: [
+      {
+        title: 'American Diabetes Association – Diagnosis',
+        url: 'https://diabetes.org/about-diabetes/diagnosis',
+      },
+    ],
+  },
+  {
+    section: 'Lipid & Cardiovascular Risk Context',
+    links: [
+      {
+        title: 'American Heart Association – Cholesterol Overview',
+        url: 'https://www.heart.org/en/health-topics/cholesterol',
+      },
+    ],
+    note: '(Lipid markers, including triglycerides and HDL cholesterol, are interpreted within broader cardiovascular risk context. Cuore presents lipid values for awareness and longitudinal trend tracking rather than diagnostic classification.)',
+  },
+  {
+    section: 'Longitudinal Cardiometabolic Research',
+    links: [
+      {
+        title: 'Framingham Heart Study',
+        url: 'https://framinghamheartstudy.org',
+      },
+    ],
+    note: "(Cuore's trend summaries and projections reflect general population research examining associations between lifestyle factors and cardiometabolic risk.)",
+  },
+  {
+    section: 'About Metabolic Age & Body Composition',
+    note: 'Cuore\'s comparative "metabolic age" and body composition summaries are derived from established population-based cardiometabolic risk modeling concepts and are intended for awareness and engagement purposes only.',
+  },
+  {
+    section: 'How Cuore Uses These References',
+    note: 'Cuore organizes user-provided health data and provides general public health context for awareness. Trend projections reflect general population research patterns and are not medical predictions. Cuore does not diagnose, treat, prescribe, or replace medical advice. All scores and projections are informational and should be interpreted in consultation with a qualified healthcare professional.',
+  },
+];
 import { useSelector, useDispatch } from 'react-redux';
 import { getCuoreScoreThunk, getOnboardingThunk } from '../../redux/slices';
 import { shareData } from '../../redux/slices';
@@ -49,6 +134,10 @@ const Score = ({ navigation, route }) => {
   const paymentStatus = useSelector(state => state.auth?.paymentStatus);
   const viewShotRef = useRef(null);
   const [sharingLoading, setSharingLoading] = useState(false);
+  const [showReferencesModal, setShowReferencesModal] = useState(false);
+  const [showWebViewModal, setShowWebViewModal] = useState(false);
+  const [webViewUrl, setWebViewUrl] = useState('');
+  const [webViewLoading, setWebViewLoading] = useState(false);
 
   // Memoize vitals conversion
   const convertVitalsToArray = useCallback(vitals => {
@@ -240,8 +329,11 @@ const Score = ({ navigation, route }) => {
   //   );
   // }
 
-
-  const profileImage = useSelector(state => state?.profile?.data?.data?.user?.photo_url || state?.profile?.data?.data?.user?.photoUrl);
+  const profileImage = useSelector(
+    state =>
+      state?.profile?.data?.data?.user?.photo_url ||
+      state?.profile?.data?.data?.user?.photoUrl,
+  );
   const profileImageSource = profileImage
     ? { uri: profileImage }
     : Images.UNCLE;
@@ -317,9 +409,14 @@ const Score = ({ navigation, route }) => {
             {Math.round(health_metrics?.health_score)}
           </Text> */}
                 {/* <Text style={styles.score}>78</Text> */}
-                <Text style={styles.timeToTarget}>
-                  Estimated Time to Target
-                </Text>
+                <View style={styles.timeToTargetTitleRow}>
+                  <Image
+                    source={Images.NOTICE}
+                    style={styles.timeToTargetTitleIcon}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.timeToTarget}>Progress Projection</Text>
+                </View>
                 <View style={styles.timeToTargetRow}>
                   <Text style={styles.timeToTargetValue}>
                     {Math.round(
@@ -329,6 +426,17 @@ const Score = ({ navigation, route }) => {
                   <Text style={styles.months}>
                     {' '}
                     {health_metrics?.estimated_time_to_target?.unit}
+                  </Text>
+                </View>
+                <View style={styles.projectionDisclaimerRow}>
+                  {/* <Image
+                    source={Images.NOTICE}
+                    style={styles.projectionDisclaimerIcon}
+                    resizeMode="contain"
+                  /> */}
+                  <Text style={styles.projectionDisclaimerText}>
+                    Based on general lifestyle-response research. Individual
+                    results vary.
                   </Text>
                 </View>
 
@@ -346,7 +454,11 @@ const Score = ({ navigation, route }) => {
                   <Text style={styles.reassessText}>Re-assess monthly</Text>
                 </TouchableOpacity>
                 <Text style={styles.reassessNote}>
-                  As your health evolves, so should your plan Re-assess monthly
+                  Based on general lifestyle and cardiometabolic research;
+                  consistent habit changes are commonly associated with
+                  measurable improvements over time. This estimate reflects
+                  general population trends and is not a medical prediction.
+                  Individual results vary.
                 </Text>
               </View>
 
@@ -354,15 +466,15 @@ const Score = ({ navigation, route }) => {
                 <InfoCard
                   label="Metabolic Age"
                   value={health_metrics?.metabolic_age?.value}
-                  subText={health_metrics?.metabolic_age?.gap}
+                  // subText={health_metrics?.metabolic_age?.gap}
                   png={Images.TREND}
                 />
                 <InfoCard
                   label="Weight"
                   value={health_metrics?.weight?.current}
-                  subText={`Target:${Math.round(
-                    health_metrics?.weight?.target,
-                  )} kg`}
+                  // subText={`Target:${Math.round(
+                  //   health_metrics?.weight?.target,
+                  // )} kg`}
                   png={Images.WEIGHT}
                 />
               </View>
@@ -370,7 +482,7 @@ const Score = ({ navigation, route }) => {
                 <InfoCard
                   label="BMI"
                   value={health_metrics?.bmi.value}
-                  subText={`Target: ${health_metrics?.bmi?.target}`}
+                  // subText={`Target: ${health_metrics?.bmi?.target}`}
                   png={Images.WEIGHT}
                 />
                 <InfoCard
@@ -378,7 +490,7 @@ const Score = ({ navigation, route }) => {
                   value={`${health_metrics?.lifestyle_score?.value?.toFixed(
                     1,
                   )}%`}
-                  subText={`Target: >${health_metrics?.lifestyle_score.target}`}
+                  // subText={`Target: >${health_metrics?.lifestyle_score.target}`}
                   png={Images.TREND}
                 />
               </View>
@@ -402,7 +514,7 @@ const Score = ({ navigation, route }) => {
                     <VitalCard
                       label={item.label}
                       value={item.value}
-                      target={item.target}
+                      // target={item.target}
                       color={item.status}
                       hasDiabetes={hasDiabetes}
                     />
@@ -431,36 +543,21 @@ const Score = ({ navigation, route }) => {
                   <Text style={styles.continueText}>Continue</Text>
                 </TouchableOpacity>
               </View>
-              <View style={[styles.card, { flexDirection: 'row' }]}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <View
-                    style={{ flexDirection: 'row', alignItems: 'center' }}
-                  ></View>
-                </View>
-
+              <TouchableOpacity
+                style={[styles.card, styles.referencesCard]}
+                onPress={() => setShowReferencesModal(true)}
+                activeOpacity={0.8}
+              >
                 <Image
-                  style={{
-                    marginRight: hp(1),
-                    height: hp(1.5),
-                    width: hp(2),
-                    resizeMode: 'contain',
-                    marginHorizontal: hp(1),
-                  }}
+                  style={styles.referencesNoticeIcon}
                   source={Images.NOTICE}
                 />
-
-                <Text>
-                  This score summarizes lifestyle and health trends for
-                  awareness only and is not intended for diagnosis, treatment,
-                  or medical decision-making.
+                <Text style={styles.referencesCardText}>
+                  Cuore – Medical References & Source Guidance
                 </Text>
+              </TouchableOpacity>
 
-                {/* <Text style={styles.bold}>History: </Text>
+              {/* <Text style={styles.bold}>History: </Text>
                          
               
                           <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
@@ -474,7 +571,6 @@ const Score = ({ navigation, route }) => {
                           <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
                             RBS: 230
                           </Text> */}
-              </View>
             </View>
           </ScrollView>
         </View>
@@ -488,10 +584,104 @@ const Score = ({ navigation, route }) => {
       >
         <View style={styles.sharingLoaderOverlay}>
           <View style={styles.sharingLoaderContainer}>
-            <ActivityIndicator size="large" color="#1E64AC" />
+            <ActivityIndicator size="large" color="#11418A" />
             <Text style={styles.sharingLoaderText}>Generating PDF...</Text>
           </View>
         </View>
+      </Modal>
+
+      {/* Medical References Modal */}
+      <Modal
+        visible={showReferencesModal}
+        animationType="slide"
+        onRequestClose={() => setShowReferencesModal(false)}
+      >
+        <SafeAreaView style={styles.refModalSafe}>
+          <View style={styles.refModalHeader}>
+            <Text style={styles.refModalTitle}>
+              Cuore – Medical References & Source Guidance
+            </Text>
+            <TouchableOpacity
+              style={styles.refModalCloseBtn}
+              onPress={() => setShowReferencesModal(false)}
+            >
+              <Text style={styles.refModalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView
+            style={styles.refModalScroll}
+            contentContainerStyle={styles.refModalContent}
+            showsVerticalScrollIndicator={true}
+          >
+            {MEDICAL_REFERENCES.map((block, idx) => (
+              <View key={`ref-${idx}`} style={styles.refBlock}>
+                {block.intro ? (
+                  <Text style={styles.refIntro}>{block.intro}</Text>
+                ) : null}
+                {block.section ? (
+                  <Text style={styles.refSectionTitle}>{block.section}</Text>
+                ) : null}
+                {block.links?.map((link, linkIdx) => (
+                  <TouchableOpacity
+                    key={`link-${idx}-${linkIdx}`}
+                    style={styles.refLinkRow}
+                    onPress={() => {
+                      setWebViewUrl(link.url);
+                      setShowReferencesModal(false);
+                      setShowWebViewModal(true);
+                    }}
+                  >
+                    <Text style={styles.refLinkBullet}>•</Text>
+                    <Text style={styles.refLinkText}>{link.title}</Text>
+                    <Text style={styles.refLinkUrl} numberOfLines={1}>
+                      {link.url}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                {block.note ? (
+                  <Text style={styles.refNote}>{block.note}</Text>
+                ) : null}
+              </View>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* WebView Modal for links */}
+      <Modal
+        visible={showWebViewModal}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowWebViewModal(false);
+          setWebViewUrl('');
+        }}
+      >
+        <SafeAreaView style={styles.webViewModalSafe}>
+          <View style={styles.webViewModalHeader}>
+            <TouchableOpacity
+              style={styles.webViewModalCloseBtn}
+              onPress={() => {
+                setShowWebViewModal(false);
+                setWebViewUrl('');
+              }}
+            >
+              <Text style={styles.webViewModalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          {webViewLoading && (
+            <View style={styles.webViewLoaderWrap}>
+              <ActivityIndicator size="large" color="#11418A" />
+            </View>
+          )}
+          {webViewUrl ? (
+            <WebView
+              source={{ uri: webViewUrl }}
+              onLoadStart={() => setWebViewLoading(true)}
+              onLoadEnd={() => setWebViewLoading(false)}
+              style={styles.webViewStyle}
+            />
+          ) : null}
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -529,7 +719,7 @@ const VitalCard = React.memo(({ label, value, target, hasDiabetes, color }) => {
           </View>
           <View style={styles.vitalTargetContainer}>
             <View style={[styles.vitalBar, { backgroundColor: color }]} />
-            <Text style={styles.vitalTarget}>{target}</Text>
+            {/* <Text style={styles.vitalTarget}>{target}</Text> */}
           </View>
         </View>
       )}
@@ -540,7 +730,7 @@ const VitalCard = React.memo(({ label, value, target, hasDiabetes, color }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
   },
   viewShot: {
     flex: 1,
@@ -549,9 +739,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
   },
-  container: { flex: 1, backgroundColor: '#fff', marginTop: hp(9) },
+  container: { flex: 1, backgroundColor: '#FFFFFF', marginTop: hp(9) },
   fixedHeader: {
     position: 'absolute',
     top: 0,
@@ -581,23 +771,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   date: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.5),
-    color: '#6B7280',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#64748B',
+    letterSpacing: 0.2,
   },
   title: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(5),
-    fontWeight: '400',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 20,
     marginTop: hp(-3),
-    color: '#000000',
+    color: '#1E293B',
     textAlign: 'center',
     marginLeft: hp(5),
+    letterSpacing: -0.3,
   },
   shareIcon: {
     resizeMode: 'contain',
     height: hp(2),
-    tintColor: 'black',
+    tintColor: '#1E293B',
   },
   profileIcon: {
     resizeMode: 'contain',
@@ -611,10 +802,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   timeToTargetValue: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 17,
-    color: '#1E64AC',
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 18,
+    color: '#11418A',
+    letterSpacing: 0.3,
   },
   reassessIcon: {
     resizeMode: 'contain',
@@ -625,67 +816,100 @@ const styles = StyleSheet.create({
 
   scoreCard: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: hp(2),
-    marginHorizontal: hp(1),
-    elevation: 1,
-    borderRadius: hp(1),
+    paddingVertical: hp(2.5),
+    marginHorizontal: hp(1.5),
+    elevation: 2,
+    borderRadius: 16,
     alignItems: 'center',
     marginVertical: hp(2),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
   },
   meter: { width: wp(70), height: wp(34), resizeMode: 'cover' },
-  score: { fontSize: wp(10), fontWeight: 'bold', color: '#0047AB' },
+  score: { fontSize: wp(10), color: '#11418A', fontFamily: 'Poppins-Medium' },
+  timeToTargetTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(0.3),
+  },
+  timeToTargetTitleIcon: {
+    marginRight: hp(1),
+    height: hp(1.5),
+    width: hp(2),
+  },
   timeToTarget: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#4B5563',
-    fontWeight: '400',
+    color: '#64748B',
+    letterSpacing: 0.2,
+  },
+  projectionDisclaimerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: hp(1),
+    marginBottom: hp(0.5),
+  },
+  projectionDisclaimerIcon: {
+    marginRight: hp(1),
+    height: hp(1.5),
+    width: hp(2),
+    marginHorizontal: hp(0.5),
+  },
+  projectionDisclaimerText: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#64748B',
+    fontStyle: 'italic',
+    lineHeight: 18,
+    letterSpacing: 0.2,
+
+    textAlign: 'center',
   },
   months: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    fontWeight: '400',
-    color: '#6B7280',
+    color: '#64748B',
+    letterSpacing: 0.2,
   },
   reassessButton: {
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    backgroundColor: '#1E64AC',
-    // marginTop: hp(4),
-    // paddingHorizontal: wp(30),
-    paddingVertical: hp(1),
-    borderRadius: wp(2),
-    // marginTop: hp(2),
+    backgroundColor: '#11418A',
+    paddingVertical: hp(1.5),
+    borderRadius: 12,
     marginVertical: hp(2),
     marginHorizontal: hp(2),
     width: '90%',
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   reassessText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
-    fontWeight: '800',
     marginLeft: wp(3),
-    // marginRight: hp(6),
     fontSize: 15,
+    letterSpacing: 0.3,
   },
   reassessNote: {
-    fontFamily: 'Roboto-Regular',
-    paddingHorizontal: hp(1),
+    fontFamily: 'Poppins-Regular',
+    paddingHorizontal: hp(2),
     textAlign: 'center',
     marginTop: hp(1),
-    fontSize: 16,
-
-    color: '#1E64AC',
-    fontWeight: '400',
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 18,
+    letterSpacing: 0.1,
   },
   reassessLink: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     textDecorationLine: 'underline',
-    color: '#0047AB',
+    color: '#11418A',
   },
 
   row: {
@@ -697,43 +921,42 @@ const styles = StyleSheet.create({
   infoCard: {
     width: '48%',
     backgroundColor: '#FFFFFF',
-    elevation: 1,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    padding: wp(3),
-    borderRadius: wp(2),
-    // alignItems: 'center',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    padding: wp(3.5),
+    borderRadius: 12,
     justifyContent: 'center',
   },
   infoValue: {
-    fontFamily: 'Roboto-Regular',
-    // marginLeft: hp(2),
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontWeight: '400',
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   infoLabel: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: hp(0.5),
+    letterSpacing: 0.2,
   },
   infoSub: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 12,
     color: '#FF8D10',
-    fontWeight: '400',
+    letterSpacing: 0.2,
   },
   infoSubContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: hp(0.5),
+    marginTop: hp(0.8),
   },
   infoSubIcon: {
     resizeMode: 'contain',
-    height: hp(3),
+    height: hp(2.5),
     width: wp(4),
     tintColor: '#FF8D10',
     marginRight: hp(0.5),
@@ -742,13 +965,13 @@ const styles = StyleSheet.create({
     marginTop: hp(2),
     paddingVertical: hp(2),
     margin: hp(1.5),
-    backgroundColor: 'white',
-    elevation: 0.5,
+    backgroundColor: '#FFFFFF',
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderRadius: hp(1),
+    shadowRadius: 8,
+    borderRadius: 12,
   },
   vitalItemWrapper: {
     marginVertical: 0,
@@ -765,36 +988,35 @@ const styles = StyleSheet.create({
   },
   vitalTargetContainer: {
     flexDirection: 'row',
-    width: hp(22),
+    flex: 1,
+    minWidth: wp(40),
+    marginLeft: wp(2),
   },
   continueContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
     margin: hp(2),
     marginBottom: hp(6),
     marginTop: hp(2),
-    borderRadius: hp(1),
+    borderRadius: 12,
     paddingVertical: hp(1),
-    elevation: 1,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
   },
 
   vitalCard: {
     justifyContent: 'center',
-    // alignItems: 'center',
-    // backgroundColor: 'red',
     paddingHorizontal: wp(4),
     marginVertical: hp(0.8),
   },
   vitalLabel: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     alignSelf: 'flex-start',
     fontSize: 14,
-    // marginBottom: hp(0.5),
-    fontWeight: 400,
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   vitalRow: {
     flexDirection: 'row',
@@ -802,31 +1024,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   vitalValue: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     marginLeft: hp(2),
     fontSize: 14,
-    fontWeight: '400',
-    color: '#000000',
-
+    color: '#1E293B',
     alignSelf: 'flex-start',
+    letterSpacing: 0.2,
   },
   vitalTarget: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     marginLeft: hp(1),
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 13,
+    color: '#64748B',
+    letterSpacing: 0.2,
   },
   vitalBar: {
-    // alignSelf: 'flex-start',
     marginTop: hp(0.5),
-    width: wp(25),
+    flex: 1,
     height: hp(1),
     borderRadius: wp(2),
-    marginHorizontal: wp(2),
   },
-  green: { backgroundColor: '#4CAF50' },
-  yellow: { backgroundColor: '#FFC107' },
-  red: { backgroundColor: '#F44336' },
+  green: { backgroundColor: '#10B981' },
+  yellow: { backgroundColor: '#F59E0B' },
+  red: { backgroundColor: '#EF4444' },
 
   focusRow: {
     justifyContent: 'space-between',
@@ -836,43 +1056,46 @@ const styles = StyleSheet.create({
     marginVertical: hp(2),
   },
   focusLabel: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
     marginBottom: hp(1),
-    color: '#000000',
-    fontWeight: '400',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   focusTags: { flexDirection: 'row', gap: wp(3) },
   focusTag: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     paddingHorizontal: wp(4),
-    paddingVertical: hp(0.8),
-    backgroundColor: '#D2E0EE',
-    borderRadius: wp(1),
-    fontSize: wp(3.5),
-    color: '#B63241',
+    paddingVertical: hp(1),
+    backgroundColor: '#DBEAFE',
+    borderRadius: 8,
+    fontSize: 13,
+    color: '#DC2626',
+    letterSpacing: 0.2,
   },
 
   continueButton: {
-    // marginTop: hp(4),
-    // marginBottom: hp(6),
     margin: wp(4),
-    backgroundColor: '#1E64AC',
-    paddingVertical: hp(1.5),
-    borderRadius: wp(1),
+    backgroundColor: '#11418A',
+    paddingVertical: hp(1.8),
+    borderRadius: 12,
     alignItems: 'center',
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   continueText: {
-    fontFamily: 'Roboto-Regular',
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '800',
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
+    fontSize: 16,
+    letterSpacing: 0.5,
   },
   bottomText: {
     fontSize: 12,
-    fontWeight: '400',
-    color: '#9CA3AF',
-    fontFamily: 'Roboto-Regular',
+    color: '#94A3B8',
+    fontFamily: 'Poppins-Regular',
+    letterSpacing: 0.1,
   },
   sharingLoaderOverlay: {
     flex: 1,
@@ -882,7 +1105,7 @@ const styles = StyleSheet.create({
   },
   sharingLoaderContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: hp(1),
+    borderRadius: 16,
     padding: hp(3),
     alignItems: 'center',
     justifyContent: 'center',
@@ -890,23 +1113,180 @@ const styles = StyleSheet.create({
   },
   sharingLoaderText: {
     marginTop: hp(1.5),
-    fontSize: hp(1.8),
-    color: '#111827',
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '500',
+    fontSize: 15,
+    color: '#1E293B',
+    fontFamily: 'Poppins-Regular',
+    letterSpacing: 0.2,
   },
 
   card: {
-    backgroundColor: 'white',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: hp(2),
-    marginVertical: 6,
+    marginVertical: hp(1),
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 2,
     justifyContent: 'center',
     marginHorizontal: hp(1.5),
+  },
+  referencesCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  referencesNoticeIcon: {
+    marginRight: hp(1),
+    height: hp(1.5),
+    width: hp(2),
+    resizeMode: 'contain',
+    marginHorizontal: hp(0.5),
+  },
+  referencesCardText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#64748B',
+    letterSpacing: 0.1,
+    lineHeight: 20,
+    flex: 1,
+  },
+  refModalSafe: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  refModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(2),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  refModalTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16,
+    color: '#1E293B',
+    flex: 1,
+    marginRight: wp(2),
+    letterSpacing: 0.2,
+  },
+  refModalCloseBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  refModalCloseText: {
+    fontSize: 20,
+    color: '#475569',
+    fontFamily: 'Poppins-Regular',
+  },
+  refModalScroll: {
+    flex: 1,
+  },
+  refModalContent: {
+    padding: wp(4),
+    paddingBottom: hp(8),
+  },
+  refBlock: {
+    marginBottom: hp(2.5),
+  },
+  refIntro: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#475569',
+    lineHeight: 22,
+    letterSpacing: 0.2,
+    marginBottom: hp(1),
+  },
+  refSectionTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#11418A',
+    marginBottom: hp(1),
+    letterSpacing: 0.2,
+  },
+  refLinkRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginBottom: hp(0.8),
+    paddingVertical: hp(0.3),
+  },
+  refLinkBullet: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#11418A',
+    marginRight: wp(1.5),
+  },
+  refLinkText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#11418A',
+    textDecorationLine: 'underline',
+    letterSpacing: 0.2,
+    flex: 1,
+  },
+  refLinkUrl: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#94A3B8',
+    marginLeft: wp(2),
+    flex: 1,
+  },
+  refNote: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#64748B',
+    fontStyle: 'italic',
+    lineHeight: 20,
+    marginTop: hp(0.5),
+    letterSpacing: 0.2,
+  },
+  webViewModalSafe: {
+    marginTop: hp(2),
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  webViewModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.5),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  webViewModalCloseBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  webViewModalCloseText: {
+    fontSize: 20,
+    color: '#475569',
+    fontFamily: 'Poppins-Regular',
+  },
+  webViewLoaderWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    zIndex: 1,
+  },
+  webViewStyle: {
+    flex: 1,
   },
 });
 

@@ -6,105 +6,41 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  Platform,
+  useWindowDimensions,
 } from 'react-native';
 import Video from 'react-native-video';
-import { hp, wp, color, Images } from '../../utilities';
-import { Space } from 'lucide-react-native';
+import { hp, wp, Images } from '../../utilities';
 import RenderHTML from 'react-native-render-html';
-// import {Ionicons} from '@expo/vector-icons';
 
 const FitnessDetails = ({ navigation, route }) => {
-  const { instruction, data } = route?.params;
-  console.log('Instructions:', instruction);
-  console.log('Data:', data);
-
-  const exerciseVideoMap = {
-    'Arm Raises with Inhale–Exhale':
-      'https://www.youtube.com/embed/zB71bclwPuo', // found via “Let’s De-Stress: Seated Breathing (Exercise 1)”. :contentReference[oaicite:0]{index=0}
-    Bhujangasana: 'https://www.youtube.com/embed/URL_FOR_Bhujangasana',
-    'Ardha Matsyendrasana': 'https://www.youtube.com/embed/51EqCa6ZGCw', // “Ardha Matsyendrasana | The Half Fish Pose | Steps | Yogic Fitness” :contentReference[oaicite:1]{index=1}
-    Tadasana: 'https://www.youtube.com/embed/URL_FOR_Tadasana',
-    'Virabhadrasana 1':
-      'https://www.youtube.com/embed/URL_FOR_Virabhadrasana_1',
-    'Neck Rotation': 'https://www.youtube.com/embed/URL_FOR_Neck_Rotation',
-    'Lateral Leg Swings':
-      'https://www.youtube.com/embed/URL_FOR_Lateral_Leg_Swings',
-    'March on the Spot':
-      'https://www.youtube.com/embed/URL_FOR_March_on_the_spot',
-    'Bicycle Crunches':
-      'https://www.youtube.com/embed/URL_FOR_Bicycle_Crunches',
-    'Bodyweight Calf Raises': 'https://www.youtube.com/embed/CufVyiLj878', // found via “Bodyweight Calf Raise – YouTube” :contentReference[oaicite:2]{index=2}
-    'Cat–Camel Stretch':
-      'https://www.youtube.com/embed/URL_FOR_Cat_Camel_Stretch',
-    'Butterfly Stretch':
-      'https://www.youtube.com/embed/URL_FOR_Butterfly_Stretch',
-    'Shoulder Rotation':
-      'https://www.youtube.com/embed/URL_FOR_Shoulder_Rotation',
-    'Eagle arms stretch':
-      'https://www.youtube.com/embed/URL_FOR_Eagle_arms_stretch',
-    'Walk with intermittent Jogging':
-      'https://www.youtube.com/embed/URL_FOR_Walk_with_intermittent_Jogging',
-    'Walking (Brisk)': 'https://www.youtube.com/embed/URL_FOR_Walking_Brisk',
-    Skipping: 'https://www.youtube.com/embed/URL_FOR_Skipping',
-    'Superman Back Extension':
-      'https://www.youtube.com/embed/URL_FOR_Superman_Back_Extension',
-    'Incline Push-Up': 'https://www.youtube.com/embed/URL_FOR_Incline_Push_Up',
-    'Resistance Band Shoulder Press':
-      'https://www.youtube.com/embed/URL_FOR_Resistance_Band_Shoulder_Press',
-    'Dumbbell Hammer Curl':
-      'https://www.youtube.com/embed/URL_FOR_Dumbbell_Hammer_Curl',
-    'Dumbbell Triceps Overhead Extension':
-      'https://www.youtube.com/embed/URL_FOR_Dumbbell_Triceps_Overhead_Extension',
-  };
+  const { instruction, data } = route?.params || {};
+  const { width } = useWindowDimensions();
+  const instructionsHtml =
+    typeof instruction?.instructionsText === 'string'
+      ? instruction.instructionsText
+      : '<p>No instructions available.</p>';
 
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
-      <View>
-        {' '}
-        <View
-          style={{
-            flexDirection: 'row',
-            marginTop: Platform.OS == 'ios' && hp(5),
-            backgroundColor: '#FFFFFF',
-            paddingTop: hp(2),
-            elevation: 1,
-          }}
-        >
+      <View style={styles.headerWrapper}>
+        <View style={styles.header}>
           <TouchableOpacity
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            style={{ paddingHorizontal: hp(1) }}
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Image
-              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-              style={{
-                resizeMode: 'contain',
-                marginTop: hp(0.5),
-                marginLeft: wp(1),
-                height: hp(3.5),
-                width: wp(4),
-                tintColor: '#000000',
-              }}
-              resizeMode="contain"
-            />
+            <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
           </TouchableOpacity>
-          <Text
-            style={[
-              styles.title,
-              {
-                color: '#000000',
-                alignSelf: 'center',
-              },
-            ]}
-          >
+          <Text style={styles.title} numberOfLines={1}>
             {data?.title ? data.title : 'Cuore Fitness'}
           </Text>
+          <View style={styles.headerSpacer} />
         </View>
       </View>
 
-      <View style={{ padding: hp(1) }}>
-        {/* Video */}
+      <View style={styles.content}>
         <View style={styles.videoContainer}>
           <Video
             source={{
@@ -118,14 +54,8 @@ const FitnessDetails = ({ navigation, route }) => {
           />
         </View>
 
-        {/* Details */}
         <View style={styles.detailsBox}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-            }}
-          >
+          <View style={styles.detailsRow}>
             <Text style={styles.detailText}>
               Duration: {instruction?.duration}
             </Text>
@@ -133,65 +63,57 @@ const FitnessDetails = ({ navigation, route }) => {
           </View>
 
           <Text style={styles.detailText}>
-            Equipment:
-            {instruction?.equipment == 'None'
+            Equipment:{' '}
+            {instruction?.equipment === 'None'
               ? 'No equipment specified'
               : instruction?.equipment}
           </Text>
         </View>
 
-        {/* Instructions */}
         <View
           style={[
             styles.instructionBox,
-            { borderLeftColor: data?.color || '#884DFF' },
+            { borderLeftColor: data?.color || '#11418A' },
           ]}
         >
           <RenderHTML
-            source={{
-              html: instruction?.instructionsText || (
-                <p>No instructions available.</p>
-              ),
-              numberOfLines: 0,
-            }}
+            contentWidth={width}
+            source={{ html: instructionsHtml }}
             tagsStyles={{
               p: {
                 fontSize: 14,
-                color: '#4B5563',
-                lineHeight: 20,
+                color: '#475569',
+                lineHeight: 22,
+                fontFamily: 'Poppins-Regular',
               },
-              ul: {
-                paddingLeft: 20,
-                marginBottom: 10,
-              },
-              ol: {
-                paddingLeft: 20,
-                marginBottom: 10,
-              },
+              ul: { paddingLeft: 20, marginBottom: 10 },
+              ol: { paddingLeft: 20, marginBottom: 10 },
               li: {
                 marginBottom: 6,
                 fontSize: 14,
-                color: '#4B5563',
+                color: '#475569',
+                fontFamily: 'Poppins-Regular',
               },
               strong: {
-                fontWeight: 'bold',
-                color: '#111827',
+                fontFamily: 'Poppins-Medium',
+                color: '#1E293B',
               },
               em: {
                 fontStyle: 'italic',
-                color: '#6B7280',
+                color: '#64748B',
+                fontFamily: 'Poppins-Regular',
               },
               h1: {
                 fontSize: 22,
-                fontWeight: '700',
+                fontFamily: 'Poppins-Medium',
                 marginBottom: 12,
-                color: data?.color || '#ed7d31',
+                color: data?.color || '#11418A',
               },
               h3: {
                 fontSize: 16,
-                fontWeight: '600',
+                fontFamily: 'Poppins-Medium',
                 marginBottom: 8,
-                color: '#1F2937',
+                color: '#1E293B',
               },
             }}
           />
@@ -204,96 +126,95 @@ const FitnessDetails = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    // padding: wp(4),
+    backgroundColor: '#F8FAFC',
   },
-  title: {
-    fontFamily: 'Roboto-Regular',
-    marginTop: hp(1),
-    marginLeft: hp(2),
-    fontSize: 18,
-    fontWeight: '500',
-    marginBottom: hp(2),
-    alignSelf: 'center',
-    color: '#000000',
+  headerWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
-  headerRow: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: hp(2),
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(2),
+    paddingTop: Platform.OS === 'ios' ? hp(2) : hp(1),
+    paddingBottom: hp(1.5),
   },
-  headerTitle: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(5),
-    fontWeight: '500',
-    marginLeft: wp(3),
-    color: '#1e4d92',
+  backButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  backIcon: {
+    resizeMode: 'contain',
+    height: hp(3.5),
+    width: wp(4),
+  },
+  title: {
+    flex: 1,
+    fontFamily: 'Poppins-Medium',
+    fontSize: 18,
+    color: '#1E293B',
+    textAlign: 'center',
+    letterSpacing: 0.2,
+    paddingHorizontal: 8,
+  },
+  headerSpacer: { width: 44 },
+  content: {
+    padding: wp(4),
+    paddingBottom: hp(6),
   },
   videoContainer: {
-    // flex: 1,
     width: '100%',
     height: hp(25),
-    borderRadius: wp(3),
+    borderRadius: 12,
     overflow: 'hidden',
     marginBottom: hp(2),
-    // backgroundColor: 'red',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   video: {
     width: '100%',
     height: '100%',
   },
   detailsBox: {
-    backgroundColor: '#EBEDEF',
+    backgroundColor: '#F1F5F9',
     padding: wp(4),
-    borderRadius: wp(2),
+    borderRadius: 12,
     marginBottom: hp(2),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  detailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   detailText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
     marginBottom: hp(0.5),
-    fontWeight: '400',
-    color: '#374151',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   instructionBox: {
     marginBottom: hp(3),
     borderLeftWidth: 4,
-    borderLeftColor: '#884DFF',
+    borderLeftColor: '#11418A',
     backgroundColor: '#FFFFFF',
     padding: wp(4),
-    borderRadius: wp(2),
-    // Floating effect
+    borderRadius: 12,
+    borderTopWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
     shadowRadius: 4,
-    elevation: 1, // Android
-  },
-  instructionsTitle: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: hp(1),
-    color: '#374151',
-  },
-  instructionsText: {
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '400',
-    fontSize: wp(3.9),
-    marginTop: hp(1),
-    color: '#374151',
-  },
-  bullet: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.7),
-    color: '#374151',
-    marginLeft: wp(3),
-  },
-  instructionsTip: {
-    fontFamily: 'Roboto-Regular',
-    fontWeight: 'bold',
-    fontSize: wp(3.9),
-    marginTop: hp(2),
+    ...(Platform.OS === 'android' && { elevation: 1 }),
   },
 });
 

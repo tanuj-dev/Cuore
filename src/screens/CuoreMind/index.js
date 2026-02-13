@@ -8,6 +8,7 @@ import {
   Image,
   RefreshControl,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 import GaugeMeter from '../../components/SpeedpMeter';
@@ -17,22 +18,10 @@ import ApiErrorFallback from '../../components/ApiError';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const COLOR_SCHEMES = [
-  {
-    borderColor: '#3B82F6',
-    backgroundColor: '#D8E0E8',
-  },
-  {
-    borderColor: '#14B8A6',
-    backgroundColor: '#D8E0E7',
-  },
-  {
-    borderColor: '#A855F7',
-    backgroundColor: '#F0FDFA',
-  },
-  {
-    borderColor: '#06B6D4',
-    backgroundColor: '#ECFEFF',
-  },
+  { borderColor: '#11418A', backgroundColor: '#E8EEF7' },
+  { borderColor: '#0F766E', backgroundColor: '#CCFBF1' },
+  { borderColor: '#7C3AED', backgroundColor: '#EDE9FE' },
+  { borderColor: '#0891B2', backgroundColor: '#CFFAFE' },
 ];
 
 const Mind = ({ navigation }) => {
@@ -77,9 +66,11 @@ const Mind = ({ navigation }) => {
 
   const handleCardPress = useCallback(
     item => {
+      console.log('item', item);
       navigation.navigate('MindDetails', {
         instructions: item?.instructions,
         audio: item?.audioUrl,
+        title: item?.title,
       });
     },
     [navigation],
@@ -95,7 +86,6 @@ const Mind = ({ navigation }) => {
           style={[
             styles.activityCard,
             {
-              borderWidth: 1.5,
               borderColor: scheme.borderColor,
               backgroundColor: scheme.backgroundColor,
             },
@@ -114,7 +104,7 @@ const Mind = ({ navigation }) => {
     return (
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E64AC" />
+          <ActivityIndicator size="large" color="#11418A" />
           <Text style={styles.loadingText}>Loading your mind data...</Text>
         </View>
       </SafeAreaView>
@@ -162,7 +152,11 @@ const Mind = ({ navigation }) => {
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#11418A"
+          />
         }
       >
         <View style={styles.scoreContainer}>
@@ -251,10 +245,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   loadingText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     marginTop: hp(2),
     fontSize: 16,
-    color: '#4B5563',
+    color: '#64748B',
+    letterSpacing: 0.2,
   },
   headerContainer: {
     backgroundColor: '#FFFFFF',
@@ -275,13 +270,13 @@ const styles = StyleSheet.create({
     width: wp(4),
   },
   title: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     marginTop: hp(1),
     marginLeft: hp(11),
     fontSize: 20,
-    fontWeight: '400',
     alignSelf: 'center',
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   container: {
     flex: 1,
@@ -300,22 +295,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scoreLabel: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     marginTop: hp(0.5),
     fontSize: wp(4),
-    color: '#374151',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   reassessButton: {
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1E64AC',
-    paddingVertical: hp(0.5),
+    backgroundColor: '#11418A',
+    paddingVertical: hp(1),
     paddingHorizontal: wp(4),
     borderRadius: wp(2),
     marginVertical: hp(2),
     minWidth: wp(50),
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    ...(Platform.OS === 'android' && { elevation: 2 }),
   },
   reassessButtonDisabled: {
     opacity: 0.5,
@@ -324,14 +325,14 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     width: wp(4),
     height: hp(4),
-    tintColor: 'white',
+    tintColor: '#FFFFFF',
   },
   reassessText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
-    fontWeight: '800',
     fontSize: 14,
     marginLeft: wp(1),
+    letterSpacing: 0.3,
   },
   reflectionCard: {
     borderLeftWidth: 4,
@@ -352,18 +353,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   reflectionTitle: {
-    fontFamily: 'Roboto-Regular',
-    color: '#1E64AC',
-    fontWeight: '400',
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
     fontSize: 16,
     marginBottom: hp(0.5),
+    letterSpacing: 0.2,
   },
   reflectionQuote: {
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#374151',
+    color: '#475569',
     lineHeight: hp(2.5),
+    letterSpacing: 0.2,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -375,55 +376,55 @@ const styles = StyleSheet.create({
     width: wp(4),
     height: hp(2),
     marginLeft: hp(-1.8),
-    tintColor: 'white',
+    tintColor: '#FFFFFF',
   },
   sectionTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontWeight: '400',
-    color: '#1E64AC',
+    color: '#11418A',
     marginBottom: hp(1),
     marginLeft: hp(0.5),
     marginTop: hp(2),
+    letterSpacing: 0.2,
   },
   horizontalScroll: {
     paddingRight: wp(4),
   },
   activityCard: {
-    backgroundColor: '#EAF5FF',
+    borderWidth: 1.5,
     padding: hp(1.5),
     height: hp(12),
     width: wp(50),
     borderRadius: wp(2),
     marginRight: wp(2),
-    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
+    ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
   cardTitle: {
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '400',
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#111827',
+    color: '#1E293B',
     marginBottom: hp(0.5),
+    letterSpacing: 0.2,
   },
   cardDesc: {
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
     marginTop: hp(1),
-    color: '#4B5563',
+    color: '#64748B',
+    letterSpacing: 0.2,
   },
   footerNote: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     fontSize: 16,
-    color: '#1E64AC',
+    color: '#11418A',
     marginTop: hp(2),
     marginBottom: hp(5),
-    fontWeight: '400',
+    letterSpacing: 0.2,
   },
 });
 

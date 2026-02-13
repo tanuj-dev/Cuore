@@ -9,6 +9,7 @@ import {
   Switch,
   Image,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -192,26 +193,22 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
 
       <View style={styles.container}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
           showsVerticalScrollIndicator
         >
           {/* Header */}
-          <View
-            style={{ flexDirection: 'row', justifyContent: 'space-between' }}
-          >
+          <View style={styles.headerRow}>
             <Text style={styles.title}>Add/Delete Entry</Text>
             <TouchableOpacity
               onPress={() => {
                 dispatch(getHomeData(user_id));
                 setIsVisible(false);
               }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Image
-                style={{ width: 13, height: 13, tintColor: '#6B7280' }}
-                source={Images.CROSS}
-              />
+              <Image style={styles.closeIcon} source={Images.CROSS} />
             </TouchableOpacity>
           </View>
           {/* Existing Reminders */}
@@ -219,7 +216,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
           {existingReminder && existingReminder.length > 0 ? (
             existingReminder.map((item, index) => (
               <View key={item.id || index.toString()} style={styles.entryCard}>
-                <View style={{ flex: 1 }}>
+                <View style={styles.entryContent}>
                   <Text style={styles.entryText}>
                     {item.title === 'Medication'
                       ? item.description
@@ -235,10 +232,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                   }}
                   style={styles.iconButton}
                 >
-                  <Image
-                    source={Images.EDIT}
-                    style={{ width: 16, height: 16 }}
-                  />
+                  <Image source={Images.EDIT} style={styles.entryIcon} />
                 </TouchableOpacity>
 
                 {item?.title?.toLowerCase() !== 'wake up' && (
@@ -263,10 +257,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                     }}
                     style={styles.iconButton}
                   >
-                    <Image
-                      source={Images.DELETE}
-                      style={{ width: 16, height: 16, tintColor: '#EF4444' }}
-                    />
+                    <Image source={Images.DELETE} style={styles.deleteIcon} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -292,18 +283,10 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.dateTimeInput}
               onPress={() => setShowDatePicker(!showDatePicker)}
             >
-              <Text
-                style={{
-                  color: date ? '#000' : '#888',
-                  fontFamily: 'Roboto-Regular',
-                }}
-              >
+              <Text style={[styles.dateTimeLabel, !date && styles.dateTimePlaceholder]}>
                 {date ? formatDisplayDate(date) : 'Start Date'}
               </Text>
-              <Image
-                source={Images.CALANDER}
-                style={{ width: 18, height: 18 }}
-              />
+              <Image source={Images.CALANDER} style={styles.dateTimeIcon} />
             </TouchableOpacity>
 
             {/* Time Picker */}
@@ -311,15 +294,10 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.dateTimeInput}
               onPress={() => setShowTimePicker(!showTimePicker)}
             >
-              <Text
-                style={{
-                  color: time ? '#000' : '#888',
-                  fontFamily: 'Roboto-Regular',
-                }}
-              >
+              <Text style={[styles.dateTimeLabel, !time && styles.dateTimePlaceholder]}>
                 {time ? formatTime(time) : 'Current Time'}
               </Text>
-              <Image source={Images.CLOCK} style={{ width: 18, height: 18 }} />
+              <Image source={Images.CLOCK} style={styles.dateTimeIcon} />
             </TouchableOpacity>
           </View>
           {showDatePicker && (
@@ -353,25 +331,15 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.pickerinput}
               onPress={() => setShowPicker(!showPicker)}
             >
-              <Text style={{ color: '#000', fontFamily: 'Roboto-Regular' }}>
-                Repeat
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontFamily: 'Roboto-Medium',
-                    color: '#6B7280',
-                  }}
-                >
-                  {repeat}
-                </Text>
-                <Image style={{ marginLeft: 4 }} source={Images.DOWN} />
+              <Text style={styles.pickerLabel}>Repeat</Text>
+              <View style={styles.pickerValueRow}>
+                <Text style={styles.pickerValue}>{repeat}</Text>
+                <Image style={styles.pickerChevron} source={Images.DOWN} />
               </View>
             </TouchableOpacity>
             {showPicker && (
               <Picker
-                itemStyle={{ color: '#1E64AC' }}
+                itemStyle={styles.pickerItemStyle}
                 selectedValue={repeat}
                 onValueChange={itemValue => {
                   setRepeat(itemValue);
@@ -389,25 +357,15 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
             )}
           </View>
           {/* End Repeat */}
-          <View style={[styles.pickercontainer, { marginTop: -10 }]}>
+          <View style={styles.pickercontainerEnd}>
             <TouchableOpacity
               style={styles.pickerinput}
               onPress={() => setShowEndPicker(!showEndPicker)}
             >
-              <Text style={{ color: '#000', fontFamily: 'Roboto-Regular' }}>
-                End Repeat
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontFamily: 'Roboto-Medium',
-                    color: '#6B7280',
-                  }}
-                >
-                  {endRepeat}
-                </Text>
-                <Image style={{ marginLeft: 4 }} source={Images.DOWN} />
+              <Text style={styles.pickerLabel}>End Repeat</Text>
+              <View style={styles.pickerValueRow}>
+                <Text style={styles.pickerValue}>{endRepeat}</Text>
+                <Image style={styles.pickerChevron} source={Images.DOWN} />
               </View>
             </TouchableOpacity>
             {showEndPicker && (
@@ -418,7 +376,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                   setShowEndPicker(false);
                 }}
                 style={styles.repeatpicker}
-                itemStyle={{ color: '#1E64AC' }}
+                itemStyle={styles.pickerItemStyle}
               >
                 <Picker.Item label="Never" value="Never" />
                 <Picker.Item label="On Date" value="On Date" />
@@ -437,7 +395,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
           {/* Add Button */}
           <TouchableOpacity onPress={handleAddEntry} style={styles.addButton}>
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.addButtonText}>Add Entry</Text>
             )}
@@ -462,130 +420,187 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
 const styles = StyleSheet.create({
   modal: { justifyContent: 'flex-end', margin: 0 },
   container: {
-    backgroundColor: 'white',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: 20,
     height: '90%',
+    ...(Platform.OS === 'android' && { elevation: 0.5 }),
+  },
+  scrollContent: { flexGrow: 1, paddingBottom: 20 },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   title: {
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontFamily: 'Roboto-Medium',
     marginBottom: 15,
-    color: '#000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  closeIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#64748B',
   },
   subtitle: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    fontFamily: 'Roboto-Regular',
     marginVertical: 10,
-    color: '#000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   entryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
     borderRadius: 10,
     padding: 12,
     marginVertical: 5,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
+  entryContent: { flex: 1 },
   entryText: {
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    fontFamily: 'Roboto-Medium',
-    color: '#000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   entrySubtext: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    fontFamily: 'Roboto-Regular',
-    color: '#4B5563',
+    color: '#64748B',
     marginTop: 4,
+    letterSpacing: 0.2,
   },
   iconButton: { paddingHorizontal: 8 },
+  entryIcon: { width: 18, height: 18 },
+  deleteIcon: { width: 18, height: 18, tintColor: '#EF4444' },
   divider: {
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#E2E8F0',
     marginVertical: 15,
   },
   inputGroup: { marginBottom: 12 },
   input: {
-    height: 45,
+    height: 48,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
     fontSize: 14,
-    fontFamily: 'Roboto-Regular',
-    color: '#000',
-    placeholderTextColor: '#red',
+    fontFamily: 'Poppins-Regular',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   infoText: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    fontFamily: 'Roboto-Regular',
-    color: '#6B7280',
+    color: '#64748B',
     marginTop: 4,
+    letterSpacing: 0.2,
   },
   dateTimeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 12,
   },
   dateTimeInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
     padding: 12,
     marginRight: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  switchRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+  dateTimeLabel: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  dateTimePlaceholder: { color: '#94A3B8' },
+  dateTimeIcon: { width: 18, height: 18 },
+  switchRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
   switchLabel: {
+    fontFamily: 'Poppins-Regular',
     marginLeft: 8,
     fontSize: 14,
-    fontFamily: 'Roboto-Regular',
-    color: '#4B5563',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   addButton: {
     marginTop: 20,
     alignSelf: 'center',
-    backgroundColor: '#1E64AC',
-    borderRadius: 8,
-    paddingVertical: 12,
+    backgroundColor: '#11418A',
+    borderRadius: 10,
+    paddingVertical: 14,
     paddingHorizontal: 40,
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    ...(Platform.OS === 'android' && { elevation: 2 }),
   },
   addButtonText: {
-    color: '#fff',
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
     fontSize: 15,
-    fontFamily: 'Roboto-Medium',
+    letterSpacing: 0.3,
   },
   pickercontainer: { marginVertical: 20 },
+  pickercontainerEnd: { marginVertical: 20, marginTop: 10 },
   pickerinput: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#E2E8F0',
     padding: 12,
-    borderRadius: 6,
+    borderRadius: 10,
   },
+  pickerLabel: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  pickerValueRow: { flexDirection: 'row', alignItems: 'center' },
+  pickerValue: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#64748B',
+    letterSpacing: 0.2,
+  },
+  pickerChevron: { marginLeft: 6 },
+  pickerItemStyle: { color: '#11418A' },
   repeatpicker: {
     marginBottom: 100,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 6,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   emptyText: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    fontFamily: 'Roboto-Regular',
-    color: '#9CA3AF',
+    color: '#94A3B8',
     textAlign: 'center',
     marginVertical: 10,
+    letterSpacing: 0.2,
   },
   datePickerWrapper: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 10,
     marginVertical: 8,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
   },
 });
 

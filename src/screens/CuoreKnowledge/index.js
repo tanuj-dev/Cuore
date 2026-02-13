@@ -4,11 +4,9 @@ import {
   Text,
   FlatList,
   Image,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   Platform,
-  refreshControl,
   RefreshControl,
   ScrollView,
 } from 'react-native';
@@ -17,19 +15,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { getKnowledge } from '../../redux/slices';
 import ApiError from '../../components/ApiError';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import Loader from '../../components/Loader';
-// import Icon from 'react-native-vector-icons/Ionicons';
 
 const CuoreKnowledge = ({ navigation }) => {
-  const [search, setSearch] = useState('');
-
   const [refreshing, setRefreshing] = useState(false);
   const dispatch = useDispatch();
   const userId = useSelector(state => state.auth.userId);
-  const knowledgeData = useSelector(state => state.knowledge.data?.data.cards);
-  // const knowledgeData = data?.cards;
-  console.log('Knowledge Data from Redux:', knowledgeData);
+  const knowledgeData = useSelector(state => state.knowledge.data?.data?.cards);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -42,7 +34,6 @@ const CuoreKnowledge = ({ navigation }) => {
   }, [dispatch, userId]);
 
   const renderItem = ({ item }) => (
-    // console.log('Rendering item:', item),
     <TouchableOpacity
       onPress={() =>
         navigation.navigate('KnowledgeDetails', {
@@ -80,50 +71,27 @@ const CuoreKnowledge = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView edges={['top']} style={styles.screen}>
       <ScrollView
+        style={styles.scroll}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        style={{ flex: 1, backgroundColor: 'white' }}
       >
-        <View style={{ flex: 1, backgroundColor: '#EFF6FF' }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              backgroundColor: '#FFFFFF',
-              // paddingTop: hp(2),
-              elevation: 1,
-            }}
-          >
+        <View style={styles.contentWrap}>
+          <View style={styles.headerRow}>
             {refreshing && <Loader />}
 
             <TouchableOpacity
               hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              style={{ paddingHorizontal: hp(1) }}
+              style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Image
-                source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-                style={{
-                  // marginTop: Platform.OS == 'ios' ? hp(5) : hp(1),
-                  resizeMode: 'contain',
-                  height: hp(3.5),
-                  width: wp(4),
-                  marginLeft: Platform.OS == 'ios' ? hp(2) : hp(1),
-                }}
-              />
+              <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
             </TouchableOpacity>
 
-            {/* Header Icon */}
             <View style={styles.headerIconContainer}>
-              <View
-                style={{
-                  padding: hp(0.8),
-                  borderWidth: 3,
-                  borderRadius: hp(10),
-                }}
-              >
+              <View style={styles.headerIconWrapper}>
                 <Image
                   source={Images.DOCTOR_PROFILE}
                   style={styles.headerIcon}
@@ -131,16 +99,14 @@ const CuoreKnowledge = ({ navigation }) => {
               </View>
               <Text style={styles.heading}>Recommended Articles</Text>
             </View>
-
-            {/* Heading */}
           </View>
 
           <View style={styles.container}>
             <FlatList
               data={knowledgeData}
               renderItem={renderItem}
-              keyExtractor={item => item._id}
-              contentContainerStyle={{ paddingBottom: hp(10) }}
+              keyExtractor={(item, index) => item?._id ?? `card-${index}`}
+              contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
             />
           </View>
@@ -151,25 +117,48 @@ const CuoreKnowledge = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: wp(4),
-    // backgroundColor: '#f6f9ff',
+  screen: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  backArrow: {
-    position: 'absolute',
-    top: hp(3),
-    left: wp(4),
-    zIndex: 1,
+  scroll: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  contentWrap: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    ...(Platform.OS === 'android' && { elevation: 0.5 }),
+  },
+  backButton: {
+    paddingHorizontal: hp(1),
+    paddingVertical: hp(1),
+  },
+  backIcon: {
+    resizeMode: 'contain',
+    height: hp(3.5),
+    width: wp(4),
+    marginLeft: Platform.OS === 'ios' ? hp(2) : hp(1),
   },
   headerIconContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    // marginTop: hp(5),
     marginLeft: hp(-6),
     marginBottom: hp(2),
-    // backgroundColor: 'red',
-    width: '100%',
+  },
+  headerIconWrapper: {
+    padding: hp(0.8),
+    borderWidth: 3,
+    borderColor: '#11418A',
+    borderRadius: hp(10),
   },
   headerIcon: {
     width: wp(10),
@@ -177,75 +166,57 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   heading: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    fontWeight: '400',
-    color: '#1E64AC',
+    color: '#11418A',
     textAlign: 'center',
     marginTop: hp(2),
+    letterSpacing: 0.2,
   },
-  searchContainer: {
-    marginTop: hp(2),
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: hp(0.5),
-    paddingHorizontal: wp(4),
-    height: hp(5.5),
-    // elevation: 2,
-    borderColor: '#E5E7EB',
-  },
-  searchInput: {
-    fontFamily: 'Roboto-Regular',
+  container: {
+    padding: wp(4),
     flex: 1,
-    fontSize: hp(1.8),
-    color: '#000',
   },
-  infoText: {
-    fontFamily: 'Roboto-Regular',
-    color: '#1E64AC',
-    marginVertical: hp(2),
-    fontWeight: '400',
-    fontSize: 16,
+  listContent: {
+    paddingBottom: hp(10),
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: hp(0.8),
+    borderRadius: 12,
     flexDirection: 'row',
     marginBottom: hp(2),
-    padding: wp(2),
-
-    elevation: 1,
+    padding: wp(3),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
     shadowRadius: 4,
-    // elevation: 1, // Android
+    ...(Platform.OS === 'android' && { elevation: 1 }),
   },
   image: {
     width: wp(18),
     height: wp(18),
-    borderRadius: hp(0.3),
+    borderRadius: 10,
   },
   textContainer: {
     flex: 1,
     marginLeft: wp(3),
     justifyContent: 'center',
+    minWidth: 0,
   },
   title: {
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '400',
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   description: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    marginTop: hp(1),
-    color: '#6B7280',
     marginTop: hp(0.5),
-    fontWeight: '400',
+    color: '#64748B',
+    letterSpacing: 0.2,
   },
 });
 

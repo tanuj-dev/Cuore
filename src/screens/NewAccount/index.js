@@ -105,7 +105,7 @@ const CreateAccountScreen = () => {
         Alert.alert(
           'Account Created',
           resultAction.payload?.message ||
-          'Account created successfully. Please verify OTP.',
+            'Account created successfully. Please verify OTP.',
           [
             {
               text: 'OK',
@@ -131,7 +131,7 @@ const CreateAccountScreen = () => {
         Alert.alert(
           'Error',
           resultAction.payload?.message ||
-          'Failed to create account. Please try again.',
+            'Failed to create account. Please try again.',
         );
       }
     } catch (error) {
@@ -170,9 +170,10 @@ const CreateAccountScreen = () => {
           <Image
             style={{
               resizeMode: 'contain',
-              height: hp(3.5),
-              width: wp(),
-              marginBottom: hp(2),
+              height: hp(4.5),
+              width: wp(30),
+              alignSelf: 'center',
+              marginBottom: hp(2.5),
             }}
             source={images.APP_LOGO}
           />
@@ -187,7 +188,7 @@ const CreateAccountScreen = () => {
           <TextInput
             style={styles.input}
             placeholder="Enter user’s full name"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#94A3B8"
             value={fullName}
             onChangeText={setFullName}
           />
@@ -199,7 +200,7 @@ const CreateAccountScreen = () => {
           <TextInput
             style={styles.input}
             placeholder="Enter your registered mobile number"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#94A3B8"
             keyboardType="phone-pad"
             value={mobileNumber}
             onChangeText={text => {
@@ -227,7 +228,7 @@ const CreateAccountScreen = () => {
           <TextInput
             style={styles.input}
             placeholder="So they can see your progress"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#94A3B8"
             keyboardType="phone-pad"
             value={familyNumber}
             onChangeText={text => {
@@ -248,7 +249,7 @@ const CreateAccountScreen = () => {
           <TextInput
             style={styles.input}
             placeholder="Connect to partnered doctor for supervision"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#94A3B8"
             value={doctorCode}
             onChangeText={setDoctorCode}
           />
@@ -258,7 +259,7 @@ const CreateAccountScreen = () => {
           <TextInput
             style={styles.input}
             placeholder="Only for corporate plan users"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#94A3B8"
             value={corporateCode}
             onChangeText={setCorporateCode}
           />
@@ -293,8 +294,8 @@ const CreateAccountScreen = () => {
                 onPress={() => Linking.openURL('https://cuore.health/terms')}
               >
                 Terms & Conditions
-              </Text>
-              {' '}and{' '}
+              </Text>{' '}
+              and{' '}
               <Text
                 style={styles.link}
                 onPress={() => Linking.openURL('https://cuore.health/privacy')}
@@ -309,7 +310,7 @@ const CreateAccountScreen = () => {
             onPress={handleCreateAccount}
             style={[
               styles.verifyButton,
-              { backgroundColor: loading ? '#9CA3AF' : color.DARK_BLUE },
+              { backgroundColor: loading ? '#94A3B8' : '#11418A' },
             ]}
             disabled={loading}
           >
@@ -326,96 +327,117 @@ const CreateAccountScreen = () => {
 // 🧾 Styles
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     padding: wp(5),
     flexGrow: 1,
   },
   backArrow: {
-    marginBottom: hp(2),
-    marginTop: Platform.OS == 'ios' && hp(2),
+    // marginBottom: hp(2),
+    // marginTop: Platform.OS === 'ios' ? hp(2) : hp(1),
+    padding: hp(0.5),
   },
   title: {
-    color: '#111827',
-    fontSize: hp(2.6),
-    fontWeight: '500',
+    color: '#1E293B',
+    fontSize: 24,
+    fontFamily: 'Poppins-Medium',
     textAlign: 'center',
     marginBottom: hp(3),
+    letterSpacing: -0.3,
   },
   label: {
-    color: '#374151',
+    color: '#475569',
     fontSize: 14,
-    fontWeight: '600',
     marginBottom: hp(0.8),
-    marginTop: hp(1.5),
-    fontFamily: 'Roboto-Regular',
+    marginTop: hp(1.8),
+    fontFamily: 'Poppins-Medium',
+    letterSpacing: 0.2,
   },
   optional: {
     fontStyle: 'italic',
-    fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
+    color: '#94A3B8',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: wp(1.5),
-    paddingVertical: hp(1.2),
-    paddingHorizontal: wp(3),
-    fontSize: 14,
-    backgroundColor: '#fff',
-    fontFamily: 'Roboto-Regular',
-    placeholderTextColor: '#6B7280',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingVertical: hp(1.6),
+    paddingHorizontal: wp(4),
+    fontSize: 15,
+    backgroundColor: '#F8FAFC',
+    fontFamily: 'Poppins-Regular',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   infoText: {
-    fontSize: hp(1.5),
-    color: '#4B5563',
+    fontSize: 13,
+    color: '#64748B',
     marginTop: hp(2),
     marginBottom: hp(2),
+    fontFamily: 'Poppins-Regular',
+    lineHeight: 20,
+    letterSpacing: 0.1,
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: hp(2),
+    marginBottom: hp(2.5),
+    marginTop: hp(1),
   },
   customCheckbox: {
-    marginRight: wp(2),
+    marginRight: wp(2.5),
+    marginTop: hp(0.3),
   },
   checkboxBox: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     borderWidth: 2,
-    borderColor: '#9CA3AF',
+    borderColor: '#CBD5E1',
     backgroundColor: '#FFFFFF',
-    borderRadius: 4,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxBoxChecked: {
-    backgroundColor: '#9CA3AF',
-    borderColor: '#9CA3AF',
+    backgroundColor: '#11418A',
+    borderColor: '#11418A',
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontFamily: 'Poppins-Medium',
   },
   checkboxLabel: {
     flex: 1,
-    fontSize: hp(1.5),
-    color: '#4B5563',
-    marginLeft: wp(2),
+    fontSize: 13,
+    color: '#64748B',
+    fontFamily: 'Poppins-Regular',
+    lineHeight: 20,
+    letterSpacing: 0.1,
   },
   link: {
-    color: '#1E64AC',
+    color: '#11418A',
     textDecorationLine: 'underline',
+    fontFamily: 'Poppins-Medium',
   },
   verifyButton: {
-    paddingVertical: hp(1.6),
-    borderRadius: wp(2),
+    paddingVertical: hp(2),
+    borderRadius: 12,
     alignItems: 'center',
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    ...Platform.select({
+      android: { elevation: 3 },
+      ios: { elevation: 5 },
+    }),
   },
   verifyText: {
-    color: 'white',
-    fontSize: hp(2),
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Poppins-Medium',
+    letterSpacing: 0.5,
   },
 });
 

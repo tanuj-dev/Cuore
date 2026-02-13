@@ -188,11 +188,7 @@ const Nutrition = ({ navigation, route }) => {
                 }}
                 source={Images.EGG}
               />
-              <Text
-                style={{ fontSize: hp(1.8), color: '#c68a40', fontSize: 10 }}
-              >
-                Egg
-              </Text>
+              <Text style={styles.eggTagText}>Egg</Text>
             </View>
           ) : (
             <Image
@@ -219,7 +215,7 @@ const Nutrition = ({ navigation, route }) => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       {toast && (
         <View style={styles.toastContainer}>
           <Toast
@@ -273,9 +269,11 @@ const Nutrition = ({ navigation, route }) => {
             scrollEventThrottle={16}
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled={true}
-            contentContainerStyle={{
-              paddingTop: Platform.OS === 'ios' ? hp(4) : hp(1.5),
-            }}
+            contentContainerStyle={
+              {
+                // paddingTop: Platform.OS === 'ios' ? hp(4) : hp(1.5),
+              }
+            }
           >
             {/* 🔵 Header */}
             <ImageBackground
@@ -301,7 +299,7 @@ const Nutrition = ({ navigation, route }) => {
                   justifyContent: 'center',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  marginTop: hp(2),
+                  marginTop: Platform.OS === 'ios' ? hp(0) : hp(2),
                 }}
               >
                 {/* Breakfast Tab */}
@@ -311,7 +309,7 @@ const Nutrition = ({ navigation, route }) => {
                     styles.tabButton,
                     {
                       backgroundColor:
-                        activeTab === 'Breakfast' ? '#1E64AC' : '#9CA3AF',
+                        activeTab === 'Breakfast' ? '#11418A' : '#94A3B8',
                     },
                   ]}
                 >
@@ -326,7 +324,7 @@ const Nutrition = ({ navigation, route }) => {
                     styles.tabButton,
                     {
                       backgroundColor:
-                        activeTab === 'LunchDinner' ? '#1E64AC' : '#9CA3AF',
+                        activeTab === 'LunchDinner' ? '#11418A' : '#94A3B8',
                     },
                   ]}
                 >
@@ -344,14 +342,14 @@ const Nutrition = ({ navigation, route }) => {
                   <Image source={Images.SEARCH} style={styles.searchIcon} />
                 </View>
 
-                <Text style={{ color: '#9CA3AF' }}> Search Recipe...</Text>
+                <Text style={styles.searchPlaceholder}> Search Recipe...</Text>
               </TouchableOpacity>
 
               {loading ? (
                 <ActivityIndicator
                   style={{ marginTop: hp(2) }}
                   size="small"
-                  color="#1E64AC"
+                  color="#11418A"
                 />
               ) : (
                 <Text style={styles.headerTitle}>
@@ -377,10 +375,10 @@ const Nutrition = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   fixedHeader: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? hp(4) : hp(1.5),
+    // position: 'absolute',
+    // top: Platform.OS === 'ios' ? hp(0) : hp(1.5),
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -388,56 +386,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: hp(2),
     zIndex: 1000,
-    elevation: 1000,
+    // elevation: 1000,
     pointerEvents: 'box-none',
   },
   fixedButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: hp(1.5),
-    padding: hp(1),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    // backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    // borderRadius: 12,
+    // padding: hp(1.2),
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 6,
+    // elevation: 3,
   },
   headerTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     paddingHorizontal: hp(5),
     fontSize: 15,
-    fontWeight: '400',
-    color: '#000000',
+    color: '#1E293B',
     textAlign: 'center',
     marginTop: hp(1.5),
+    lineHeight: 22,
+    letterSpacing: 0.2,
   },
   cardList: {
     padding: wp(5),
   },
   card: {
-    borderLeftWidth: 2,
+    borderLeftWidth: 3,
     backgroundColor: '#FFFFFF',
-    borderRadius: wp(3),
+    borderRadius: 12,
     padding: wp(4),
-    marginBottom: hp(1.5),
+    marginBottom: hp(1.8),
     elevation: 2,
-    borderLeftColor: '#17AD8D',
+    borderLeftColor: '#10B981',
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
   },
   mealTitle: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#000000',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#1E293B',
     marginBottom: hp(0.5),
+    letterSpacing: -0.2,
   },
   detail: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '400',
+    color: '#64748B',
+    lineHeight: 18,
+    letterSpacing: 0.1,
   },
   cardFooter: {
     marginTop: hp(1.5),
@@ -445,18 +445,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   kcal: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     marginLeft: hp(0),
     fontSize: 14,
-    color: '#4B5563',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   tabButton: {
     alignItems: 'center',
     flexDirection: 'row',
-    padding: hp(1),
+    padding: hp(1.2),
     paddingHorizontal: hp(4),
-    borderRadius: hp(3),
+    borderRadius: 12,
     marginHorizontal: hp(1),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   tabIcon: {
     resizeMode: 'contain',
@@ -465,10 +470,11 @@ const styles = StyleSheet.create({
     tintColor: '#FFFFFF',
   },
   tabText: {
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    fontWeight: '500',
     color: '#FFFFFF',
     marginLeft: hp(1),
+    letterSpacing: 0.3,
   },
   toastContainer: {
     position: 'absolute',
@@ -482,33 +488,49 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: hp(1),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     marginHorizontal: hp(1),
     marginTop: hp(2),
     paddingHorizontal: hp(2),
-    paddingVertical: hp(1),
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    paddingVertical: hp(1.2),
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  searchPlaceholder: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#94A3B8',
+    letterSpacing: 0.2,
   },
   searchIcon: {
     height: hp(2.5),
     width: wp(4),
     resizeMode: 'contain',
-    tintColor: '#9CA3AF',
+    tintColor: '#94A3B8',
     marginRight: hp(1),
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#111827',
+    fontFamily: 'Poppins-Regular',
+    color: '#1E293B',
     paddingVertical: Platform.OS === 'ios' ? hp(1.5) : 0,
+    letterSpacing: 0.2,
   },
   noResultText: {
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
-    color: '#6B7280',
+    color: '#64748B',
     fontSize: 14,
     marginTop: hp(2),
+    letterSpacing: 0.2,
+  },
+  eggTagText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 11,
+    color: '#C68A40',
+    letterSpacing: 0.2,
   },
 });
 

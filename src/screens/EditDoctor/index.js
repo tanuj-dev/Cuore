@@ -162,8 +162,8 @@ const EditDoctor = ({ navigation }) => {
   );
 
   return (
-    <ScrollView style={{ backgroundColor: 'white' }}>
-      <View style={{ backgroundColor: '#F3F4F6', flex: 1 }}>
+    <ScrollView style={styles.scroll}>
+      <View style={styles.screen}>
         <ProfileHeader navigation={navigation} title="Add/Edit Doctor" />
 
         {toastMessage && (
@@ -178,8 +178,8 @@ const EditDoctor = ({ navigation }) => {
         <View style={styles.container}>
           {!isEditing && (
             <TouchableOpacity
-              disabled={role == 'caregiver'}
-              style={{ marginBottom: hp(2), alignSelf: 'flex-end' }}
+              disabled={role === 'caregiver'}
+              style={styles.editButtonWrap}
               onPress={() => setIsEditing(true)}
             >
               <Image source={Images.EDIT} style={styles.editIcon} />
@@ -209,7 +209,7 @@ const EditDoctor = ({ navigation }) => {
             {isEditing && (
               <>
                 <TouchableOpacity
-                  style={{ ...styles.saveBtn, width: wp(40) }}
+                  style={styles.saveBtn}
                   onPress={handleSave}
                 >
                   <Text style={styles.saveText}>Save</Text>
@@ -228,7 +228,7 @@ const EditDoctor = ({ navigation }) => {
             I do not have a Cuore-partnered doctor
           </Text>
           <TouchableOpacity
-            disabled={role == 'caregiver'}
+            disabled={role === 'caregiver'}
             onPressIn={() => navigation.navigate('Doctor')}
             style={styles.findBtn}
           >
@@ -241,13 +241,27 @@ const EditDoctor = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  screen: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
   container: {
     padding: wp(5),
-    height: hp(80),
+    minHeight: hp(80),
     margin: wp(4),
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...(Platform.OS === 'android' && { elevation: 1 }),
+  },
+  editButtonWrap: {
+    marginBottom: hp(2),
+    alignSelf: 'flex-end',
   },
   editIcon: {
     width: wp(5),
@@ -258,25 +272,27 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
   },
   label: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
+    color: '#475569',
     marginBottom: hp(0.5),
-    fontWeight: '400',
+    letterSpacing: 0.2,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: wp(3),
-    paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(0),
-    borderWidth: 0.5,
-    borderColor: '#D1D5DB',
+    paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(0.5),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   input: {
     flex: 1,
+    fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    color: '#6B7280',
+    color: '#1E293B',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -285,49 +301,54 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     alignItems: 'center',
-    backgroundColor: '#1E64AC',
+    backgroundColor: '#11418A',
     paddingVertical: hp(1.5),
-    borderRadius: 8,
+    width: wp(40),
+    borderRadius: 10,
   },
   saveText: {
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '400',
+    letterSpacing: 0.2,
   },
   cancelBtn: {
     backgroundColor: '#FFFFFF',
     width: wp(40),
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: '#E2E8F0',
     paddingVertical: hp(1.5),
-    borderRadius: 8,
+    borderRadius: 10,
   },
   cancelText: {
-    color: '#000000',
+    fontFamily: 'Poppins-Regular',
+    color: '#475569',
     fontSize: 14,
-    fontWeight: '400',
+    letterSpacing: 0.2,
   },
   noteText: {
     alignSelf: 'center',
-    color: '#000000',
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
     fontSize: 15,
-    fontWeight: '400',
     fontStyle: 'italic',
     marginTop: hp(24),
+    letterSpacing: 0.2,
   },
   findBtn: {
-    backgroundColor: '#1E64AC',
+    backgroundColor: '#11418A',
     padding: hp(1.5),
     marginHorizontal: hp(6),
-    borderRadius: hp(0.5),
+    borderRadius: 10,
     marginTop: hp(1),
   },
   findText: {
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '400',
     alignSelf: 'center',
+    letterSpacing: 0.2,
   },
 });
 

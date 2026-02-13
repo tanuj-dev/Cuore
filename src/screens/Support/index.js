@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -7,32 +7,23 @@ import {
   Alert,
   Image,
   Linking,
+  Platform,
 } from 'react-native';
-// import { Ionicons } from '@expo/vector-icons';
-import { hp, wp, Images } from '../../utilities'; // your responsive helpers
-import Profile from '../Profile';
+import { hp, wp, Images } from '../../utilities';
 import ProfileHeader from '../../components/ProfileHeader';
 
 const Support = ({ navigation }) => {
   return (
-    <View>
+    <View style={styles.wrapper}>
       <ProfileHeader navigation={navigation} title="Support" />
 
       <View style={styles.container}>
         <Text style={styles.heading}>Call our support team</Text>
-        <View style={{ alignItems: 'center', marginTop: hp(4) }}>
-          <Image
-            source={Images.PHONE}
-            style={{
-              height: hp(4),
-              width: wp(7),
-              resizeMode: 'contain',
-              // tintColor: '#000000',
-            }}
-          />
-          <Text style={[styles.heading, { marginTop: hp(1) }]}>
-            support Line
-          </Text>
+        <View style={styles.centerSection}>
+          <View style={styles.iconContainer}>
+            <Image source={Images.PHONE} style={styles.phoneIcon} />
+          </View>
+          <Text style={styles.supportLineText}>Support Line</Text>
           <TouchableOpacity
             onPress={async () => {
               const url = `tel:${1 - 800 - 123 - 4567}`;
@@ -48,49 +39,15 @@ const Support = ({ navigation }) => {
             }}
             style={styles.continueBtn}
           >
-            <Text style={styles.continueText}>Call 1-800-123-4567</Text>
+            <Text style={styles.continueText}>📞 Call 1-800-123-4567</Text>
           </TouchableOpacity>
         </View>
-        <View
-          style={{
-            marginTop: hp(6),
-            backgroundColor: '#F9FAFB',
-            padding: hp(2),
-            borderRadius: hp(1),
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontWeight: '400',
-              fontSize: 14,
-              color: '#000000',
-            }}
-          >
-            Support Hours
-          </Text>
+        <View style={styles.hoursContainer}>
+          <Text style={styles.hoursTitle}>Support Hours</Text>
 
-          <View style={{ marginTop: hp(1) }}>
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontWeight: '400',
-                fontSize: 14,
-                color: '#4B5563',
-              }}
-            >
-              Monday - Saturday
-            </Text>
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontWeight: '400',
-                fontSize: 14,
-                color: '#4B5563',
-              }}
-            >
-              9:00 AM - 6:00 PM
-            </Text>
+          <View style={styles.hoursContent}>
+            <Text style={styles.hoursDay}>Monday - Saturday</Text>
+            <Text style={styles.hoursTime}>9:00 AM - 6:00 PM</Text>
           </View>
         </View>
       </View>
@@ -99,42 +56,108 @@ const Support = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
   container: {
     padding: wp(5),
     margin: wp(4),
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    height: hp(80),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 10,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 4 },
+    }),
   },
   heading: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 20,
+    marginBottom: hp(2),
+    color: '#1E293B',
+    letterSpacing: -0.5,
+  },
+  centerSection: {
+    alignItems: 'center',
+    marginTop: hp(3),
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(2),
+  },
+  phoneIcon: {
+    height: hp(4.5),
+    width: wp(9),
+    resizeMode: 'contain',
+    tintColor: '#11418A',
+  },
+  supportLineText: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 18,
-    fontWeight: '400',
-    marginBottom: hp(2),
-    color: '#000000',
+    marginTop: hp(1),
+    color: '#475569',
+    letterSpacing: -0.3,
   },
-  roleCard: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
-    padding: wp(4),
-    marginBottom: hp(2),
-    backgroundColor: '#fff',
-  },
-
   continueBtn: {
     width: wp(70),
-    backgroundColor: '#1E64AC',
-    paddingVertical: hp(1.8),
-    borderRadius: 8,
+    backgroundColor: '#11418A',
+    paddingVertical: hp(2),
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: hp(4),
+    marginTop: hp(3.5),
+    shadowColor: '#11418A',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 6 },
+    }),
   },
   continueText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
+    fontSize: 15.5,
+    letterSpacing: -0.2,
+  },
+  hoursContainer: {
+    marginTop: hp(6),
+    backgroundColor: '#F1F5F9',
+    padding: hp(2.5),
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  hoursTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#1E293B',
+    letterSpacing: -0.3,
+  },
+  hoursContent: {
+    marginTop: hp(1.5),
+  },
+  hoursDay: {
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    fontWeight: '400',
+    color: '#64748B',
+    marginBottom: hp(0.5),
+    letterSpacing: 0.1,
+  },
+  hoursTime: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#64748B',
+    letterSpacing: 0.1,
   },
 });
 

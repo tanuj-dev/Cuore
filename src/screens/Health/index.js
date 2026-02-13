@@ -359,7 +359,7 @@ const Health = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1E64AC" />
+        <ActivityIndicator size="large" color="#11418A" />
       </View>
     );
   }
@@ -549,6 +549,16 @@ const Health = ({ navigation }) => {
                 </View>
 
                 {/* Health Observations */}
+                <View style={styles.observationsDisclaimerRow}>
+                  <Image
+                    style={styles.observationsDisclaimerIcon}
+                    source={Images.NOTICE}
+                  />
+                  <Text style={styles.observationsDisclaimer}>
+                    Indicators reflect general public health reference ranges.
+                    They are not diagnostic classifications.
+                  </Text>
+                </View>
                 <View style={styles.card}>
                   <View
                     style={{
@@ -565,7 +575,7 @@ const Health = ({ navigation }) => {
                       style={styles.updateButton}
                     >
                       <Text style={styles.updateButtonText}>
-                        Update Biomarkers
+                        Update Readings
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -579,9 +589,8 @@ const Health = ({ navigation }) => {
                     <Text
                       style={{
                         fontSize: 15,
-                        fontWeight: '700',
                         color: '#374151',
-                        fontFamily: 'Roboto-Regular',
+                        fontFamily: 'Poppins-Medium',
                       }}
                     >
                       Parameter
@@ -589,9 +598,8 @@ const Health = ({ navigation }) => {
                     <Text
                       style={{
                         fontSize: 14,
-                        fontWeight: '700',
                         color: '#374151',
-                        fontFamily: 'Roboto-Regular',
+                        fontFamily: 'Poppins-Medium',
                       }}
                     >
                       Value
@@ -599,9 +607,8 @@ const Health = ({ navigation }) => {
                     <Text
                       style={{
                         fontSize: 14,
-                        fontWeight: '700',
                         color: '#000000',
-                        fontFamily: 'Roboto-Regular',
+                        fontFamily: 'Poppins-Medium',
                         marginRight: hp(2),
                       }}
                     >
@@ -635,9 +642,8 @@ const Health = ({ navigation }) => {
                               // backgroundColor: 'pink',
                               width: hp(17),
                               fontSize: 14,
-                              fontWeight: '500',
                               color: '#000000',
-                              fontFamily: 'Roboto-Regular',
+                              fontFamily: 'Poppins-Regular',
                             }}
                           >
                             {item?.parameter}
@@ -649,9 +655,8 @@ const Health = ({ navigation }) => {
                               marginLeft: hp(2),
                               width: hp(17),
                               fontSize: 14,
-                              fontWeight: '500',
                               color: '#374151',
-                              fontFamily: 'Roboto-Regular',
+                              fontFamily: 'Poppins-Regular',
                             }}
                           >
                             {item?.value ?? '-'}
@@ -724,9 +729,8 @@ const Health = ({ navigation }) => {
                     </Text>
                   </TouchableOpacity>
                   <Text style={styles.note}>
-                    * By uploading health records, you agree to our medical
-                    records policy and consent to OCR processing for better
-                    health insights.
+                    * By uploading records, you consent to AI-assisted OCR
+                    processing to organize and summarize your documents.
                   </Text>
                 </TouchableOpacity>
 
@@ -779,12 +783,26 @@ const Health = ({ navigation }) => {
 
                   {isSummaryExpanded && (
                     <View style={{ marginTop: hp(2) }}>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: '#4B5563',
+                          fontFamily: 'Poppins-Regular',
+                          fontStyle: 'italic',
+                          marginBottom: hp(1),
+                        }}
+                      >
+                        AI-assisted extraction. Accuracy may vary. Please verify
+                        with your original report.
+                      </Text>
                       {isEditingMode ? (
                         // Edit Mode - Show TextInputs
                         <View>
                           {/* Past History Input */}
                           <View style={{ marginBottom: hp(2) }}>
-                            <Text style={styles.bold}>History:</Text>
+                            <Text style={styles.bold}>
+                              History (from uploaded records):
+                            </Text>
                             <TextInput
                               style={styles.editInput}
                               value={editedSummary.past_history}
@@ -799,7 +817,9 @@ const Health = ({ navigation }) => {
 
                           {/* Medications Input */}
                           <View style={{ marginBottom: hp(2) }}>
-                            <Text style={styles.bold}>Medications:</Text>
+                            <Text style={styles.bold}>
+                              Medications (as listed in records):
+                            </Text>
                             <TextInput
                               style={styles.editInput}
                               value={editedSummary.medications}
@@ -814,7 +834,9 @@ const Health = ({ navigation }) => {
 
                           {/* Labs Input */}
                           <View style={{ marginBottom: hp(2) }}>
-                            <Text style={styles.bold}>Labs:</Text>
+                            <Text style={styles.bold}>
+                              Lab values (as recorded in reports):
+                            </Text>
                             <TextInput
                               style={styles.editInput}
                               value={editedSummary.labs}
@@ -829,7 +851,9 @@ const Health = ({ navigation }) => {
 
                           {/* Imaging Input */}
                           <View style={{ marginBottom: hp(2) }}>
-                            <Text style={styles.bold}>Imaging:</Text>
+                            <Text style={styles.bold}>
+                              Imaging findings (as recorded in reports):
+                            </Text>
                             <TextInput
                               style={styles.editInput}
                               value={editedSummary.imaging}
@@ -866,7 +890,7 @@ const Health = ({ navigation }) => {
                                   style={{
                                     color: '#FFFFFF',
                                     fontSize: 14,
-                                    fontWeight: '600',
+                                    fontFamily: 'Poppins-Medium',
                                   }}
                                 >
                                   Save Changes
@@ -890,7 +914,7 @@ const Health = ({ navigation }) => {
                                 style={{
                                   color: '#FFFFFF',
                                   fontSize: 14,
-                                  fontWeight: '600',
+                                  fontFamily: 'Poppins-Medium',
                                 }}
                               >
                                 Cancel
@@ -906,12 +930,14 @@ const Health = ({ navigation }) => {
                             Array.isArray(healtRecords.summary.past_history) &&
                             healtRecords.summary.past_history.length > 0 && (
                               <View>
-                                <Text style={styles.bold}>History: </Text>
+                                <Text style={styles.bold}>
+                                  History (from uploaded records):
+                                </Text>
                                 <Text
                                   style={{
                                     fontSize: 14,
-                                    fontWeight: '400',
                                     color: '#4B5563',
+                                    fontFamily: 'Poppins-Regular',
                                     marginTop: hp(0.5),
                                   }}
                                 >
@@ -927,12 +953,14 @@ const Health = ({ navigation }) => {
                             Array.isArray(healtRecords.summary.medications) &&
                             healtRecords.summary.medications.length > 0 && (
                               <View style={{ marginTop: hp(1) }}>
-                                <Text style={styles.bold}>Medications:</Text>
+                                <Text style={styles.bold}>
+                                  Medications (as listed in records):
+                                </Text>
                                 <Text
                                   style={{
                                     fontSize: 14,
-                                    fontWeight: '400',
                                     color: '#4B5563',
+                                    fontFamily: 'Poppins-Regular',
                                     marginTop: hp(0.5),
                                   }}
                                 >
@@ -946,12 +974,14 @@ const Health = ({ navigation }) => {
                             Array.isArray(healtRecords.summary.labs) &&
                             healtRecords.summary.labs.length > 0 && (
                               <View style={{ marginTop: hp(1) }}>
-                                <Text style={styles.bold}>Labs:</Text>
+                                <Text style={styles.bold}>
+                                  Lab values (as recorded in reports):
+                                </Text>
                                 <Text
                                   style={{
                                     fontSize: 14,
-                                    fontWeight: '400',
                                     color: '#4B5563',
+                                    fontFamily: 'Poppins-Regular',
                                     marginTop: hp(0.5),
                                   }}
                                 >
@@ -965,12 +995,15 @@ const Health = ({ navigation }) => {
                             Array.isArray(healtRecords.summary.imaging) &&
                             healtRecords.summary.imaging.length > 0 && (
                               <View style={{ marginTop: hp(1) }}>
-                                <Text style={styles.bold}>Imaging:</Text>
+                                <Text style={styles.bold}>
+                                  {' '}
+                                  Imaging findings (as recorded in reports):
+                                </Text>
                                 <Text
                                   style={{
                                     fontSize: 14,
-                                    fontWeight: '400',
                                     color: '#4B5563',
+                                    fontFamily: 'Poppins-Regular',
                                     marginTop: hp(0.5),
                                   }}
                                 >
@@ -985,29 +1018,29 @@ const Health = ({ navigation }) => {
                               healtRecords.summary.past_history.length === 0) &&
                               (!healtRecords.summary.medications ||
                                 healtRecords.summary.medications.length ===
-                                0) &&
+                                  0) &&
                               (!healtRecords.summary.labs ||
                                 healtRecords.summary.labs.length === 0) &&
                               (!healtRecords.summary.imaging ||
                                 healtRecords.summary.imaging.length ===
-                                0))) && (
-                              <Text
-                                style={{
-                                  fontSize: 14,
-                                  fontWeight: '400',
-                                  color: '#6B7280',
-                                  fontStyle: 'italic',
-                                  marginTop: hp(1),
-                                }}
-                              >
-                                No summary data available
-                              </Text>
-                            )}
+                                  0))) && (
+                            <Text
+                              style={{
+                                fontSize: 14,
+                                color: '#6B7280',
+                                fontFamily: 'Poppins-Regular',
+                                fontStyle: 'italic',
+                                marginTop: hp(1),
+                              }}
+                            >
+                              No summary data available
+                            </Text>
+                          )}
 
                           {/* Edit Button */}
                           <TouchableOpacity
                             style={{
-                              backgroundColor: '#3B82F6',
+                              backgroundColor: '#11418A',
                               borderRadius: 8,
                               paddingVertical: hp(1.5),
                               paddingHorizontal: wp(4),
@@ -1021,7 +1054,7 @@ const Health = ({ navigation }) => {
                               style={{
                                 color: '#FFFFFF',
                                 fontSize: 14,
-                                fontWeight: '600',
+                                fontFamily: 'Poppins-Medium',
                               }}
                             >
                               Edit Summary
@@ -1100,8 +1133,9 @@ const Health = ({ navigation }) => {
                   />
 
                   <Text>
-                    Cuore Health summarizes your health records over time using
-                    AI, for awareness only—not for diagnosis or treatment
+                    This is an AI-generated summary for awareness only. It is
+                    not a medical diagnosis or treatment plan. Please verify all
+                    information with your healthcare provider.
                   </Text>
 
                   {/* <Text style={styles.bold}>History: </Text>
@@ -1133,7 +1167,7 @@ const Health = ({ navigation }) => {
       >
         <View style={styles.sharingLoaderOverlay}>
           <View style={styles.sharingLoaderContainer}>
-            <ActivityIndicator size="large" color="#1E64AC" />
+            <ActivityIndicator size="large" color="#11418A" />
             <Text style={styles.sharingLoaderText}>Generating PDF...</Text>
           </View>
         </View>
@@ -1156,7 +1190,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: hp(1),
-    paddingTop: Platform.OS === 'ios' ? hp(6) : hp(4),
+    paddingTop: Platform.OS === 'ios' ? hp(2) : hp(3),
     paddingBottom: hp(1.5),
     zIndex: 1000,
     elevation: 1000,
@@ -1176,9 +1210,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   fixedHeaderTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    fontWeight: '400',
     color: '#1F2937',
   },
   header: {
@@ -1189,7 +1222,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'Poppins-Medium',
   },
   card: {
     backgroundColor: 'white',
@@ -1215,15 +1248,12 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 14,
-    fontWeight: '400',
     color: '#1F2937',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
   },
   detail: {
     fontSize: 14,
-    fontWeight: '400',
-
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     color: '#6B7280',
   },
   label: {
@@ -1236,26 +1266,44 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontSize: 14,
-    fontWeight: '700',
     color: '#4B5563',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
     color: '#1F2937',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
+  },
+  observationsDisclaimerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: hp(1),
+    marginTop: hp(0.5),
+  },
+  observationsDisclaimerIcon: {
+    marginRight: hp(1),
+    height: hp(1.5),
+    width: hp(2),
+    resizeMode: 'contain',
+    marginHorizontal: hp(0.5),
+  },
+  observationsDisclaimer: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    fontStyle: 'italic',
+    letterSpacing: 0.2,
   },
 
   progressTitle: {
     fontSize: 12.5,
-    fontWeight: '600',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
   },
   updateButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1E64AC',
+    backgroundColor: '#11418A',
     paddingVertical: hp(1),
     paddingHorizontal: hp(1),
     width: hp(12),
@@ -1265,23 +1313,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#FFFFFF',
     fontSize: 12.5,
-    fontWeight: '700',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
   },
 
   columnHeader: {
     fontSize: 14,
-    fontWeight: '700',
     color: '#374151',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     width: hp(17),
   },
 
   cellText: {
     fontSize: 14,
-    fontWeight: '500',
     color: '#374151',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     width: hp(17),
   },
 
@@ -1313,26 +1358,26 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: hp(1),
-    backgroundColor: '#1E64AC',
-    borderRadius: hp(0.4),
+    backgroundColor: '#11418A',
+    borderRadius: hp(1),
     padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
+    paddingVertical: hp(2),
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '600',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
   },
   note: {
     marginHorizontal: hp(1),
     fontSize: 14,
     color: '#6B7280',
     marginTop: hp(0.5),
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
   },
   loadingContainer: {
     flex: 1,
@@ -1357,8 +1402,7 @@ const styles = StyleSheet.create({
     marginTop: hp(1.5),
     fontSize: hp(1.8),
     color: '#111827',
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '500',
+    fontFamily: 'Poppins-Regular',
   },
   datePickerWrapper: {
     backgroundColor: '#FFFFFF',
@@ -1376,7 +1420,7 @@ const styles = StyleSheet.create({
     padding: hp(1.5),
     fontSize: 14,
     color: '#1F2937',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     minHeight: hp(8),
     textAlignVertical: 'top',
     marginTop: hp(0.5),

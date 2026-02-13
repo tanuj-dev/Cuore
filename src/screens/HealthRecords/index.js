@@ -27,6 +27,8 @@ import { deleteRecord } from '../../redux/uploadPhoto/deleteRecordThunk';
 const HealthRecords = ({ navigation }) => {
   const dispatch = useDispatch();
   const userId = useSelector(state => state.auth?.userId);
+  const role = useSelector(state => state.auth?.role);
+  const isCaregiver = role === 'caregiver';
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isPrescription, setIsPrescription] = useState(false);
@@ -47,218 +49,134 @@ const HealthRecords = ({ navigation }) => {
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
       try {
-        // First check if permission is already granted
-        const checkResult = await PermissionsAndroid.check(
-          PermissionsAndroid.PERMISSIONS.CAMERA
-        );
-
-        if (checkResult) {
-          console.log('Camera permission already granted');
-          return true;
-        }
-
-        console.log('Requesting camera permission...');
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.CAMERA,
           {
             title: 'Camera Permission',
-            message:
-              'This app needs access to your camera to take photos of health records.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
+            message: 'Allow this app to access your camera to take photos of health records.',
+            buttonPositive: 'Allow',
+            buttonNegative: 'Deny',
           },
         );
-
-        console.log('Permission result:', granted);
-
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('Camera permission granted');
-          return true;
-        } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-          console.log('Camera permission denied permanently');
-          Alert.alert(
-            'Permission Required',
-            'Camera permission was denied permanently. Please enable it in your device settings.',
-            [
-              { text: 'Open Settings', onPress: () => Linking.openSettings() },
-              { text: 'Cancel', style: 'cancel' }
-            ]
-          );
-          return false;
-        } else {
-          console.log('Camera permission denied');
-          return false;
-        }
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
       } catch (err) {
-        console.warn('Camera permission error:', err);
+        console.error('Camera permission error:', err);
         return false;
       }
     }
-    return true; // iOS handles permissions automatically
+    return true; // iOS handles permissions automatically via Info.plist
   };
 
   const pickImageFromCamera = async () => {
+    console.log('📷 Opening camera...');
+    
     try {
-      // iOS Simulator check
-      if (Platform.OS === 'ios' && !Platform.constants?.isTesting) {
-        // Check if we're likely in simulator
-        const isSimulator = !Platform.constants?.uiMode ||
-          Platform.constants?.uiMode === 'simulator' ||
-          // Additional checks for simulator detection
-          !Platform.constants?.systemName?.includes('iPhone');
-
-        if (isSimulator) {
+      // Request permission for Android
+      if (Platform.OS === 'android') {
+        const hasPermission = await requestCameraPermission();
+        if (!hasPermission) {
+          setShowUploadModal(false);
           Alert.alert(
-            'Simulator Limitation',
-            'Camera is not available in iOS Simulator. Please use a physical device or the Gallery option.',
+            'Permission Required',
+            'Camera permission is needed to take photos. Please grant permission in your device settings.',
             [
-              {
-                text: 'Use Gallery',
-                onPress: () => {
-                  setShowUploadModal(false);
-                  pickImageFromGallery();
-                }
-              },
-              { text: 'Cancel', onPress: () => setShowUploadModal(false) }
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() }
             ]
           );
           return;
         }
       }
 
-      // Request camera permission first
-      const hasPermission = await requestCameraPermission();
-
-      if (!hasPermission) {
-        Alert.alert(
-          'Permission Denied',
-          'Camera permission is required to take photos. Please enable it in your device settings.',
-          [
-            { text: 'OK', onPress: () => setShowUploadModal(false) }
-          ]
-        );
-        return;
-      }
+      // Close modal AFTER permission is granted but BEFORE launching camera
+      setShowUploadModal(false);
+      
+      // Small delay to ensure modal is fully closed before camera opens
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const options = {
         mediaType: 'photo',
         quality: 0.8,
-        saveToPhotos: true,
+        saveToPhotos: false,
         includeBase64: false,
-        maxWidth: 1920,
-        maxHeight: 1920,
+        cameraType: 'back',
       };
 
-      console.log('Launching camera with options:', options);
-
-      // Additional iOS-specific checks
-      if (Platform.OS === 'ios') {
-        // Small delay to ensure permissions are fully processed
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
+      console.log('📷 Launching camera...');
       const result = await launchCamera(options);
 
-      console.log('Camera result:', JSON.stringify(result, null, 2));
+      console.log('📷 Camera result:', JSON.stringify(result, null, 2));
 
       if (result.didCancel) {
-        console.log('User cancelled camera');
-        setShowUploadModal(false);
+        console.log('📷 User cancelled camera');
         return;
       }
 
       if (result.errorCode) {
-        console.log('Camera Error Code:', result.errorCode);
-        console.log('Camera Error Message:', result.errorMessage);
-
-        let errorMessage = result.errorMessage || 'Failed to open camera';
-        let showRetryOption = false;
-
-        // Handle specific error codes
-        switch (result.errorCode) {
-          case 'camera_unavailable':
-            if (Platform.OS === 'ios') {
-              errorMessage = 'Camera is not available. This can happen if:\n\n' +
-                '• You\'re using the iOS Simulator (camera doesn\'t work in simulator)\n' +
-                '• Another app is currently using the camera\n' +
-                '• iOS temporarily restricted camera access\n\n' +
-                'Please try:\n' +
-                '1. Close other camera apps\n' +
-                '2. Restart this app\n' +
-                '3. Use the Gallery option instead';
-              showRetryOption = true;
-            } else {
-              errorMessage = 'Camera is not available. Please check if another app is using the camera.';
-              showRetryOption = true;
-            }
-            break;
-          case 'permission':
-            errorMessage = 'Camera permission was denied. Please enable it in settings.';
-            break;
-          case 'others':
-            errorMessage = 'An unexpected error occurred. Please try again.';
-            break;
-        }
-
-        const alertButtons = [
-          { text: 'OK', onPress: () => setShowUploadModal(false) }
-        ];
-
-        if (showRetryOption) {
-          alertButtons.unshift(
-            {
-              text: 'Use Gallery',
-              onPress: () => {
-                setShowUploadModal(false);
-                pickImageFromGallery();
+        console.error('📷 Camera error:', result.errorCode, result.errorMessage);
+        
+        if (result.errorCode === 'camera_unavailable') {
+          Alert.alert(
+            'Camera Unavailable',
+            'Camera is not available. Please use the Gallery option instead.',
+            [
+              { text: 'OK' },
+              { 
+                text: 'Open Gallery', 
+                onPress: () => {
+                  setTimeout(() => pickImageFromGallery(), 300);
+                }
               }
-            }
+            ]
           );
+        } else if (result.errorCode === 'permission') {
+          Alert.alert(
+            'Permission Denied',
+            'Camera permission is required. Please enable it in Settings.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() }
+            ]
+          );
+        } else {
+          Alert.alert('Error', result.errorMessage || 'Failed to open camera');
         }
-
-        Alert.alert('Camera Error', errorMessage, alertButtons);
         return;
       }
 
       if (result.assets && result.assets.length > 0) {
         const photo = result.assets[0];
-        console.log('Photo captured:', photo);
-
         const newFile = {
           uri: photo.uri,
-          name: photo.fileName || `health_record_${Date.now()}.jpg`,
+          name: photo.fileName || `photo_${Date.now()}.jpg`,
           type: photo.type || 'image/jpeg',
           size: photo.fileSize || 0,
         };
 
-        console.log('New file object:', newFile);
+        console.log('📷 Photo captured successfully:', newFile.name);
+        console.log('📷 Photo URI:', newFile.uri);
         setSelectedFiles(prev => [...prev, newFile]);
         Alert.alert('Success', 'Photo captured successfully!');
       } else {
-        console.log('No assets returned from camera');
+        console.log('📷 No assets in result');
         Alert.alert('Error', 'No photo was captured. Please try again.');
       }
-
-      setShowUploadModal(false);
-    } catch (err) {
-      console.log('Camera exception:', err);
-      console.log('Error name:', err.name);
-      console.log('Error message:', err.message);
-      console.log('Error stack:', err.stack);
-
-      let errorMessage = 'Failed to open camera';
-
-      // Handle specific error types
-      if (err.message && err.message.includes('permission')) {
-        errorMessage = 'Camera permission denied. Please check your device settings.';
-      } else if (err.message && err.message.includes('unavailable')) {
-        errorMessage = 'Camera is currently unavailable. Please try again later.';
-      }
-
-      Alert.alert('Camera Error', errorMessage, [
-        { text: 'OK', onPress: () => setShowUploadModal(false) }
-      ]);
+    } catch (error) {
+      console.error('📷 Camera exception:', error);
+      console.error('📷 Error details:', error.message, error.stack);
+      Alert.alert(
+        'Camera Error',
+        'Failed to open camera. Please try using the Gallery option instead.',
+        [
+          { text: 'OK' },
+          { 
+            text: 'Open Gallery', 
+            onPress: () => {
+              setTimeout(() => pickImageFromGallery(), 300);
+            }
+          }
+        ]
+      );
     }
   };
 
@@ -266,18 +184,16 @@ const HealthRecords = ({ navigation }) => {
     if (Platform.OS === 'android') {
       try {
         const androidVersion = Platform.Version;
-
-        // Android 13+ uses READ_MEDIA_IMAGES
+        
+        // Android 13+ (API 33+) uses READ_MEDIA_IMAGES
         if (androidVersion >= 33) {
           const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
             {
               title: 'Gallery Permission',
-              message:
-                'This app needs access to your gallery to select health record images.',
-              buttonNeutral: 'Ask Me Later',
-              buttonNegative: 'Cancel',
-              buttonPositive: 'OK',
+              message: 'Allow this app to access your photos to select health records.',
+              buttonPositive: 'Allow',
+              buttonNegative: 'Deny',
             },
           );
           return granted === PermissionsAndroid.RESULTS.GRANTED;
@@ -287,65 +203,80 @@ const HealthRecords = ({ navigation }) => {
             PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
             {
               title: 'Gallery Permission',
-              message:
-                'This app needs access to your gallery to select health record images.',
-              buttonNeutral: 'Ask Me Later',
-              buttonNegative: 'Cancel',
-              buttonPositive: 'OK',
+              message: 'Allow this app to access your photos to select health records.',
+              buttonPositive: 'Allow',
+              buttonNegative: 'Deny',
             },
           );
           return granted === PermissionsAndroid.RESULTS.GRANTED;
         }
       } catch (err) {
-        console.warn('Storage permission error:', err);
+        console.error('Storage permission error:', err);
         return false;
       }
     }
-    return true; // iOS handles permissions automatically
+    return true; // iOS handles permissions automatically via Info.plist
   };
 
   const pickImageFromGallery = async () => {
-    // Request storage permission first
-    const hasPermission = await requestStoragePermission();
-
-    if (!hasPermission) {
-      Alert.alert(
-        'Permission Denied',
-        'Gallery permission is required to select images. Please enable it in your device settings.',
-      );
-      setShowUploadModal(false);
-      return;
-    }
-
-    const options = {
-      mediaType: 'photo',
-      quality: 0.8,
-      selectionLimit: 0, // 0 means unlimited, or set a number like 5 for max 5 images
-      includeBase64: false,
-    };
-
+    console.log('🖼️ Opening gallery...');
+    setShowUploadModal(false); // Close modal first
+    
     try {
+      // Request permission for Android
+      if (Platform.OS === 'android') {
+        const hasPermission = await requestStoragePermission();
+        if (!hasPermission) {
+          Alert.alert(
+            'Permission Required',
+            'Gallery permission is needed to select photos. Please grant permission in your device settings.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() }
+            ]
+          );
+          return;
+        }
+      }
+
+      const options = {
+        mediaType: 'photo',
+        quality: 0.8,
+        selectionLimit: 0, // 0 = unlimited selection
+        includeBase64: false,
+      };
+
+      console.log('🖼️ Launching gallery...');
       const result = await launchImageLibrary(options);
 
+      console.log('🖼️ Gallery result:', result);
+
       if (result.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (result.errorCode) {
-        console.log('Image Picker Error:', result.errorMessage);
+        console.log('🖼️ User cancelled gallery');
+        return;
+      }
+
+      if (result.errorCode) {
+        console.error('🖼️ Gallery error:', result.errorCode, result.errorMessage);
         Alert.alert('Error', result.errorMessage || 'Failed to open gallery');
-      } else if (result.assets && result.assets.length > 0) {
+        return;
+      }
+
+      if (result.assets && result.assets.length > 0) {
         const newFiles = result.assets.map((photo, index) => ({
           uri: photo.uri,
           name: photo.fileName || `image_${Date.now()}_${index}.jpg`,
-          type: photo.type,
-          size: photo.fileSize,
+          type: photo.type || 'image/jpeg',
+          size: photo.fileSize || 0,
         }));
+        
+        console.log(`🖼️ Selected ${newFiles.length} image(s) from gallery`);
         setSelectedFiles(prev => [...prev, ...newFiles]);
+        Alert.alert('Success', `${newFiles.length} image(s) selected successfully!`);
       }
-      setShowUploadModal(false);
-    } catch (err) {
-      console.log('Gallery error:', err);
-      Alert.alert('Error', 'Failed to open gallery');
-      setShowUploadModal(false);
+    } catch (error) {
+      console.error('🖼️ Gallery exception:', error);
+      Alert.alert('Error', 'Failed to open gallery. Please try again.');
     }
   };
 
@@ -562,50 +493,40 @@ const HealthRecords = ({ navigation }) => {
 
   return (
     <ScrollView>
-      <View style={{ flex: 1 }}>
+      <View style={styles.screen}>
         <ProfileHeader navigation={navigation} title="Health Records" />
         <View style={styles.container}>
           <Text style={styles.header}>Upload Records</Text>
           <View
-            style={{ padding: hp(1), backgroundColor: '#FFFFFF', elevation: 2 }}
+            style={styles.uploadCard}
           >
             <TouchableOpacity
-              style={styles.uploadBox}
-              onPress={() => setShowUploadModal(true)}
+              style={[styles.uploadBox, isCaregiver && styles.uploadBoxDisabled]}
+              onPress={() => !isCaregiver && setShowUploadModal(true)}
+              disabled={isCaregiver}
+              activeOpacity={isCaregiver ? 1 : 0.7}
             >
               <Image
                 source={Images.UPLOAD}
-                style={{
-                  tintColor: 'green',
-                  height: hp(4),
-                  width: wp(7),
-                  resizeMode: 'contain',
-                }}
+                style={[styles.uploadIcon, isCaregiver && styles.uploadIconDisabled]}
               />
-              <Text style={{ fontSize: 14, fontWeight: '400', color: 'green' }}>
+              <Text style={[styles.uploadLabel, isCaregiver && styles.textDisabled]}>
                 Upload Record
               </Text>
-              <Text style={styles.fileText}>
+              <Text style={[styles.fileText, isCaregiver && styles.textDisabled]}>
                 {selectedFiles.length > 0
                   ? `${selectedFiles.length} file(s) selected`
-                  : 'PNG, JPG ONLY up to 10MB'}
+                  : 'PNG, JPG up to 10MB'}
               </Text>
-
-              <Text
-                style={{
-                  fontSize: 12.5,
-                  fontWeight: '400',
-                  color: 'green',
-                  marginTop: hp(1),
-                  textAlign: 'center',
-                }}
-              >
-                Make sure the uploaded health record belongs to you
+              <Text style={[styles.uploadDisclaimer, isCaregiver && styles.textDisabled]}>
+                {isCaregiver
+                  ? 'Only the account holder can upload or manage records'
+                  : 'Make sure the uploaded health record belongs to you'}
               </Text>
             </TouchableOpacity>
 
             {/* Display Selected Files */}
-            {selectedFiles.length > 0 && (
+            {selectedFiles.length > 0 && !isCaregiver && (
               <View style={styles.selectedFilesContainer}>
                 {selectedFiles.map((file, index) => (
                   <View key={index} style={styles.fileItem}>
@@ -627,41 +548,26 @@ const HealthRecords = ({ navigation }) => {
               </View>
             )}
 
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: hp(1),
-              }}
-            >
+            <View style={styles.checkboxRowWrapper}>
               <TouchableOpacity
-                onPress={() => setIsPrescription(!isPrescription)}
+                onPress={() => !isCaregiver && setIsPrescription(!isPrescription)}
+                disabled={isCaregiver}
               >
                 <View
-                  style={{
-                    borderWidth: 1,
-                    borderColor: '#9CA3AF',
-                    backgroundColor: isPrescription ? 'white' : '#1E64AC',
-                    height: hp(3),
-                    width: wp(6),
-                    borderRadius: hp(0.9),
-                  }}
-                ></View>
+                  style={[
+                    styles.checkboxBox,
+                    isPrescription && styles.checkboxBoxUnchecked,
+                  ]}
+                />
               </TouchableOpacity>
               <View style={styles.checkboxRow}>
-                <Text
-                  style={{
-                    marginLeft: 8,
-                    fontSize: 14,
-                    color: '#4B5563',
-                    fontWeight: '400',
-                  }}
-                >
+                <Text style={styles.checkboxLabel}>
                   Mark as Prescription or Doctor’s Note
                 </Text>
               </View>
             </View>
 
+            {!isCaregiver && (
             <TouchableOpacity
               style={[
                 styles.submitBtn,
@@ -673,25 +579,17 @@ const HealthRecords = ({ navigation }) => {
               {isUploading ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={{ color: 'white', fontWeight: '600' }}>
+                <Text style={styles.submitBtnText}>
                   Submit
                 </Text>
               )}
             </TouchableOpacity>
+            )}
+
           </View>
 
           {/* Tabs */}
-          <Text
-            style={{
-              marginTop: hp(2),
-              color: '#000',
-              fontfamily: 'Roboto-Regular',
-              fontSize: 18,
-              fontStyle: 'normal',
-              fontWeight: '400',
-              marginBottom: hp(1),
-            }}
-          >
+          <Text style={styles.viewRecordsTitle}>
             View Records
           </Text>
           {/* <View style={styles.tabs}>
@@ -716,8 +614,8 @@ const HealthRecords = ({ navigation }) => {
           {isFetching ? (
             <ActivityIndicator
               size="large"
-              color="#1E64AC"
-              style={{ marginTop: 20 }}
+              color="#11418A"
+              style={styles.fetchLoader}
             />
           ) : records.length > 0 ? (
             <FlatList
@@ -728,29 +626,30 @@ const HealthRecords = ({ navigation }) => {
               scrollEnabled={false} // Disable scrolling as it's inside ScrollView
               renderItem={({ item }) => (
                 <View style={styles.recordItem}>
-                  <View style={{ flex: 1 }}>
-                    {editingRecordId === item.recordId ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={styles.recordItemContent}>
+                    {editingRecordId === item.recordId && !isCaregiver ? (
+                      <View style={styles.editRow}>
                         <TextInput
-                          style={[styles.recordTitle, { flex: 1, borderWidth: 1, borderColor: '#1E64AC', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }]}
+                          style={styles.editFileNameInput}
                           value={editFileNameValue}
                           onChangeText={setEditFileNameValue}
                           editable={!isEditingFilename}
                           placeholder="File name"
+                          placeholderTextColor="#94A3B8"
                         />
                         <TouchableOpacity
                           onPress={handleSaveEditFileName}
                           disabled={isEditingFilename}
-                          style={{ padding: 4, marginLeft: 8 }}
+                          style={styles.saveEditBtn}
                         >
                           {isEditingFilename ? (
-                            <ActivityIndicator size="small" color="#1E64AC" />
+                            <ActivityIndicator size="small" color="#11418A" />
                           ) : (
-                            <Text style={{ color: '#1E64AC', fontWeight: '600' }}>Save</Text>
+                            <Text style={styles.saveEditText}>Save</Text>
                           )}
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={cancelEditFileName} style={{ padding: 4, marginLeft: 4 }}>
-                          <Text style={{ color: '#6B7280' }}>Cancel</Text>
+                        <TouchableOpacity onPress={cancelEditFileName} style={styles.cancelEditBtn}>
+                          <Text style={styles.cancelEditText}>Cancel</Text>
                         </TouchableOpacity>
                       </View>
                     ) : (
@@ -758,20 +657,15 @@ const HealthRecords = ({ navigation }) => {
                     )}
                     <Text style={styles.recordDate}>{item.uploadDate}</Text>
                   </View>
-                  <View style={{ flexDirection: 'row' }}>
-                    <TouchableOpacity
-                      onPress={() => startEditFileName(item)}
-                      disabled={editingRecordId !== null && editingRecordId !== item.recordId}
-                    >
-                      <Image
-                        style={{
-                          width: wp(4),
-                          height: hp(3),
-                          resizeMode: 'contain',
-                        }}
-                        source={Images.EDIT}
-                      />
-                    </TouchableOpacity>
+                  <View style={styles.recordActions}>
+                    {!isCaregiver && (
+                      <TouchableOpacity
+                        onPress={() => startEditFileName(item)}
+                        disabled={editingRecordId !== null && editingRecordId !== item.recordId}
+                      >
+                        <Image style={styles.recordActionIcon} source={Images.EDIT} />
+                      </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                       onPress={() => {
                         if (item.fileUrl) {
@@ -783,43 +677,33 @@ const HealthRecords = ({ navigation }) => {
                       }}
                     >
                       <Image
-                        style={{
-                          width: wp(13),
-                          height: hp(3),
-                          resizeMode: 'contain',
-                          marginLeft: hp(3),
-                        }}
+                        style={[styles.recordActionIcon, styles.eyeIcon]}
                         source={Images.EYE}
                       />
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDelete(item.recordId)}
-                      disabled={deletingRecordId !== null}
-                    >
-                      {deletingRecordId === item.recordId ? (
-                        <ActivityIndicator
-                          size="small"
-                          color="#1E64AC"
-                          style={{ width: wp(4), height: hp(3) }}
-                        />
-                      ) : (
-                        <Image
-                          style={{
-                            width: wp(4),
-                            height: hp(3),
-                            resizeMode: 'contain',
-                          }}
-                          source={Images.DELETE}
-                        />
-                      )}
-                    </TouchableOpacity>
+                    {!isCaregiver && (
+                      <TouchableOpacity
+                        onPress={() => handleDelete(item.recordId)}
+                        disabled={deletingRecordId !== null}
+                      >
+                        {deletingRecordId === item.recordId ? (
+                          <ActivityIndicator
+                            size="small"
+                            color="#11418A"
+                            style={styles.recordActionIcon}
+                          />
+                        ) : (
+                          <Image style={styles.recordActionIcon} source={Images.DELETE} />
+                        )}
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               )}
             />
           ) : (
-            <View style={{ alignItems: 'center', marginTop: 20 }}>
-              <Text style={{ color: '#6B7280' }}>
+            <View style={styles.emptyRecords}>
+              <Text style={styles.emptyRecordsText}>
                 No records found for {selectedTab}
               </Text>
             </View>
@@ -856,14 +740,6 @@ const HealthRecords = ({ navigation }) => {
                 <Image source={Images.EYE} style={styles.modalIcon} />
                 <Text style={styles.modalButtonText}>Choose from Gallery</Text>
               </TouchableOpacity>
-
-              {/* <TouchableOpacity
-                style={styles.modalButton}
-                onPress={pickDocument}
-              >
-                <Image source={Images.UPLOAD} style={styles.modalIcon} />
-                <Text style={styles.modalButtonText}>Browse Files</Text>
-              </TouchableOpacity> */}
 
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -918,58 +794,141 @@ const HealthRecords = ({ navigation }) => {
 export default HealthRecords;
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    backgroundColor: '#F9FAFB',
+  screen: {
     flex: 1,
   },
+  container: {
+    padding: 16,
+    backgroundColor: '#F8FAFC',
+    flex: 1,
+  },
+  fetchLoader: {
+    marginTop: 20,
+  },
   header: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontWeight: '400',
-    color: '#000000',
+    color: '#1E293B',
     marginBottom: 12,
+    letterSpacing: -0.3,
   },
   input: {
-    fontFamily: 'Roboto-Regular',
-    borderWidth: 1,
-    fontSize: 16,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    padding: 10,
+    fontFamily: 'Poppins-Regular',
+    borderWidth: 1.5,
+    fontSize: 15,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    padding: 12,
     marginBottom: 10,
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  uploadCard: {
+    padding: hp(1),
+    backgroundColor: '#FFFFFF',
+    ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
   uploadBox: {
-    borderWidth: 1,
-    borderColor: '#ccc',
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
     borderStyle: 'dashed',
-    borderRadius: 8,
-    padding: 16,
+    borderRadius: 12,
+    padding: 18,
     alignItems: 'center',
     marginBottom: 12,
+    backgroundColor: '#F8FAFC',
+  },
+  uploadIcon: {
+    tintColor: '#047857',
+    height: hp(4),
+    width: wp(7),
+    resizeMode: 'contain',
+  },
+  uploadLabel: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#047857',
+    letterSpacing: 0.2,
+  },
+  uploadDisclaimer: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12.5,
+    color: '#047857',
+    marginTop: hp(1),
+    textAlign: 'center',
+    letterSpacing: 0.2,
   },
   fileText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: 'green',
+    color: '#047857',
     marginTop: 5,
-    fontWeight: '400',
+    letterSpacing: 0.2,
+  },
+  checkboxRowWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: hp(1),
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    // marginBottom: 12,
+  },
+  uploadBoxDisabled: {
+    opacity: 0.6,
+    backgroundColor: '#F1F5F9',
+  },
+  uploadIconDisabled: {
+    opacity: 0.5,
+  },
+  textDisabled: {
+    color: '#94A3B8',
+  },
+  checkboxBox: {
+    borderWidth: 1,
+    borderColor: '#9CA3AF',
+    backgroundColor: '#11418A',
+    height: hp(3),
+    width: wp(6),
+    borderRadius: hp(0.9),
+  },
+  checkboxBoxUnchecked: {
+    backgroundColor: '#FFFFFF',
+  },
+  checkboxLabel: {
+    fontFamily: 'Poppins-Regular',
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#4B5563',
+    letterSpacing: 0.2,
   },
   submitBtn: {
-    backgroundColor: '#1E64AC',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: '#11418A',
+    padding: 14,
+    borderRadius: 12,
     alignItems: 'center',
     marginVertical: 16,
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   submitBtnDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: '#94A3B8',
     opacity: 0.7,
+  },
+  submitBtnText: {
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  viewRecordsTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 18,
+    color: '#000',
+    marginTop: hp(2),
+    marginBottom: hp(1),
+    letterSpacing: 0.2,
   },
   tabs: {
     marginTop: hp(2),
@@ -979,49 +938,113 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     paddingVertical: hp(1.5),
-    borderRadius: 6,
-    backgroundColor: '#9CA3AF',
+    borderRadius: 10,
+    backgroundColor: '#94A3B8',
     marginHorizontal: 4,
     alignItems: 'center',
   },
-  activeTab: { fontFamily: 'Roboto-Regular', backgroundColor: '#1E64AC' },
+  activeTab: { fontFamily: 'Poppins-Regular', backgroundColor: '#11418A' },
   tabText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     color: '#FFFFFF',
-    fontWeight: '400',
+    fontSize: 14,
+    letterSpacing: 0.2,
   },
   activeText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
-    fontWeight: '600',
     fontSize: 14,
+    letterSpacing: 0.3,
   },
   recordItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: hp(2),
     backgroundColor: '#FFFFFF',
-    borderRadius: 6,
-    marginBottom: 8,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  recordItemContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  editRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recordActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recordActionIcon: {
+    width: wp(4),
+    height: hp(3),
+    resizeMode: 'contain',
+  },
+  eyeIcon: {
+    width: wp(13),
+    marginLeft: hp(3),
   },
   recordTitle: {
-    fontFamily: 'Roboto-Regular',
-    fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   recordDate: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#64748B',
+    letterSpacing: 0.2,
+  },
+  editFileNameInput: {
+    fontFamily: 'Poppins-Regular',
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#11418A',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     fontSize: 14,
+    color: '#1E293B',
+  },
+  saveEditBtn: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  saveEditText: {
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
+    letterSpacing: 0.2,
+  },
+  cancelEditBtn: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  cancelEditText: {
+    fontFamily: 'Poppins-Regular',
     color: '#6B7280',
-    fontWeight: 400,
+    fontSize: 14,
+    letterSpacing: 0.2,
+  },
+  emptyRecords: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  emptyRecordsText: {
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    fontSize: 14,
+    letterSpacing: 0.2,
   },
   upperInputText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     marginBottom: hp(1),
     fontSize: 14,
-    fontWeight: '400',
-    color: '#374151',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   modalOverlay: {
     flex: 1,
@@ -1031,26 +1054,28 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
     width: wp(85),
     maxWidth: 400,
   },
   modalTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
+    color: '#1E293B',
     marginBottom: 20,
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   modalButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   modalIcon: {
     width: wp(6),
@@ -1059,10 +1084,10 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   modalButtonText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#374151',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 15,
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   cancelButton: {
     backgroundColor: '#EF4444',
@@ -1070,11 +1095,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   cancelButtonText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
     color: '#FFFFFF',
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
   selectedFilesContainer: {
     marginTop: hp(1),
@@ -1084,30 +1109,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F3F4F6',
-    padding: 10,
-    borderRadius: 6,
+    backgroundColor: '#F1F5F9',
+    padding: 12,
+    borderRadius: 10,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   fileName: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
+    color: '#475569',
     flex: 1,
     marginRight: 10,
+    letterSpacing: 0.2,
   },
   removeButton: {
     backgroundColor: '#EF4444',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Poppins-Medium',
+    letterSpacing: 0.2,
   },
   viewImageOverlay: {
     flex: 1,
@@ -1136,7 +1165,7 @@ const styles = StyleSheet.create({
   closeViewImageText: {
     color: '#FFFFFF',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Medium',
   },
   fullImage: {
     width: wp(95),

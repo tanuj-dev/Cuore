@@ -101,82 +101,31 @@ const DeleteAccount = ({ navigation }) => {
   };
 
   return (
-    <View>
+    <View style={styles.screen}>
       {AlertComponent}
       <ProfileHeader navigation={navigation} title="Delete Account" />
 
       <View style={styles.container}>
-        <View style={{ flexDirection: 'row' }}>
-          <Image
-            source={Images.WARNING}
-            style={{
-              height: hp(4),
-              width: wp(6),
-              resizeMode: 'contain',
-              tintColor: '#EF4444',
-            }}
-          />
-          <Text
-            style={[styles.heading, { marginLeft: hp(2), color: '#EF4444' }]}
-          >
-            Warning
-          </Text>
+        <View style={styles.warningRow}>
+          <Image source={Images.WARNING} style={styles.warningIcon} />
+          <Text style={styles.heading}>Warning</Text>
         </View>
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            fontSize: 14,
-            fontWeight: '400',
-            color: '#4B5563',
-          }}
-        >
+        <Text style={styles.bodyText}>
           Deleting your account will permanently remove all your data,
           including:
         </Text>
-        <View style={{ marginTop: hp(1) }}>
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 14,
-              fontWeight: '400',
-              color: '#4B5563',
-              marginVertical: hp(1.8),
-            }}
-          >{`•  ${'Personal information'}`}</Text>
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 14,
-              fontWeight: '400',
-              color: '#4B5563',
-            }}
-          >{`•   ${'Health records'}`}</Text>
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 14,
-              fontWeight: '400',
-              color: '#4B5563',
-              marginVertical: hp(1.8),
-            }}
-          >{`•   ${'Activity history'}`}</Text>
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 14,
-              fontWeight: '400',
-              color: '#4B5563',
-            }}
-          >{`•   ${'Saved preferences'}`}</Text>
+        <View style={styles.bulletList}>
+          <Text style={styles.bulletItem}>• Personal information</Text>
+          <Text style={styles.bulletItem}>• Health records</Text>
+          <Text style={styles.bulletItem}>• Activity history</Text>
+          <Text style={styles.bulletItem}>• Saved preferences</Text>
         </View>
       </View>
       <View style={styles.container}>
-        <Text style={{ fontSize: 14, fontWeight: '400', color: '#4B5563' }}>
-          Type "DELETE" to confirm
-        </Text>
+        <Text style={styles.confirmLabel}>Type "DELETE" to confirm</Text>
         <TextInput
           placeholder="Type DELETE"
-          placeholderTextColor={'#6B7280'}
+          placeholderTextColor="#64748B"
           style={styles.input}
           value={deleteText}
           onChangeText={setDeleteText}
@@ -195,51 +144,81 @@ const DeleteAccount = ({ navigation }) => {
             <Text style={styles.continueText}>Delete Account</Text>
           )}
         </TouchableOpacity>
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            marginTop: hp(2),
-            fontSize: 14,
-            fontWeight: '400',
-            color: '#4B5563',
-            alignSelf: 'center',
-          }}
-        >
-          This action cannot be undone
-        </Text>
+        <Text style={styles.footerNote}>This action cannot be undone</Text>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
   container: {
     padding: wp(5),
     margin: wp(4),
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    height: hp(34),
+    minHeight: hp(28),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  warningRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  warningIcon: {
+    height: hp(4),
+    width: wp(6),
+    resizeMode: 'contain',
+    tintColor: '#EF4444',
   },
   heading: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontWeight: '400',
+    marginLeft: hp(2),
     marginBottom: hp(2),
-    color: '#000000',
+    color: '#EF4444',
+    letterSpacing: 0.2,
   },
-  roleCard: {
+  bodyText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#475569',
+    letterSpacing: 0.2,
+  },
+  bulletList: {
+    marginTop: hp(1),
+  },
+  bulletItem: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#475569',
+    marginVertical: hp(0.5),
+    letterSpacing: 0.2,
+  },
+  confirmLabel: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#475569',
+    letterSpacing: 0.2,
+  },
+  input: {
+    fontFamily: 'Poppins-Regular',
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(3),
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    marginTop: hp(1.5),
+    fontSize: 15,
     borderRadius: 10,
-    padding: wp(4),
-    marginBottom: hp(2),
-    backgroundColor: '#fff',
+    borderColor: '#E2E8F0',
+    color: '#1E293B',
   },
-
   continueBtn: {
     backgroundColor: '#EF4444',
     paddingVertical: hp(1.8),
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
     marginTop: hp(4),
   },
@@ -248,20 +227,18 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   continueText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '400',
+    letterSpacing: 0.2,
   },
-  input: {
-    paddingVertical: hp(1.5),
-    paddingLeft: hp(1),
-    fontFamily: 'Roboto-Regular',
-    borderWidth: 1,
-    marginTop: hp(1.5),
-    fontSize: 15,
-    borderRadius: hp(1),
-    borderColor: '#6B7280',
+  footerNote: {
+    fontFamily: 'Poppins-Regular',
+    marginTop: hp(2),
+    fontSize: 14,
+    color: '#475569',
+    alignSelf: 'center',
+    letterSpacing: 0.2,
   },
 });
 

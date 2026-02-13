@@ -48,6 +48,7 @@ const OnBoarding = ({ navigation, route }) => {
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   console.log('OnBoarding Component State:', {
     // step,
     // onboarding2Data,
@@ -261,7 +262,9 @@ const OnBoarding = ({ navigation, route }) => {
           {step === 1 && (
             <>
               <Text style={styles.title}>Welcome to Cuore!</Text>
-              <Text style={styles.subtitle}>Your everyday health companion</Text>
+              <Text style={styles.subtitle}>
+                Your everyday health companion
+              </Text>
             </>
           )}
           {step === 2 && <Text style={styles.title}>Basic Information</Text>}
@@ -271,7 +274,7 @@ const OnBoarding = ({ navigation, route }) => {
             <Text style={styles.title}>Exercise & Eating Preferences</Text>
           )}
           {step === 6 && <Text style={styles.title}>Sleep & Stress</Text>}
-          {step === 7 && <Text style={styles.title}>Biomarkers</Text>}
+          {step === 7 && <Text style={styles.title}>Health Readings</Text>}
 
           {/* Descriptions */}
           {step === 1 && (
@@ -301,8 +304,8 @@ const OnBoarding = ({ navigation, route }) => {
           )}
           {step === 6 && (
             <Text style={styles.helpText}>
-              Sleep and stress play a major role in cardio-metabolic health, let’s
-              understand how they impact you.
+              Sleep and stress play a major role in cardio-metabolic health,
+              let’s understand how they impact you.
             </Text>
           )}
           {step === 7 && (
@@ -320,15 +323,17 @@ const OnBoarding = ({ navigation, route }) => {
               <View style={{ paddingHorizontal: hp(2) }}>
                 <Text
                   style={{
-                    fontSize: hp(2),
-                    color: '#4B5563',
-                    fontFamily: 'Roboto-Regular',
+                    fontSize: 16,
+                    color: '#475569',
+                    fontFamily: 'Poppins-Medium',
+                    letterSpacing: 0.2,
+                    marginBottom: hp(0.5),
                   }}
                 >
-                  Keep your biomarkers up to date{'\n'}
+                  For awareness and tracking only
                 </Text>
                 <Text style={styles.warningText}>
-                  If some biomarkers aren’t available right now, you can update
+                  If some readings aren’t available right now, you can update
                   them later in ‘Today’
                 </Text>
               </View>
@@ -341,7 +346,7 @@ const OnBoarding = ({ navigation, route }) => {
           </View>
           <ProgressBar
             progress={step / 7}
-            color="#0A5FD8"
+            color="#11418A"
             style={styles.progress}
           />
 
@@ -364,11 +369,33 @@ const OnBoarding = ({ navigation, route }) => {
               </View>
 
               <Text style={styles.disclaimer}>
-                <Text style={{ fontWeight: 'bold' }}>Disclaimer:</Text> This
-                assessment is not a substitute for professional medical advice.
-                Always consult your doctor before beginning any new therapy or
-                treatment.
+                <Text style={{ fontFamily: 'Poppins-Medium' }}>
+                  Disclaimer:
+                </Text>{' '}
+                This assessment is not a substitute for professional medical
+                advice. Always consult your doctor before beginning any new
+                therapy or treatment.
               </Text>
+
+              <TouchableOpacity
+                style={styles.disclaimerCheckRow}
+                onPress={() => setDisclaimerAccepted(prev => !prev)}
+                activeOpacity={0.8}
+              >
+                <View
+                  style={[
+                    styles.disclaimerCheckbox,
+                    disclaimerAccepted && styles.disclaimerCheckboxChecked,
+                  ]}
+                >
+                  {disclaimerAccepted ? (
+                    <Text style={styles.disclaimerCheckmark}>✓</Text>
+                  ) : null}
+                </View>
+                <Text style={styles.disclaimerCheckLabel}>
+                  I understand & Accept
+                </Text>
+              </TouchableOpacity>
             </>
           )}
 
@@ -447,11 +474,26 @@ const OnBoarding = ({ navigation, route }) => {
 
           {/* Button */}
 
-          <TouchableOpacity style={styles.button} onPress={handleNext}>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              step === 1 && !disclaimerAccepted && styles.buttonDisabled,
+            ]}
+            onPress={handleNext}
+            disabled={step === 1 && !disclaimerAccepted}
+            activeOpacity={step === 1 && !disclaimerAccepted ? 1 : 0.8}
+          >
             {step === 7 && loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>
+              <Text
+                style={[
+                  styles.buttonText,
+                  step === 1 &&
+                    !disclaimerAccepted &&
+                    styles.buttonTextDisabled,
+                ]}
+              >
                 {step === 7 ? 'Submit' : step === 1 ? 'Start' : 'Next'}
               </Text>
             )}
@@ -499,128 +541,178 @@ export default OnBoarding;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: wp(5),
-    backgroundColor: '#fff',
+    paddingHorizontal: wp(5),
+    backgroundColor: '#FFFFFF',
   },
   logo: {
-    marginTop: Platform.OS == 'ios' && hp(4),
-    width: wp(20),
-    height: hp(3),
+    marginTop: Platform.OS === 'ios' ? hp(4) : hp(2),
+    width: wp(25),
+    height: hp(4),
     resizeMode: 'contain',
-    marginBottom: hp(1),
+    marginBottom: hp(1.5),
   },
   banner: {
-    // elevation: 3,
-    // borderBlockColor: 'red',
     width: '100%',
     height: hp(20),
     resizeMode: 'contain',
-    marginVertical: hp(1),
-    // borderWidth: 2,
-    // ensure no border bordexrColor: 'white',
-    // just in case
-    backgroundColor: 'transparent', // avoid dark background peeking
+    marginVertical: hp(1.5),
+    backgroundColor: 'transparent',
   },
   title: {
-    fontFamily: 'Roboto-Regular',
-    color: '#111827',
-    fontSize: wp(5.5),
-    fontWeight: '450',
-    marginTop: hp(1),
+    fontFamily: 'Poppins-Medium',
+    color: '#1E293B',
+    fontSize: 22,
+    marginTop: hp(1.5),
+    letterSpacing: -0.3,
   },
   subtitle: {
-    fontFamily: 'Roboto-Regular',
-    color: '#111827',
-    fontSize: wp(5.5),
-    fontWeight: '450',
-    marginBottom: hp(1),
+    fontFamily: 'Poppins-Regular',
+    color: '#475569',
+    fontSize: 16,
+    marginBottom: hp(1.5),
+    letterSpacing: 0.2,
   },
   helpText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     marginTop: hp(2),
-    fontSize: wp(3.5),
-    color: '#111827',
-    marginBottom: hp(1),
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: hp(1.5),
+    lineHeight: 22,
+    letterSpacing: 0.2,
   },
   stepRow: {
-    marginTop: hp(1),
+    marginTop: hp(1.5),
     flexDirection: 'row',
     justifyContent: 'flex-end',
   },
   stepText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.5),
-    color: '#111827',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   progress: {
     marginTop: hp(2),
     height: hp(1),
-    borderRadius: wp(2),
+    borderRadius: 8,
     marginVertical: hp(1),
   },
   cardInfo: {
     flexDirection: 'row',
-    // alignItems: 'flex-start',
-    backgroundColor: '#FFFFFF',
-    padding: wp(3),
-    borderRadius: wp(2),
+    backgroundColor: '#F8FAFC',
+    padding: wp(4),
+    borderRadius: 12,
     marginTop: hp(2),
     alignItems: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   cardIcon: {
-    height: hp(2),
-    width: wp(5),
+    height: hp(2.5),
+    width: wp(6),
     resizeMode: 'contain',
-    marginRight: hp(1),
-    marginTop: hp(1),
-    // marginLeft: wp(-4),
+    marginRight: hp(1.5),
+    marginTop: hp(0.5),
   },
   cardText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     flex: 1,
-    fontSize: wp(3.5),
+    fontSize: 14,
     color: '#A16207',
+    lineHeight: 20,
+    letterSpacing: 0.2,
   },
   disclaimer: {
-    fontSize: wp(3),
-    color: '#6B7280',
-    marginTop: hp(2),
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: hp(2.5),
     fontStyle: 'italic',
+    lineHeight: 18,
+    letterSpacing: 0.1,
+  },
+  disclaimerCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: hp(1.5),
+  },
+  disclaimerCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    marginRight: wp(3),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  disclaimerCheckboxChecked: {
+    backgroundColor: '#11418A',
+    borderColor: '#11418A',
+  },
+  disclaimerCheckmark: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+  },
+  disclaimerCheckLabel: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   button: {
     marginBottom: hp(5),
-    backgroundColor: '#1E64AC',
-    paddingVertical: hp(1.5),
-    borderRadius: wp(1),
+    backgroundColor: '#11418A',
+    paddingVertical: hp(2),
+    borderRadius: 12,
     marginTop: hp(4),
     alignItems: 'center',
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    ...Platform.select({
+      android: { elevation: 3 },
+      ios: { elevation: 5 },
+    }),
   },
   buttonText: {
-    fontFamily: 'Roboto-Regular',
-    color: '#fff',
-    fontSize: wp(4),
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  buttonDisabled: {
+    backgroundColor: '#94A3B8',
+    shadowOpacity: 0.1,
+  },
+  buttonTextDisabled: {
+    color: '#E2E8F0',
   },
   warningBox: {
     flexDirection: 'row',
-    borderWidth: 2,
-    marginTop: hp(1),
-    backgroundColor: '#FFF8DC',
-    // borderLeftWidth: 4,
-    borderColor: '#FEF08A',
-    borderRadius: hp(1),
-    padding: 12,
-    marginBottom: 20,
+    borderWidth: 1.5,
+    marginTop: hp(1.5),
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE047',
+    borderRadius: 12,
+    padding: hp(2),
+    marginBottom: hp(2),
   },
   warningText: {
-    fontFamily: 'Roboto-Regular',
-    color: '#333',
+    fontFamily: 'Poppins-Regular',
+    color: '#475569',
     fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 0.2,
   },
   bottomText: {
     fontSize: 12,
-    fontWeight: '400',
-    color: '#9CA3AF',
-    fontFamily: 'Roboto-Regular',
+    color: '#94A3B8',
+    fontFamily: 'Poppins-Regular',
+    letterSpacing: 0.1,
   },
   modalOverlay: {
     flex: 1,
@@ -629,32 +721,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalBox: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    padding: hp(3),
+    borderRadius: 16,
     width: '80%',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 10,
+    fontFamily: 'Poppins-Medium',
+    fontSize: 20,
+    color: '#1E293B',
+    marginBottom: hp(1.5),
+    letterSpacing: -0.3,
   },
   modalMessage: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
+    color: '#64748B',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: hp(2.5),
+    lineHeight: 20,
+    letterSpacing: 0.2,
   },
   modalButton: {
-    backgroundColor: '#2563EB',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 6,
+    backgroundColor: '#11418A',
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(8),
+    borderRadius: 10,
   },
   modalButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
+    fontSize: 15,
+    letterSpacing: 0.3,
   },
 });

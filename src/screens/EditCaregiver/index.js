@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  Platform,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 import ProfileHeader from '../../components/ProfileHeader';
@@ -38,6 +39,7 @@ const EditCaregiver = ({ navigation }) => {
     return () => setToast({ message: '', type: 'success' });
   }, [caregiverData]);
 
+  // eslint-disable-next-line no-unused-vars -- used when Caregiver Name field is enabled
   const handleNameChange = text => {
     if (text.length <= 20) {
       setCaregiverName(text);
@@ -107,7 +109,7 @@ const EditCaregiver = ({ navigation }) => {
   }, [caregiverData, navigation]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+    <View style={styles.screen}>
       <ProfileHeader navigation={navigation} title="Edit Caregiver" />
       {toast.message ? (
         <ToastMessage
@@ -121,7 +123,7 @@ const EditCaregiver = ({ navigation }) => {
         <View style={styles.headerRow}>
           {!isEditing && (
             <TouchableOpacity
-              disabled={role == 'caregiver'}
+              disabled={role === 'caregiver'}
               onPress={() => setIsEditing(true)}
             >
               <Image source={Images.EDIT} style={styles.editIcon} />
@@ -129,7 +131,7 @@ const EditCaregiver = ({ navigation }) => {
           )}
         </View>
 
-        <View style={styles.inputGroup}>
+        {/* <View style={styles.inputGroup}>
           <Text style={styles.label}>Caregiver Name</Text>
           <TextInput
             style={[styles.input, !isEditing && styles.disabledInput]}
@@ -139,7 +141,7 @@ const EditCaregiver = ({ navigation }) => {
             placeholder="Enter caregiver name"
             placeholderTextColor="#9CA3AF"
           />
-        </View>
+        </View> */}
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Caregiver Mobile</Text>
@@ -150,7 +152,7 @@ const EditCaregiver = ({ navigation }) => {
             keyboardType="number-pad"
             onChangeText={handleMobileChange}
             placeholder="+91XXXXXXXXXX"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#64748B"
           />
         </View>
 
@@ -172,12 +174,18 @@ const EditCaregiver = ({ navigation }) => {
 export default memo(EditCaregiver);
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
   container: {
     padding: wp(5),
     margin: wp(4),
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...(Platform.OS === 'android' && { elevation: 1 }),
   },
   headerRow: {
     flexDirection: 'row',
@@ -194,22 +202,25 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
   },
   label: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
+    color: '#475569',
     marginBottom: hp(0.5),
+    letterSpacing: 0.2,
   },
   input: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    borderWidth: 0.5,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
     paddingHorizontal: wp(3),
     height: hp(6),
-    color: '#111827',
+    color: '#1E293B',
   },
   disabledInput: {
-    backgroundColor: '#F3F4F6',
-    color: '#9CA3AF',
+    backgroundColor: '#F1F5F9',
+    color: '#94A3B8',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -218,26 +229,30 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     alignItems: 'center',
-    backgroundColor: '#1E64AC',
+    backgroundColor: '#11418A',
     paddingVertical: hp(1.5),
     width: wp(40),
-    borderRadius: 8,
+    borderRadius: 10,
   },
   saveText: {
-    color: '#fff',
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
     fontSize: 14,
+    letterSpacing: 0.2,
   },
   cancelBtn: {
     backgroundColor: '#FFFFFF',
     width: wp(40),
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: '#E2E8F0',
     paddingVertical: hp(1.5),
-    borderRadius: 8,
+    borderRadius: 10,
   },
   cancelText: {
-    color: '#000',
+    fontFamily: 'Poppins-Regular',
+    color: '#475569',
     fontSize: 14,
+    letterSpacing: 0.2,
   },
 });

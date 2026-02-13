@@ -152,13 +152,14 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           source={Images.NOTICE}
         />
         <Text style={styles.note}>
-          Yearly for non-diabetics, unless advised
+          General guidance: often checked annually. Follow your doctor’s advice
         </Text>
       </View>
 
+      <Text style={styles.subsectionTitle}>Blood Sugar</Text>
       {renderDoubleInputRow(
-        { label: 'Blood Sugar (Fasting)', key: 'bs_f' },
-        { label: 'Blood Sugar (After Meal)', key: 'bs_am' },
+        { label: 'Fasting', key: 'bs_f' },
+        { label: 'After Meal', key: 'bs_am' },
       )}
       {renderDoubleInputRow(
         { label: 'HbA1c', key: 'A1C' },
@@ -222,16 +223,24 @@ const styles = StyleSheet.create({
     borderRadius: hp(1),
   },
   sectionTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: wp(4.5),
-    fontWeight: '490',
     marginTop: hp(2),
     marginBottom: hp(1),
     color: color.QUESTION_COLOR,
   },
+  subsectionTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: color.QUESTION_COLOR,
+    marginTop: hp(1),
+    marginBottom: hp(1),
+    letterSpacing: 0.2,
+  },
   note: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.5),
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    letterSpacing: 0.2,
     color: color.NOTE_COLOR,
     marginBottom: hp(2),
   },
@@ -245,15 +254,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
+    color: '#475569',
     marginBottom: hp(1),
   },
   input: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#E2E8F0',
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(3),
     borderRadius: wp(2),
@@ -279,7 +288,7 @@ const styles = StyleSheet.create({
   },
   unitText: {
     fontSize: hp(1.5),
-    color: '#000',
+    color: '#1E293B',
   },
   errorText: {
     fontSize: 12,

@@ -7,6 +7,7 @@ import {
   Platform,
   StyleSheet,
   Image,
+  ScrollView,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { hp, wp, Images } from '../../utilities';
@@ -161,7 +162,8 @@ const Fitness = ({ navigation, route }) => {
           >
             <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
           </TouchableOpacity>
-          <Text style={styles.title}>Cuore Fitness</Text>
+          <Text style={styles.title} numberOfLines={1}>Cuore Fitness</Text>
+          <View style={styles.headerSpacer} />
         </View>
       </View>
 
@@ -207,7 +209,7 @@ const Fitness = ({ navigation, route }) => {
                 is24Hour={false}
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={onChangeTime}
-                textColor="#000000"
+                textColor="#1E293B"
                 themeVariant="light"
               />
             </View>
@@ -216,29 +218,33 @@ const Fitness = ({ navigation, route }) => {
 
         {/* Day Tabs */}
         <View style={styles.innerShadowContainer}>
-          <View style={styles.dayTabsContainer}>
-            <View style={styles.dayTabsRow}>
-              {days.map(day => (
-                <TouchableOpacity
-                  key={day}
-                  onPress={() => handleDaySelect(day)}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dayTabsScrollContent}
+            style={styles.dayTabsScroll}
+          >
+            {days.map(day => (
+              <TouchableOpacity
+                key={day}
+                onPress={() => handleDaySelect(day)}
+                style={[
+                  styles.dayBtn,
+                  selectedDay === day && styles.selectedDayBtn,
+                ]}
+              >
+                <Text
                   style={[
-                    styles.dayBtn,
-                    selectedDay === day && styles.selectedDayBtn,
+                    styles.dayText,
+                    selectedDay === day && styles.selectedDayText,
                   ]}
+                  numberOfLines={1}
                 >
-                  <Text
-                    style={[
-                      styles.dayText,
-                      selectedDay === day && styles.selectedDayText,
-                    ]}
-                  >
-                    {day}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+                  {day}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         {/* Workout List */}
@@ -265,38 +271,45 @@ const Fitness = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#F8FAFC',
   },
   headerContainer: {
     backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(1.5),
+    ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
   backButton: {
-    paddingHorizontal: hp(1),
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   backIcon: {
-    marginLeft: wp(1),
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),
   },
   title: {
-    fontFamily: 'Roboto-Regular',
-    marginTop: hp(1),
-    marginLeft: hp(12),
+    flex: 1,
+    fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    fontWeight: '400',
-    marginBottom: hp(2),
-    alignSelf: 'center',
-    color: '#000000',
+    color: '#1E293B',
+    textAlign: 'center',
+    letterSpacing: 0.2,
+    paddingHorizontal: 8,
   },
+  headerSpacer: { width: 44 },
   content: {
     flex: 1,
-    backgroundColor: '#F6F5FF',
+    backgroundColor: '#F8FAFC',
     padding: wp(4),
   },
   timeCard: {
@@ -304,7 +317,13 @@ const styles = StyleSheet.create({
     padding: wp(4),
     borderRadius: 12,
     marginBottom: hp(2),
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    ...(Platform.OS === 'android' && { elevation: 1 }),
   },
   timeCardHeader: {
     flexDirection: 'row',
@@ -314,111 +333,133 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     height: hp(2.5),
     width: wp(5),
-    tintColor: '#17AD8D',
+    tintColor: '#11418A',
   },
   timeCardTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     marginLeft: hp(1),
     fontSize: 18,
-    fontWeight: '400',
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   timeCardSubtitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    fontWeight: '400',
-    color: '#4B5563',
+    color: '#64748B',
     marginTop: 4,
+    letterSpacing: 0.2,
   },
   timeButton: {
     justifyContent: 'space-between',
     flexDirection: 'row',
+    alignItems: 'center',
     marginTop: hp(1),
     paddingVertical: hp(1),
     paddingHorizontal: wp(4),
     width: '100%',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
   },
   timeText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: wp(4),
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   timeWatchIcon: {
     resizeMode: 'contain',
     height: hp(2),
     width: wp(5),
-    tintColor: '#8F8F8F',
+    tintColor: '#64748B',
   },
   updateBtn: {
     marginTop: hp(1.5),
-    backgroundColor: '#0057D9',
-    paddingVertical: hp(1),
+    backgroundColor: '#11418A',
+    paddingVertical: hp(1.2),
     alignItems: 'center',
-    borderRadius: 4,
+    borderRadius: 10,
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    ...(Platform.OS === 'android' && { elevation: 2 }),
   },
   updateBtnDisabled: {
     opacity: 0.5,
   },
   updateBtnText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
-    fontWeight: '400',
     fontSize: 14,
+    letterSpacing: 0.3,
   },
   datePickerContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 10,
     marginTop: hp(1),
     padding: wp(2),
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
   },
   innerShadowContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     marginBottom: hp(1),
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
-  dayTabsContainer: {
-    paddingHorizontal: hp(1),
-    paddingVertical: hp(0.5),
+  dayTabsScroll: {
+    flexGrow: 0,
   },
-  dayTabsRow: {
+  dayTabsScrollContent: {
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(0.6),
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   dayBtn: {
+    minWidth: 40,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: hp(0.8),
+    paddingHorizontal: wp(2.5),
     borderRadius: 20,
-    paddingHorizontal: wp(3),
+    marginRight: 8,
   },
   selectedDayBtn: {
-    // Add any selected state styles if needed
+    backgroundColor: '#E8EEF7',
   },
   dayText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    fontWeight: '400',
-    color: '#1E64AC',
+    color: '#11418A',
+    letterSpacing: 0.2,
   },
   selectedDayText: {
-    fontFamily: 'Roboto-Regular',
-    color: '#000000',
+    fontFamily: 'Poppins-Medium',
+    color: '#1E293B',
     fontSize: 16,
-    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   card: {
     padding: wp(4),
     marginVertical: hp(0.8),
     borderLeftWidth: 4,
-    borderRadius: 10,
-    backgroundColor: '#FAFAFA',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderRightWidth: 1,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
     shadowRadius: 4,
-    elevation: 1,
+    ...(Platform.OS === 'android' && { elevation: 1 }),
   },
   cardHeader: {
     flexDirection: 'row',
@@ -428,14 +469,14 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     height: hp(2),
     width: wp(4),
-    tintColor: '#000000',
+    tintColor: '#11418A',
   },
   cardTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     marginLeft: hp(1),
     fontSize: 14,
-    fontWeight: '400',
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   cardDetails: {
     flexDirection: 'row',
@@ -443,15 +484,21 @@ const styles = StyleSheet.create({
     marginTop: hp(0.7),
   },
   detailText: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
+    color: '#64748B',
+    letterSpacing: 0.2,
   },
   listContent: {
     paddingBottom: hp(8),
   },
   emptyText: {
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: hp(2),
+    color: '#64748B',
+    fontSize: 14,
+    letterSpacing: 0.2,
   },
 });
 

@@ -18,37 +18,37 @@ const MODULES = [
   {
     id: '1',
     title: 'Cuore Nourish',
-    subtitle: 'What to Eat, Made Simple',
+    subtitle: 'Simple Eating',
     image: Images.MEAL1,
   },
   {
     id: '2',
-    title: 'Cuore MealBuilder',
-    subtitle: 'Customize What Fuels You',
+    title: 'Cuore Plate',
+    subtitle: 'Custom meal plans',
     image: Images.MEAL2,
   },
   {
     id: '3',
     title: 'Cuore Fitness',
-    subtitle: 'Workouts Designed for You',
+    subtitle: 'Personal Workouts',
     image: Images.MEAL3,
   },
   {
     id: '4',
     title: 'Cuore Mind',
-    subtitle: 'Calm, Clarity & Rest',
+    subtitle: 'Calm & clear mind',
     image: Images.MEAL4,
   },
   {
     id: '5',
     title: 'Cuore Tobacco',
-    subtitle: 'Reclaim your life',
+    subtitle: 'Smoke free living',
     image: Images.MEAL5,
   },
   {
     id: '6',
-    title: 'Cuore Knowledge',
-    subtitle: 'Curated Health Insights',
+    title: 'Cuore Insight',
+    subtitle: 'Simplified Knowledge',
     image: Images.MEAL6,
   },
 ];
@@ -112,22 +112,20 @@ const Explore = ({ navigation }) => {
     [handleModulePress],
   );
 
-  const keyExtractor = useCallback(
-    item => item.id.toString(),
-    [],
-  );
+  const keyExtractor = useCallback(item => item.id.toString(), []);
 
   // ✅ PROFILE IMAGE FROM REDUX
   const profileImage = useSelector(
     state =>
       state?.profile?.data?.data?.user?.photo_url ||
-      state?.profile?.data?.data?.user?.photoUrl
+      state?.profile?.data?.data?.user?.photoUrl,
   );
 
   // ✅ SAFE IMAGE SOURCE
-  const profileImageSource = profileImage
-    ? { uri: profileImage }
-    : Images.UNCLE;
+  const profileImageSource = useMemo(
+    () => (profileImage ? { uri: profileImage } : Images.UNCLE),
+    [profileImage],
+  );
 
   const renderListHeader = useCallback(
     () => (
@@ -149,10 +147,7 @@ const Explore = ({ navigation }) => {
             style={styles.healthButton}
             activeOpacity={0.7}
           >
-            <Image
-              source={Images.DOCTOR_PROFILE}
-              style={styles.doctorIcon}
-            />
+            <Image source={Images.DOCTOR_PROFILE} style={styles.doctorIcon} />
             <Text style={styles.heading}>Cuore Health</Text>
           </TouchableOpacity>
 
@@ -187,17 +182,23 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
   },
   headerContainer: {
     backgroundColor: '#FFFFFF',
-    paddingBottom: hp(2),
+    paddingBottom: hp(2.5),
+    // borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    marginBottom: hp(2.5),
+    borderRadius: hp(2),
   },
   logoContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: hp(1.5),
+    paddingHorizontal: hp(2),
+    paddingTop: hp(1.5),
+    paddingBottom: hp(1),
   },
   logo: {
     width: wp(20),
@@ -205,80 +206,100 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   logoRight: {
-    width: 40,
-    height: 40,
-    borderRadius: 20, // 👈 profile look
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#11418A',
   },
   healthSection: {
     alignItems: 'center',
     paddingHorizontal: wp(4),
-    paddingBottom: hp(1),
+    paddingTop: hp(1),
   },
   healthButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: hp(1),
-    paddingHorizontal: hp(1.5),
-    borderRadius: hp(3),
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
+    backgroundColor: '#11418A',
+    paddingVertical: hp(1.5),
+    paddingHorizontal: hp(3),
+    borderRadius: 16,
     ...Platform.select({
-      android: { elevation: 4 },
+      android: { elevation: 0.5 },
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowColor: '#11418A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
       },
     }),
   },
   doctorIcon: {
     height: hp(2.5),
     width: wp(6),
+    tintColor: '#FFFFFF',
   },
   heading: {
-    fontSize: 16,
-    color: '#4B5563',
-    marginLeft: wp(1),
+    fontSize: 17,
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
+    marginLeft: wp(2),
+    letterSpacing: -0.2,
   },
   subheading: {
     fontSize: 14,
-    color: '#6B7280',
-    marginTop: hp(1),
+    fontFamily: 'Poppins-Medium',
+    color: '#64748B',
+    marginTop: hp(1.2),
     textAlign: 'center',
+    letterSpacing: 0.1,
   },
   grid: {
     paddingHorizontal: wp(4),
     paddingBottom: hp(4),
-    paddingTop: hp(1),
+    paddingTop: hp(2.5),
   },
   row: {
     justifyContent: 'space-between',
-    marginBottom: hp(2),
+    marginBottom: hp(2.5),
   },
   card: {
     width: wp(42),
     backgroundColor: '#FFFFFF',
-    borderRadius: wp(3),
-    padding: wp(4),
+    borderRadius: 16,
+    padding: wp(3.5),
     alignItems: 'center',
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+    }),
   },
   image: {
-    width: wp(38),
-    height: hp(12),
-    marginBottom: hp(1.2),
+    width: wp(36),
+    height: hp(11),
+    marginBottom: hp(1.5),
+    borderRadius: 12,
   },
   title: {
-    fontSize: 15,
-    color: '#000000',
+    fontSize: 15.5,
+    fontFamily: 'Poppins-Medium',
+    color: '#1E293B',
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: 11,
-    color: '#6B7280',
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
     textAlign: 'center',
-    marginTop: hp(0.5),
+    marginTop: hp(0.3),
+    letterSpacing: 0.1,
+    lineHeight: 16,
   },
 });
 

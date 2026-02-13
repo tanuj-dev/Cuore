@@ -39,19 +39,20 @@ const PRODUCT_IDS = [
 // Map IAP products to UI plans
 const plans = [
   {
-    title: 'Stabilise',
-    subtitle: 'Build steady habits with expert guidance',
-    duration: '3 Months',
-    oldPrice: 1499,
-    newPrice: 999,
-    daily: ' ₹11/day',
-    discount: '33%',
-    productId: 'com.cuore.stabilise',
+    title: 'Cuore Annual',
+    subtitle: 'Complete health and wellness program',
+    duration: '12 Months',
+    oldPrice: 1999,
+    newPrice: 1499,
+    daily: ' ₹4.1/day',
+    discount: '25%',
+    productId: 'com.cuore.annual',
+    topPick: true,
   },
 ];
 
 const Checkout = ({ navigation }) => {
-  const [selectedPlan, setSelectedPlan] = useState('Stabilise');
+  const [selectedPlan, setSelectedPlan] = useState('Cuore Annual');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [products, setProducts] = useState([]);
   const [isIAPInitialized, setIsIAPInitialized] = useState(false);
@@ -230,7 +231,7 @@ const Checkout = ({ navigation }) => {
             <View style={{ flexDirection: 'row' }}>
               <TouchableOpacity
                 style={{
-                  marginTop: Platform.OS === 'ios' ? hp(7) : 0,
+                  marginTop: Platform.OS === 'ios' ? hp(0) : 0,
                   marginBottom: hp(2),
                 }}
                 onPress={() => navigation.goBack()}
@@ -250,17 +251,17 @@ const Checkout = ({ navigation }) => {
               <Text style={styles.title}>Checkout</Text>
             </View>
 
-            <Text style={[styles.notice, { textAlign: 'center' }]}>
+            {/* <Text style={[styles.notice, { textAlign: 'center' }]}>
               Remote supervision is billed separately by the doctor, & does not
               include consultation
-            </Text>
+            </Text> */}
           </View>
 
           <View style={styles.container}>
             {/* Offer */}
-            <View style={styles.offerBanner}>
+            {/* <View style={styles.offerBanner}>
               <Text style={styles.offerText}>Launch Offer · Ends 31 March</Text>
-            </View>
+            </View> */}
 
             {/* Plan Selection */}
             <Text style={styles.sectionTitle}>Choose Your Plan</Text>
@@ -334,7 +335,7 @@ const Checkout = ({ navigation }) => {
                           isSelected && styles.selectedText,
                         ]}
                       >
-                        ₹{plan.oldPrice}
+                        {/* ₹{plan.oldPrice} */}
                       </Text>
                       <Text
                         style={[
@@ -396,7 +397,7 @@ const Checkout = ({ navigation }) => {
         </View> */}
 
             {/* Payment Method */}
-            <Text style={styles.sectionTitle}>Payment Method</Text>
+            {/* <Text style={styles.sectionTitle}>Payment Method</Text>
             <View style={styles.paymentMethodCard}>
               <View style={styles.paymentOption}>
                 <View style={styles.radioSelected}>
@@ -413,7 +414,7 @@ const Checkout = ({ navigation }) => {
                 <Image source={Images.CREDIT_CARD} style={styles.paymentIcon} />
                 <Text style={styles.paymentMethodText}>Credit/Debit Card</Text>
               </View>
-            </View>
+            </View> */}
 
             {/* Order Summary */}
             {/* <Text style={styles.sectionTitle}>Order Summary</Text> */}
@@ -464,7 +465,7 @@ const Checkout = ({ navigation }) => {
             {/* IAP Status */}
             {!isIAPInitialized && (
               <View style={styles.statusContainer}>
-                <ActivityIndicator size="small" color="#1E64AC" />
+                <ActivityIndicator size="small" color="#11418A" />
                 <Text style={styles.statusText}>
                   Setting up secure payment...
                 </Text>
@@ -496,128 +497,130 @@ const Checkout = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { padding: wp(4), backgroundColor: '#F9FAFB' },
+  container: { padding: wp(4), backgroundColor: '#F8FAFC' },
   title: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     marginTop: hp(2),
     marginLeft: hp(13),
     fontSize: 20,
-    fontWeight: '400',
     marginBottom: hp(2),
-    // alignSelf: 'center',
-    color: '#000000',
+    color: '#1E293B',
     alignSelf: 'center',
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   header: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: hp(3),
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 22,
     marginVertical: hp(1),
+    color: '#1E293B',
+    letterSpacing: -0.3,
   },
   subheader: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: hp(1.6),
-    color: '#555',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#64748B',
     marginBottom: hp(2),
+    letterSpacing: 0.2,
   },
   sectionTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontWeight: '400',
-    color: '#000000',
-    marginBottom: hp(1),
+    color: '#1E293B',
+    marginBottom: hp(1.5),
+    letterSpacing: -0.3,
   },
   planContainer: {
     alignItems: 'center',
-    // flexDirection: 'row',
-    // flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   planBox: {
     width: '90%',
     borderWidth: 2,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
     padding: hp(2),
     marginBottom: hp(2),
-    // elevation: 70,
+    backgroundColor: '#FFFFFF',
   },
-  selectedBox: { borderColor: 'white', backgroundColor: '#D1D5DB' },
+  selectedBox: {
+    borderColor: '#11418A',
+    backgroundColor: '#EFF6FF',
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
   discount: {
-    fontFamily: 'Roboto-Regular',
-    color: '#000000',
-    fontWeight: '400',
-    fontSize: 16,
+    fontFamily: 'Poppins-Medium',
+    color: '#DC2626',
+    fontSize: 15,
     marginLeft: hp(4),
-    // alignSelf: 'flex-end',
+    letterSpacing: 0.2,
   },
   topPick: {
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
-    fontWeight: '400',
-    fontSize: 14,
+    fontSize: 13,
     position: 'absolute',
-    backgroundColor: '#17AD8D',
+    backgroundColor: '#10B981',
     padding: hp(1),
     borderRadius: hp(2),
     top: 7,
+    letterSpacing: 0.5,
   },
   planTitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-
-    fontWeight: '600',
-    color: '#1E64AC',
-
+    color: '#11418A',
     marginLeft: hp(12),
     marginVertical: hp(1),
+    letterSpacing: -0.2,
   },
   planSubtitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
-    fontWeight: '400',
-    // marginVertical: hp(1),
+    color: '#64748B',
     numberOfLines: 2,
     width: '60%',
+    letterSpacing: 0.2,
   },
   planDuration: {
     position: 'absolute',
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
-    fontWeight: '400',
+    color: '#64748B',
     top: hp(11),
     marginTop: hp(1),
     left: hp(2),
+    letterSpacing: 0.2,
   },
   priceOld: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     textDecorationLine: 'line-through',
-    color: '#000000',
-    fontSize: 21,
-    fontWeight: '400',
-    // marginVertical: hp(2),
+    color: '#94A3B8',
+    fontSize: 20,
     alignSelf: 'flex-end',
+    letterSpacing: 0.2,
   },
   priceNew: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 24,
-    fontWeight: '400',
-    color: '#000000',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 26,
+    color: '#1E293B',
     alignSelf: 'flex-end',
+    marginLeft: hp(10),
+    letterSpacing: -0.5,
   },
   dailyPrice: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#1E64ACBF',
-    // marginTop: hp(-1),
-    // alignSelf: 'center',
+    color: '#11418A',
+    letterSpacing: 0.2,
   },
   summaryBox: {
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
     padding: hp(2),
     marginBottom: hp(2),
     backgroundColor: '#FFFFFF',
@@ -625,28 +628,27 @@ const styles = StyleSheet.create({
   promoBox: {
     flexDirection: 'row',
     marginVertical: hp(1),
-    // backgroundColor: 'red',
   },
   promoInput: {
     flex: 1,
-    // borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    backgroundColor: '#F9FAFB',
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F8FAFC',
+    fontFamily: 'Poppins-Regular',
   },
   applyButton: {
-    backgroundColor: '#1E64AC',
-    borderRadius: 1,
+    backgroundColor: '#11418A',
+    borderRadius: 8,
     marginLeft: 8,
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   applyText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '400',
+    letterSpacing: 0.3,
   },
   checkboxRow: {
     padding: hp(1),
@@ -656,38 +658,45 @@ const styles = StyleSheet.create({
   },
   checkboxText: {
     marginLeft: hp(1),
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#000000',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   checkoutButton: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1E64AC',
-    padding: hp(1.5),
-    borderRadius: hp(0.5),
+    backgroundColor: '#11418A',
+    padding: hp(2),
+    borderRadius: 12,
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   checkoutButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: '#94A3B8',
     opacity: 0.7,
   },
   checkoutText: {
-    color: '#fff',
-    fontSize: hp(2),
-    fontFamily: 'Roboto-Regular',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Poppins-Medium',
+    letterSpacing: 0.5,
   },
   offerBanner: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F1F5F9',
     padding: hp(1.5),
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: hp(2),
     alignItems: 'center',
   },
   offerText: {
-    fontFamily: 'Roboto-Medium',
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1F2937',
+    color: '#1E293B',
+    letterSpacing: 0.3,
   },
   selectedPlanCard: {
     backgroundColor: '#FFFFFF',
@@ -698,25 +707,28 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
   },
   selectedPlanTitle: {
-    fontFamily: 'Roboto-Bold',
+    fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#1E64AC',
+    color: '#11418A',
     marginBottom: hp(0.5),
+    letterSpacing: -0.3,
   },
   selectedPlanSubtitle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#6B7280',
+    color: '#64748B',
     marginBottom: hp(1.5),
+    letterSpacing: 0.2,
   },
   selectedPlanDuration: {
-    fontFamily: 'Roboto-Medium',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
+    color: '#475569',
     marginBottom: hp(1),
+    letterSpacing: 0.2,
   },
   priceRow: {
     flexDirection: 'row',
@@ -743,7 +755,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#1E64AC',
+    borderColor: '#11418A',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: hp(1),
@@ -752,7 +764,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#1E64AC',
+    backgroundColor: '#11418A',
   },
   radioUnselected: {
     width: 20,
@@ -771,9 +783,10 @@ const styles = StyleSheet.create({
     marginRight: hp(1),
   },
   paymentMethodText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#374151',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   orderSummaryHeader: {
     flexDirection: 'row',
@@ -784,7 +797,6 @@ const styles = StyleSheet.create({
   dropdownIcon: {
     width: 16,
     height: 16,
-    // tintColor: '#6B7280',
   },
   summaryRow: {
     flexDirection: 'row',
@@ -792,26 +804,27 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
   },
   summaryText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#374151',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   totalRow: {
     borderTopWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
     paddingTop: hp(1.5),
     marginTop: hp(0.5),
   },
   totalText: {
-    fontFamily: 'Roboto-Bold',
+    fontFamily: 'Poppins-Medium',
     fontSize: 16,
-    color: '#1F2937',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   lockIcon: {
     width: 16,
     height: 16,
     marginRight: hp(1),
-    // tintColor: '#',
   },
   sslBadge: {
     flexDirection: 'row',
@@ -824,29 +837,28 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     marginRight: hp(0.5),
-    // tintColor: '#6B7280',
   },
   sslText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#6B7280',
+    color: '#64748B',
+    letterSpacing: 0.2,
   },
   ssl: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: hp(1),
-    color: '#888',
+    color: '#94A3B8',
+    letterSpacing: 0.1,
   },
   faqSection: {
     borderWidth: 2,
     padding: hp(2),
     marginTop: hp(2),
-    // marginBottom: hp(20),
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderRadius: hp(0.5),
-    borderColor: '#E5E7EB',
-    // elevation: 0.1,
+    borderRadius: 12,
+    borderColor: '#E2E8F0',
   },
   planHeaderRow: {
     flexDirection: 'row',
@@ -856,21 +868,21 @@ const styles = StyleSheet.create({
   },
   discountBadge: {
     backgroundColor: '#FEE2E2',
-    paddingHorizontal: hp(1),
-    paddingVertical: hp(0.5),
-    borderRadius: hp(1),
+    paddingHorizontal: hp(1.2),
+    paddingVertical: hp(0.6),
+    borderRadius: 8,
   },
   discountBadgeSelected: {
     backgroundColor: '#FECACA',
   },
   selectedPlanTitleText: {
-    color: '#1E64AC',
+    color: '#11418A',
   },
   selectedText: {
-    color: '#1E64AC',
+    color: '#11418A',
   },
   topPickPlan: {
-    borderColor: '#17AD8D',
+    borderColor: '#10B981',
     borderWidth: 2,
   },
   paymentIcon: {
@@ -887,24 +899,28 @@ const styles = StyleSheet.create({
     padding: hp(1),
   },
   statusText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#6B7280',
+    color: '#64748B',
     marginLeft: hp(1),
+    letterSpacing: 0.2,
   },
   iapFooter: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
     padding: hp(2),
-    borderRadius: 8,
+    borderRadius: 12,
     marginTop: hp(2),
     marginBottom: hp(4),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   iapFooterText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#6B7280',
+    color: '#64748B',
     marginBottom: hp(1),
     lineHeight: 18,
+    letterSpacing: 0.1,
   },
 });
 

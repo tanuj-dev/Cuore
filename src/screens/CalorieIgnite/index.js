@@ -15,60 +15,93 @@ const CalorieIgnite = ({ navigation }) => {
 
   const mealOptions = [
     {
-      title: '1 glass Soaked Jeera water',
+      title: '1 glass Apple Cider Vinegar Water',
       details:
-        'Soak 1 teaspoon of cumin seeds in water overnight and boil the next morning. Strain and drink warm',
-
-      calories: 390,
-    },
-    {
-      title: '1 glass Cucumber Mint Infusion',
-      details:
-        'Soak cucumber slices and fresh mint in water overnight, & drink in the morning',
-
-      calories: 370,
-    },
-    {
-      title: '1 glass Soaked Raisin water',
-      details:
-        'Soak 8-10 raisins in water overnight, & consume the water and raisins',
-
-      calories: 400,
+        'Mix 1-2 teaspoons of raw apple cider vinegar in a glass of warm water & drink.',
+      calories: 2,
     },
     {
       title: '1 glass Soaked Cinnamon Water',
       details:
         'Soak a cinnamon stick in warm water overnight & drink in the morning on an empty stomach.',
-
-      calories: 410,
+      calories: 3,
+    },
+    {
+      title: '1 glass Green Tea with Turmeric',
+      details:
+        'Brew green tea, add a pinch of turmeric powder, and drink warm.',
+      calories: 4,
+    },
+    {
+      title: '1 glass Soaked Tulsi Water',
+      details:
+        'Soak a few fresh tulsi leaves in water overnight, warm it slightly & drink in the morning.',
+      calories: 4,
+    },
+    {
+      title: '1 glass Soaked Jeera Water',
+      details:
+        'Soak 1 teaspoon of cumin seeds in water overnight. Boil the next morning, strain & drink warm.',
+      calories: 8,
+    },
+    {
+      title: '1 glass Soaked Ajwain Water',
+      details:
+        'Soak 1 teaspoon of ajwain seeds in water overnight, strain & drink in the morning.',
+      calories: 8,
+    },
+    {
+      title: '1 glass Soaked Methi Water',
+      details:
+        'Soak 1 teaspoon of methi seeds in water overnight & drink the water on an empty stomach.',
+      calories: 12,
+    },
+    {
+      title: '1 glass Cucumber Mint Infusion',
+      details:
+        'Soak cucumber slices and fresh mint leaves in water overnight & drink in the morning.',
+      calories: 12,
+    },
+    {
+      title: '1 glass Lemon Honey Water',
+      details:
+        'Mix fresh lemon juice and a dash of honey in warm water & drink on an empty stomach.',
+      calories: 15,
+    },
+    {
+      title: '1 glass Soaked Flaxseed Water',
+      details:
+        'Soak 1 teaspoon of flaxseeds in water overnight & consume both the water and flaxseeds.',
+      calories: 15,
+    },
+    {
+      title: '1 glass Soaked Raisin Water',
+      details:
+        'Soak 8-10 raisins in water overnight & consume both the water and raisins in the morning.',
+      calories: 16,
     },
     {
       title: '1 glass Ginger Lemon Water',
       details:
         'Boil crushed fresh ginger in water, let it cool slightly, add a squeeze of lemon & drink.',
-
-      calories: 380,
+      calories: 18,
     },
     {
-      title: '1 glass Cucumber Mint Infusion',
+      title: '1 glass Amla Water',
       details:
-        'Soak cucumber slices and fresh mint in water overnight, & drink in the morning',
-
-      calories: 370,
+        'Mix 1 teaspoon of amla juice in water & drink fresh in the morning.',
+      calories: 20,
     },
     {
-      title: '1 glass Cucumber Mint Infusion',
+      title: '1 glass Lemon and Chia Seed Water',
       details:
-        'Soak cucumber slices and fresh mint in water overnight, & drink in the morning',
-
-      calories: 370,
+        'Soak 1 teaspoon of chia seeds in a glass of water with lemon juice for 10 minutes & drink.',
+      calories: 25,
     },
     {
-      title: '1 glass Cucumber Mint Infusion',
-      details:
-        'Soak cucumber slices and fresh mint in water overnight, & drink in the morning',
-
-      calories: 370,
+      title: '1 glass Beetroot Water',
+      details: 'Blend 1 beetroot with water, strain the juice & drink fresh.',
+      calories: 35,
     },
   ];
 

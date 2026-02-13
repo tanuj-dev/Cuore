@@ -150,55 +150,38 @@ const MealBuilder = ({ navigation, route }) => {
     const isActive = expandedCategory === category;
 
     return (
-      <View
-        style={{
-          backgroundColor: '#F9FAFB',
-          borderWidth: 1,
-          borderRadius: hp(1),
-          borderColor: '#E5E7EB',
-          margin: 3,
-          padding: hp(2),
-          marginHorizontal: hp(2),
-          marginBottom: hp(1),
-        }}
-      >
-        {/* Header */}
+      <View style={styles.categoryCard}>
         <TouchableOpacity
           onPress={() => toggleExpand(category)}
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginBottom: isActive ? hp(3) : 0,
-          }}
+          style={[
+            styles.categoryHeader,
+            isActive && styles.categoryHeaderActive,
+          ]}
         >
-          <Text
-            style={{
-              fontFamily: 'Roboto-Regular',
-              fontSize: 14,
-              color: '#000',
-            }}
-          >
+          <Text style={styles.categoryTitle}>
             {category} ({items.length})
           </Text>
           <Animated.Image
-            style={{
-              height: hp(2),
-              width: wp(3),
-              transform: [
-                {
-                  rotate: animationMap[category].interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0deg', '90deg'],
-                  }),
-                },
-              ],
-            }}
+            style={[
+              styles.categoryChevron,
+              {
+                transform: [
+                  {
+                    rotate: animationMap[category].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '90deg'],
+                    }),
+                  },
+                ],
+              },
+            ]}
             source={images.RIGHT_ARROW}
           />
         </TouchableOpacity>
 
-        {/* Expanded Items */}
-        <Animated.View style={{ height: animatedHeight, overflow: 'hidden' }}>
+        <Animated.View
+          style={[styles.expandedWrap, { height: animatedHeight }]}
+        >
           {isActive &&
             items.map((subItem, index) => {
               const isAlreadyAdded = selectedItems.some(
@@ -206,113 +189,60 @@ const MealBuilder = ({ navigation, route }) => {
               );
 
               return (
-                <View key={subItem?._id || index}>
-                  <View
-                    style={{
-                      backgroundColor: '#FFF',
-                      height: hp(8),
-                      overflow: 'hidden',
-                      margin: hp(0.5),
-                      borderRadius: hp(0.5),
-                      justifyContent: 'center',
-                      elevation: 0.5,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.5,
-                      shadowRadius: 2,
-                      borderWidth: Platform.OS === 'ios' ? 0.5 : 0,
-                      borderColor: '#E5E7EB',
-                    }}
-                  >
+                <View key={subItem?._id || index} style={styles.itemRowWrap}>
+                  <View style={styles.itemRow}>
                     <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-evenly',
-                        alignItems: 'center',
+                      style={[
+                        styles.healthDot,
+                        {
+                          backgroundColor:
+                            subItem?.healthColor === 'red'
+                              ? tagColors['Avoid']
+                              : subItem?.healthColor === 'yellow'
+                              ? tagColors['Limit']
+                              : subItem?.healthColor === 'green'
+                              ? tagColors['Include']
+                              : '#94A3B8',
+                        },
+                      ]}
+                    />
+                    <View style={styles.itemInfo}>
+                      <Text style={styles.itemName}>{subItem?.name}</Text>
+                      <Text style={styles.itemCal}>
+                        {subItem?.calories} cal
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.addItemBtn,
+                        isAlreadyAdded && styles.addItemBtnAdded,
+                      ]}
+                      onPress={() => {
+                        const newItem = {
+                          dishname: subItem?.name,
+                          calories: subItem?.calories,
+                          id: subItem?._id,
+                          section: category,
+                        };
+                        if (isAlreadyAdded) {
+                          setSelectedItems(prev =>
+                            prev.filter(i => i.dishname !== newItem.dishname),
+                          );
+                        } else {
+                          setSelectedItems(prev => [...prev, newItem]);
+                        }
                       }}
                     >
-                      <View
-                        style={{
-                          height: hp(2),
-                          width: wp(4),
-                          borderRadius: hp(2),
-                          backgroundColor:
-                            subItem?.healthColor == 'red'
-                              ? tagColors['Avoid']
-                              : subItem?.healthColor == 'yellow'
-                              ? tagColors['Limit']
-                              : subItem?.healthColor == 'green'
-                              ? tagColors['Include']
-                              : '#D1D5DB',
-                        }}
-                      />
-                      <View
-                        style={{
-                          width: hp(20),
-                          alignItems: 'flex-start',
-                          marginLeft: hp(2),
-                        }}
+                      <Text
+                        style={[
+                          styles.addItemBtnText,
+                          isAlreadyAdded && styles.addItemBtnTextAdded,
+                        ]}
                       >
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            fontWeight: '400',
-                            color: '#000',
-                          }}
-                        >
-                          {subItem?.name}
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            color: '#6B7280',
-                            marginTop: hp(0.5),
-                          }}
-                        >
-                          {subItem?.calories} cal
-                        </Text>
-                      </View>
-
-                      <TouchableOpacity
-                        style={{
-                          width: wp(18),
-                          height: hp(4),
-                          borderWidth: 1,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: hp(4),
-                          backgroundColor: isAlreadyAdded
-                            ? '#D1FAE5'
-                            : '#FFFFFF',
-                          borderColor: isAlreadyAdded ? '#22C55E' : '#000',
-                        }}
-                        onPress={() => {
-                          const newItem = {
-                            dishname: subItem?.name,
-                            calories: subItem?.calories,
-                            id: subItem?._id,
-                            section: category,
-                          };
-                          if (isAlreadyAdded) {
-                            setSelectedItems(prev =>
-                              prev.filter(i => i.dishname !== newItem.dishname),
-                            );
-                          } else {
-                            setSelectedItems(prev => [...prev, newItem]);
-                          }
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            fontWeight: '400',
-                            color: '#000',
-                          }}
-                        >
-                          {isAlreadyAdded ? 'Added' : 'Add'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
+                        {isAlreadyAdded ? 'Added' : 'Add'}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               );
@@ -363,7 +293,7 @@ const MealBuilder = ({ navigation, route }) => {
           style={styles.floatingText}
         >
           <Image source={Images.CART} style={styles.cartImage} />
-          <Text style={{ color: '#FFF', marginLeft: hp(1), fontWeight: '600' }}>
+          <Text style={styles.floatingCartText}>
             View Cart ({selectedItems.length})
           </Text>
         </TouchableOpacity>
@@ -403,7 +333,7 @@ const MealBuilder = ({ navigation, route }) => {
                 ? CaloriesBreakfastIndian
                 : CaloriesDinnerGlobal)
             }
-            color="#3271B1"
+            color="#11418A"
             style={styles.progress}
           />
 
@@ -415,7 +345,7 @@ const MealBuilder = ({ navigation, route }) => {
                   ? CaloriesBreakfastIndian
                   : CaloriesDinnerGlobal) -
                   sumofCalories <
-                  0 && { color: 'red' },
+                  0 && styles.remainingOver,
               ]}
             >
               Remaining
@@ -428,7 +358,7 @@ const MealBuilder = ({ navigation, route }) => {
                   ? CaloriesBreakfastIndian
                   : CaloriesDinnerGlobal) -
                   sumofCalories <
-                  0 && { color: 'red' },
+                  0 && styles.remainingOver,
               ]}
             >
               {(activeTab === 'Breakfast' && CaloriesBreakfastIndian
@@ -442,13 +372,13 @@ const MealBuilder = ({ navigation, route }) => {
       <ScrollView
         refreshControl={
           <RefreshControl
-            title="Pull to refresh..."
             refreshing={refreshing}
             onRefresh={onRefresh}
+            tintColor="#11418A"
           />
         }
         nestedScrollEnabled={true}
-        style={{ backgroundColor: '#F9FAFB' }}
+        style={styles.scrollView}
       >
         <View style={styles.body}>
           <View style={styles.mealTypeRow}>
@@ -456,10 +386,9 @@ const MealBuilder = ({ navigation, route }) => {
               onPress={() => setActiveTab('Breakfast')}
               style={[
                 styles.breakfastBox,
-                {
-                  backgroundColor:
-                    activeTab === 'Breakfast' ? '#1E64AC' : '#9CA3AF',
-                },
+                activeTab === 'Breakfast'
+                  ? styles.mealTabActive
+                  : styles.mealTabInactive,
               ]}
             >
               <Image
@@ -467,7 +396,12 @@ const MealBuilder = ({ navigation, route }) => {
                 source={Images.BREAKFAST}
                 // tintColor="#FFFFFF"
               />
-              <Text style={[styles.breakfastText, { color: '#FFFFFF' }]}>
+              <Text
+                style={styles.breakfastText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                allowFontScaling={false}
+              >
                 Breakfast
               </Text>
             </TouchableOpacity>
@@ -475,10 +409,9 @@ const MealBuilder = ({ navigation, route }) => {
               onPress={() => setActiveTab('LunchDinner')}
               style={[
                 styles.lunchDinnerBox,
-                {
-                  backgroundColor:
-                    activeTab === 'LunchDinner' ? '#1E64AC' : '#9CA3AF',
-                },
+                activeTab === 'LunchDinner'
+                  ? styles.mealTabActive
+                  : styles.mealTabInactive,
               ]}
             >
               <Image
@@ -486,7 +419,12 @@ const MealBuilder = ({ navigation, route }) => {
                 source={Images.KNIFE}
                 // tintColor="#FFFFFF"
               />
-              <Text style={[styles.lunchDinnerText, { color: '#FFFFFF' }]}>
+              <Text
+                style={styles.lunchDinnerText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                allowFontScaling={false}
+              >
                 Lunch Dinner
               </Text>
             </TouchableOpacity>
@@ -569,14 +507,10 @@ const MealBuilder = ({ navigation, route }) => {
             data={sectionedData}
             keyExtractor={(item, index) => item.category + index}
             renderItem={renderCard}
-            contentContainerStyle={{ paddingBottom: 100 }}
-            ListEmptyComponent={() => (
-              <Text
-                style={{ textAlign: 'center', marginTop: 20, color: '#777' }}
-              >
-                No items found 😢
-              </Text>
-            )}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <Text style={styles.emptyListText}>No items found</Text>
+            }
           />
         </>
       </ScrollView>
@@ -594,7 +528,7 @@ const styles = StyleSheet.create({
     // marginBottom: hp(1),
   },
   headerContainer: {
-    marginTop: Platform.OS == 'ios' && hp(4),
+    // marginTop: Platform.OS == 'ios' && hp(4),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -607,12 +541,13 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignItems: 'center',
-    marginTop: hp(1),
+    // marginTop: hp(1),
   },
   title: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    fontWeight: '400',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   progressRow: {
     marginTop: hp(2.5),
@@ -627,21 +562,23 @@ const styles = StyleSheet.create({
     marginVertical: hp(1),
   },
   target: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    fontWeight: '700',
-    color: '#000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   kcal: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    fontWeight: '700',
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   remainingKcal: {
-    fontFamily: 'Roboto-Regular',
-    color: '#46BCA1',
+    fontFamily: 'Poppins-Medium',
+    color: '#0D9488',
+    letterSpacing: 0.2,
   },
+  remainingOver: { color: '#DC2626' },
   body: {
     padding: hp(2),
     // marginTop: hp(1),
@@ -654,61 +591,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    backgroundColor: '#1E64AC',
     padding: hp(1),
-    // margin: hp(1),
-    paddingHorizontal: hp(6),
-    borderRadius: hp(0.5),
-    alignItems: 'center',
+    paddingHorizontal: wp(2.5),
+    borderRadius: 10,
     width: wp(42),
   },
   breakfastIcon: {
     height: hp(3),
-    width: wp(4),
-    marginRight: hp(1),
+    width: wp(5),
+    marginRight: wp(1.5),
     resizeMode: 'contain',
     tintColor: '#FFFFFF',
   },
   breakfastText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
-    fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
+    fontSize: hp(1.6),
     color: '#FFFFFF',
+    flexShrink: 1,
+    letterSpacing: 0.2,
   },
   lunchDinnerBox: {
     alignItems: 'center',
     justifyContent: 'center',
     width: wp(42),
     flexDirection: 'row',
-    backgroundColor: '#9CA3AF',
     padding: hp(1.4),
-    paddingHorizontal: hp(4.5),
-    borderRadius: hp(0.5),
-    alignItems: 'center',
+    paddingHorizontal: wp(1.5),
+    borderRadius: 10,
   },
   lunchDinnerIcon: {
     height: hp(2),
-    width: wp(4),
-    marginRight: hp(1),
+    width: wp(5),
+    marginRight: wp(1.5),
     resizeMode: 'contain',
     tintColor: '#FFFFFF',
   },
   lunchDinnerText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
-    fontWeight: '400',
+    fontFamily: 'Poppins-Regular',
+    fontSize: hp(1.6),
     color: '#FFFFFF',
+    flexShrink: 1,
+    letterSpacing: 0.2,
   },
   searchBox: {
     marginHorizontal: hp(2),
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    padding: hp(0.5),
+    padding: hp(1),
     paddingHorizontal: hp(2),
-    borderRadius: hp(0.9),
+    borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
     marginTop: hp(2),
   },
   searchIcon: {
@@ -718,9 +652,12 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   searchInput: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     flex: 1,
-    paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(1),
+    paddingVertical: hp(1),
+    fontSize: 14,
+    color: '#1E293B',
+    letterSpacing: 0.2,
   },
   cuisineRow: {
     flexDirection: 'row',
@@ -734,7 +671,7 @@ const styles = StyleSheet.create({
   cuisineSelected: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#6B7280',
+    backgroundColor: '#11418A',
     width: hp(18),
     paddingVertical: hp(1.3),
     borderRadius: hp(0.6),
@@ -749,24 +686,24 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   cuisineSelectedText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    fontWeight: '400',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   cuisineUnselected: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#E2E8F0',
     width: hp(18),
     paddingVertical: hp(1.3),
     borderRadius: hp(0.6),
   },
   cuisineUnselectedText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    fontWeight: '400',
-    color: '#000000',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   tagRow: {
     flexDirection: 'row',
@@ -781,11 +718,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tagText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     marginLeft: hp(0.5),
     fontSize: 14,
-    fontWeight: '400',
-    color: '#000000',
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   cartImage: {
     width: hp(4),
@@ -796,22 +733,128 @@ const styles = StyleSheet.create({
   floatingText: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#bb6a62ff',
+    justifyContent: 'center',
+    backgroundColor: '#11418A',
     position: 'absolute',
-    borderRadius: hp(5),
+    borderRadius: 12,
     paddingHorizontal: hp(2),
     right: wp(28),
     bottom: hp(3),
-    zIndex: 999, // ensure it's above everything else
+    zIndex: 999,
     width: wp(45),
     padding: hp(1),
     height: hp(6),
-    shadowColor: '#000',
+    shadowColor: '#11418A',
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 5,
+    shadowRadius: 6,
+    elevation: 4,
   },
+  floatingCartText: {
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
+    marginLeft: hp(1),
+    fontSize: 14,
+    letterSpacing: 0.3,
+  },
+  scrollView: { backgroundColor: '#F8FAFC' },
+  mealTabActive: { backgroundColor: '#11418A' },
+  mealTabInactive: { backgroundColor: '#94A3B8' },
+  categoryCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderRadius: 12,
+    borderColor: '#E2E8F0',
+    marginHorizontal: hp(2),
+    marginBottom: hp(1.5),
+    padding: hp(2),
+    ...(Platform.OS === 'android' && { elevation: 0.5 }),
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  categoryHeaderActive: { marginBottom: hp(2) },
+  categoryTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  categoryChevron: {
+    height: hp(2),
+    width: wp(3),
+  },
+  expandedWrap: { overflow: 'hidden' },
+  itemRowWrap: { marginTop: hp(0.5) },
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    minHeight: hp(8),
+    marginVertical: hp(0.2),
+    borderRadius: 10,
+    paddingHorizontal: hp(1.5),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  healthDot: {
+    height: hp(2),
+    width: wp(4),
+    borderRadius: hp(1),
+  },
+  itemInfo: {
+    flex: 1,
+    marginLeft: hp(2),
+    justifyContent: 'center',
+  },
+  itemName: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#1E293B',
+    letterSpacing: 0.2,
+  },
+  itemCal: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 2,
+    letterSpacing: 0.2,
+  },
+  addItemBtn: {
+    minWidth: wp(18),
+    height: hp(4),
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#11418A',
+  },
+  addItemBtnAdded: {
+    backgroundColor: '#D1FAE5',
+    borderColor: '#22C55E',
+  },
+  addItemBtnText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    color: '#11418A',
+    letterSpacing: 0.2,
+  },
+  addItemBtnTextAdded: {
+    color: '#15803D',
+  },
+  emptyListText: {
+    fontFamily: 'Poppins-Regular',
+    textAlign: 'center',
+    marginTop: 24,
+    color: '#64748B',
+    fontSize: 14,
+    letterSpacing: 0.2,
+  },
+  listContent: { paddingBottom: 100 },
 });
 
 export default MealBuilder;

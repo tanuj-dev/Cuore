@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,14 @@ import {
   ScrollView,
   Modal,
   RefreshControl,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { hp, wp, Images } from '../../utilities';
-// import { useSelector } from 'react-redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/Auth/slice';
 import EncryptedStorage from 'react-native-encrypted-storage';
-import { resetCreateAccount } from '../../redux/Auth/slice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getProfile } from '../../redux/slices';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
@@ -76,6 +77,9 @@ const Profile = ({ navigation }) => {
   const role = useSelector(state => state.auth.role);
   const isCaregiver = role === 'caregiver';
   const [refreshing, setRefreshing] = useState(false);
+  const [showWebViewModal, setShowWebViewModal] = useState(false);
+  const [webViewUrl, setWebViewUrl] = useState('');
+  const [isWebViewLoading, setIsWebViewLoading] = useState(false);
 
   // Filter out items that caregivers shouldn't see
   const filteredOptions = profileOptions.filter(item => {
@@ -120,6 +124,12 @@ const Profile = ({ navigation }) => {
             const route = routeMap[item.title]; // Corrected here
 
             if (route) {
+              if (route === 'TermsAndConditions') {
+                setWebViewUrl('https://cuore.health/terms');
+                setShowWebViewModal(true);
+                return;
+              }
+
               // Alert.alert(route);
               navigation.navigate(route);
             } else {
@@ -136,10 +146,10 @@ const Profile = ({ navigation }) => {
               {
                 tintColor:
                   item.title === 'Logout'
-                    ? '#FF3D00'
+                    ? '#EF4444'
                     : item.title === 'Select Persona'
-                    ? '#6B7280'
-                    : '#000000',
+                    ? '#94A3B8'
+                    : '#64748B',
               },
             ]}
             resizeMode="contain"
@@ -150,10 +160,10 @@ const Profile = ({ navigation }) => {
               {
                 color:
                   item.title === 'Logout'
-                    ? '#FF3D00'
+                    ? '#EF4444'
                     : item.title === 'Select Persona'
-                    ? '#6B7280'
-                    : '#000000',
+                    ? '#94A3B8'
+                    : '#1E293B',
               },
             ]}
           >
@@ -163,7 +173,14 @@ const Profile = ({ navigation }) => {
             source={Images.RIGHT_ARROW}
             style={[
               styles.arrowIcon,
-              { tintColor: item.title === 'Logout' ? '#FF3D00' : '#000000' },
+              {
+                tintColor:
+                  item.title === 'Logout'
+                    ? '#EF4444'
+                    : item.title === 'Select Persona'
+                    ? '#94A3B8'
+                    : '#94A3B8',
+              },
             ]}
           />
         </TouchableOpacity>
@@ -213,7 +230,7 @@ const Profile = ({ navigation }) => {
     if (userID) {
       dispatch(getProfile(userID));
     }
-  }, [userID]);
+  }, [userID, dispatch]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -224,42 +241,28 @@ const Profile = ({ navigation }) => {
     }
   };
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       {AlertComponent}
+      <View style={styles.headerSection}>
+        <Image
+          source={Images.APP_LOGO}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
       <ScrollView
         refreshControl={
           <RefreshControl
             title="Pull to refresh"
             refreshing={refreshing}
             onRefresh={onRefresh}
+            tintColor="#11418A"
           />
         }
         style={styles.container}
       >
-        <View style={{ backgroundColor: '#FAFAFA' }}>
-          {/* Logo at the top */}
-          <View
-            style={{
-              padding: hp(2),
-              elevation: 2,
-              // height: hp(7),
-              backgroundColor: '#FFFFFF',
-            }}
-          >
-            <View
-              style={{
-                justifyContent: 'center',
-              }}
-            >
-              <Image
-                source={Images.APP_LOGO}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
-
-          <View style={{ padding: wp(4) }}>
+        <View style={styles.contentContainer}>
+          <View style={styles.paddingContainer}>
             {/* User profile card */}
             <TouchableOpacity
               disabled={role === 'caregiver'}
@@ -268,14 +271,26 @@ const Profile = ({ navigation }) => {
             >
               {userProfile?.user?.photo_url || userProfile?.user?.photoUrl ? (
                 <Image
-                  key={userProfile?.user?.photo_url || userProfile?.user?.photoUrl}
-                  source={{ 
-                    uri: (userProfile?.user?.photo_url || userProfile?.user?.photoUrl)?.trim()
+                  key={
+                    userProfile?.user?.photo_url || userProfile?.user?.photoUrl
+                  }
+                  source={{
+                    uri: (
+                      userProfile?.user?.photo_url ||
+                      userProfile?.user?.photoUrl
+                    )?.trim(),
                   }}
                   style={[styles.profileImage, { borderRadius: wp(6) }]}
-                  onError={(error) => {
-                    console.log('Profile image load error:', error.nativeEvent?.error || error);
-                    console.log('Failed to load image URI:', userProfile?.user?.photo_url || userProfile?.user?.photoUrl);
+                  onError={error => {
+                    console.log(
+                      'Profile image load error:',
+                      error.nativeEvent?.error || error,
+                    );
+                    console.log(
+                      'Failed to load image URI:',
+                      userProfile?.user?.photo_url ||
+                        userProfile?.user?.photoUrl,
+                    );
                   }}
                   onLoad={() => {
                     console.log('Profile image loaded successfully');
@@ -303,93 +318,209 @@ const Profile = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+
+      {/* WebView Modal for Terms and Conditions */}
+      <Modal
+        visible={showWebViewModal}
+        animationType="slide"
+        onRequestClose={() => setShowWebViewModal(false)}
+      >
+        <SafeAreaView style={styles.webViewContainer}>
+          <View style={styles.webViewHeader}>
+            <Text style={styles.webViewTitle}>Terms and Conditions</Text>
+            <TouchableOpacity
+              onPress={() => setShowWebViewModal(false)}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          {isWebViewLoading && (
+            <ActivityIndicator
+              size="large"
+              color="#11418A"
+              style={styles.webViewLoader}
+            />
+          )}
+          <WebView
+            source={{ uri: webViewUrl }}
+            onLoadStart={() => setIsWebViewLoading(true)}
+            onLoadEnd={() => setIsWebViewLoading(false)}
+            style={styles.webView}
+          />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  headerSection: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: hp(2),
+    paddingVertical: hp(2),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    alignItems: 'flex-start',
+  },
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#F8FAFC',
+  },
+  contentContainer: {
+    backgroundColor: '#F8FAFC',
+  },
+  paddingContainer: {
+    padding: wp(4),
   },
   logo: {
-    // backgroundColor:'red',
     resizeMode: 'contain',
     width: wp(20),
     height: hp(3),
-    // marginBottom: hp(2),
   },
   profileCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: wp(3),
-    padding: wp(4),
+    borderRadius: 16,
+    padding: wp(4.5),
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: hp(2),
+    marginBottom: hp(2.5),
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 4 },
+    }),
   },
   profileImage: {
-    width: wp(12),
-    height: wp(12),
-    borderRadius: wp(6),
+    width: wp(14),
+    height: wp(14),
+    borderRadius: wp(7),
+    borderWidth: 2,
+    borderColor: '#CBD5E1',
   },
   name: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     marginLeft: wp(3),
-    fontSize: 14,
-    fontWeight: '400',
+    fontSize: 16,
     flex: 1,
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: -0.3,
   },
   profileArrow: {
     resizeMode: 'contain',
-    width: wp(4),
-    height: wp(4),
+    width: wp(5),
+    height: wp(5),
+    tintColor: '#64748B',
   },
   sectionContainer: {
-    marginBottom: hp(2),
+    marginBottom: hp(2.5),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 0.5,
   },
   sectionHeader: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '400',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    color: '#64748B',
     marginTop: hp(1),
-    marginBottom: hp(2),
-    marginLeft: hp(2),
+    marginBottom: hp(1),
+    marginLeft: wp(4),
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
   item: {
     backgroundColor: '#FFFFFF',
-    borderRadius: wp(2),
-    paddingVertical: hp(1.5),
+    paddingVertical: hp(1.8),
     paddingHorizontal: wp(4),
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderColor: '#E5E7EB',
-    // marginBottom: hp(0.8),
+    borderColor: '#F1F5F9',
   },
   itemIcon: {
-    width: wp(5),
-    height: wp(5),
-    tintColor: '#000000',
+    width: wp(5.5),
+    height: wp(5.5),
   },
   itemText: {
-    marginLeft: wp(4),
-    fontSize: 14,
-    fontWeight: '400',
+    marginLeft: wp(3.5),
+    fontSize: 15,
+    fontFamily: 'Poppins-Medium',
     flex: 1,
-    color: '#000000',
+    color: '#1E293B',
+    letterSpacing: -0.2,
   },
   arrowIcon: {
     width: wp(4),
     height: wp(4),
     resizeMode: 'contain',
-    tintColor: 'black',
+    tintColor: '#94A3B8',
+  },
+  webViewContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  webViewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(2),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 2 },
+    }),
+  },
+  webViewTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 18,
+    color: '#1E293B',
+    flex: 1,
+    letterSpacing: -0.3,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    fontSize: 22,
+    fontFamily: 'Poppins-Regular',
+    color: '#475569',
+  },
+  webView: {
+    flex: 1,
+  },
+  webViewLoader: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginLeft: -20,
+    marginTop: -20,
+    zIndex: 1,
   },
 });
 

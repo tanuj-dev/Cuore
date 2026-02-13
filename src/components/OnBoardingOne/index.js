@@ -102,7 +102,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
           <Text style={styles.label}>Age</Text>
           <TextInput
             placeholder="Your age"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#94A3B8"
             value={form.age?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('age', text)}
@@ -114,7 +114,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
             style={styles.input}
             onPress={() => setShowGenderModal(true)}
           >
-            <Text style={{ color: '#6B7280' }}>
+            <Text style={{ color: gender ? '#1E293B' : '#94A3B8', fontFamily: 'Poppins-Regular', fontSize: 15, letterSpacing: 0.2 }}>
               {gender
                 ? gender.charAt(0).toUpperCase() + gender.slice(1)
                 : 'Choose gender'}
@@ -123,7 +123,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
           <Text style={styles.label}>Height (cm)</Text>
           <TextInput
             placeholder="Your height in cm"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#94A3B8"
             value={form.height_cm?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('height_cm', text)}
@@ -135,7 +135,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
           <Text style={styles.label}>Weight (kg)</Text>
           <TextInput
             placeholder="Morning, empty stomach weight in kgs"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#94A3B8"
             value={form.weight_kg?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('weight_kg', text)}
@@ -147,7 +147,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
           <Text style={styles.label}>Waist (in)</Text>
           <TextInput
             placeholder="Measured just above your belly button"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#94A3B8"
             value={form.waist_cm?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('waist_cm', text)}
@@ -196,34 +196,36 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
 
 export default OnBoarding2;
 
-// --- Styles (unchanged)
+// --- Styles
 const styles = StyleSheet.create({
-  container: { padding: 2, backgroundColor: '#fff', flexGrow: 1 },
+  container: { padding: 2, backgroundColor: '#FFFFFF', flexGrow: 1 },
   card: {
-    backgroundColor: '#FFFFFF',
-    elevation: 3,
-    padding: 15,
+    backgroundColor: '#F8FAFC',
+    padding: 18,
     borderRadius: 12,
     marginBottom: 20,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   label: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    fontWeight: '400',
-    marginBottom: 4,
-    color: '#374151',
+    marginBottom: 6,
+    color: '#475569',
+    letterSpacing: 0.2,
   },
   input: {
-    color: '#6B7280',
-    fontSize: 14,
-    fontFamily: 'Roboto-Regular',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 14,
+    color: '#1E293B',
+    fontSize: 15,
+    fontFamily: 'Poppins-Regular',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   modalOverlay: {
     flex: 1,
@@ -232,19 +234,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     width: '80%',
-    borderRadius: 10,
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
   },
-  modalTitle: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
-  modalItem: { paddingVertical: 12 },
-  modalItemText: { fontSize: 14, color: '#000' },
-  modalCancel: { marginTop: 10, alignItems: 'center' },
-  modalCancelText: { color: '#007bff', fontSize: 14 },
+  modalTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 18,
+    color: '#1E293B',
+    marginBottom: 16,
+    letterSpacing: -0.3,
+  },
+  modalItem: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  modalItemText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 15,
+    color: '#475569',
+    letterSpacing: 0.2,
+  },
+  modalCancel: {
+    marginTop: 12,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  modalCancelText: {
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
+    fontSize: 15,
+    letterSpacing: 0.3,
+  },
   error: {
-    color: 'red',
+    fontFamily: 'Poppins-Regular',
+    color: '#EF4444',
     fontSize: 12,
     marginBottom: 8,
+    marginTop: -8,
+    letterSpacing: 0.1,
   },
 });
