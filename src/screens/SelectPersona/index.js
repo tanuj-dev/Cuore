@@ -4,14 +4,15 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   Image,
 } from 'react-native';
 // import { Ionicons } from '@expo/vector-icons';
 import { hp, wp, Images } from '../../utilities'; // your responsive helpers
 import ProfileHeader from '../../components/ProfileHeader';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const SelectPersona = ({ navigation }) => {
+  const { alert, AlertComponent } = useCustomAlert();
   const [selectedRole, setSelectedRole] = useState(null);
 
   const roles = [
@@ -29,16 +30,18 @@ const SelectPersona = ({ navigation }) => {
 
   const handleContinue = () => {
     if (!selectedRole) {
-      Alert.alert('Please select a role to continue');
-      return;
-    }
+    alert('Select a Role', 'Please select a role to continue.');
+    return;
+  }
 
-    Alert.alert('Selected Role', selectedRole);
+  // Role selected — navigate or submit
     // You can now navigate or send this data to backend
   };
 
   return (
-    <View style={styles.screen}>
+    <>
+      {AlertComponent}
+      <View style={styles.screen}>
       <ProfileHeader navigation={navigation} title="Select Persona" />
 
       <View style={styles.container}>
@@ -74,7 +77,8 @@ const SelectPersona = ({ navigation }) => {
           <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
       </View>
-    </View>
+      </View>
+    </>
   );
 };
 

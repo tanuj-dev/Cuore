@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   Image,
   PermissionsAndroid,
   Platform,
@@ -20,9 +19,11 @@ import { hp, wp, Images } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateProfile, getProfile } from './../../redux/slices';
 import ToastMessage from '../../components/Toast';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 
 const EditProfile = ({ navigation }) => {
+  const { alert, AlertComponent } = useCustomAlert();
   const [userName, setUserName] = useState('M. Johnson');
   const [userMobile, setUserMobile] = useState('981121234');
   const [toastMessage, setToastMessage] = useState('');
@@ -129,7 +130,7 @@ const EditProfile = ({ navigation }) => {
       if (type === 'camera') {
         const hasPermission = await requestCameraPermission();
         if (!hasPermission) {
-          Alert.alert(
+          alert(
             'Permission required',
             'Camera permission is needed to take photos',
           );
@@ -143,7 +144,7 @@ const EditProfile = ({ navigation }) => {
       } else {
         const hasPermission = await requestStoragePermission();
         if (!hasPermission) {
-          Alert.alert(
+          alert(
             'Permission Required',
             'Gallery permission is needed to select photos. Please enable it in your device settings.',
             [
@@ -169,13 +170,13 @@ const EditProfile = ({ navigation }) => {
       }
     } catch (error) {
       console.log(error);
-      Alert.alert('Error', 'Failed to pick image');
+      alert('Error', 'Failed to pick image');
     }
   };
 
   const showImagePickerOptions = () => {
     if (!isEditing) return; // only allow editing mode to change photo
-    Alert.alert(
+    alert(
       'Select Image',
       'Choose an option',
       [
@@ -351,7 +352,9 @@ const EditProfile = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <>
+      {AlertComponent}
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? hp(8) : 0}
@@ -455,7 +458,8 @@ const EditProfile = ({ navigation }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 };
 

@@ -14,7 +14,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Alert,
   Modal,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
@@ -111,9 +110,11 @@ import { getCuoreScoreThunk, getOnboardingThunk } from '../../redux/slices';
 import { shareData } from '../../redux/slices';
 import GaugeMeter from '../../components/SpeedpMeter';
 import Loader from '../../components/Loader';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const Score = ({ navigation, route }) => {
   const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
   const navigateTo = route.params?.navigateTo;
 
   // Combine selectors for better performance
@@ -249,17 +250,17 @@ const Score = ({ navigation, route }) => {
 
         await Share.open(shareOptions);
       } else {
-        Alert.alert('Error', 'Failed to generate PDF for sharing');
+        alert('Error', 'Failed to generate PDF for sharing');
       }
     } catch (error) {
       // User cancelled sharing - don't show error
       if (error.message !== 'User did not share') {
-        Alert.alert('Error', 'Failed to share PDF');
+        alert('Error', 'Failed to share PDF');
       }
     } finally {
       setSharingLoading(false);
     }
-  }, [dispatch]);
+  }, [dispatch, alert]);
 
   useEffect(() => {
     if (userId) {
@@ -343,7 +344,9 @@ const Score = ({ navigation, route }) => {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <>
+      {AlertComponent}
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ViewShot
         ref={viewShotRef}
         options={{ format: 'jpg', quality: 0.9 }}
@@ -398,23 +401,27 @@ const Score = ({ navigation, route }) => {
               <View style={styles.scoreCard}>
                 <GaugeMeter value={Math.round(health_metrics?.health_score)} />
                 {/* <Text
-            style={{
-              fontSize: hp(2.5),
-              color: 'red',
-              // marginLeft: hp(1),
-              fontFamily: 'Roboto-Regular',
-              marginBottom: hp(1),
-            }}
-          >
-            {Math.round(health_metrics?.health_score)}
-          </Text> */}
+                  style={{
+                    fontSize: hp(2.5),
+                    color: 'red',
+                    // marginLeft: hp(1),
+                    fontFamily: 'Roboto-Regular',
+                    marginBottom: hp(1),
+                  }}
+                >
+                  {Math.round(health_metrics?.health_score)}
+                </Text> */}
                 {/* <Text style={styles.score}>78</Text> */}
+                {/* <Text style={styles.scoreDisclaimer}>
+                  As you habits change, update you score regularly
+                </Text> */}
                 <View style={styles.timeToTargetTitleRow}>
                   <Image
                     source={Images.NOTICE}
                     style={styles.timeToTargetTitleIcon}
                     resizeMode="contain"
                   />
+
                   <Text style={styles.timeToTarget}>Progress Projection</Text>
                 </View>
                 <View style={styles.timeToTargetRow}>
@@ -434,10 +441,9 @@ const Score = ({ navigation, route }) => {
                     style={styles.projectionDisclaimerIcon}
                     resizeMode="contain"
                   /> */}
-                  {/* <Text style={styles.projectionDisclaimerText}>
-                    Based on general lifestyle-response research. Individual
-                    results vary.
-                  </Text> */}
+                  <Text style={styles.projectionDisclaimerText}>
+                    As you habits change, update you score regularly.
+                  </Text>
                 </View>
 
                 <TouchableOpacity
@@ -451,7 +457,7 @@ const Score = ({ navigation, route }) => {
                     resizeMode="contain"
                   />
 
-                  <Text style={styles.reassessText}>Re-assess </Text>
+                  <Text style={styles.reassessText}>Update Score </Text>
                 </TouchableOpacity>
                 <Text style={styles.reassessNote}>
                   Based on general lifestyle and cardiometabolic research;
@@ -684,6 +690,7 @@ const Score = ({ navigation, route }) => {
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
+    </>
   );
 };
 
@@ -1287,6 +1294,14 @@ const styles = StyleSheet.create({
   },
   webViewStyle: {
     flex: 1,
+  },
+  scoreDisclaimer: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#64748B',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+    marginVertical: hp(1),
   },
 });
 

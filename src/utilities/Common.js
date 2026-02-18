@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, PermissionsAndroid, Platform } from 'react-native';
+import { PermissionsAndroid, Platform } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import axios from 'axios';
 import NetInfo from '@react-native-community/netinfo';
@@ -47,26 +47,9 @@ const requestStoragePermission = async () => {
   }
   return true;
 };
-const showImagePickerOptions = () => {
-  Alert.alert(
-    'Select Image',
-    'Choose an option',
-    [
-      {
-        text: 'Take Photo',
-        onPress: () => handleImagePicker('camera'),
-      },
-      {
-        text: 'Choose from Gallery',
-        onPress: () => handleImagePicker('gallery'),
-      },
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-    ],
-    { cancelable: true },
-  );
+const showImagePickerOptions = (onCamera, onGallery) => {
+  // This utility is a no-op; use useCustomAlert in the calling screen instead.
+  console.warn('showImagePickerOptions: Use useCustomAlert in the calling screen component.');
 };
 
 const $http = axios.create({

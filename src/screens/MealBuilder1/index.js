@@ -8,7 +8,6 @@ import {
   ScrollView,
   ImageBackground,
   Image,
-  Alert,
   ActivityIndicator,
   Platform,
 } from 'react-native';
@@ -16,6 +15,7 @@ import { hp, wp, Images } from '../../utilities';
 import LimitExceededModal from '../../components/LimitExceedModa';
 import { useDispatch } from 'react-redux';
 import { adjustPortion } from '../../redux/slices';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const tagColors = {
   green: '#00C853',
@@ -24,6 +24,7 @@ const tagColors = {
 
 const MealBuilder1 = ({ navigation, route }) => {
   const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
   console.log('Route params:', route.params);
   const { dishes, targetCalories, sumofCalories, activeTab, activeCuisine } =
     route.params;
@@ -71,7 +72,7 @@ const MealBuilder1 = ({ navigation, route }) => {
 
     // Early exit if no items selected
     if (selectedItems.length === 0) {
-      Alert.alert('No items selected', 'Please select at least one item.');
+      alert('No items selected', 'Please select at least one item.');
       return;
     }
 
@@ -103,21 +104,23 @@ const MealBuilder1 = ({ navigation, route }) => {
         setAdjustedPortions(response);
         navigation.navigate('MealBuilder2', { selectedItems: response });
       } else {
-        Alert.alert(
+        alert(
           'Adjustment Error',
           'Could not adjust portions. Please try again.',
         );
       }
     } catch (error) {
       console.warn('Adjustment failed:', error);
-      Alert.alert('Error', 'Something went wrong while adjusting portions.');
+      alert('Error', 'Something went wrong while adjusting portions.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView style={styles.scroll}>
+    <>
+      {AlertComponent}
+      <ScrollView style={styles.scroll}>
       <ImageBackground
         style={styles.backgroundImage}
         source={Images.BACKGROUND_IMAGE_NUTRITION}
@@ -230,6 +233,7 @@ const MealBuilder1 = ({ navigation, route }) => {
         onClose={() => setShowLimitModal(false)}
       />
     </ScrollView>
+    </>
   );
 };
 

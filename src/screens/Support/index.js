@@ -4,16 +4,19 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   Image,
   Linking,
   Platform,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 import ProfileHeader from '../../components/ProfileHeader';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const Support = ({ navigation }) => {
+  const { alert, AlertComponent } = useCustomAlert();
   return (
+    <>
+      {AlertComponent}
     <View style={styles.wrapper}>
       <ProfileHeader navigation={navigation} title="Support" />
 
@@ -31,7 +34,7 @@ const Support = ({ navigation }) => {
               if (supported) {
                 Linking.openURL(url);
               } else {
-                Alert.alert(
+                alert(
                   'Error',
                   'Phone dialer not supported on this device',
                 );
@@ -51,7 +54,8 @@ const Support = ({ navigation }) => {
           </View>
         </View>
       </View>
-    </View>
+      </View>
+    </>
   );
 };
 

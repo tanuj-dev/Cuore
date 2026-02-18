@@ -90,7 +90,7 @@ const ReminderEditor = ({
       if (res?.success) {
         setShowModal(false);
       } else {
-        Alert.alert('Error', 'Failed to update reminder. Please try again.');
+        alert('Error', 'Failed to update reminder. Please try again.');
         safeSetVisible(false);
       }
     } catch (err) {

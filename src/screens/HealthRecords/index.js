@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   Image,
   ScrollView,
   Modal,
@@ -28,9 +27,11 @@ import { uploadPhoto } from '../../redux/uploadPhoto/uploadPhotoThunk';
 import { getPresRecordsThunk } from '../../redux/uploadPhoto/getPresRecordsThunk';
 import { editFilename } from '../../redux/uploadPhoto/editFilenameThunk';
 import { deleteRecord } from '../../redux/uploadPhoto/deleteRecordThunk';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const HealthRecords = ({ navigation }) => {
   const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
   const userId = useSelector(state => state.auth?.userId);
   const role = useSelector(state => state.auth?.role);
   const isCaregiver = role === 'caregiver';
@@ -85,7 +86,7 @@ const HealthRecords = ({ navigation }) => {
         const hasPermission = await requestCameraPermission();
         if (!hasPermission) {
           setShowUploadModal(false);
-          Alert.alert(
+          alert(
             'Permission Required',
             'Camera permission is needed to take photos. Please grant permission in your device settings.',
             [
@@ -125,7 +126,7 @@ const HealthRecords = ({ navigation }) => {
         console.error('📷 Camera error:', result.errorCode, result.errorMessage);
         
         if (result.errorCode === 'camera_unavailable') {
-          Alert.alert(
+          alert(
             'Camera Unavailable',
             'Camera is not available. Please use the Gallery option instead.',
             [
@@ -139,7 +140,7 @@ const HealthRecords = ({ navigation }) => {
             ]
           );
         } else if (result.errorCode === 'permission') {
-          Alert.alert(
+          alert(
             'Permission Denied',
             'Camera permission is required. Please enable it in Settings.',
             [
@@ -148,7 +149,7 @@ const HealthRecords = ({ navigation }) => {
             ]
           );
         } else {
-          Alert.alert('Error', result.errorMessage || 'Failed to open camera');
+          alert('Error', result.errorMessage || 'Failed to open camera');
         }
         return;
       }
@@ -163,20 +164,20 @@ const HealthRecords = ({ navigation }) => {
         };
         setSelectedFiles(prev => {
           if (prev.length >= MAX_FILES_PER_UPLOAD) {
-            Alert.alert('Limit reached', `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload.`);
+            alert('Limit reached', `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload.`);
             return prev;
           }
           return [...prev, newFile];
         });
-        Alert.alert('Success', 'Photo captured successfully!');
+        alert('Success', 'Photo captured successfully!');
       } else {
         console.log('📷 No assets in result');
-        Alert.alert('Error', 'No photo was captured. Please try again.');
+        alert('Error', 'No photo was captured. Please try again.');
       }
     } catch (error) {
       console.error('📷 Camera exception:', error);
       console.error('📷 Error details:', error.message, error.stack);
-      Alert.alert(
+      alert(
         'Camera Error',
         'Failed to open camera. Please try using the Gallery option instead.',
         [
@@ -239,7 +240,7 @@ const HealthRecords = ({ navigation }) => {
       if (Platform.OS === 'android') {
         const hasPermission = await requestStoragePermission();
         if (!hasPermission) {
-          Alert.alert(
+          alert(
             'Permission Required',
             'Gallery permission is needed to select photos. Please grant permission in your device settings.',
             [
@@ -270,7 +271,7 @@ const HealthRecords = ({ navigation }) => {
 
       if (result.errorCode) {
         console.error('🖼️ Gallery error:', result.errorCode, result.errorMessage);
-        Alert.alert('Error', result.errorMessage || 'Failed to open gallery');
+        alert('Error', result.errorMessage || 'Failed to open gallery');
         return;
       }
 
@@ -285,7 +286,7 @@ const HealthRecords = ({ navigation }) => {
           const total = prev.length + newFiles.length;
           if (total > MAX_FILES_PER_UPLOAD) {
             const allowed = MAX_FILES_PER_UPLOAD - prev.length;
-            Alert.alert(
+            alert(
               'Limit reached',
               `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload. Adding first ${allowed} of ${newFiles.length} selected.`,
             );
@@ -293,11 +294,11 @@ const HealthRecords = ({ navigation }) => {
           }
           return [...prev, ...newFiles];
         });
-        Alert.alert('Success', `${newFiles.length} image(s) selected successfully!`);
+        alert('Success', `${newFiles.length} image(s) selected successfully!`);
       }
     } catch (error) {
       console.error('🖼️ Gallery exception:', error);
-      Alert.alert('Error', 'Failed to open gallery. Please try again.');
+      alert('Error', 'Failed to open gallery. Please try again.');
     }
   };
 
@@ -320,7 +321,7 @@ const HealthRecords = ({ navigation }) => {
           const total = prev.length + newFiles.length;
           if (total > MAX_FILES_PER_UPLOAD) {
             const allowed = MAX_FILES_PER_UPLOAD - prev.length;
-            Alert.alert(
+            alert(
               'Limit reached',
               `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload. Adding first ${allowed} of ${newFiles.length} selected.`,
             );
@@ -328,25 +329,25 @@ const HealthRecords = ({ navigation }) => {
           }
           return [...prev, ...newFiles];
         });
-        Alert.alert('Success', `${newFiles.length} PDF(s) selected successfully!`);
+        alert('Success', `${newFiles.length} PDF(s) selected successfully!`);
       }
     } catch (err) {
       if (isErrorWithCode(err) && err.code === docErrorCodes.OPERATION_CANCELED) {
         return;
       }
       console.error('Document picker error:', err);
-      Alert.alert('Error', err?.message || 'Failed to pick document. Please try again.');
+      alert('Error', err?.message || 'Failed to pick document. Please try again.');
     }
   };
 
   const handleSubmit = async () => {
     if (selectedFiles.length === 0) {
-      Alert.alert('Incomplete', 'Please upload at least one file');
+      alert('Incomplete', 'Please upload at least one file');
       return;
     }
 
     if (selectedFiles.length > MAX_FILES_PER_UPLOAD) {
-      Alert.alert(
+      alert(
         'Too many files',
         `You can upload up to ${MAX_FILES_PER_UPLOAD} files at a time.`,
       );
@@ -357,7 +358,7 @@ const HealthRecords = ({ navigation }) => {
       file => file.size > MAX_FILE_SIZE_BYTES,
     );
     if (oversizedFiles.length > 0) {
-      Alert.alert(
+      alert(
         'File too large',
         `Some files exceed ${MAX_FILE_SIZE_MB}MB. Please choose smaller files.`,
       );
@@ -365,7 +366,7 @@ const HealthRecords = ({ navigation }) => {
     }
 
     if (!userId) {
-      Alert.alert('Error', 'User ID not found. Please login again.');
+      alert('Error', 'User ID not found. Please login again.');
       return;
     }
 
@@ -393,7 +394,7 @@ const HealthRecords = ({ navigation }) => {
       const response = await dispatch(uploadPhoto(formData)).unwrap();
 
       if (response?.success || response?.data?.success) {
-        Alert.alert(
+        alert(
           'Success',
           'Health record uploaded and analyzed successfully!',
         );
@@ -413,7 +414,7 @@ const HealthRecords = ({ navigation }) => {
           response?.data?.error ||
           response?.message ||
           'Failed to upload health record. Please try again.';
-        Alert.alert('Upload Failed', errorMsg);
+        alert('Upload Failed', errorMsg);
       }
     } catch (error) {
       const errorMsg =
@@ -421,14 +422,14 @@ const HealthRecords = ({ navigation }) => {
         error?.data?.error ||
         error?.message ||
         'Failed to upload health record. Please try again.';
-      Alert.alert('Upload Failed', errorMsg);
+      alert('Upload Failed', errorMsg);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleDelete = id => {
-    Alert.alert(
+    alert(
       'Delete record',
       'Are you sure you want to delete this record?',
       [
@@ -446,7 +447,7 @@ const HealthRecords = ({ navigation }) => {
                 error?.message ||
                 error?.data?.message ||
                 'Failed to delete record.';
-              Alert.alert('Error', msg);
+              alert('Error', msg);
             } finally {
               setDeletingRecordId(null);
             }
@@ -487,7 +488,7 @@ const HealthRecords = ({ navigation }) => {
     } catch (error) {
       const msg =
         error?.message || error?.data?.message || 'Failed to update name.';
-      Alert.alert('Error', msg);
+      alert('Error', msg);
     } finally {
       setIsEditingFilename(false);
     }
@@ -550,7 +551,9 @@ const HealthRecords = ({ navigation }) => {
   }, [getRecords]);
 
   return (
-    <ScrollView>
+    <>
+      {AlertComponent}
+      <ScrollView>
       <View style={styles.screen}>
         <ProfileHeader navigation={navigation} title="Health Records" />
         <View style={styles.container}>
@@ -727,7 +730,7 @@ const HealthRecords = ({ navigation }) => {
                         setCurrentViewImageUrl(item.fileUrl);
                         setShowViewImageModal(true);
                       } else {
-                        Alert.alert('Error', 'Image URL not found');
+                        alert('Error', 'Image URL not found');
                       }
                     }}
                   >
@@ -850,6 +853,7 @@ const HealthRecords = ({ navigation }) => {
         </Modal>
       </View>
     </ScrollView>
+    </>
   );
 };
 

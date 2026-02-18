@@ -5,27 +5,30 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Image,
 } from 'react-native';
 // import {Ionicons} from '@expo/vector-icons';
 import { hp, wp, Images } from '../../utilities'; // height/width percentage helpers
 import ProfileHeader from '../../components/ProfileHeader';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const TermsAndConditions = ({ navigation }) => {
+  const { alert, AlertComponent } = useCustomAlert();
   const [accepted, setAccepted] = useState(false);
 
   const handleAccept = () => {
     if (accepted) {
       // Proceed to next screen or action
-      Alert.alert('Accepted', 'You have accepted the Terms & Conditions.');
+      alert('Accepted', 'You have accepted the Terms & Conditions.');
     } else {
-      Alert.alert('Required', 'Please accept the Terms & Conditions.');
+      alert('Required', 'Please accept the Terms & Conditions.');
     }
   };
 
   return (
-    <View style={styles.container}>
+    <>
+      {AlertComponent}
+      <View style={styles.container}>
       {/* Header */}
       <ProfileHeader title="Terms & Conditions" navigation={navigation} />
 
@@ -150,7 +153,8 @@ const TermsAndConditions = ({ navigation }) => {
       </View>
 
       {/* Continue Button */}
-    </View>
+      </View>
+    </>
   );
 };
 

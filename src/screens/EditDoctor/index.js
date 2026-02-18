@@ -208,10 +208,7 @@ const EditDoctor = ({ navigation }) => {
           <View style={styles.buttonRow}>
             {isEditing && (
               <>
-                <TouchableOpacity
-                  style={styles.saveBtn}
-                  onPress={handleSave}
-                >
+                <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
                   <Text style={styles.saveText}>Save</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -342,12 +339,15 @@ const styles = StyleSheet.create({
     marginHorizontal: hp(6),
     borderRadius: 10,
     marginTop: hp(1),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   findText: {
     fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
     fontSize: 14,
     alignSelf: 'center',
+    textAlign: 'center',
     letterSpacing: 0.2,
   },
 });

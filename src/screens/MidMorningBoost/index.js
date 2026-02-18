@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Images, hp, wp } from '../../utilities';
+import MealOptionCard from '../../components/MealOptionCard';
 
 const MidMorningBoost = ({ navigation }) => {
   const mealOptions = [
@@ -51,18 +52,6 @@ const MidMorningBoost = ({ navigation }) => {
       calories: 60,
     },
   ];
-
-  const renderMealCard = (item, index) => (
-    <View key={index} style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.kcalPill}>
-          <Text style={styles.kcalText}>⚡ {item.calories} kcal</Text>
-        </View>
-      </View>
-      <Text style={styles.mealTitle}>{item.title}</Text>
-      <Text style={styles.detail}>{item.details}</Text>
-    </View>
-  );
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -107,7 +96,14 @@ const MidMorningBoost = ({ navigation }) => {
 
         <View style={styles.content}>
           <Text style={styles.sectionTitle}>Snack options</Text>
-          {mealOptions.map((item, index) => renderMealCard(item, index))}
+          {mealOptions.map((item, index) => (
+            <MealOptionCard
+              key={index}
+              title={item.title}
+              details={item.details}
+              calories={item.calories}
+            />
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -152,7 +148,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#11418A',
-    paddingVertical: hp(1.2),
+    paddingVertical: hp(1),
     paddingHorizontal: wp(5),
     borderRadius: 20,
     ...Platform.select({
@@ -196,55 +192,6 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     marginBottom: hp(2),
     letterSpacing: -0.3,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: wp(4),
-    marginBottom: hp(1.8),
-    borderLeftWidth: 4,
-    borderLeftColor: '#17AD8D',
-    ...Platform.select({
-      android: { elevation: 1.5 },
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-      },
-    }),
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: hp(0.5),
-  },
-  kcalPill: {
-    backgroundColor: '#ECFDF5',
-    paddingVertical: hp(0.5),
-    paddingHorizontal: wp(3),
-    borderRadius: 12,
-  },
-  kcalText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 13,
-    color: '#059669',
-    letterSpacing: 0.2,
-  },
-  mealTitle: {
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 15,
-    color: '#1E293B',
-    marginBottom: hp(0.8),
-    letterSpacing: -0.2,
-    lineHeight: 22,
-  },
-  detail: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 13,
-    color: '#64748B',
-    lineHeight: 20,
-    letterSpacing: 0.1,
   },
 });
 

@@ -110,7 +110,7 @@ const Nutrition = ({ navigation, route }) => {
         } else {
           setLoading(false);
           setToastType('error');
-          setToast('Recipe data unavailable for this meal.');
+          setToast('Try searching using the recipe search bar');
         }
       }
     } catch (error) {

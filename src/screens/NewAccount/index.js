@@ -13,7 +13,6 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
-  Alert,
 } from 'react-native';
 import Toast from '../../components/Toast';
 import { useNavigation } from '@react-navigation/native';
@@ -22,12 +21,14 @@ import { Images, hp, wp, Color } from '../../utilities';
 import color from '../../utilities/Color';
 import images from '../../utilities/Images';
 import { createAccountThunk } from '../../redux/slices';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { create } from 'react-test-renderer';
 
 const CreateAccountScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
 
   // 🧩 Local state for all input fields
   const [fullName, setFullName] = useState('');
@@ -44,7 +45,7 @@ const CreateAccountScreen = () => {
   const handleCreateAccount = async () => {
     // 🔹 Basic validations
     if (!fullName.trim() || !mobileNumber.trim()) {
-      Alert.alert('Missing Fields', 'Please fill all required fields.');
+      alert('Missing Fields', 'Please fill all required fields.');
       return;
     } else if (fullName.trim().length < 3) {
       setToast({
@@ -75,7 +76,7 @@ const CreateAccountScreen = () => {
 
     // 🔹 Terms and Conditions check
     if (!isChecked) {
-      Alert.alert(
+      alert(
         'Terms Required',
         'Please agree to the Terms and Conditions.',
       );
@@ -102,7 +103,7 @@ const CreateAccountScreen = () => {
       console.log('Create Account Result:', resultAction);
 
       if (createAccountThunk.fulfilled.match(resultAction)) {
-        Alert.alert(
+        alert(
           'Account Created',
           resultAction.payload?.message ||
             'Account created successfully. Please verify OTP.',
@@ -128,7 +129,7 @@ const CreateAccountScreen = () => {
         );
         console.log('[EncryptedStorage] Saved user_id and request_id');
       } else {
-        Alert.alert(
+        alert(
           'Error',
           resultAction.payload?.message ||
             'Failed to create account. Please try again.',
@@ -136,15 +137,17 @@ const CreateAccountScreen = () => {
       }
     } catch (error) {
       console.error('Create Account Error:', error);
-      Alert.alert('Error', error.message || 'Something went wrong.');
+      alert('Error', error.message || 'Something went wrong.');
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1 }}
-    >
+    <>
+      {AlertComponent}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           contentContainerStyle={styles.container}
@@ -320,7 +323,8 @@ const CreateAccountScreen = () => {
           </TouchableOpacity>
         </ScrollView>
       </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </>
   );
 };
 

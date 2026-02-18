@@ -5,13 +5,13 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useMemo, useCallback } from 'react';
 import { hp, wp, Images } from '../../utilities';
 import { useSelector } from 'react-redux';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 // Constants
 const MODULES = [
@@ -65,6 +65,7 @@ const ROUTE_MAP = {
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const Explore = ({ navigation }) => {
+  const { alert, AlertComponent } = useCustomAlert();
   const currentDayKey = useMemo(() => {
     return DAY_KEYS[new Date().getDay()];
   }, []);
@@ -74,7 +75,7 @@ const Explore = ({ navigation }) => {
       const route = ROUTE_MAP[item.title];
 
       if (!route) {
-        Alert.alert('Route not found');
+        alert('Route not found', 'This module is not available yet.');
         return;
       }
 
@@ -90,7 +91,7 @@ const Explore = ({ navigation }) => {
 
       navigation.navigate(route);
     },
-    [navigation, currentDayKey],
+    [navigation, currentDayKey, alert],
   );
 
   const handleHealthPress = useCallback(() => {
@@ -159,7 +160,9 @@ const Explore = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <>
+      {AlertComponent}
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
       <FlatList
         data={MODULES}
         renderItem={renderItem}
@@ -172,6 +175,7 @@ const Explore = ({ navigation }) => {
         style={styles.list}
       />
     </SafeAreaView>
+    </>
   );
 };
 

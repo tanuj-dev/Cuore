@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  Alert,
   Platform,
   Modal,
   ActivityIndicator,
@@ -29,9 +28,11 @@ import { submitOnboarding } from '../../redux/OnBoardng/onBoardingThunk';
 import { createReassessment } from '../../redux/OnBoardng/onBoardingThunk';
 import { getOnboardingThunk } from '../../redux/slices';
 import Toast from '../../components/Toast';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const OnBoarding = ({ navigation, route }) => {
   const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
   const { STEP, screen, navigateTo } = route?.params ?? {};
 
   console.log('OnBoarding Screen Params:', route?.params);
@@ -211,11 +212,11 @@ const OnBoarding = ({ navigation, route }) => {
         });
       } else if (res?.payload?.error) {
         setLoading(false);
-        Alert.alert('Submission Error', res.payload.error);
+        alert('Submission Error', res.payload.error);
       }
     } catch (error) {
       setLoading(false);
-      Alert.alert(
+      alert(
         'Submission Error',
         'There was an error submitting your data. Please try again.',
       );
@@ -260,11 +261,13 @@ const OnBoarding = ({ navigation, route }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    >
+    <>
+      {AlertComponent}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
       <ScrollView
         ref={scrollRef}
         style={styles.container}
@@ -556,7 +559,8 @@ const OnBoarding = ({ navigation, route }) => {
           />
         )}
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </>
   );
 };
 
