@@ -11,11 +11,12 @@ export async function initializeNotifee() {
     console.log('🚫 Notification permissions denied');
   }
 
-  // Create notification channel
+  // Create notification channel (sound: 'doorbell' = default notification sound on Android)
   await notifee.createChannel({
     id: 'health-schedule',
     name: 'Health Schedule Notifications',
     importance: 4,
+    sound: 'doorbell',
   });
 
   console.log('📢 Notification channel ready');

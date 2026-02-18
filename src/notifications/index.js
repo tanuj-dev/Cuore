@@ -30,12 +30,13 @@ export default function App() {
     }
   }
 
-  // 🔹 Create Android channel (required)
+  // 🔹 Create Android channel (required; sound: 'doorbell' = default notification sound)
   async function createChannel() {
     await notifee.createChannel({
       id: 'health-schedule',
       name: 'Health Schedule Notifications',
       importance: 4,
+      sound: 'doorbell',
     });
   }
 

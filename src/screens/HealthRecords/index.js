@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
   StyleSheet,
   Alert,
   Image,
@@ -16,6 +15,12 @@ import {
   Linking,
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import {
+  pick as pickDocument,
+  types as docTypes,
+  isErrorWithCode,
+  errorCodes as docErrorCodes,
+} from '@react-native-documents/picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { hp, wp, Images } from '../../utilities';
 import ProfileHeader from '../../components/ProfileHeader';
@@ -32,7 +37,7 @@ const HealthRecords = ({ navigation }) => {
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isPrescription, setIsPrescription] = useState(false);
-  const [selectedTab, setSelectedTab] = useState('Prescriptions');
+  const [selectedTab] = useState('Prescriptions'); // Used when tabs are enabled; empty state shows "No records yet" when tabs hidden
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -45,6 +50,10 @@ const HealthRecords = ({ navigation }) => {
   const [editFileNameValue, setEditFileNameValue] = useState('');
   const [isEditingFilename, setIsEditingFilename] = useState(false);
   const [deletingRecordId, setDeletingRecordId] = useState(null);
+
+  const MAX_FILE_SIZE_MB = 10;
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+  const MAX_FILES_PER_UPLOAD = 10;
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -152,10 +161,13 @@ const HealthRecords = ({ navigation }) => {
           type: photo.type || 'image/jpeg',
           size: photo.fileSize || 0,
         };
-
-        console.log('📷 Photo captured successfully:', newFile.name);
-        console.log('📷 Photo URI:', newFile.uri);
-        setSelectedFiles(prev => [...prev, newFile]);
+        setSelectedFiles(prev => {
+          if (prev.length >= MAX_FILES_PER_UPLOAD) {
+            Alert.alert('Limit reached', `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload.`);
+            return prev;
+          }
+          return [...prev, newFile];
+        });
         Alert.alert('Success', 'Photo captured successfully!');
       } else {
         console.log('📷 No assets in result');
@@ -269,9 +281,18 @@ const HealthRecords = ({ navigation }) => {
           type: photo.type || 'image/jpeg',
           size: photo.fileSize || 0,
         }));
-        
-        console.log(`🖼️ Selected ${newFiles.length} image(s) from gallery`);
-        setSelectedFiles(prev => [...prev, ...newFiles]);
+        setSelectedFiles(prev => {
+          const total = prev.length + newFiles.length;
+          if (total > MAX_FILES_PER_UPLOAD) {
+            const allowed = MAX_FILES_PER_UPLOAD - prev.length;
+            Alert.alert(
+              'Limit reached',
+              `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload. Adding first ${allowed} of ${newFiles.length} selected.`,
+            );
+            return [...prev, ...newFiles.slice(0, allowed)];
+          }
+          return [...prev, ...newFiles];
+        });
         Alert.alert('Success', `${newFiles.length} image(s) selected successfully!`);
       }
     } catch (error) {
@@ -280,9 +301,66 @@ const HealthRecords = ({ navigation }) => {
     }
   };
 
+  const pickDocumentForUpload = async () => {
+    setShowUploadModal(false);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    try {
+      const result = await pickDocument({
+        type: [docTypes.pdf],
+        allowMultiSelection: true,
+      });
+      if (result && result.length > 0) {
+        const newFiles = result.map(doc => ({
+          uri: doc.uri,
+          name: doc.name || `document_${Date.now()}.pdf`,
+          type: doc.type || 'application/pdf',
+          size: doc.size || 0,
+        }));
+        setSelectedFiles(prev => {
+          const total = prev.length + newFiles.length;
+          if (total > MAX_FILES_PER_UPLOAD) {
+            const allowed = MAX_FILES_PER_UPLOAD - prev.length;
+            Alert.alert(
+              'Limit reached',
+              `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload. Adding first ${allowed} of ${newFiles.length} selected.`,
+            );
+            return [...prev, ...newFiles.slice(0, allowed)];
+          }
+          return [...prev, ...newFiles];
+        });
+        Alert.alert('Success', `${newFiles.length} PDF(s) selected successfully!`);
+      }
+    } catch (err) {
+      if (isErrorWithCode(err) && err.code === docErrorCodes.OPERATION_CANCELED) {
+        return;
+      }
+      console.error('Document picker error:', err);
+      Alert.alert('Error', err?.message || 'Failed to pick document. Please try again.');
+    }
+  };
+
   const handleSubmit = async () => {
     if (selectedFiles.length === 0) {
       Alert.alert('Incomplete', 'Please upload at least one file');
+      return;
+    }
+
+    if (selectedFiles.length > MAX_FILES_PER_UPLOAD) {
+      Alert.alert(
+        'Too many files',
+        `You can upload up to ${MAX_FILES_PER_UPLOAD} files at a time.`,
+      );
+      return;
+    }
+
+    const oversizedFiles = selectedFiles.filter(
+      file => file.size > MAX_FILE_SIZE_BYTES,
+    );
+    if (oversizedFiles.length > 0) {
+      Alert.alert(
+        'File too large',
+        `Some files exceed ${MAX_FILE_SIZE_MB}MB. Please choose smaller files.`,
+      );
       return;
     }
 
@@ -294,37 +372,25 @@ const HealthRecords = ({ navigation }) => {
     try {
       setIsUploading(true);
 
-      // Create FormData with userId and multiple files
       const formData = new FormData();
-
-      // Add userId
       formData.append('userId', userId);
+      formData.append('isPrescription', isPrescription ? 'true' : 'false');
 
-      // Add all selected files (backend expects 'files' field name)
       selectedFiles.forEach((file, index) => {
+        const isPdf = file.type === 'application/pdf';
+        const defaultName = isPdf
+          ? `health_record_${Date.now()}_${index}.pdf`
+          : `health_record_${Date.now()}_${index}.jpg`;
         const fileData = {
           uri:
             Platform.OS === 'ios' ? file.uri.replace('file://', '') : file.uri,
           type: file.type || 'image/jpeg',
-          name: file.name || `health_record_${Date.now()}_${index}.jpg`,
+          name: file.name || defaultName,
         };
         formData.append('files', fileData);
       });
 
-      console.log('📤 Uploading with userId:', userId);
-      console.log('📤 Number of files:', selectedFiles.length);
-      console.log('📤 Files:', selectedFiles);
-      console.log(
-        '📤 FormData _parts:',
-        JSON.stringify(formData._parts, null, 2),
-      );
-
-      // Upload photo to API
       const response = await dispatch(uploadPhoto(formData)).unwrap();
-
-      console.log('📥 Response received:', response);
-      console.log('📥 Response status:', response?.status);
-      console.log('📥 Response data:', response?.data);
 
       if (response?.success || response?.data?.success) {
         Alert.alert(
@@ -347,13 +413,9 @@ const HealthRecords = ({ navigation }) => {
           response?.data?.error ||
           response?.message ||
           'Failed to upload health record. Please try again.';
-        console.error('Upload failed with message:', errorMsg);
         Alert.alert('Upload Failed', errorMsg);
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
-
       const errorMsg =
         error?.data?.message ||
         error?.data?.error ||
@@ -458,13 +520,11 @@ const HealthRecords = ({ navigation }) => {
     }
   };
 
-  const getRecords = async () => {
+  const getRecords = useCallback(async () => {
     try {
       setIsFetching(true);
       const response = await dispatch(getPresRecordsThunk()).unwrap();
-      console.log('Prescriptions response:', response);
       if (response?.success && response?.data) {
-        // Map API data to our records format
         const apiRecords = response.data.data.map((item, index) => ({
           fileName: item?.fileName || 'Unnamed Record',
           fileUrl: item?.fileUrl || '',
@@ -477,19 +537,17 @@ const HealthRecords = ({ navigation }) => {
           uploadDate: formatDate(item?.uploadDate || ''),
         }));
         setRecords(apiRecords);
-        console.log('Mapped records:', apiRecords);
       }
     } catch (error) {
       console.error('Error fetching prescriptions:', error);
     } finally {
       setIsFetching(false);
     }
-  };
+  }, [dispatch]);
+
   useEffect(() => {
     getRecords();
-  }, []);
-
-  console.log('userId', userId);
+  }, [getRecords]);
 
   return (
     <ScrollView>
@@ -516,7 +574,7 @@ const HealthRecords = ({ navigation }) => {
               <Text style={[styles.fileText, isCaregiver && styles.textDisabled]}>
                 {selectedFiles.length > 0
                   ? `${selectedFiles.length} file(s) selected`
-                  : 'PNG, JPG up to 10MB'}
+                  : `PNG, JPG, PDF up to ${MAX_FILE_SIZE_MB}MB, max ${MAX_FILES_PER_UPLOAD} files`}
               </Text>
               <Text style={[styles.uploadDisclaimer, isCaregiver && styles.textDisabled]}>
                 {isCaregiver
@@ -618,89 +676,85 @@ const HealthRecords = ({ navigation }) => {
               style={styles.fetchLoader}
             />
           ) : records.length > 0 ? (
-            <FlatList
-              data={records}
-              keyExtractor={(item, index) =>
-                (item.recordId || index).toString()
-              }
-              scrollEnabled={false} // Disable scrolling as it's inside ScrollView
-              renderItem={({ item }) => (
-                <View style={styles.recordItem}>
-                  <View style={styles.recordItemContent}>
-                    {editingRecordId === item.recordId && !isCaregiver ? (
-                      <View style={styles.editRow}>
-                        <TextInput
-                          style={styles.editFileNameInput}
-                          value={editFileNameValue}
-                          onChangeText={setEditFileNameValue}
-                          editable={!isEditingFilename}
-                          placeholder="File name"
-                          placeholderTextColor="#94A3B8"
-                        />
-                        <TouchableOpacity
-                          onPress={handleSaveEditFileName}
-                          disabled={isEditingFilename}
-                          style={styles.saveEditBtn}
-                        >
-                          {isEditingFilename ? (
-                            <ActivityIndicator size="small" color="#11418A" />
-                          ) : (
-                            <Text style={styles.saveEditText}>Save</Text>
-                          )}
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={cancelEditFileName} style={styles.cancelEditBtn}>
-                          <Text style={styles.cancelEditText}>Cancel</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <Text style={styles.recordTitle}>{item.fileName}</Text>
-                    )}
-                    <Text style={styles.recordDate}>{item.uploadDate}</Text>
-                  </View>
-                  <View style={styles.recordActions}>
-                    {!isCaregiver && (
-                      <TouchableOpacity
-                        onPress={() => startEditFileName(item)}
-                        disabled={editingRecordId !== null && editingRecordId !== item.recordId}
-                      >
-                        <Image style={styles.recordActionIcon} source={Images.EDIT} />
-                      </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
-                      onPress={() => {
-                        if (item.fileUrl) {
-                          setCurrentViewImageUrl(item.fileUrl);
-                          setShowViewImageModal(true);
-                        } else {
-                          Alert.alert('Error', 'Image URL not found');
-                        }
-                      }}
-                    >
-                      <Image
-                        style={[styles.recordActionIcon, styles.eyeIcon]}
-                        source={Images.EYE}
+            records.map((item, index) => (
+              <View
+                key={item.recordId || index}
+                style={styles.recordItem}
+              >
+                <View style={styles.recordItemContent}>
+                  {editingRecordId === item.recordId && !isCaregiver ? (
+                    <View style={styles.editRow}>
+                      <TextInput
+                        style={styles.editFileNameInput}
+                        value={editFileNameValue}
+                        onChangeText={setEditFileNameValue}
+                        editable={!isEditingFilename}
+                        placeholder="File name"
+                        placeholderTextColor="#94A3B8"
                       />
-                    </TouchableOpacity>
-                    {!isCaregiver && (
                       <TouchableOpacity
-                        onPress={() => handleDelete(item.recordId)}
-                        disabled={deletingRecordId !== null}
+                        onPress={handleSaveEditFileName}
+                        disabled={isEditingFilename}
+                        style={styles.saveEditBtn}
                       >
-                        {deletingRecordId === item.recordId ? (
-                          <ActivityIndicator
-                            size="small"
-                            color="#11418A"
-                            style={styles.recordActionIcon}
-                          />
+                        {isEditingFilename ? (
+                          <ActivityIndicator size="small" color="#11418A" />
                         ) : (
-                          <Image style={styles.recordActionIcon} source={Images.DELETE} />
+                          <Text style={styles.saveEditText}>Save</Text>
                         )}
                       </TouchableOpacity>
-                    )}
-                  </View>
+                      <TouchableOpacity onPress={cancelEditFileName} style={styles.cancelEditBtn}>
+                        <Text style={styles.cancelEditText}>Cancel</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <Text style={styles.recordTitle}>{item.fileName}</Text>
+                  )}
+                  <Text style={styles.recordDate}>{item.uploadDate}</Text>
                 </View>
-              )}
-            />
+                <View style={styles.recordActions}>
+                  {!isCaregiver && (
+                    <TouchableOpacity
+                      onPress={() => startEditFileName(item)}
+                      disabled={editingRecordId !== null && editingRecordId !== item.recordId}
+                    >
+                      <Image style={styles.recordActionIcon} source={Images.EDIT} />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (item.fileUrl) {
+                        setCurrentViewImageUrl(item.fileUrl);
+                        setShowViewImageModal(true);
+                      } else {
+                        Alert.alert('Error', 'Image URL not found');
+                      }
+                    }}
+                  >
+                    <Image
+                      style={[styles.recordActionIcon, styles.eyeIcon]}
+                      source={Images.EYE}
+                    />
+                  </TouchableOpacity>
+                  {!isCaregiver && (
+                    <TouchableOpacity
+                      onPress={() => handleDelete(item.recordId)}
+                      disabled={deletingRecordId !== null}
+                    >
+                      {deletingRecordId === item.recordId ? (
+                        <ActivityIndicator
+                          size="small"
+                          color="#11418A"
+                          style={styles.recordActionIcon}
+                        />
+                      ) : (
+                        <Image style={styles.recordActionIcon} source={Images.DELETE} />
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            ))
           ) : (
             <View style={styles.emptyRecords}>
               <Text style={styles.emptyRecordsText}>
@@ -737,8 +791,16 @@ const HealthRecords = ({ navigation }) => {
                 style={styles.modalButton}
                 onPress={pickImageFromGallery}
               >
-                <Image source={Images.EYE} style={styles.modalIcon} />
+                <Image source={Images.UPLOAD} style={styles.modalIcon} />
                 <Text style={styles.modalButtonText}>Choose from Gallery</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={pickDocumentForUpload}
+              >
+                <Image source={Images.UPLOAD} style={styles.modalIcon} />
+                <Text style={styles.modalButtonText}>Choose PDF</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

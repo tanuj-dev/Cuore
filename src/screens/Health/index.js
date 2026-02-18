@@ -34,6 +34,11 @@ import { useCustomAlert } from '../../hooks/useCustomAlert';
 const HIT_SLOP = { top: 20, bottom: 20, left: 20, right: 20 };
 const REASSESS_STEP_3 = 3;
 const REASSESS_STEP_7 = 7;
+const FLAT_FEEDBACK_OPTIONS = [
+  { id: 'inaccurate', label: 'Inaccurate summary' },
+  { id: 'missing', label: 'Missing key information' },
+  { id: 'terminology', label: 'Incorrect medical terminology' },
+];
 const formatDate = date => {
   if (!date) return '';
   const d = new Date(date);
@@ -74,9 +79,60 @@ const Health = ({ navigation }) => {
     imaging: '',
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [showFlatFeedbackModal, setShowFlatFeedbackModal] = useState(false);
+  const [flatFeedbackSelected, setFlatFeedbackSelected] = useState([]);
+  const [flatFeedbackSubmitting, setFlatFeedbackSubmitting] = useState(false);
   const viewShotRef = useRef(null);
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
+
+  const handleToggleFlatFeedbackOption = useCallback(id => {
+    setFlatFeedbackSelected(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id],
+    );
+  }, []);
+
+  const handleOpenFlatFeedback = useCallback(() => {
+    setFlatFeedbackSelected([]);
+    setShowFlatFeedbackModal(true);
+  }, []);
+
+  const handleCloseFlatFeedback = useCallback(() => {
+    setShowFlatFeedbackModal(false);
+    setFlatFeedbackSelected([]);
+  }, []);
+
+  const handleSubmitFlatFeedback = useCallback(async () => {
+    if (flatFeedbackSelected.length === 0) {
+      alert('Select an option', 'Please select at least one issue to report.');
+      return;
+    }
+    setFlatFeedbackSubmitting(true);
+    try {
+      // TODO: Wire to your API - e.g. dispatch(submitSummaryFeedback({ userId, options: flatFeedbackSelected }))
+      const payload = {
+        userId,
+        section: 'flat_history',
+        options: flatFeedbackSelected,
+        labels: FLAT_FEEDBACK_OPTIONS.filter(o =>
+          flatFeedbackSelected.includes(o.id),
+        ).map(o => o.label),
+      };
+      // Placeholder: log for now; replace with API call when endpoint is ready
+      if (__DEV__) {
+        console.log('Summary feedback submitted:', payload);
+      }
+      handleCloseFlatFeedback();
+      alert(
+        'Thank you',
+        'Your feedback has been submitted to our support team.',
+      );
+    } catch (err) {
+      alert('Error', 'Failed to submit feedback. Please try again.');
+    } finally {
+      setFlatFeedbackSubmitting(false);
+    }
+  }, [flatFeedbackSelected, userId, alert, handleCloseFlatFeedback]);
 
   const healthObservations = useSelector(
     state => state.health?.data?.data?.data?.healthObservations,
@@ -783,6 +839,20 @@ const Health = ({ navigation }) => {
 
                   {isSummaryExpanded && (
                     <View style={{ marginTop: hp(2) }}>
+                      <TouchableOpacity
+                        style={styles.flatFeedbackTapRow}
+                        onPress={handleOpenFlatFeedback}
+                        activeOpacity={0.7}
+                      >
+                        <Image
+                          source={Images.FLAG}
+                          style={styles.flatHistoryFlag}
+                          resizeMode="contain"
+                        />
+                        <Text style={styles.flatFeedbackTapText}>
+                          Report Inaccuracy
+                        </Text>
+                      </TouchableOpacity>
                       <Text
                         style={{
                           fontSize: 12,
@@ -800,9 +870,11 @@ const Health = ({ navigation }) => {
                         <View>
                           {/* Past History Input */}
                           <View style={{ marginBottom: hp(2) }}>
-                            <Text style={styles.bold}>
-                              History (from uploaded records):
-                            </Text>
+                            <View style={styles.flatHistoryRow}>
+                              <Text style={styles.bold}>
+                                History (from uploaded records):
+                              </Text>
+                            </View>
                             <TextInput
                               style={styles.editInput}
                               value={editedSummary.past_history}
@@ -930,9 +1002,11 @@ const Health = ({ navigation }) => {
                             Array.isArray(healtRecords.summary.past_history) &&
                             healtRecords.summary.past_history.length > 0 && (
                               <View>
-                                <Text style={styles.bold}>
-                                  History (from uploaded records):
-                                </Text>
+                                <View style={styles.flatHistoryRow}>
+                                  <Text style={styles.bold}>
+                                    History (from uploaded records):
+                                  </Text>
+                                </View>
                                 <Text
                                   style={{
                                     fontSize: 14,
@@ -1158,6 +1232,77 @@ const Health = ({ navigation }) => {
           </ScrollView>
         </View>
       </ViewShot>
+      {/* Flat History feedback popup */}
+      <Modal
+        visible={showFlatFeedbackModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseFlatFeedback}
+      >
+        <TouchableOpacity
+          style={styles.flatFeedbackOverlay}
+          activeOpacity={1}
+          onPress={handleCloseFlatFeedback}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={e => e.stopPropagation()}
+            style={styles.flatFeedbackBox}
+          >
+            <Text style={styles.flatFeedbackTitle}>Report summary issue</Text>
+            <Text style={styles.flatFeedbackSubtitle}>
+              Select one or more issues below. Tap outside to close.
+            </Text>
+            {FLAT_FEEDBACK_OPTIONS.map(opt => (
+              <TouchableOpacity
+                key={opt.id}
+                style={[
+                  styles.flatFeedbackOption,
+                  flatFeedbackSelected.includes(opt.id) &&
+                    styles.flatFeedbackOptionSelected,
+                ]}
+                onPress={() => handleToggleFlatFeedbackOption(opt.id)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.flatFeedbackOptionText,
+                    flatFeedbackSelected.includes(opt.id) &&
+                      styles.flatFeedbackOptionTextSelected,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+                {flatFeedbackSelected.includes(opt.id) && (
+                  <Text style={styles.flatFeedbackCheck}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[
+                styles.flatFeedbackSubmitBtn,
+                flatFeedbackSubmitting && styles.flatFeedbackSubmitDisabled,
+              ]}
+              onPress={handleSubmitFlatFeedback}
+              disabled={flatFeedbackSubmitting}
+              activeOpacity={0.8}
+            >
+              {flatFeedbackSubmitting ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.flatFeedbackSubmitText}>Submit</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.flatFeedbackCancelBtn}
+              onPress={handleCloseFlatFeedback}
+            >
+              <Text style={styles.flatFeedbackCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Loading overlay for PDF sharing */}
       <Modal
         transparent={true}
@@ -1268,6 +1413,107 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4B5563',
     fontFamily: 'Poppins-Medium',
+  },
+  flatHistoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(0.5),
+  },
+  flatHistoryFlag: {
+    width: 20,
+    height: 20,
+    marginRight: wp(2),
+  },
+  flatFeedbackTapRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(1.5),
+  },
+  flatFeedbackTapText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#11418A',
+  },
+  flatFeedbackOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: wp(5),
+  },
+  flatFeedbackBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: hp(2.5),
+    width: '100%',
+    maxWidth: 340,
+  },
+  flatFeedbackTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 18,
+    color: '#1E293B',
+    marginBottom: hp(0.5),
+  },
+  flatFeedbackSubtitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: hp(2),
+  },
+  flatFeedbackOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(3),
+    borderRadius: 10,
+    marginBottom: hp(1),
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+  },
+  flatFeedbackOptionSelected: {
+    borderColor: '#11418A',
+    backgroundColor: '#EFF6FF',
+  },
+  flatFeedbackOptionText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#475569',
+  },
+  flatFeedbackOptionTextSelected: {
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
+  },
+  flatFeedbackCheck: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#11418A',
+  },
+  flatFeedbackSubmitBtn: {
+    backgroundColor: '#11418A',
+    paddingVertical: hp(1.5),
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: hp(1.5),
+  },
+  flatFeedbackSubmitDisabled: {
+    opacity: 0.7,
+  },
+  flatFeedbackSubmitText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#FFFFFF',
+  },
+  flatFeedbackCancelBtn: {
+    alignItems: 'center',
+    paddingVertical: hp(1),
+    marginTop: hp(0.5),
+  },
+  flatFeedbackCancelText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#64748B',
   },
   sectionTitle: {
     fontSize: 16,

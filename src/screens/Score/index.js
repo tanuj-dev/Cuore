@@ -418,7 +418,7 @@ const Score = ({ navigation, route }) => {
                   <Text style={styles.timeToTarget}>Progress Projection</Text>
                 </View>
                 <View style={styles.timeToTargetRow}>
-                  <Text style={styles.timeToTargetValue}>
+                  <Text style={styles.months}>
                     {Math.round(
                       health_metrics?.estimated_time_to_target?.value,
                     )}
@@ -434,10 +434,10 @@ const Score = ({ navigation, route }) => {
                     style={styles.projectionDisclaimerIcon}
                     resizeMode="contain"
                   /> */}
-                  <Text style={styles.projectionDisclaimerText}>
+                  {/* <Text style={styles.projectionDisclaimerText}>
                     Based on general lifestyle-response research. Individual
                     results vary.
-                  </Text>
+                  </Text> */}
                 </View>
 
                 <TouchableOpacity
@@ -451,7 +451,7 @@ const Score = ({ navigation, route }) => {
                     resizeMode="contain"
                   />
 
-                  <Text style={styles.reassessText}>Re-assess monthly</Text>
+                  <Text style={styles.reassessText}>Re-assess </Text>
                 </TouchableOpacity>
                 <Text style={styles.reassessNote}>
                   Based on general lifestyle and cardiometabolic research;

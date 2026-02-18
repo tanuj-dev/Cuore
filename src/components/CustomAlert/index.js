@@ -96,18 +96,20 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontFamily: 'Roboto-SemiBold',
-    color: '#1F2937',
+    fontFamily: 'Poppins-SemiBold',
+    color: '#1E293B',
     marginBottom: 12,
     textAlign: 'center',
+    letterSpacing: -0.2,
   },
   message: {
     fontSize: 15,
-    fontFamily: 'Roboto-Regular',
-    color: '#4B5563',
+    fontFamily: 'Poppins-Regular',
+    color: '#475569',
     marginBottom: 20,
     textAlign: 'center',
     lineHeight: 22,
+    letterSpacing: 0.1,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -118,8 +120,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#1E64AC',
+    borderRadius: 10,
+    backgroundColor: '#11418A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -127,21 +129,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cancelButton: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F1F5F9',
   },
   destructiveButton: {
     backgroundColor: '#EF4444',
   },
   buttonText: {
     fontSize: 15,
-    fontFamily: 'Roboto-Medium',
+    fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   cancelButtonText: {
-    color: '#6B7280',
+    color: '#475569',
+    fontFamily: 'Poppins-Medium',
   },
   destructiveButtonText: {
     color: '#FFFFFF',
+    fontFamily: 'Poppins-Medium',
   },
 });
 

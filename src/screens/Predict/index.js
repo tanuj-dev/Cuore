@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Constants
 const TITLES_WITH_TABS = ['Blood Pressure & Heart Rate', 'Blood Sugar'];
+const TITLES_BELOW_GRAPH = ['Cuore Score', 'Blood Sugar', 'A1C', 'Weight'];
 const TITLE_TO_STEP_MAP = {
   'Cuore Score': 1,
   'Blood Pressure & Heart Rate': 7,
@@ -258,14 +259,11 @@ const Predict = ({ navigation }) => {
                   </View>
                 )}
                 <View style={styles.cardHeader}>
-                  <Text style={styles.title}>
-                    {getTitleDisplay(item?.title)}
-                  </Text>
-                  <View style={styles.switchContainer}>
+                  <View style={styles.showDataRow}>
                     <TouchableOpacity
-                      // hitSlop={HIT_SLOP}
                       onPress={() => handleToggleShowData(item?.title)}
                       style={styles.showDataButton}
+                      activeOpacity={0.7}
                     >
                       {isShowDataVisible && (
                         <Image
@@ -281,6 +279,7 @@ const Predict = ({ navigation }) => {
                       handleNavigateToReassess(getStepForTitle(item?.title))
                     }
                     style={[styles.button, styles.buttonRow]}
+                    activeOpacity={0.8}
                   >
                     <Image style={styles.buttonIcon} source={Images.EDIT} />
                     <Text style={styles.buttonText}>
@@ -321,6 +320,11 @@ const Predict = ({ navigation }) => {
                   withShadow={false}
                   withInnerLines={false}
                 />
+                {TITLES_BELOW_GRAPH.includes(item?.title) && (
+                  <Text style={styles.titleBelow}>
+                    {getTitleDisplay(item?.title)}
+                  </Text>
+                )}
                 <View style={styles.legendContainer}>
                   {item?.data?.datasets.map((ds, idx) => {
                     const colorValue =
@@ -362,7 +366,7 @@ const Predict = ({ navigation }) => {
             <Image style={styles.footerIcon} source={Images.DOCTOR_PROFILE} />
             <Text style={styles.footerText}>Cuore Health</Text>
           </TouchableOpacity>
-          <View style={styles.card1}>
+          {/* <View style={styles.card1}>
             <Image style={styles.noticeIcon} source={Images.NOTICE} />
 
             <Text style={styles.disclaimerText}>
@@ -371,21 +375,8 @@ const Predict = ({ navigation }) => {
               or treatment
             </Text>
 
-            {/* <Text style={styles.bold}>History: </Text>
-                         
-              
-                          <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
-                          <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
-                            Diabetes on metformin   Hypertension (HTN) on Cardace
-                          </Text>
-              
-                          <Text style={[styles.label, {marginTop: hp(1)}]}>
-                            <Text style={styles.bold}>Labs:</Text>
-                          </Text>
-                          <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
-                            RBS: 230
-                          </Text> */}
-          </View>
+           
+          </View> */}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -469,6 +460,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: hp(1.5),
+    paddingVertical: hp(0.5),
+    gap: wp(4),
   },
   title: {
     fontFamily: 'Poppins-Medium',
@@ -476,9 +469,19 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     letterSpacing: -0.3,
   },
-  switchContainer: {
+  titleBelow: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 16,
+    color: '#1E293B',
+    letterSpacing: -0.3,
+    marginTop: hp(1),
+    marginBottom: hp(0.5),
+  },
+  showDataRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    gap: wp(2),
   },
   button: {
     backgroundColor: '#11418A',
@@ -534,21 +537,22 @@ const styles = StyleSheet.create({
   showDataButton: {
     borderWidth: 1.5,
     borderColor: '#CBD5E1',
-    height: hp(2.2),
-    width: wp(4.5),
-    borderRadius: 6,
-    marginRight: hp(1),
+    height: hp(2.5),
+    width: wp(5),
+    borderRadius: 8,
     backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   showDataIcon: {
     resizeMode: 'cover',
-    height: hp(2.2),
-    width: wp(4.5),
+    height: hp(2.5),
+    width: wp(5),
     borderRadius: 6,
   },
   showDataText: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#475569',
     letterSpacing: 0.1,
   },

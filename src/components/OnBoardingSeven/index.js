@@ -146,14 +146,13 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
       )}
 
       <Text style={styles.sectionTitle}>Blood Tests</Text>
-      <View style={{ flexDirection: 'row', marginBottom: hp(2) }}>
-        <Image
-          style={{ height: hp(2), width: wp(4), marginRight: hp(1) }}
-          source={Images.NOTICE}
-        />
-        <Text style={styles.note}>
+      <View style={styles.noteRow}>
+        <Image style={styles.noteIcon} source={Images.NOTICE} />
+        <View style={styles.noteTextWrap}>
+          <Text style={styles.note}>
           General guidance: often checked annually. Follow your doctor’s advice
-        </Text>
+          </Text>
+        </View>
       </View>
 
       <Text style={styles.subsectionTitle}>Blood Sugar</Text>
@@ -236,6 +235,20 @@ const styles = StyleSheet.create({
     marginTop: hp(1),
     marginBottom: hp(1),
     letterSpacing: 0.2,
+  },
+  noteRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: hp(2),
+  },
+  noteIcon: {
+    height: hp(2),
+    width: wp(4),
+    marginRight: hp(1),
+  },
+  noteTextWrap: {
+    flex: 1,
+    flexShrink: 1,
   },
   note: {
     fontFamily: 'Poppins-Regular',

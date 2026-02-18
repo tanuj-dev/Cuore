@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -7,293 +7,256 @@ import {
   ScrollView,
   Image,
   ImageBackground,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Images, hp, wp } from '../../utilities';
 
 const RefreshRefuel = ({ navigation }) => {
-  const [selectedTab, setSelectedTab] = useState('Breakfast');
-
   const mealOptions = [
     {
-      title: '1/2 bowl Sprouted Moong Chaat',
+      title: '1/2 katori Sprouted Moong Chaat',
       details:
         'Soak 1 teaspoon of cumin seeds in water overnight and boil the next morning. Strain and drink warm',
-
-      calories: 50,
+      calories: 80,
     },
     {
-      title: '1 Baked Samosa with Chickpea filling',
+      title: '1 small Baked Samosa with Chickpea filling',
       details:
         'Soak cucumber slices and fresh mint in water overnight, & drink in the morning',
-
-      calories: 50,
+      calories: 80,
     },
     {
       title: '2 tbsp Roasted Chana',
       details:
         'Soak 8-10 raisins in water overnight, & consume the water and raisins',
-
-      calories: 50,
+      calories: 60,
     },
     {
-      title: '1 Baked Samosa with Chickpea filling',
+      title: '1 katori Steamed Corn with Lemon',
       details:
         'Soak a cinnamon stick in warm water overnight & drink in the morning on an empty stomach.',
-
-      calories: 50,
+      calories: 80,
     },
     {
       title: '1 Masala Boiled Egg',
       details:
         'Boil crushed fresh ginger in water, let it cool slightly, add a squeeze of lemon & drink.',
-
-      calories: 50,
+      calories: 90,
     },
     {
-      title: '1 Masala Boiled Egg',
+      title: '1/2 medium sized Sweet Potato Chaat',
       details:
         'Soak cucumber slices and fresh mint in water overnight, & drink in the morning',
-
-      calories: 50,
+      calories: 90,
     },
     {
-      title: '1 glass Cucumber Mint Infusion',
+      title: '2 Steamed Dumplings (Veggie or Tofu Filling)',
       details:
         'Soak cucumber slices and fresh mint in water overnight, & drink in the morning',
-
-      calories: 50,
+      calories: 110,
     },
     {
-      title: '1 glass Cucumber Mint Infusion',
+      title: 'Cucumber and Carrot Sticks with Yogurt Dip',
       details:
         'Soak cucumber slices and fresh mint in water overnight, & drink in the morning',
-
-      calories: 50,
+      calories: 110,
     },
   ];
 
-  const renderMealCard = (item, index) => {
-    return (
-      <TouchableOpacity
-        key={index}
-        style={[styles.card, { borderLeftColor: '#17AD8D' }]}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            position: 'absolute',
-          }}
-        >
-          <Text style={styles.kcal}>⚡{item.calories} kcal</Text>
+  const renderMealCard = (item, index) => (
+    <View key={index} style={styles.card}>
+      <View style={styles.cardHeader}>
+        <View style={styles.kcalPill}>
+          <Text style={styles.kcalText}>⚡ {item.calories} kcal</Text>
         </View>
-
-        <View>
-          <Text style={styles.mealTitle}>{item.title}</Text>
-
-          <View style={{}}>
-            {/* <Text style={styles.detail}>{item.details}</Text> */}
-            {/* 
-            <Image
-              style={{
-                height: hp(2),
-                width: wp(4),
-                resizeMode: 'contain',
-                position: 'absolute',
-                left: hp(37),
-                bottom: hp(1),
-              }}
-              source={Images.RIGHT_ARROW}></Image> */}
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+      </View>
+      <Text style={styles.mealTitle}>{item.title}</Text>
+      <Text style={styles.detail}>{item.details}</Text>
+    </View>
+  );
 
   return (
-    <ScrollView style={styles.container}>
-      {/* 🔵 Header */}
-
-      <ImageBackground
-        style={{ height: hp(25), padding: hp(2) }}
-        source={Images.BACKGROUND_IMAGE_NUTRITION}
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
+        <ImageBackground
+          style={styles.headerImage}
+          source={Images.BACKGROUND_IMAGE_NUTRITION}
+          imageStyle={styles.headerImageStyle}
         >
           <TouchableOpacity
-            style={{
-              paddingHorizontal: hp(0.5),
-              marginTop: Platform.OS == 'ios' && hp(5),
-            }}
+            hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
           >
             <Image
-              source={Images.BACK_BUTTON} // Replace with actual key in your `images` object
-              style={{
-                resizeMode: 'contain',
-                height: hp(3.5),
-                width: wp(4),
-              }}
+              source={Images.BACK_BUTTON}
+              style={styles.backIcon}
               resizeMode="contain"
             />
           </TouchableOpacity>
-          {/* <Image
-            style={{height: hp(2), width: wp(4), resizeMode: 'contain'}}
-            source={Images.SHARE_4}></Image> */}
-        </View>
 
-        <View
-          style={{
-            // flexDirection: 'row',
-            alignItems: 'center',
-            marginTop: hp(2),
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: '#1E64AC',
-              paddingHorizontal: hp(2),
-              borderRadius: hp(3),
-            }}
-          >
-            <Image
-              style={{
-                height: hp(5),
-                width: wp(4),
-                resizeMode: 'contain',
-                marginHorizontal: hp(1),
-                // backgroundColor: 'red',
-              }}
-              source={Images.CUP}
-            ></Image>
-
-            <Text
-              style={{
-                fontFamily: 'Roboto-Regular',
-                fontSize: 14,
-                fontWeight: '400',
-                color: '#FFFFFF',
-              }}
-            >
-              Refresh & Refuel
-            </Text>
+          <View style={styles.badgeWrapper}>
+            <View style={styles.badge}>
+              <Image
+                source={Images.CUP}
+                style={styles.badgeIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.badgeTitle}>Refresh & Refuel</Text>
+            </View>
           </View>
-        </View>
-        <Text
-          style={{
-            fontFamily: 'Roboto-Regular',
-            paddingHorizontal: hp(5),
-            fontSize: 15,
-            fontWeight: '400',
-            color: '#000000',
-            // alignSelf: 'center',
-            textAlign: 'center',
-            marginTop: hp(1.5),
-          }}
-        >
-          Daily variety leads to better results— try a new option each day.
-        </Text>
-      </ImageBackground>
 
-      {/* Meal Cards */}
-      <View style={styles.cardList}>
-        {mealOptions.map((item, index) => renderMealCard(item, index))}
-      </View>
-    </ScrollView>
+          <Text style={styles.subtitle}>
+            Daily variety leads to better results— try a new option each day.
+          </Text>
+        </ImageBackground>
+
+        <View style={styles.content}>
+          <Text style={styles.sectionTitle}>Snack options</Text>
+          {mealOptions.map((item, index) => renderMealCard(item, index))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  headerImage: {
-    width: '100%',
-    height: hp(30),
-    justifyContent: 'flex-end',
-  },
-  headerContent: {
-    paddingHorizontal: wp(5),
-    paddingBottom: hp(14),
-  },
-  headerTitle: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: wp(3.5),
-    color: '#1f2937',
-    marginBottom: hp(1),
-    fontWeight: '500',
-  },
-  toggleContainer: {
-    flexDirection: 'row',
-    // backgroundColor: '#9CA3AF',
-    borderRadius: wp(2),
-    overflow: 'hidden',
-    marginTop: hp(-20),
-  },
-  toggleButton: {
+  safeArea: {
     flex: 1,
-    margin: 1,
-    borderRadius: hp(2),
-    paddingVertical: hp(1),
-    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  scrollContent: {
+    paddingBottom: hp(6),
+  },
+  headerImage: {
+    height: hp(28),
+    paddingHorizontal: wp(4),
+    paddingTop: Platform.OS === 'ios' ? hp(1) : hp(2),
+    justifyContent: 'flex-start',
+  },
+  headerImageStyle: {
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    padding: hp(0.5),
+  },
+  backIcon: {
+    height: hp(3.5),
+    width: wp(5),
+  },
+  badgeWrapper: {
     alignItems: 'center',
+    marginTop: hp(2),
   },
-  toggleText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#11418A',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(5),
+    borderRadius: 20,
+    ...Platform.select({
+      android: { elevation: 2 },
+      ios: {
+        shadowColor: '#11418A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+      },
+    }),
+  },
+  badgeIcon: {
+    height: hp(3.5),
+    width: wp(5),
+    marginRight: wp(2),
+  },
+  badgeTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 16,
     color: '#FFFFFF',
-    fontWeight: '400',
+    letterSpacing: 0.2,
   },
-  toggleActive: {
-    backgroundColor: '#2563eb',
+  subtitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#475569',
+    textAlign: 'center',
+    marginTop: hp(2),
+    paddingHorizontal: wp(4),
+    lineHeight: 22,
+    letterSpacing: 0.1,
   },
-  toggleTextActive: {
-    fontFamily: 'Roboto-Regular',
-    color: '#fff',
-    fontWeight: '600',
+  content: {
+    paddingHorizontal: wp(5),
+    paddingTop: hp(3),
   },
-  cardList: {
-    padding: wp(5),
+  sectionTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 18,
+    color: '#1E293B',
+    marginBottom: hp(2),
+    letterSpacing: -0.3,
   },
   card: {
-    borderLeftWidth: 2,
     backgroundColor: '#FFFFFF',
-    borderRadius: wp(3),
+    borderRadius: 16,
     padding: wp(4),
-    marginBottom: hp(3),
-    elevation: 2,
+    marginBottom: hp(1.8),
+    borderLeftWidth: 4,
     borderLeftColor: '#17AD8D',
+    ...Platform.select({
+      android: { elevation: 1.5 },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+    }),
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: hp(0.5),
+  },
+  kcalPill: {
+    backgroundColor: '#ECFDF5',
+    paddingVertical: hp(0.5),
+    paddingHorizontal: wp(3),
+    borderRadius: 12,
+  },
+  kcalText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    color: '#059669',
+    letterSpacing: 0.2,
   },
   mealTitle: {
-    fontFamily: 'Roboto-Regular',
-    marginVertical: hp(1),
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#000000',
-    // marginBottom: hp(0.5),
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 15,
+    color: '#1E293B',
+    marginBottom: hp(0.8),
+    letterSpacing: -0.2,
+    lineHeight: 22,
   },
   detail: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '400',
-  },
-  cardFooter: {
-    // marginTop: hp(1.5),
-    // flexDirection: 'row',
-    // justifyContent: 'space-between',
-  },
-  tag: { fontFamily: 'Roboto-Regular', fontSize: wp(3.2), fontWeight: '500' },
-  kcal: {
-    fontFamily: 'Roboto-Regular',
-    marginLeft: hp(0),
-    fontSize: 14,
-    color: '#4B5563',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 20,
+    letterSpacing: 0.1,
   },
 });
 

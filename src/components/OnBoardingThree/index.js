@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   TextInput,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -89,10 +88,7 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
   };
 
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.container}
-    >
+    <View style={styles.container}>
       {/* Options */}
       <View style={styles.card}>
         {options.map((option, index) => (
@@ -127,7 +123,7 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
         />
         <Text style={styles.wordCount}>Characters: {text.length}/60</Text>
       </View>
-    </ScrollView>
+    </View>
   );
 };
 

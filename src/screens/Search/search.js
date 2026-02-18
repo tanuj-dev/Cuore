@@ -51,50 +51,32 @@ const Search = ({ navigation }) => {
       }
     };
     fetchResults();
-  }, [debouncedQuery]);
+  }, [debouncedQuery, dispatch]);
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
       onPress={() => navigation.navigate('Recipe', { recipeData: item })}
-      style={styles.card}
+      style={[
+        styles.card,
+        {
+          borderLeftColor:
+            item?.dietPreference === 'Non-Veg' ? '#DC2626' : '#16A34A',
+        },
+      ]}
     >
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{item?.name}</Text>
         {/* {item.dietPreference && (
           <Text style={styles.tag}>{item?.dietPreference}</Text>
         )} */}
-        {item?.dietPreference == 'Eggetarian' ? (
-          <View
-            style={{
-              backgroundColor: '#fff8c3',
-              flexDirection: 'row',
-              alignItems: 'center',
-              // marginRight: hp(2),
-              paddingHorizontal: wp(2),
-              borderRadius: hp(1),
-              justifyContent: 'center',
-            }}
-          >
-            <Image
-              style={{
-                height: hp(2.5),
-                width: wp(3),
-                resizeMode: 'contain',
-                marginRight: hp(0),
-              }}
-              source={Images.EGG}
-            />
-            <Text style={{ fontSize: hp(1.8), color: '#c68a40', fontSize: 10 }}>
-              Egg
-            </Text>
+        {item?.dietPreference === 'Eggetarian' ? (
+          <View style={styles.eggBadge}>
+            <Image style={styles.eggIcon} source={Images.EGG} />
+            <Text style={styles.eggText}>Egg</Text>
           </View>
         ) : (
           <Image
-            style={{
-              height: hp(2.5),
-              width: wp(13),
-              resizeMode: 'contain',
-            }}
+            style={styles.dietIcon}
             source={
               item?.dietPreference === 'Non-Veg' ? Images.NON_VEG : Images.VEG
             }
@@ -123,38 +105,38 @@ const Search = ({ navigation }) => {
   return (
     <SafeAreaView
       edges={['top']}
-      style={{ flex: 1, backgroundColor: '#F9FAFB' }}
+      style={styles.safeArea}
     >
       <View style={styles.container}>
-        <Text style={styles.title}>Search Recipes</Text>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            borderWidth: 1,
-            borderColor: '#D1D5DB',
-            borderRadius: hp(1),
-            backgroundColor: '#FFFFFF',
-          }}
-        >
-          <Image style={styles.searchIcon} source={Images.SEARCH} />
-          <TextInput
-            style={styles.input}
-            placeholder="Type a dish name..."
-            value={query}
-            onChangeText={setQuery}
-          />
+        <View style={styles.header}>
+          <Text style={styles.title}>Search Recipes</Text>
+          <View style={styles.searchBar}>
+            <Image style={styles.searchIcon} source={Images.SEARCH} />
+            <TextInput
+              style={styles.input}
+              placeholder="Type a dish name..."
+              placeholderTextColor="#94A3B8"
+              value={query}
+              onChangeText={setQuery}
+            />
+          </View>
+          {loading && (
+            <ActivityIndicator
+              style={styles.loader}
+              size="small"
+              color="#11418A"
+            />
+          )}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </View>
-
-        {loading && <ActivityIndicator style={{ marginTop: 20 }} />}
-
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <FlatList
           data={results}
           keyExtractor={(item, index) => index.toString()}
           renderItem={renderItem}
-          contentContainerStyle={{ marginTop: 20 }}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
         />
       </View>
     </SafeAreaView>
@@ -163,77 +145,129 @@ const Search = ({ navigation }) => {
 
 export default Search;
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
   container: {
     flex: 1,
     padding: hp(2),
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 20,
-    color: '#9CA3AF',
+  header: {
+    paddingBottom: hp(1),
   },
-  input: {
-    // flex: 1,
-    left: wp(3),
-    // height: hp(5.5),
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 14,
-    color: '#9CA3AF',
-    // backgroundColor: 'red',
+  list: {
     flex: 1,
   },
+  title: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 22,
+    marginBottom: hp(2.5),
+    color: '#1E293B',
+    letterSpacing: -0.3,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    paddingLeft: wp(3),
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: wp(2),
+    fontSize: 15,
+    fontFamily: 'Poppins-Regular',
+    color: '#1E293B',
+  },
+  searchIcon: {
+    width: wp(4),
+    height: wp(4),
+    tintColor: '#64748B',
+    resizeMode: 'contain',
+  },
+  loader: {
+    marginTop: hp(2),
+  },
+  listContent: {
+    paddingTop: hp(2),
+    paddingBottom: hp(3),
+  },
   errorText: {
+    fontFamily: 'Poppins-Medium',
     color: '#EF4444',
-    marginTop: 10,
+    marginTop: hp(1.5),
     fontSize: 14,
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     marginBottom: 12,
-    elevation: 3,
-    shadowColor: '#000',
+    elevation: 2,
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: '#17AD8D',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    borderLeftWidth: 3,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
-    // backgroundColor: '#F3F4F6',
     overflow: 'hidden',
-    // width: wp(70),
   },
   cardTitle: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
-    // backgroundColor: '#F3F4F6',
-    width: wp(70),
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 15,
+    color: '#1E293B',
+    width: wp(65),
+    letterSpacing: 0.1,
+  },
+  eggBadge: {
+    backgroundColor: '#FEF9C3',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(0.5),
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  eggIcon: {
+    height: hp(2.5),
+    width: wp(3),
+    resizeMode: 'contain',
+    marginRight: wp(1),
+  },
+  eggText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 10,
+    color: '#A16207',
+  },
+  dietIcon: {
+    height: hp(2.5),
+    width: wp(13),
+    resizeMode: 'contain',
   },
   tag: {
     backgroundColor: '#D1FAE5',
     color: '#065F46',
     fontSize: 12,
+    fontFamily: 'Poppins-Medium',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     overflow: 'hidden',
   },
   subText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Poppins-Regular',
     fontSize: 9,
-    color: '#6B7280',
+    color: '#64748B',
     marginBottom: 8,
   },
   metaRow: {
@@ -242,18 +276,8 @@ const styles = StyleSheet.create({
     marginTop: hp(0.5),
   },
   metaText: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 11,
-    color: '#374151',
-  },
-  searchIcon: {
-    width: wp(4),
-    height: wp(4),
-    tintColor: '#9CA3AF',
-    // position: 'absolute',
-    // top: hp(2),
-    left: wp(3),
-    resizeMode: 'contain',
-    zIndex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#475569',
   },
 });

@@ -57,8 +57,8 @@ const ROUTE_MAP = {
   'Cuore Tobacco': 'Tobacco',
   'Cuore Mind': 'Mind',
   'Cuore Fitness': 'Fitness',
-  'Cuore Knowledge': 'CuoreKnowledge',
-  'Cuore MealBuilder': 'MealBuilder',
+  'Cuore Insight': 'CuoreKnowledge',
+  'Cuore Plate': 'MealBuilder',
   'Cuore Nourish': 'Nutrition',
 };
 

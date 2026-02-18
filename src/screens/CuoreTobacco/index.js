@@ -10,7 +10,7 @@ import {
   RefreshControl,
   Platform,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { hp, wp, Images } from '../../utilities';
 import Header from '../../components/Header';
 import ToastMessage from '../../components/Toast';
@@ -22,14 +22,27 @@ import {
 } from '../../redux/slices';
 
 const Tobacco = ({ navigation }) => {
-  const [yesterdayCount, setYesterdayCount] = useState(0);
+  const [yesterdayCount, setYesterdayCount] = useState('');
   const [cigarettesPerDay, setCigarettesPerDay] = useState(0);
   const [yearsOfSmoking, setYearsOfSmoking] = useState(0);
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const hasSyncedFromProfile = useRef(false);
 
   const data = useSelector(state => state.tobacco.data?.data);
+
+  // Show previousDayCount from profile only once when data loads; user can then clear and type freely
+  useEffect(() => {
+    if (
+      profileData?.previousDayCount != null &&
+      profileData?.previousDayCount !== '' &&
+      !hasSyncedFromProfile.current
+    ) {
+      setYesterdayCount(String(profileData.previousDayCount));
+      hasSyncedFromProfile.current = true;
+    }
+  }, [profileData?.previousDayCount]);
   const dailyChalanges = useSelector(
     state => state.tobacco.data?.data?.allChallenges,
   );
@@ -63,7 +76,10 @@ const Tobacco = ({ navigation }) => {
   const handleLogUsage = async () => {
     console.log('handleLogUsage triggered');
     setLoading(true);
-    const count = yesterdayCount;
+    const count =
+      yesterdayCount !== '' && yesterdayCount !== undefined
+        ? Number(yesterdayCount)
+        : 0;
     const res = await dispatch(logTobaccoUsage({ userId, count })).unwrap();
     console.log('logTobaccoUsage response:', res);
     if (res.status === 'success') {
@@ -75,6 +91,7 @@ const Tobacco = ({ navigation }) => {
 
   const onRefresh = () => {
     setRefreshing(true);
+    hasSyncedFromProfile.current = false;
     if (userId) {
       dispatch(getTobacco(userId));
     }
@@ -109,12 +126,9 @@ const Tobacco = ({ navigation }) => {
               <TextInput
                 style={styles.inputSmall}
                 keyboardType="numeric"
-                value={
-                  yesterdayCount
-                    ? yesterdayCount
-                    : profileData?.previousDayCount
-                }
+                value={String(yesterdayCount)}
                 onChangeText={setYesterdayCount}
+                placeholder="0"
               />
             </View>
             <TouchableOpacity

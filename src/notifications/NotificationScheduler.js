@@ -24,9 +24,11 @@ export async function scheduleNotificationAfterMinutes(
         pressAction: {
           id: 'default',
         },
+        sound: 'doorbell', // Notifee default notification sound on Android
       },
       ios: {
         categoryId: 'default',
+        sound: 'default',
       },
     },
     trigger,
@@ -58,9 +60,11 @@ export async function scheduleNotificationAfterSeconds(
         pressAction: {
           id: 'default',
         },
+        sound: 'doorbell', // Notifee default notification sound on Android
       },
       ios: {
         categoryId: 'default',
+        sound: 'default',
       },
     },
     trigger,
@@ -81,9 +85,11 @@ export async function showImmediateNotification(title, body) {
       pressAction: {
         id: 'default',
       },
+      sound: 'doorbell', // Notifee default notification sound on Android
     },
     ios: {
       categoryId: 'default',
+      sound: 'default',
     },
   });
 }
@@ -153,9 +159,11 @@ export async function scheduleNotificationAtTime(
         pressAction: {
           id: 'default',
         },
+        sound: 'doorbell', // Notifee default notification sound on Android
       },
       ios: {
         categoryId: 'default',
+        sound: 'default',
       },
     },
     trigger,

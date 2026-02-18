@@ -5,14 +5,13 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  ScrollView,
   Alert,
   Platform,
   Modal,
   ActivityIndicator,
+  ScrollView,
   KeyboardAvoidingView,
   Keyboard,
-  TouchableWithoutFeedback,
 } from 'react-native';
 import { ProgressBar } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
@@ -49,6 +48,37 @@ const OnBoarding = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const scrollRef = useRef(null);
+  const scrollYRef = useRef(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      e => setKeyboardHeight(e.endCoordinates.height),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardHeight(0),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  // When keyboard opens, scroll up so focused input stays visible
+  useEffect(() => {
+    if (keyboardHeight > 0 && scrollRef.current) {
+      const delay = Platform.OS === 'ios' ? 150 : 400;
+      const timer = setTimeout(() => {
+        const newY = Math.min(scrollYRef.current + keyboardHeight * 0.4, 99999);
+        scrollRef.current?.scrollTo?.({ y: newY, animated: true });
+      }, delay);
+      return () => clearTimeout(timer);
+    }
+  }, [keyboardHeight]);
+
   console.log('OnBoarding Component State:', {
     // step,
     // onboarding2Data,
@@ -58,8 +88,6 @@ const OnBoarding = ({ navigation, route }) => {
     //   onboarding6Data,
     //   onboarding7Data,
   });
-
-  const scrollRef = useRef();
 
   // Validate required fields for each step
   const validateStepData = step => {
@@ -226,313 +254,308 @@ const OnBoarding = ({ navigation, route }) => {
     }));
   };
 
+  const scrollContentStyle = {
+    flexGrow: 1,
+    paddingBottom: hp(4) + keyboardHeight,
+  };
+
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          ref={scrollRef}
-          style={styles.container}
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Header */}
-          {step === 1 ? (
-            <Image source={Images.APP_LOGO} style={styles.logo} />
-          ) : (
-            <TouchableOpacity
-              onPress={handleBack}
-              style={{ marginTop: Platform.OS === 'ios' && hp(3) }}
-            >
-              <Image
-                source={Images.BACK_BUTTON}
-                style={{ resizeMode: 'contain', height: hp(3.5), width: wp(4) }}
-              />
-            </TouchableOpacity>
-          )}
-
-          {/* Banner */}
-          <View style={{ backgroundColor: 'white' }}>
-            <Image source={Images[`ON_BOARD${step}`]} style={styles.banner} />
-          </View>
-
-          {/* Titles */}
-          {step === 1 && (
-            <>
-              <Text style={styles.title}>Welcome to Cuore!</Text>
-              <Text style={styles.subtitle}>
-                Your everyday health companion
-              </Text>
-            </>
-          )}
-          {step === 2 && <Text style={styles.title}>Basic Information</Text>}
-          {step === 3 && <Text style={styles.title}>Health History</Text>}
-          {step === 4 && <Text style={styles.title}>Lifestyle</Text>}
-          {step === 5 && (
-            <Text style={styles.title}>Exercise & Eating Preferences</Text>
-          )}
-          {step === 6 && <Text style={styles.title}>Sleep & Stress</Text>}
-          {step === 7 && <Text style={styles.title}>Health Readings</Text>}
-
-          {/* Descriptions */}
-          {step === 1 && (
-            <Text style={styles.helpText}>
-              Help us guide you better—share your health and wellness history
-            </Text>
-          )}
-          {step === 2 && (
-            <Text style={styles.helpText}>Fill in your details below:</Text>
-          )}
-          {step === 3 && (
-            <Text style={styles.helpText}>
-              Please select details about your family’s health, history, or
-              symptoms you’ve experienced.
-            </Text>
-          )}
-          {step === 4 && (
-            <Text style={styles.helpText}>
-              Your lifestyle choices significantly impact your overall health.
-            </Text>
-          )}
-          {step === 5 && (
-            <Text style={styles.helpText}>
-              Let’s explore your exercise & eating preference for tailored
-              recommendations.
-            </Text>
-          )}
-          {step === 6 && (
-            <Text style={styles.helpText}>
-              Sleep and stress play a major role in cardio-metabolic health,
-              let’s understand how they impact you.
-            </Text>
-          )}
-          {step === 7 && (
-            <View style={styles.warningBox}>
-              <Image
-                source={images.NOTICE}
-                style={{
-                  height: hp(2),
-                  width: hp(2),
-                  resizeMode: 'contain',
-                  marginTop: hp(3),
-                  marginRight: hp(1),
-                }}
-              />
-              <View style={{ paddingHorizontal: hp(2) }}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: '#475569',
-                    fontFamily: 'Poppins-Medium',
-                    letterSpacing: 0.2,
-                    marginBottom: hp(0.5),
-                  }}
-                >
-                  For awareness and tracking only
-                </Text>
-                <Text style={styles.warningText}>
-                  If some readings aren’t available right now, you can update
-                  them later in ‘Today’
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {/* Step Indicator */}
-          <View style={styles.stepRow}>
-            <Text style={styles.stepText}>{`${step} of 7`}</Text>
-          </View>
-          <ProgressBar
-            progress={step / 7}
-            color="#11418A"
-            style={styles.progress}
-          />
-
-          {/* Step Components */}
-          {step === 1 && (
-            <>
-              <View style={styles.cardInfo}>
-                <Image source={Images.NOTICE} style={styles.cardIcon} />
-                <Text style={[styles.cardText, { color: '#4B5563' }]}>
-                  Please have a weighing scale and measuring tape ready.
-                </Text>
-              </View>
-
-              <View style={[styles.cardInfo, { backgroundColor: '#FBFAE5' }]}>
-                <Image source={Images.WARNING} style={styles.cardIcon} />
-                <Text style={styles.cardText}>
-                  This plan is tailored for you — using it for others can impact
-                  your recommendations.
-                </Text>
-              </View>
-
-              <Text style={styles.disclaimer}>
-                <Text style={{ fontFamily: 'Poppins-Medium' }}>
-                  Disclaimer:
-                </Text>{' '}
-                This assessment is not a substitute for professional medical
-                advice. Always consult your doctor before beginning any new
-                therapy or treatment.
-              </Text>
-
-              <TouchableOpacity
-                style={styles.disclaimerCheckRow}
-                onPress={() => setDisclaimerAccepted(prev => !prev)}
-                activeOpacity={0.8}
-              >
-                <View
-                  style={[
-                    styles.disclaimerCheckbox,
-                    disclaimerAccepted && styles.disclaimerCheckboxChecked,
-                  ]}
-                >
-                  {disclaimerAccepted ? (
-                    <Text style={styles.disclaimerCheckmark}>✓</Text>
-                  ) : null}
-                </View>
-                <Text style={styles.disclaimerCheckLabel}>
-                  I understand & Accept
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {step === 2 && (
-            <OnBoarding2
-              initialData={
-                screen !== 'Reassess'
-                  ? onboarding2Data
-                  : onBoardingData?.data?.o2Data
-              }
-              onFormChange={setOnboarding2Data}
-            />
-          )}
-
-          {step === 3 && (
-            <OnBoardingThree
-              initialData={
-                screen !== 'Reassess'
-                  ? onboarding3Data
-                  : onBoardingData?.data?.o3Data
-              }
-              onFormChange={handleFormChange}
-            />
-          )}
-          {step === 4 && (
-            <OnBoardingFour
-              initialData={
-                screen !== 'Reassess'
-                  ? onboarding4Data
-                  : onBoardingData?.data?.o4Data
-              }
-              onFormChange={setOnboarding4Data}
-            />
-          )}
-
-          {step === 5 && (
-            <OnBoardingFive
-              initialData={
-                screen !== 'Reassess'
-                  ? onboarding5Data
-                  : onBoardingData?.data?.o5Data
-              }
-              onFormChange={data => {
-                setOnboarding5Data(prev =>
-                  JSON.stringify(prev) === JSON.stringify(data) ? prev : data,
-                );
-              }}
-            />
-          )}
-
-          {step === 6 && (
-            <OnBoardingSix
-              initialData={
-                screen !== 'Reassess'
-                  ? onboarding6Data
-                  : onBoardingData?.data?.o6Data
-              }
-              onFormChange={data => {
-                setOnboarding6Data(prev =>
-                  JSON.stringify(prev) === JSON.stringify(data) ? prev : data,
-                );
-              }}
-            />
-          )}
-
-          {step === 7 && (
-            <OnBoardingSeven
-              initialData={
-                screen !== 'Reassess'
-                  ? onboarding7Data
-                  : onBoardingData?.data?.o7Data
-              }
-              onFormChange={handleOnboarding7Change}
-            />
-          )}
-
-          {/* Button */}
-
+      <ScrollView
+        ref={scrollRef}
+        style={styles.container}
+        contentContainerStyle={scrollContentStyle}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+        onScroll={e => {
+          scrollYRef.current = e.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={100}
+      >
+        {/* Header */}
+        {step === 1 ? (
+          <Image source={Images.APP_LOGO} style={styles.logo} />
+        ) : (
           <TouchableOpacity
-            style={[
-              styles.button,
-              step === 1 && !disclaimerAccepted && styles.buttonDisabled,
-            ]}
-            onPress={handleNext}
-            disabled={step === 1 && !disclaimerAccepted}
-            activeOpacity={step === 1 && !disclaimerAccepted ? 1 : 0.8}
+            onPress={handleBack}
+            style={{ marginTop: Platform.OS === 'ios' && hp(3) }}
           >
-            {step === 7 && loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
+            <Image
+              source={Images.BACK_BUTTON}
+              style={{ resizeMode: 'contain', height: hp(3.5), width: wp(4) }}
+            />
+          </TouchableOpacity>
+        )}
+
+        {/* Banner */}
+        <View style={{ backgroundColor: 'white' }}>
+          <Image source={Images[`ON_BOARD${step}`]} style={styles.banner} />
+        </View>
+
+        {/* Titles */}
+        {step === 1 && (
+          <>
+            <Text style={styles.title}>Welcome to Cuore!</Text>
+            <Text style={styles.subtitle}>Your everyday health companion</Text>
+          </>
+        )}
+        {step === 2 && <Text style={styles.title}>Basic Information</Text>}
+        {step === 3 && <Text style={styles.title}>Health History</Text>}
+        {step === 4 && <Text style={styles.title}>Lifestyle</Text>}
+        {step === 5 && (
+          <Text style={styles.title}>Exercise & Eating Preferences</Text>
+        )}
+        {step === 6 && <Text style={styles.title}>Sleep & Stress</Text>}
+        {step === 7 && <Text style={styles.title}>Health Readings</Text>}
+
+        {/* Descriptions */}
+        {step === 1 && (
+          <Text style={styles.helpText}>
+            Help us guide you better—share your health and wellness history
+          </Text>
+        )}
+        {step === 2 && (
+          <Text style={styles.helpText}>Fill in your details below:</Text>
+        )}
+        {step === 3 && (
+          <Text style={styles.helpText}>
+            Please select details about your family’s health, history, or
+            symptoms you’ve experienced.
+          </Text>
+        )}
+        {step === 4 && (
+          <Text style={styles.helpText}>
+            Your lifestyle choices significantly impact your overall health.
+          </Text>
+        )}
+        {step === 5 && (
+          <Text style={styles.helpText}>
+            Let’s explore your exercise & eating preference for tailored
+            recommendations.
+          </Text>
+        )}
+        {step === 6 && (
+          <Text style={styles.helpText}>
+            Sleep and stress play a major role in cardio-metabolic health.
+          </Text>
+        )}
+        {step === 7 && (
+          <View style={styles.warningBox}>
+            <Image
+              source={images.NOTICE}
+              style={{
+                height: hp(2),
+                width: hp(2),
+                resizeMode: 'contain',
+                marginTop: hp(3),
+                marginRight: hp(1),
+              }}
+            />
+            <View style={{ paddingHorizontal: hp(2) }}>
               <Text
+                style={{
+                  fontSize: 16,
+                  color: '#475569',
+                  fontFamily: 'Poppins-Medium',
+                  letterSpacing: 0.2,
+                  marginBottom: hp(0.5),
+                }}
+              >
+                For awareness and tracking only
+              </Text>
+              <Text style={styles.warningText}>
+                If some readings aren’t available right now, you can update them
+                later in ‘Today’
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Step Indicator */}
+        <View style={styles.stepRow}>
+          <Text style={styles.stepText}>{`${step} of 7`}</Text>
+        </View>
+        <ProgressBar
+          progress={step / 7}
+          color="#11418A"
+          style={styles.progress}
+        />
+
+        {/* Step Components */}
+        {step === 1 && (
+          <>
+            <View style={styles.disclaimerBox}>
+              <Image source={Images.WARNING} style={styles.disclaimerBoxIcon} />
+              <Text style={styles.disclaimerBoxText}>
+                Cuore is a wellness support tool designed to help you track
+                fitness, nutrition, sleep, stress, and health records. It is
+                intended for awareness and continuity only. Cuore does not
+                provide medical advice, diagnosis, or treatment. AI-assisted
+                summaries help organize uploaded records and may contain
+                inaccuracies. Please verify important details with your original
+                reports. For medical decisions or concerns, consult your
+                healthcare professional.
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.disclaimerCheckRow}
+              onPress={() => setDisclaimerAccepted(prev => !prev)}
+              activeOpacity={0.8}
+            >
+              <View
                 style={[
-                  styles.buttonText,
-                  step === 1 &&
-                    !disclaimerAccepted &&
-                    styles.buttonTextDisabled,
+                  styles.disclaimerCheckbox,
+                  disclaimerAccepted && styles.disclaimerCheckboxChecked,
                 ]}
               >
-                {step === 7 ? 'Submit' : step === 1 ? 'Start' : 'Next'}
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Validation Modal */}
-          <Modal
-            visible={showValidationModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowValidationModal(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalBox}>
-                <Text style={styles?.modalTitle}>Incomplete</Text>
-                <Text style={styles?.modalMessage}>
-                  {screen === 'Reassess'
-                    ? 'Please confirm your Gender.'
-                    : 'Please fill all the required details before continuing.'}
-                </Text>
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={() => setShowValidationModal(false)}
-                >
-                  <Text style={styles.modalButtonText}>OK</Text>
-                </TouchableOpacity>
+                {disclaimerAccepted ? (
+                  <Text style={styles.disclaimerCheckmark}>✓</Text>
+                ) : null}
               </View>
-            </View>
-          </Modal>
-          {toast && (
-            <Toast
-              message={toast.message}
-              type={toast.type}
-              onHide={() => setToast(null)}
-              top={700}
-            />
+              <Text style={styles.disclaimerCheckLabel}>
+                I understand & Accept
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {step === 2 && (
+          <OnBoarding2
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding2Data
+                : onBoardingData?.data?.o2Data
+            }
+            onFormChange={setOnboarding2Data}
+          />
+        )}
+
+        {step === 3 && (
+          <OnBoardingThree
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding3Data
+                : onBoardingData?.data?.o3Data
+            }
+            onFormChange={handleFormChange}
+          />
+        )}
+        {step === 4 && (
+          <OnBoardingFour
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding4Data
+                : onBoardingData?.data?.o4Data
+            }
+            onFormChange={setOnboarding4Data}
+          />
+        )}
+
+        {step === 5 && (
+          <OnBoardingFive
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding5Data
+                : onBoardingData?.data?.o5Data
+            }
+            onFormChange={data => {
+              setOnboarding5Data(prev =>
+                JSON.stringify(prev) === JSON.stringify(data) ? prev : data,
+              );
+            }}
+          />
+        )}
+
+        {step === 6 && (
+          <OnBoardingSix
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding6Data
+                : onBoardingData?.data?.o6Data
+            }
+            onFormChange={data => {
+              setOnboarding6Data(prev =>
+                JSON.stringify(prev) === JSON.stringify(data) ? prev : data,
+              );
+            }}
+          />
+        )}
+
+        {step === 7 && (
+          <OnBoardingSeven
+            initialData={
+              screen !== 'Reassess'
+                ? onboarding7Data
+                : onBoardingData?.data?.o7Data
+            }
+            onFormChange={handleOnboarding7Change}
+          />
+        )}
+
+        {/* Button */}
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            step === 1 && !disclaimerAccepted && styles.buttonDisabled,
+          ]}
+          onPress={handleNext}
+          disabled={step === 1 && !disclaimerAccepted}
+          activeOpacity={step === 1 && !disclaimerAccepted ? 1 : 0.8}
+        >
+          {step === 7 && loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text
+              style={[
+                styles.buttonText,
+                step === 1 && !disclaimerAccepted && styles.buttonTextDisabled,
+              ]}
+            >
+              {step === 7 ? 'Submit' : step === 1 ? 'Start' : 'Next'}
+            </Text>
           )}
-        </ScrollView>
-      </TouchableWithoutFeedback>
+        </TouchableOpacity>
+
+        {/* Validation Modal */}
+        <Modal
+          visible={showValidationModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowValidationModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              <Text style={styles?.modalTitle}>Incomplete</Text>
+              <Text style={styles?.modalMessage}>
+                {screen === 'Reassess'
+                  ? 'Please confirm your Gender.'
+                  : 'Please fill all the required details before continuing.'}
+              </Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowValidationModal(false)}
+              >
+                <Text style={styles.modalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onHide={() => setToast(null)}
+            top={700}
+          />
+        )}
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -622,6 +645,37 @@ const styles = StyleSheet.create({
     color: '#A16207',
     lineHeight: 20,
     letterSpacing: 0.2,
+  },
+  disclaimerBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FEFCE8',
+    borderWidth: 1.5,
+    borderColor: '#FDE047',
+    borderRadius: 12,
+    padding: hp(2),
+    marginTop: hp(0.5),
+    marginBottom: hp(1),
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 },
+    }),
+  },
+  disclaimerBoxIcon: {
+    height: hp(2.5),
+    width: wp(5),
+    resizeMode: 'contain',
+    marginRight: wp(3),
+    marginTop: hp(0.2),
+  },
+  disclaimerBoxText: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#92400E',
+    lineHeight: 20,
+    letterSpacing: 0.1,
+    textAlign: 'justify',
   },
   disclaimer: {
     fontFamily: 'Poppins-Regular',
