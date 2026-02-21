@@ -8,7 +8,6 @@ import {
   Image,
   ActivityIndicator,
   Platform,
-  Alert,
   KeyboardAvoidingView,
   Keyboard,
   TouchableWithoutFeedback,
@@ -16,27 +15,19 @@ import {
 import {
   initConnection,
   endConnection,
-  getProducts,
-  requestPurchase,
+  getSubscriptions,
+  requestSubscription,
   purchaseUpdatedListener,
   purchaseErrorListener,
   finishTransaction,
-  getAvailablePurchases,
-  validateReceiptIos,
-  validateReceiptAndroid,
   flushFailedPurchasesCachedAsPendingAndroid,
 } from 'react-native-iap';
 import { hp, wp, Images } from '../../utilities';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
-// IAP Product IDs - These should match your App Store/Play Store product IDs
-const PRODUCT_IDS = [
-  'com.cuore.stabilise', // 3 Months
-  'com.cuore.progress', // 6 Months
-  'com.cuore.thrive', // 12 Months
-];
+// Subscription product ID — must match Google Play Console exactly
+const SUBSCRIPTION_ID = 'pro_membership_annual';
 
-// Map IAP products to UI plans
 const plans = [
   {
     title: 'Cuore Annual',
@@ -44,9 +35,9 @@ const plans = [
     duration: '12 Months',
     oldPrice: 1999,
     newPrice: 1499,
-    daily: ' ₹4.1/day',
+    daily: '₹4.1/day',
     discount: '25%',
-    productId: 'com.cuore.annual',
+    productId: SUBSCRIPTION_ID,
     topPick: true,
   },
 ];
@@ -61,157 +52,122 @@ const Checkout = ({ navigation }) => {
   const selected = plans.find(p => p.title === selectedPlan);
   const GST = 0.18;
   const gstAmount = selected ? selected.newPrice * GST : 0;
-  const totalAmount = selected ? selected.newPrice + gstAmount : 0;
 
   // Initialize IAP connection
-  // useEffect(() => {
-  //   const initIAP = async () => {
-  //     try {
-  //       const result = await initConnection();
-  //       console.log('IAP Connection Result:', result);
+  useEffect(() => {
+    let purchaseUpdateSub = null;
+    let purchaseErrorSub = null;
 
-  //       if (result) {
-  //         // Flush failed purchases for Android
-  //         if (Platform.OS === 'android') {
-  //           await flushFailedPurchasesCachedAsPendingAndroid();
-  //         }
+    const initIAP = async () => {
+      try {
+        await initConnection();
 
-  //         // Get available products
-  //         const availableProducts = await getProducts({ skus: PRODUCT_IDS });
-  //         console.log('Available Products:', availableProducts);
-  //         setProducts(availableProducts);
-  //         setIsIAPInitialized(true);
+        if (Platform.OS === 'android') {
+          await flushFailedPurchasesCachedAsPendingAndroid();
+        }
 
-  //         // Listen for purchase updates
-  //         purchaseUpdatedListener(async purchase => {
-  //           console.log('Purchase Updated:', purchase);
-  //           try {
-  //             // Validate receipt
-  //             let receiptValidationResult;
-  //             if (Platform.OS === 'ios') {
-  //               receiptValidationResult = await validateReceiptIos(
-  //                 {
-  //                   'receipt-data': purchase.transactionReceipt,
-  //                   password: 'YOUR_SHARED_SECRET', // Add your Apple Shared Secret
-  //                 },
-  //                 __DEV__,
-  //               );
-  //             } else {
-  //               receiptValidationResult = await validateReceiptAndroid(
-  //                 {
-  //                   packageName: 'com.cuore',
-  //                   productId: purchase.productId,
-  //                   purchaseToken: purchase.purchaseToken,
-  //                   subscription: false,
-  //                 },
-  //                 'YOUR_GOOGLE_SERVICE_ACCOUNT', // Add your Google Service Account
-  //               );
-  //             }
+        const subs = await getSubscriptions({ skus: [SUBSCRIPTION_ID] });
+        console.log('Subscriptions fetched:', subs);
+        setProducts(subs);
+        setIsIAPInitialized(true);
 
-  //             console.log('Receipt Validation:', receiptValidationResult);
+        // Listen for successful purchases
+        purchaseUpdateSub = purchaseUpdatedListener(async purchase => {
+          console.log('Purchase updated:', purchase);
+          try {
+            await finishTransaction({ purchase, isConsumable: false });
+            handleSuccessfulPurchase(purchase);
+          } catch (err) {
+            console.error('Finish transaction error:', err);
+            alert('Purchase Error', 'Could not complete your purchase. Please try again.');
+          }
+        });
 
-  //             // Finish the transaction
-  //             await finishTransaction({ purchase, isConsumable: false });
+        // Listen for purchase errors
+        purchaseErrorSub = purchaseErrorListener(err => {
+          console.error('Purchase error:', err);
+          setIsProcessingPayment(false);
+          if (err.code !== 'E_USER_CANCELLED') {
+            alert('Purchase Failed', err.message || 'Something went wrong. Please try again.');
+          }
+        });
+      } catch (err) {
+        console.error('IAP init error:', err);
+        // In debug/dev builds this error is expected — IAP only works with
+        // a signed release build installed via Play Store internal testing.
+        if (!__DEV__) {
+          alert('Error', 'Failed to set up payment. Please try again.');
+        }
+      }
+    };
 
-  //             // Handle successful purchase
-  //             handleSuccessfulPurchase(purchase);
-  //           } catch (error) {
-  //             console.error('Purchase validation error:', error);
-  //             Alert.alert(
-  //               'Purchase Error',
-  //               'There was an error validating your purchase.',
-  //             );
-  //           }
-  //         });
+    initIAP();
 
-  //         // Listen for purchase errors
-  //         purchaseErrorListener(error => {
-  //           console.error('Purchase Error:', error);
-  //           setIsProcessingPayment(false);
-  //           Alert.alert(
-  //             'Purchase Failed',
-  //             error.message || 'There was an error processing your purchase.',
-  //           );
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error('IAP Initialization Error:', error);
-  //       Alert.alert(
-  //         'Error',
-  //         'Failed to initialize payment system. Please try again.',
-  //       );
-  //     }
-  //   };
+    return () => {
+      purchaseUpdateSub?.remove();
+      purchaseErrorSub?.remove();
+      endConnection();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  //   initIAP();
-
-  //   // Cleanup
-  //   return () => {
-  //     endConnection();
-  //   };
-  // }, []);
-
-  // Handle successful purchase
-  // const handleSuccessfulPurchase = useCallback(
-  //   purchase => {
-  //     setIsProcessingPayment(false);
-  //     Alert.alert(
-  //       'Purchase Successful',
-  //       'Thank you for your subscription! Your account has been upgraded.',
-  //       [
-  //         {
-  //           text: 'OK',
-  //           onPress: () => {
-  //             // Navigate to appropriate screen after successful purchase
-  //             navigation.reset({
-  //               index: 0,
-  //               routes: [{ name: 'Home' }],
-  //             });
-  //           },
-  //         },
-  //       ],
-  //     );
-  //   },
-  //   [navigation],
-  // );
+  const handleSuccessfulPurchase = useCallback(
+    purchase => {
+      setIsProcessingPayment(false);
+      alert(
+        'Subscription Active!',
+        'Thank you for subscribing to Cuore. Your account has been upgraded.',
+        [
+          {
+            text: 'Get Started',
+            onPress: () =>
+              navigation.reset({ index: 0, routes: [{ name: 'Home' }] }),
+          },
+        ],
+      );
+    },
+    [navigation, alert],
+  );
 
   const handlePlanSelect = planTitle => {
     setSelectedPlan(planTitle);
   };
 
   const handleCheckout = async () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Home' }],
-    });
+    if (!isIAPInitialized) {
+      alert('Not Ready', 'Payment system is still loading. Please wait a moment.');
+      return;
+    }
 
-    // if (!isIAPInitialized) {
-    //   Alert.alert('Error', 'Payment system is not ready. Please try again.');
-    //   return;
-    // }
+    const subscription = products.find(p => p.productId === selected.productId);
+    if (!subscription) {
+      alert('Unavailable', 'This subscription is not available right now. Please try again later.');
+      return;
+    }
 
-    // try {
-    //   setIsProcessingPayment(true);
+    try {
+      setIsProcessingPayment(true);
 
-    //   // Find the product for the selected plan
-    //   const product = products.find(p => p.productId === selected.productId);
+      if (Platform.OS === 'android') {
+        // Android requires offerToken from the base plan
+        const offerToken =
+          subscription?.subscriptionOfferDetails?.[0]?.offerToken;
 
-    //   if (!product) {
-    //     throw new Error('Product not found');
-    //   }
-
-    //   console.log('Requesting purchase for:', product.productId);
-
-    //   // Request purchase
-    //   await requestPurchase({ sku: product.productId });
-
-    //   // The purchase listener will handle the success/failure
-
-    // } catch (error) {
-    //   console.error('Purchase Request Error:', error);
-    //   setIsProcessingPayment(false);
-    //   Alert.alert('Purchase Error', error.message || 'Failed to initiate purchase.');
-    // }
+        await requestSubscription({
+          sku: selected.productId,
+          ...(offerToken && {
+            subscriptionOffers: [{ sku: selected.productId, offerToken }],
+          }),
+        });
+      } else {
+        await requestSubscription({ sku: selected.productId });
+      }
+    } catch (err) {
+      console.error('Purchase request error:', err);
+      setIsProcessingPayment(false);
+      if (err.code !== 'E_USER_CANCELLED') {
+        alert('Purchase Error', err.message || 'Failed to start purchase.');
+      }
+    }
   };
 
   return (
@@ -445,21 +401,21 @@ const Checkout = ({ navigation }) => {
               onPress={handleCheckout}
               style={[
                 styles.checkoutButton,
-                isProcessingPayment && styles.checkoutButtonDisabled,
+                (isProcessingPayment || !isIAPInitialized) && styles.checkoutButtonDisabled,
               ]}
-              // disabled={isProcessingPayment || !isIAPInitialized}
+              disabled={isProcessingPayment || !isIAPInitialized}
             >
-              {/* {isProcessingPayment ? (
+              {isProcessingPayment ? (
                 <>
-                  <ActivityIndicator color="#fff" />
-                  <Text style={styles.checkoutText}> Processing...</Text>
+                  <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={styles.checkoutText}>Processing...</Text>
                 </>
-              ) : ( */}
-              <>
-                <Image source={Images.LOCK} style={styles.lockIcon} />
-                <Text style={styles.checkoutText}>Subscribe Now</Text>
-              </>
-              {/* )} */}
+              ) : (
+                <>
+                  <Image source={Images.LOCK} style={styles.lockIcon} />
+                  <Text style={styles.checkoutText}>Subscribe Now</Text>
+                </>
+              )}
             </TouchableOpacity>
 
             {/* IAP Status */}
