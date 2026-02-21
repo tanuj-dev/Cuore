@@ -288,6 +288,7 @@ const Score = ({ navigation, route }) => {
 
   const handleReassess = useCallback(() => {
     navigation.navigate('OnBoarding', {
+      STEP: 2,
       screen: 'Reassess',
     });
   }, [navigation]);
@@ -347,60 +348,65 @@ const Score = ({ navigation, route }) => {
     <>
       {AlertComponent}
       <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <ViewShot
-        ref={viewShotRef}
-        options={{ format: 'jpg', quality: 0.9 }}
-        style={styles.viewShot}
-        collapsable={false}
-      >
-        <View style={styles.viewShotContent}>
-          {/* Fixed Header - Non-scrollable */}
-          <View style={styles.fixedHeader}>
-            <View style={styles.headerContainer}>
-              <View style={styles.headerTopRow}>
-                <TouchableOpacity>
-                  <Text style={styles.date}>{date || ''}</Text>
-                </TouchableOpacity>
-                <View style={styles.headerIconsRow}>
-                  <TouchableOpacity
-                    disabled={role === 'caregiver'}
-                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                    onPress={handleShareScreenshot}
-                  >
+        <ViewShot
+          ref={viewShotRef}
+          options={{ format: 'jpg', quality: 0.9 }}
+          style={styles.viewShot}
+          collapsable={false}
+        >
+          <View style={styles.viewShotContent}>
+            {/* Fixed Header - Non-scrollable */}
+            <View style={styles.fixedHeader}>
+              <View style={styles.headerContainer}>
+                <View style={styles.headerTopRow}>
+                  <TouchableOpacity>
+                    <Text style={styles.date}>{date || ''}</Text>
+                  </TouchableOpacity>
+                  <View style={styles.headerIconsRow}>
+                    <TouchableOpacity
+                      disabled={role === 'caregiver'}
+                      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                      onPress={handleShareScreenshot}
+                    >
+                      <Image
+                        source={Images.SHARE_4}
+                        style={styles.shareIcon}
+                        resizeMode="contain"
+                      />
+                    </TouchableOpacity>
                     <Image
-                      source={Images.SHARE_4}
-                      style={styles.shareIcon}
+                      source={profileImageSource}
+                      style={styles.profileIcon}
                       resizeMode="contain"
                     />
-                  </TouchableOpacity>
-                  <Image
-                    source={profileImageSource}
-                    style={styles.profileIcon}
-                    resizeMode="contain"
-                  />
+                  </View>
                 </View>
-              </View>
-              <View style={styles.header}>
-                <Text style={styles.title}>Cuore Score</Text>
-                <View style={styles.avatarWrapper}>
-                  <Image source={Images.avatar} style={styles.avatar} />
+                <View style={styles.header}>
+                  <Text style={styles.title}>Cuore Score</Text>
+                  <View style={styles.avatarWrapper}>
+                    <Image source={Images.avatar} style={styles.avatar} />
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
 
-          <ScrollView
-            refreshControl={
-              <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
-            }
-            style={styles.container}
-            nestedScrollEnabled={true}
-            showsVerticalScrollIndicator={true}
-          >
-            <View style={styles.scrollContent}>
-              <View style={styles.scoreCard}>
-                <GaugeMeter value={Math.round(health_metrics?.health_score)} />
-                {/* <Text
+            <ScrollView
+              refreshControl={
+                <RefreshControl
+                  refreshing={loading}
+                  onRefresh={handleRefresh}
+                />
+              }
+              style={styles.container}
+              nestedScrollEnabled={true}
+              showsVerticalScrollIndicator={true}
+            >
+              <View style={styles.scrollContent}>
+                <View style={styles.scoreCard}>
+                  <GaugeMeter
+                    value={Math.round(health_metrics?.health_score)}
+                  />
+                  {/* <Text
                   style={{
                     fontSize: hp(2.5),
                     color: 'red',
@@ -411,159 +417,159 @@ const Score = ({ navigation, route }) => {
                 >
                   {Math.round(health_metrics?.health_score)}
                 </Text> */}
-                {/* <Text style={styles.score}>78</Text> */}
-                {/* <Text style={styles.scoreDisclaimer}>
+                  {/* <Text style={styles.score}>78</Text> */}
+                  {/* <Text style={styles.scoreDisclaimer}>
                   As you habits change, update you score regularly
                 </Text> */}
-                <View style={styles.timeToTargetTitleRow}>
-                  <Image
-                    source={Images.NOTICE}
-                    style={styles.timeToTargetTitleIcon}
-                    resizeMode="contain"
-                  />
+                  <View style={styles.timeToTargetTitleRow}>
+                    <Image
+                      source={Images.NOTICE}
+                      style={styles.timeToTargetTitleIcon}
+                      resizeMode="contain"
+                    />
 
-                  <Text style={styles.timeToTarget}>Progress Projection</Text>
-                </View>
-                <View style={styles.timeToTargetRow}>
-                  <Text style={styles.months}>
-                    {Math.round(
-                      health_metrics?.estimated_time_to_target?.value,
-                    )}
-                  </Text>
-                  <Text style={styles.months}>
-                    {' '}
-                    {health_metrics?.estimated_time_to_target?.unit}
-                  </Text>
-                </View>
-                <View style={styles.projectionDisclaimerRow}>
-                  {/* <Image
+                    <Text style={styles.timeToTarget}>Progress Projection</Text>
+                  </View>
+                  <View style={styles.timeToTargetRow}>
+                    <Text style={styles.months}>
+                      {Math.round(
+                        health_metrics?.estimated_time_to_target?.value,
+                      )}
+                    </Text>
+                    <Text style={styles.months}>
+                      {' '}
+                      {health_metrics?.estimated_time_to_target?.unit}
+                    </Text>
+                  </View>
+                  <View style={styles.projectionDisclaimerRow}>
+                    {/* <Image
                     source={Images.NOTICE}
                     style={styles.projectionDisclaimerIcon}
                     resizeMode="contain"
                   /> */}
-                  <Text style={styles.projectionDisclaimerText}>
-                    As you habits change, update you score regularly.
+                    <Text style={styles.projectionDisclaimerText}>
+                      As you habits change, update you score regularly.
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    disabled={role === 'caregiver'}
+                    onPress={handleReassess}
+                    style={styles.reassessButton}
+                  >
+                    <Image
+                      source={Images.EDIT}
+                      style={styles.reassessIcon}
+                      resizeMode="contain"
+                    />
+
+                    <Text style={styles.reassessText}>Update Score </Text>
+                  </TouchableOpacity>
+                  <Text style={styles.reassessNote}>
+                    Based on general lifestyle and cardiometabolic research;
+                    consistent habit changes are commonly associated with
+                    measurable improvements over time. This estimate reflects
+                    general population trends and is not a medical prediction.
+                    Individual results vary.
                   </Text>
                 </View>
 
-                <TouchableOpacity
-                  disabled={role === 'caregiver'}
-                  onPress={handleReassess}
-                  style={styles.reassessButton}
-                >
-                  <Image
-                    source={Images.EDIT}
-                    style={styles.reassessIcon}
-                    resizeMode="contain"
+                <View style={styles.row}>
+                  <InfoCard
+                    label="Metabolic Age"
+                    value={health_metrics?.metabolic_age?.value}
+                    // subText={health_metrics?.metabolic_age?.gap}
+                    png={Images.TREND}
                   />
+                  <InfoCard
+                    label="Weight"
+                    value={health_metrics?.weight?.current}
+                    // subText={`Target:${Math.round(
+                    //   health_metrics?.weight?.target,
+                    // )} kg`}
+                    png={Images.WEIGHT}
+                  />
+                </View>
+                <View style={styles.row}>
+                  <InfoCard
+                    label="BMI"
+                    value={health_metrics?.bmi.value}
+                    // subText={`Target: ${health_metrics?.bmi?.target}`}
+                    png={Images.WEIGHT}
+                  />
+                  <InfoCard
+                    label="Lifestyle"
+                    value={`${health_metrics?.lifestyle_score?.value?.toFixed(
+                      1,
+                    )}%`}
+                    // subText={`Target: >${health_metrics?.lifestyle_score.target}`}
+                    png={Images.TREND}
+                  />
+                </View>
 
-                  <Text style={styles.reassessText}>Update Score </Text>
-                </TouchableOpacity>
-                <Text style={styles.reassessNote}>
-                  Based on general lifestyle and cardiometabolic research;
-                  consistent habit changes are commonly associated with
-                  measurable improvements over time. This estimate reflects
-                  general population trends and is not a medical prediction.
-                  Individual results vary.
-                </Text>
-              </View>
+                <View style={styles.row}>
+                  <InfoCard
+                    label="Recommended Calories"
+                    value={`${health_metrics?.recommended?.calories?.value} kcal`}
+                  />
+                  <InfoCard
+                    label="Recommended Exercise"
+                    value={`${health_metrics?.recommended?.exercise?.value} min`}
+                  />
+                </View>
+                <View style={styles.vitalsContainer}>
+                  {filteredVitals.map((item, index) => (
+                    <View
+                      key={`${item.label}-${index}`}
+                      style={styles.vitalItemWrapper}
+                    >
+                      <VitalCard
+                        label={item.label}
+                        value={item.value}
+                        // target={item.target}
+                        color={item.status}
+                        hasDiabetes={hasDiabetes}
+                      />
+                    </View>
+                  ))}
 
-              <View style={styles.row}>
-                <InfoCard
-                  label="Metabolic Age"
-                  value={health_metrics?.metabolic_age?.value}
-                  // subText={health_metrics?.metabolic_age?.gap}
-                  png={Images.TREND}
-                />
-                <InfoCard
-                  label="Weight"
-                  value={health_metrics?.weight?.current}
-                  // subText={`Target:${Math.round(
-                  //   health_metrics?.weight?.target,
-                  // )} kg`}
-                  png={Images.WEIGHT}
-                />
-              </View>
-              <View style={styles.row}>
-                <InfoCard
-                  label="BMI"
-                  value={health_metrics?.bmi.value}
-                  // subText={`Target: ${health_metrics?.bmi?.target}`}
-                  png={Images.WEIGHT}
-                />
-                <InfoCard
-                  label="Lifestyle"
-                  value={`${health_metrics?.lifestyle_score?.value?.toFixed(
-                    1,
-                  )}%`}
-                  // subText={`Target: >${health_metrics?.lifestyle_score.target}`}
-                  png={Images.TREND}
-                />
-              </View>
-
-              <View style={styles.row}>
-                <InfoCard
-                  label="Recommended Calories"
-                  value={`${health_metrics?.recommended?.calories?.value} kcal`}
-                />
-                <InfoCard
-                  label="Recommended Exercise"
-                  value={`${health_metrics?.recommended?.exercise?.value} min`}
-                />
-              </View>
-              <View style={styles.vitalsContainer}>
-                {filteredVitals.map((item, index) => (
-                  <View
-                    key={`${item.label}-${index}`}
-                    style={styles.vitalItemWrapper}
-                  >
-                    <VitalCard
-                      label={item.label}
-                      value={item.value}
-                      // target={item.target}
-                      color={item.status}
-                      hasDiabetes={hasDiabetes}
-                    />
-                  </View>
-                ))}
-
-                <View style={styles.focusRow}>
-                  <Text style={styles.focusLabel}>Main Focus</Text>
-                  <View style={styles.focusTags}>
-                    <Text style={styles.focusTag}>
-                      {health_metrics?.main_focus?.[0]}
-                    </Text>
-                    <Text style={styles.focusTag}>
-                      {health_metrics?.main_focus?.[1]}
-                    </Text>
+                  <View style={styles.focusRow}>
+                    <Text style={styles.focusLabel}>Main Focus</Text>
+                    <View style={styles.focusTags}>
+                      <Text style={styles.focusTag}>
+                        {health_metrics?.main_focus?.[0]}
+                      </Text>
+                      <Text style={styles.focusTag}>
+                        {health_metrics?.main_focus?.[1]}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
 
-              <View style={styles.continueContainer}>
+                <View style={styles.continueContainer}>
+                  <TouchableOpacity
+                    disabled={role === 'caregiver'}
+                    onPress={handleContinue}
+                    style={styles.continueButton}
+                  >
+                    <Text style={styles.continueText}>Continue</Text>
+                  </TouchableOpacity>
+                </View>
                 <TouchableOpacity
-                  disabled={role === 'caregiver'}
-                  onPress={handleContinue}
-                  style={styles.continueButton}
+                  style={[styles.card, styles.referencesCard]}
+                  onPress={() => setShowReferencesModal(true)}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.continueText}>Continue</Text>
+                  <Image
+                    style={styles.referencesNoticeIcon}
+                    source={Images.NOTICE}
+                  />
+                  <Text style={styles.referencesCardText}>
+                    Cuore – Medical References & Source Guidance
+                  </Text>
                 </TouchableOpacity>
-              </View>
-              <TouchableOpacity
-                style={[styles.card, styles.referencesCard]}
-                onPress={() => setShowReferencesModal(true)}
-                activeOpacity={0.8}
-              >
-                <Image
-                  style={styles.referencesNoticeIcon}
-                  source={Images.NOTICE}
-                />
-                <Text style={styles.referencesCardText}>
-                  Cuore – Medical References & Source Guidance
-                </Text>
-              </TouchableOpacity>
 
-              {/* <Text style={styles.bold}>History: </Text>
+                {/* <Text style={styles.bold}>History: </Text>
                          
               
                           <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
@@ -577,119 +583,119 @@ const Score = ({ navigation, route }) => {
                           <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
                             RBS: 230
                           </Text> */}
-            </View>
-          </ScrollView>
-        </View>
-      </ViewShot>
-      {/* Loading overlay for PDF sharing */}
-      <Modal
-        transparent={true}
-        animationType="fade"
-        visible={sharingLoading}
-        onRequestClose={() => setSharingLoading(false)}
-      >
-        <View style={styles.sharingLoaderOverlay}>
-          <View style={styles.sharingLoaderContainer}>
-            <ActivityIndicator size="large" color="#11418A" />
-            <Text style={styles.sharingLoaderText}>Generating PDF...</Text>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Medical References Modal */}
-      <Modal
-        visible={showReferencesModal}
-        animationType="slide"
-        onRequestClose={() => setShowReferencesModal(false)}
-      >
-        <SafeAreaView style={styles.refModalSafe}>
-          <View style={styles.refModalHeader}>
-            <Text style={styles.refModalTitle}>
-              Cuore – Medical References & Source Guidance
-            </Text>
-            <TouchableOpacity
-              style={styles.refModalCloseBtn}
-              onPress={() => setShowReferencesModal(false)}
-            >
-              <Text style={styles.refModalCloseText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView
-            style={styles.refModalScroll}
-            contentContainerStyle={styles.refModalContent}
-            showsVerticalScrollIndicator={true}
-          >
-            {MEDICAL_REFERENCES.map((block, idx) => (
-              <View key={`ref-${idx}`} style={styles.refBlock}>
-                {block.intro ? (
-                  <Text style={styles.refIntro}>{block.intro}</Text>
-                ) : null}
-                {block.section ? (
-                  <Text style={styles.refSectionTitle}>{block.section}</Text>
-                ) : null}
-                {block.links?.map((link, linkIdx) => (
-                  <TouchableOpacity
-                    key={`link-${idx}-${linkIdx}`}
-                    style={styles.refLinkRow}
-                    onPress={() => {
-                      setWebViewUrl(link.url);
-                      setShowReferencesModal(false);
-                      setShowWebViewModal(true);
-                    }}
-                  >
-                    <Text style={styles.refLinkBullet}>•</Text>
-                    <Text style={styles.refLinkText}>{link.title}</Text>
-                    <Text style={styles.refLinkUrl} numberOfLines={1}>
-                      {link.url}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-                {block.note ? (
-                  <Text style={styles.refNote}>{block.note}</Text>
-                ) : null}
               </View>
-            ))}
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
-
-      {/* WebView Modal for links */}
-      <Modal
-        visible={showWebViewModal}
-        animationType="slide"
-        onRequestClose={() => {
-          setShowWebViewModal(false);
-          setWebViewUrl('');
-        }}
-      >
-        <SafeAreaView style={styles.webViewModalSafe}>
-          <View style={styles.webViewModalHeader}>
-            <TouchableOpacity
-              style={styles.webViewModalCloseBtn}
-              onPress={() => {
-                setShowWebViewModal(false);
-                setWebViewUrl('');
-              }}
-            >
-              <Text style={styles.webViewModalCloseText}>✕</Text>
-            </TouchableOpacity>
+            </ScrollView>
           </View>
-          {webViewLoading && (
-            <View style={styles.webViewLoaderWrap}>
+        </ViewShot>
+        {/* Loading overlay for PDF sharing */}
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={sharingLoading}
+          onRequestClose={() => setSharingLoading(false)}
+        >
+          <View style={styles.sharingLoaderOverlay}>
+            <View style={styles.sharingLoaderContainer}>
               <ActivityIndicator size="large" color="#11418A" />
+              <Text style={styles.sharingLoaderText}>Generating PDF...</Text>
             </View>
-          )}
-          {webViewUrl ? (
-            <WebView
-              source={{ uri: webViewUrl }}
-              onLoadStart={() => setWebViewLoading(true)}
-              onLoadEnd={() => setWebViewLoading(false)}
-              style={styles.webViewStyle}
-            />
-          ) : null}
-        </SafeAreaView>
-      </Modal>
-    </SafeAreaView>
+          </View>
+        </Modal>
+
+        {/* Medical References Modal */}
+        <Modal
+          visible={showReferencesModal}
+          animationType="slide"
+          onRequestClose={() => setShowReferencesModal(false)}
+        >
+          <SafeAreaView style={styles.refModalSafe}>
+            <View style={styles.refModalHeader}>
+              <Text style={styles.refModalTitle}>
+                Cuore – Medical References & Source Guidance
+              </Text>
+              <TouchableOpacity
+                style={styles.refModalCloseBtn}
+                onPress={() => setShowReferencesModal(false)}
+              >
+                <Text style={styles.refModalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              style={styles.refModalScroll}
+              contentContainerStyle={styles.refModalContent}
+              showsVerticalScrollIndicator={true}
+            >
+              {MEDICAL_REFERENCES.map((block, idx) => (
+                <View key={`ref-${idx}`} style={styles.refBlock}>
+                  {block.intro ? (
+                    <Text style={styles.refIntro}>{block.intro}</Text>
+                  ) : null}
+                  {block.section ? (
+                    <Text style={styles.refSectionTitle}>{block.section}</Text>
+                  ) : null}
+                  {block.links?.map((link, linkIdx) => (
+                    <TouchableOpacity
+                      key={`link-${idx}-${linkIdx}`}
+                      style={styles.refLinkRow}
+                      onPress={() => {
+                        setWebViewUrl(link.url);
+                        setShowReferencesModal(false);
+                        setShowWebViewModal(true);
+                      }}
+                    >
+                      <Text style={styles.refLinkBullet}>•</Text>
+                      <Text style={styles.refLinkText}>{link.title}</Text>
+                      <Text style={styles.refLinkUrl} numberOfLines={1}>
+                        {link.url}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  {block.note ? (
+                    <Text style={styles.refNote}>{block.note}</Text>
+                  ) : null}
+                </View>
+              ))}
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+
+        {/* WebView Modal for links */}
+        <Modal
+          visible={showWebViewModal}
+          animationType="slide"
+          onRequestClose={() => {
+            setShowWebViewModal(false);
+            setWebViewUrl('');
+          }}
+        >
+          <SafeAreaView style={styles.webViewModalSafe}>
+            <View style={styles.webViewModalHeader}>
+              <TouchableOpacity
+                style={styles.webViewModalCloseBtn}
+                onPress={() => {
+                  setShowWebViewModal(false);
+                  setWebViewUrl('');
+                }}
+              >
+                <Text style={styles.webViewModalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            {webViewLoading && (
+              <View style={styles.webViewLoaderWrap}>
+                <ActivityIndicator size="large" color="#11418A" />
+              </View>
+            )}
+            {webViewUrl ? (
+              <WebView
+                source={{ uri: webViewUrl }}
+                onLoadStart={() => setWebViewLoading(true)}
+                onLoadEnd={() => setWebViewLoading(false)}
+                style={styles.webViewStyle}
+              />
+            ) : null}
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
     </>
   );
 };

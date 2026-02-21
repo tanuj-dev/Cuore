@@ -222,7 +222,7 @@ const MealBuilder = ({ navigation, route }) => {
                         const newItem = {
                           dishname: subItem?.name,
                           calories: subItem?.calories,
-                          id: subItem?._id,
+                          id: subItem?.recipeLink?._id,
                           section: category,
                         };
                         if (isAlreadyAdded) {
@@ -312,7 +312,7 @@ const MealBuilder = ({ navigation, route }) => {
         </TouchableOpacity>
 
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Cuore MealBuilder</Text>
+          <Text style={styles.title}>Cuore plate</Text>
         </View>
 
         <View style={styles.progressRow}>

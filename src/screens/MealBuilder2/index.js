@@ -66,7 +66,7 @@ const MealBuilder2 = ({ navigation, route }) => {
         </TouchableOpacity>
 
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Cuore MealBuilder</Text>
+          <Text style={styles.title}>Cuore plate</Text>
         </View>
 
         <TouchableOpacity
@@ -81,7 +81,9 @@ const MealBuilder2 = ({ navigation, route }) => {
       <View style={styles.contentWrap}>
         <FlatList
           data={data}
-          keyExtractor={(item, index) => String(item?.id ?? item?.name ?? index)}
+          keyExtractor={(item, index) =>
+            String(item?.id ?? item?.name ?? index)
+          }
           renderItem={({ item }) => {
             const newServingSize = item?.newServingSizeString;
 
@@ -95,12 +97,11 @@ const MealBuilder2 = ({ navigation, route }) => {
                   <View style={styles.itemDot} />
                   <View style={styles.itemContent}>
                     <Text style={styles.servingText}>{newServingSize}</Text>
-                    <Text style={styles.calText}>{item?.adjustedCalories} cal</Text>
+                    <Text style={styles.calText}>
+                      {item?.adjustedCalories} cal
+                    </Text>
                   </View>
-                  <Image
-                    style={styles.arrowIcon}
-                    source={Images.RIGHT_ARROW}
-                  />
+                  <Image style={styles.arrowIcon} source={Images.RIGHT_ARROW} />
                 </View>
               </TouchableOpacity>
             );
@@ -120,9 +121,7 @@ const MealBuilder2 = ({ navigation, route }) => {
           )}
         </TouchableOpacity>
 
-        <Text style={styles.noteText}>
-          Note: {selectedItems?.message}
-        </Text>
+        <Text style={styles.noteText}>Note: {selectedItems?.message}</Text>
       </View>
     </ScrollView>
   );

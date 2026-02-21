@@ -63,7 +63,8 @@ const HealthRecords = ({ navigation }) => {
           PermissionsAndroid.PERMISSIONS.CAMERA,
           {
             title: 'Camera Permission',
-            message: 'Allow this app to access your camera to take photos of health records.',
+            message:
+              'Allow this app to access your camera to take photos of health records.',
             buttonPositive: 'Allow',
             buttonNegative: 'Deny',
           },
@@ -79,7 +80,7 @@ const HealthRecords = ({ navigation }) => {
 
   const pickImageFromCamera = async () => {
     console.log('📷 Opening camera...');
-    
+
     try {
       // Request permission for Android
       if (Platform.OS === 'android') {
@@ -91,8 +92,8 @@ const HealthRecords = ({ navigation }) => {
             'Camera permission is needed to take photos. Please grant permission in your device settings.',
             [
               { text: 'Cancel', style: 'cancel' },
-              { text: 'Open Settings', onPress: () => Linking.openSettings() }
-            ]
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ],
           );
           return;
         }
@@ -100,7 +101,7 @@ const HealthRecords = ({ navigation }) => {
 
       // Close modal AFTER permission is granted but BEFORE launching camera
       setShowUploadModal(false);
-      
+
       // Small delay to ensure modal is fully closed before camera opens
       await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -123,21 +124,25 @@ const HealthRecords = ({ navigation }) => {
       }
 
       if (result.errorCode) {
-        console.error('📷 Camera error:', result.errorCode, result.errorMessage);
-        
+        console.error(
+          '📷 Camera error:',
+          result.errorCode,
+          result.errorMessage,
+        );
+
         if (result.errorCode === 'camera_unavailable') {
           alert(
             'Camera Unavailable',
             'Camera is not available. Please use the Gallery option instead.',
             [
               { text: 'OK' },
-              { 
-                text: 'Open Gallery', 
+              {
+                text: 'Open Gallery',
                 onPress: () => {
                   setTimeout(() => pickImageFromGallery(), 300);
-                }
-              }
-            ]
+                },
+              },
+            ],
           );
         } else if (result.errorCode === 'permission') {
           alert(
@@ -145,8 +150,8 @@ const HealthRecords = ({ navigation }) => {
             'Camera permission is required. Please enable it in Settings.',
             [
               { text: 'Cancel', style: 'cancel' },
-              { text: 'Open Settings', onPress: () => Linking.openSettings() }
-            ]
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ],
           );
         } else {
           alert('Error', result.errorMessage || 'Failed to open camera');
@@ -164,7 +169,10 @@ const HealthRecords = ({ navigation }) => {
         };
         setSelectedFiles(prev => {
           if (prev.length >= MAX_FILES_PER_UPLOAD) {
-            alert('Limit reached', `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload.`);
+            alert(
+              'Limit reached',
+              `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload.`,
+            );
             return prev;
           }
           return [...prev, newFile];
@@ -182,13 +190,13 @@ const HealthRecords = ({ navigation }) => {
         'Failed to open camera. Please try using the Gallery option instead.',
         [
           { text: 'OK' },
-          { 
-            text: 'Open Gallery', 
+          {
+            text: 'Open Gallery',
             onPress: () => {
               setTimeout(() => pickImageFromGallery(), 300);
-            }
-          }
-        ]
+            },
+          },
+        ],
       );
     }
   };
@@ -197,14 +205,15 @@ const HealthRecords = ({ navigation }) => {
     if (Platform.OS === 'android') {
       try {
         const androidVersion = Platform.Version;
-        
+
         // Android 13+ (API 33+) uses READ_MEDIA_IMAGES
         if (androidVersion >= 33) {
           const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
             {
               title: 'Gallery Permission',
-              message: 'Allow this app to access your photos to select health records.',
+              message:
+                'Allow this app to access your photos to select health records.',
               buttonPositive: 'Allow',
               buttonNegative: 'Deny',
             },
@@ -216,7 +225,8 @@ const HealthRecords = ({ navigation }) => {
             PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
             {
               title: 'Gallery Permission',
-              message: 'Allow this app to access your photos to select health records.',
+              message:
+                'Allow this app to access your photos to select health records.',
               buttonPositive: 'Allow',
               buttonNegative: 'Deny',
             },
@@ -234,7 +244,7 @@ const HealthRecords = ({ navigation }) => {
   const pickImageFromGallery = async () => {
     console.log('🖼️ Opening gallery...');
     setShowUploadModal(false); // Close modal first
-    
+
     try {
       // Request permission for Android
       if (Platform.OS === 'android') {
@@ -245,8 +255,8 @@ const HealthRecords = ({ navigation }) => {
             'Gallery permission is needed to select photos. Please grant permission in your device settings.',
             [
               { text: 'Cancel', style: 'cancel' },
-              { text: 'Open Settings', onPress: () => Linking.openSettings() }
-            ]
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ],
           );
           return;
         }
@@ -270,7 +280,11 @@ const HealthRecords = ({ navigation }) => {
       }
 
       if (result.errorCode) {
-        console.error('🖼️ Gallery error:', result.errorCode, result.errorMessage);
+        console.error(
+          '🖼️ Gallery error:',
+          result.errorCode,
+          result.errorMessage,
+        );
         alert('Error', result.errorMessage || 'Failed to open gallery');
         return;
       }
@@ -332,11 +346,17 @@ const HealthRecords = ({ navigation }) => {
         alert('Success', `${newFiles.length} PDF(s) selected successfully!`);
       }
     } catch (err) {
-      if (isErrorWithCode(err) && err.code === docErrorCodes.OPERATION_CANCELED) {
+      if (
+        isErrorWithCode(err) &&
+        err.code === docErrorCodes.OPERATION_CANCELED
+      ) {
         return;
       }
       console.error('Document picker error:', err);
-      alert('Error', err?.message || 'Failed to pick document. Please try again.');
+      alert(
+        'Error',
+        err?.message || 'Failed to pick document. Please try again.',
+      );
     }
   };
 
@@ -394,10 +414,7 @@ const HealthRecords = ({ navigation }) => {
       const response = await dispatch(uploadPhoto(formData)).unwrap();
 
       if (response?.success || response?.data?.success) {
-        alert(
-          'Success',
-          'Health record uploaded and analyzed successfully!',
-        );
+        alert('Success', 'Health record uploaded and analyzed successfully!');
 
         // Reset form
         setSelectedFiles([]);
@@ -429,32 +446,28 @@ const HealthRecords = ({ navigation }) => {
   };
 
   const handleDelete = id => {
-    alert(
-      'Delete record',
-      'Are you sure you want to delete this record?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setDeletingRecordId(id);
-              await dispatch(deleteRecord(id)).unwrap();
-              setRecords(prev => prev.filter(item => item.recordId !== id));
-            } catch (error) {
-              const msg =
-                error?.message ||
-                error?.data?.message ||
-                'Failed to delete record.';
-              alert('Error', msg);
-            } finally {
-              setDeletingRecordId(null);
-            }
-          },
+    alert('Delete record', 'Are you sure you want to delete this record?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setDeletingRecordId(id);
+            await dispatch(deleteRecord(id)).unwrap();
+            setRecords(prev => prev.filter(item => item.recordId !== id));
+          } catch (error) {
+            const msg =
+              error?.message ||
+              error?.data?.message ||
+              'Failed to delete record.';
+            alert('Error', msg);
+          } finally {
+            setDeletingRecordId(null);
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const startEditFileName = item => {
@@ -475,7 +488,10 @@ const HealthRecords = ({ navigation }) => {
     try {
       setIsEditingFilename(true);
       await dispatch(
-        editFilename({ recordId: editingRecordId, fileName: editFileNameValue.trim() }),
+        editFilename({
+          recordId: editingRecordId,
+          fileName: editFileNameValue.trim(),
+        }),
       ).unwrap();
       setRecords(prev =>
         prev.map(r =>
@@ -532,7 +548,7 @@ const HealthRecords = ({ navigation }) => {
           recordId: item?.recordId || index.toString(),
           type:
             item?.summarySnippet === 'prescription' ||
-              item?.type === 'Prescription'
+            item?.type === 'Prescription'
               ? 'Prescriptions'
               : 'Diagnostics',
           uploadDate: formatDate(item?.uploadDate || ''),
@@ -554,106 +570,119 @@ const HealthRecords = ({ navigation }) => {
     <>
       {AlertComponent}
       <ScrollView>
-      <View style={styles.screen}>
-        <ProfileHeader navigation={navigation} title="Health Records" />
-        <View style={styles.container}>
-          <Text style={styles.header}>Upload Records</Text>
-          <View
-            style={styles.uploadCard}
-          >
-            <TouchableOpacity
-              style={[styles.uploadBox, isCaregiver && styles.uploadBoxDisabled]}
-              onPress={() => !isCaregiver && setShowUploadModal(true)}
-              disabled={isCaregiver}
-              activeOpacity={isCaregiver ? 1 : 0.7}
-            >
-              <Image
-                source={Images.UPLOAD}
-                style={[styles.uploadIcon, isCaregiver && styles.uploadIconDisabled]}
-              />
-              <Text style={[styles.uploadLabel, isCaregiver && styles.textDisabled]}>
-                Upload Record
-              </Text>
-              <Text style={[styles.fileText, isCaregiver && styles.textDisabled]}>
-                {selectedFiles.length > 0
-                  ? `${selectedFiles.length} file(s) selected`
-                  : `PNG, JPG, PDF up to ${MAX_FILE_SIZE_MB}MB, max ${MAX_FILES_PER_UPLOAD} files`}
-              </Text>
-              <Text style={[styles.uploadDisclaimer, isCaregiver && styles.textDisabled]}>
-                {isCaregiver
-                  ? 'Only the account holder can upload or manage records'
-                  : 'Make sure the uploaded health record belongs to you'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Display Selected Files */}
-            {selectedFiles.length > 0 && !isCaregiver && (
-              <View style={styles.selectedFilesContainer}>
-                {selectedFiles.map((file, index) => (
-                  <View key={index} style={styles.fileItem}>
-                    <Text style={styles.fileName} numberOfLines={1}>
-                      {file.name}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedFiles(prev =>
-                          prev.filter((_, i) => i !== index),
-                        );
-                      }}
-                      style={styles.removeButton}
-                    >
-                      <Text style={styles.removeButtonText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            <View style={styles.checkboxRowWrapper}>
+        <View style={styles.screen}>
+          <ProfileHeader navigation={navigation} title="Health Records" />
+          <View style={styles.container}>
+            <Text style={styles.header}>Upload Records</Text>
+            <View style={styles.uploadCard}>
               <TouchableOpacity
-                onPress={() => !isCaregiver && setIsPrescription(!isPrescription)}
+                style={[
+                  styles.uploadBox,
+                  isCaregiver && styles.uploadBoxDisabled,
+                ]}
+                onPress={() => !isCaregiver && setShowUploadModal(true)}
                 disabled={isCaregiver}
+                activeOpacity={isCaregiver ? 1 : 0.7}
               >
-                <View
+                <Image
+                  source={Images.UPLOAD}
                   style={[
-                    styles.checkboxBox,
-                    isPrescription && styles.checkboxBoxUnchecked,
+                    styles.uploadIcon,
+                    isCaregiver && styles.uploadIconDisabled,
                   ]}
                 />
-              </TouchableOpacity>
-              <View style={styles.checkboxRow}>
-                <Text style={styles.checkboxLabel}>
-                  Mark as Prescription or Doctor’s Note
+                <Text
+                  style={[
+                    styles.uploadLabel,
+                    isCaregiver && styles.textDisabled,
+                  ]}
+                >
+                  Upload Record
                 </Text>
+                <Text
+                  style={[styles.fileText, isCaregiver && styles.textDisabled]}
+                >
+                  {selectedFiles.length > 0
+                    ? `${selectedFiles.length} file(s) selected`
+                    : `PNG, JPG, PDF up to ${MAX_FILE_SIZE_MB}MB, max ${MAX_FILES_PER_UPLOAD} files`}
+                </Text>
+                <Text
+                  style={[
+                    styles.uploadDisclaimer,
+                    isCaregiver && styles.textDisabled,
+                  ]}
+                >
+                  {isCaregiver
+                    ? 'Only the account holder can upload or manage records'
+                    : 'Make sure the uploaded health record belongs to you'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Display Selected Files */}
+              {selectedFiles.length > 0 && !isCaregiver && (
+                <View style={styles.selectedFilesContainer}>
+                  {selectedFiles.map((file, index) => (
+                    <View key={index} style={styles.fileItem}>
+                      <Text style={styles.fileName} numberOfLines={1}>
+                        {file.name}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedFiles(prev =>
+                            prev.filter((_, i) => i !== index),
+                          );
+                        }}
+                        style={styles.removeButton}
+                      >
+                        <Text style={styles.removeButtonText}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <View style={styles.checkboxRowWrapper}>
+                <TouchableOpacity
+                  onPress={() =>
+                    !isCaregiver && setIsPrescription(!isPrescription)
+                  }
+                  disabled={isCaregiver}
+                >
+                  <View
+                    style={[
+                      styles.checkboxBox,
+                      isPrescription && styles.checkboxBoxUnchecked,
+                    ]}
+                  />
+                </TouchableOpacity>
+                <View style={styles.checkboxRow}>
+                  <Text style={styles.checkboxLabel}>
+                    Mark as Prescription or Doctor’s Note
+                  </Text>
+                </View>
               </View>
+
+              {!isCaregiver && (
+                <TouchableOpacity
+                  style={[
+                    styles.submitBtn,
+                    isUploading && styles.submitBtnDisabled,
+                  ]}
+                  onPress={handleSubmit}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.submitBtnText}>Submit</Text>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
 
-            {!isCaregiver && (
-            <TouchableOpacity
-              style={[
-                styles.submitBtn,
-                isUploading && styles.submitBtnDisabled,
-              ]}
-              onPress={handleSubmit}
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.submitBtnText}>
-                  Submit
-                </Text>
-              )}
-            </TouchableOpacity>
-            )}
-
-          </View>
-
-          {/* Tabs */}
-          <Text style={styles.viewRecordsTitle}>
-            View Records
-          </Text>
-          {/* <View style={styles.tabs}>
+            {/* Tabs */}
+            <Text style={styles.viewRecordsTitle}>View Records</Text>
+            {/* <View style={styles.tabs}>
             {['Prescriptions', 'Diagnostics'].map(tab => (
               <TouchableOpacity
                 key={tab}
@@ -671,188 +700,199 @@ const HealthRecords = ({ navigation }) => {
             ))}
           </View> */}
 
-          {/* Record List */}
-          {isFetching ? (
-            <ActivityIndicator
-              size="large"
-              color="#11418A"
-              style={styles.fetchLoader}
-            />
-          ) : records.length > 0 ? (
-            records.map((item, index) => (
-              <View
-                key={item.recordId || index}
-                style={styles.recordItem}
-              >
-                <View style={styles.recordItemContent}>
-                  {editingRecordId === item.recordId && !isCaregiver ? (
-                    <View style={styles.editRow}>
-                      <TextInput
-                        style={styles.editFileNameInput}
-                        value={editFileNameValue}
-                        onChangeText={setEditFileNameValue}
-                        editable={!isEditingFilename}
-                        placeholder="File name"
-                        placeholderTextColor="#94A3B8"
-                      />
+            {/* Record List */}
+            {isFetching ? (
+              <ActivityIndicator
+                size="large"
+                color="#11418A"
+                style={styles.fetchLoader}
+              />
+            ) : records.length > 0 ? (
+              records.map((item, index) => (
+                <View key={item.recordId || index} style={styles.recordItem}>
+                  <View style={styles.recordItemContent}>
+                    {editingRecordId === item.recordId && !isCaregiver ? (
+                      <View style={styles.editRow}>
+                        <TextInput
+                          style={styles.editFileNameInput}
+                          value={editFileNameValue}
+                          onChangeText={setEditFileNameValue}
+                          editable={!isEditingFilename}
+                          placeholder="File name"
+                          placeholderTextColor="#94A3B8"
+                        />
+                        <TouchableOpacity
+                          onPress={handleSaveEditFileName}
+                          disabled={isEditingFilename}
+                          style={styles.saveEditBtn}
+                        >
+                          {isEditingFilename ? (
+                            <ActivityIndicator size="small" color="#11418A" />
+                          ) : (
+                            <Text style={styles.saveEditText}>Save</Text>
+                          )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={cancelEditFileName}
+                          style={styles.cancelEditBtn}
+                        >
+                          <Text style={styles.cancelEditText}>Cancel</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <Text style={styles.recordTitle}>{item.fileName}</Text>
+                    )}
+                    <Text style={styles.recordDate}>{item.uploadDate}</Text>
+                  </View>
+                  <View style={styles.recordActions}>
+                    {!isCaregiver && (
                       <TouchableOpacity
-                        onPress={handleSaveEditFileName}
-                        disabled={isEditingFilename}
-                        style={styles.saveEditBtn}
+                        onPress={() => startEditFileName(item)}
+                        disabled={
+                          editingRecordId !== null &&
+                          editingRecordId !== item.recordId
+                        }
                       >
-                        {isEditingFilename ? (
-                          <ActivityIndicator size="small" color="#11418A" />
+                        <Image
+                          style={styles.recordActionIcon}
+                          source={Images.EDIT}
+                        />
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (item.fileUrl) {
+                          setCurrentViewImageUrl(item.fileUrl);
+                          setShowViewImageModal(true);
+                        } else {
+                          alert('Error', 'Image URL not found');
+                        }
+                      }}
+                    >
+                      <Image
+                        style={[styles.recordActionIcon, styles.eyeIcon]}
+                        source={Images.EYE}
+                      />
+                    </TouchableOpacity>
+                    {!isCaregiver && (
+                      <TouchableOpacity
+                        onPress={() => handleDelete(item.recordId)}
+                        disabled={deletingRecordId !== null}
+                      >
+                        {deletingRecordId === item.recordId ? (
+                          <ActivityIndicator
+                            size="small"
+                            color="#11418A"
+                            style={styles.recordActionIcon}
+                          />
                         ) : (
-                          <Text style={styles.saveEditText}>Save</Text>
+                          <Image
+                            style={styles.recordActionIcon}
+                            source={Images.DELETE}
+                          />
                         )}
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={cancelEditFileName} style={styles.cancelEditBtn}>
-                        <Text style={styles.cancelEditText}>Cancel</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <Text style={styles.recordTitle}>{item.fileName}</Text>
-                  )}
-                  <Text style={styles.recordDate}>{item.uploadDate}</Text>
+                    )}
+                  </View>
                 </View>
-                <View style={styles.recordActions}>
-                  {!isCaregiver && (
-                    <TouchableOpacity
-                      onPress={() => startEditFileName(item)}
-                      disabled={editingRecordId !== null && editingRecordId !== item.recordId}
-                    >
-                      <Image style={styles.recordActionIcon} source={Images.EDIT} />
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (item.fileUrl) {
-                        setCurrentViewImageUrl(item.fileUrl);
-                        setShowViewImageModal(true);
-                      } else {
-                        alert('Error', 'Image URL not found');
-                      }
-                    }}
-                  >
-                    <Image
-                      style={[styles.recordActionIcon, styles.eyeIcon]}
-                      source={Images.EYE}
-                    />
-                  </TouchableOpacity>
-                  {!isCaregiver && (
-                    <TouchableOpacity
-                      onPress={() => handleDelete(item.recordId)}
-                      disabled={deletingRecordId !== null}
-                    >
-                      {deletingRecordId === item.recordId ? (
-                        <ActivityIndicator
-                          size="small"
-                          color="#11418A"
-                          style={styles.recordActionIcon}
-                        />
-                      ) : (
-                        <Image style={styles.recordActionIcon} source={Images.DELETE} />
-                      )}
-                    </TouchableOpacity>
-                  )}
-                </View>
+              ))
+            ) : (
+              <View style={styles.emptyRecords}>
+                <Text style={styles.emptyRecordsText}>
+                  No records found for {selectedTab}
+                </Text>
               </View>
-            ))
-          ) : (
-            <View style={styles.emptyRecords}>
-              <Text style={styles.emptyRecordsText}>
-                No records found for {selectedTab}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Upload Options Modal */}
-        <Modal
-          visible={showUploadModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowUploadModal(false)}
-        >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setShowUploadModal(false)}
-          >
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Choose Upload Method</Text>
-
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={pickImageFromCamera}
-              >
-                <Image source={Images.CAMERA} style={styles.modalIcon} />
-                <Text style={styles.modalButtonText}>Take Photo</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={pickImageFromGallery}
-              >
-                <Image source={Images.UPLOAD} style={styles.modalIcon} />
-                <Text style={styles.modalButtonText}>Choose from Gallery</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={pickDocumentForUpload}
-              >
-                <Image source={Images.UPLOAD} style={styles.modalIcon} />
-                <Text style={styles.modalButtonText}>Choose PDF</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowUploadModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
-        {/* View Image Modal */}
-        <Modal
-          visible={showViewImageModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowViewImageModal(false)}
-        >
-          <View style={styles.viewImageOverlay}>
-            <View style={styles.viewImageContainer}>
-              <TouchableOpacity
-                style={styles.closeViewImage}
-                onPress={() => {
-                  setShowViewImageModal(false);
-                  setIsImageLoading(false);
-                }}
-              >
-                <Text style={styles.closeViewImageText}>✕</Text>
-              </TouchableOpacity>
-              {isImageLoading && (
-                <ActivityIndicator
-                  size="large"
-                  color="#FFFFFF"
-                  style={styles.imageLoader}
-                />
-              )}
-              <Image
-                source={{ uri: currentViewImageUrl }}
-                style={styles.fullImage}
-                resizeMode="contain"
-                onLoadStart={() => setIsImageLoading(true)}
-                onLoadEnd={() => setIsImageLoading(false)}
-              />
-            </View>
+            )}
           </View>
-        </Modal>
-      </View>
-    </ScrollView>
+
+          {/* Upload Options Modal */}
+          <Modal
+            visible={showUploadModal}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowUploadModal(false)}
+          >
+            <TouchableOpacity
+              style={styles.modalOverlay}
+              activeOpacity={1}
+              onPress={() => setShowUploadModal(false)}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Choose Upload Method</Text>
+
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={pickImageFromCamera}
+                >
+                  <Image source={Images.CAMERA} style={styles.modalIcon} />
+                  <Text style={styles.modalButtonText}>Take Photo</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={pickImageFromGallery}
+                >
+                  <Image source={Images.UPLOAD} style={styles.modalIcon} />
+                  <Text style={styles.modalButtonText}>
+                    Choose from Gallery
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={pickDocumentForUpload}
+                >
+                  <Image source={Images.UPLOAD} style={styles.modalIcon} />
+                  <Text style={styles.modalButtonText}>Choose PDF</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowUploadModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </Modal>
+
+          {/* View Image Modal */}
+          <Modal
+            visible={showViewImageModal}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowViewImageModal(false)}
+          >
+            <View style={styles.viewImageOverlay}>
+              <View style={styles.viewImageContainer}>
+                <TouchableOpacity
+                  style={styles.closeViewImage}
+                  onPress={() => {
+                    setShowViewImageModal(false);
+                    setIsImageLoading(false);
+                  }}
+                >
+                  <Text style={styles.closeViewImageText}>✕</Text>
+                </TouchableOpacity>
+                {isImageLoading && (
+                  <ActivityIndicator
+                    size="large"
+                    color="#FFFFFF"
+                    style={styles.imageLoader}
+                  />
+                )}
+                <Image
+                  source={{ uri: currentViewImageUrl }}
+                  style={styles.fullImage}
+                  resizeMode="contain"
+                  onLoadStart={() => setIsImageLoading(true)}
+                  onLoadEnd={() => setIsImageLoading(false)}
+                />
+              </View>
+            </View>
+          </Modal>
+        </View>
+      </ScrollView>
     </>
   );
 };
@@ -1057,6 +1097,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
     color: '#1E293B',
+    fontWeight: 'bold',
     letterSpacing: 0.2,
   },
   recordDate: {

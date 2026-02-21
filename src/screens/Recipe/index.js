@@ -10,9 +10,21 @@ import {
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 
+const DIET_COLORS = {
+  'Non-Veg': { bg: '#FEE2E2', text: '#991B1B' },
+  Eggetarian: { bg: '#FEF9C3', text: '#A16207' },
+  Veg: { bg: '#DCFCE7', text: '#166534' },
+};
+
 const Recipe = ({ navigation, route }) => {
   const recipeData = route?.params?.recipeData;
   const { ingredients, instructions } = recipeData || {};
+
+  const totalSteps =
+    instructions?.reduce((acc, s) => acc + (s?.steps?.length || 0), 0) ?? 0;
+
+  const dietPref = recipeData?.dietPreference;
+  const badgeColors = DIET_COLORS[dietPref] || DIET_COLORS['Veg'];
 
   if (!recipeData || recipeData.message === 'Recipe not found.') {
     return (
@@ -24,7 +36,7 @@ const Recipe = ({ navigation, route }) => {
         />
         <Text style={styles.emptyTitle}>No recipe found</Text>
         <Text style={styles.emptyMessage}>
-          We couldn’t find a recipe for this particular dish. Please try another
+          We couldn't find a recipe for this particular dish. Please try another
           one or check back later.
         </Text>
       </View>
@@ -32,67 +44,85 @@ const Recipe = ({ navigation, route }) => {
   }
 
   return (
-    <ScrollView style={styles.scroll}>
+    <ScrollView style={styles.scroll} bounces={false}>
       <View style={styles.screen}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.container}>
-          <Text style={styles.measurements}>
-            1 katori = 150ml, 1 Cup = 200ml, 1 Bowl = 300ml
-          </Text>
-          <View style={styles.card}>
-            <View>
-              <View style={styles.recipeHeader}>
-                <Text style={styles.recipeTitle}>{recipeData?.name}</Text>
 
-                <View style={styles.timeContainer}>
-                  <View style={styles.timeBadge}>
-                    <Text style={styles.timeLabel}>Prep</Text>
-                    <Text style={styles.timeValue}>
-                      {recipeData?.prepTime ?? '5 mins'}
-                    </Text>
-                  </View>
-                  <View style={styles.timeBadge}>
-                    <Text style={styles.timeLabel}>Cook</Text>
-                    <Text style={styles.timeValue}>
-                      {recipeData?.cookTime ?? '10 mins'}
-                    </Text>
-                  </View>
-                </View>
+        {/* ── Hero Header ── */}
+        <View style={styles.heroHeader}>
+          <View style={styles.heroTopRow}>
+            <TouchableOpacity
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
+            </TouchableOpacity>
+
+            {dietPref && (
+              <View style={[styles.dietBadge, { backgroundColor: badgeColors.bg }]}>
+                <Text style={[styles.dietBadgeText, { color: badgeColors.text }]}>
+                  {dietPref === 'Eggetarian' ? 'Egg' : dietPref}
+                </Text>
               </View>
+            )}
+          </View>
 
-              <Text style={styles.sectionTitle}>Ingredients:</Text>
+          <Text style={styles.heroTitle}>{recipeData?.name}</Text>
+          <Text style={styles.heroMeasurements}>
+            1 katori = 150ml  •  1 Cup = 200ml  •  1 Bowl = 300ml
+          </Text>
+        </View>
 
-              {ingredients?.map((item, index) => (
-                <View key={`ingredient-${index}`} style={styles.ingredientRow}>
-                  <View
-                    key={`substep-${index}-${item?.name}`}
-                    style={styles.stepRow}
-                  >
-                    <View style={styles.stepBadge}>
-                      <Text style={styles.stepBadgeText}>{index + 1}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.ingredientText}>
-                    {item?.quantity} {item?.unit} {item?.name}
-                  </Text>
+        {/* ── Floating Stats Card ── */}
+        <View style={styles.statsCard}>
+          <View style={styles.statBox}>
+            <Text style={styles.statLabel}>Prep Time</Text>
+            <Text style={styles.statValue}>
+              {recipeData?.prepTime?.replace(/\t/g, '') || 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={styles.statLabel}>Cook Time</Text>
+            <Text style={styles.statValue}>
+              {recipeData?.cookTime?.replace(/\t/g, '') || 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={styles.statLabel}>Ingredients</Text>
+            <Text style={styles.statValue}>{ingredients?.length ?? 0}</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={styles.statLabel}>Steps</Text>
+            <Text style={styles.statValue}>{totalSteps}</Text>
+          </View>
+        </View>
+
+        {/* ── Content ── */}
+        <View style={styles.container}>
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Ingredients:</Text>
+
+            {ingredients?.map((item, index) => (
+              <View key={`ingredient-${index}`} style={styles.ingredientRow}>
+                <View style={styles.stepBadge}>
+                  <Text style={styles.stepBadgeText}>{index + 1}</Text>
                 </View>
-              ))}
-            </View>
+                <Text style={styles.ingredientText}>
+                  {item?.quantity} {item?.unit} {item?.name}
+                </Text>
+              </View>
+            ))}
+
             <Text style={styles.sectionTitleSpaced}>Instructions:</Text>
+
             {instructions?.map((step, index) => (
               <View key={`step-${index}`} style={styles.stepSection}>
                 {step?.heading?.toLowerCase() !== 'instructions' && (
                   <Text style={styles.stepHeading}>{step.heading}</Text>
                 )}
-
                 {step?.steps?.map((subStep, subIndex) => (
                   <View
                     key={`substep-${index}-${subIndex}`}
@@ -108,6 +138,7 @@ const Recipe = ({ navigation, route }) => {
             ))}
           </View>
         </View>
+
       </View>
     </ScrollView>
   );
@@ -122,23 +153,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: hp(2),
-    marginTop: Platform.OS === 'ios' ? hp(4) : hp(1.5),
-    backgroundColor: '#F8FAFC',
-  },
-  backButton: {
-    paddingVertical: hp(0.5),
-  },
-  backIcon: {
-    height: hp(3.5),
-    width: wp(4),
-    resizeMode: 'contain',
-    tintColor: '#1E293B',
-  },
+
+  /* ── Empty State ── */
   emptyScreen: {
     flex: 1,
     justifyContent: 'center',
@@ -166,24 +182,104 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     letterSpacing: 0.2,
   },
+
+  /* ── Hero Header ── */
+  heroHeader: {
+    backgroundColor: '#11418A',
+    paddingTop: Platform.OS === 'ios' ? hp(6) : hp(4),
+    paddingHorizontal: wp(5),
+    paddingBottom: hp(7),
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: hp(2.5),
+  },
+  backButton: {
+    paddingVertical: hp(0.5),
+  },
+  backIcon: {
+    height: hp(3),
+    width: wp(4),
+    resizeMode: 'contain',
+    tintColor: '#FFFFFF',
+  },
+  dietBadge: {
+    paddingHorizontal: wp(3.5),
+    paddingVertical: hp(0.6),
+    borderRadius: 20,
+  },
+  dietBadgeText: {
+    fontSize: 12,
+    fontFamily: 'Poppins-SemiBold',
+    letterSpacing: 0.2,
+  },
+  heroTitle: {
+    fontSize: 26,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+    marginBottom: hp(1.2),
+    lineHeight: 34,
+  },
+  heroMeasurements: {
+    fontSize: 11,
+    fontFamily: 'Poppins-Regular',
+    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 0.2,
+  },
+
+  /* ── Floating Stats Card ── */
+  statsCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    marginHorizontal: wp(5),
+    marginTop: -hp(4),
+    paddingVertical: hp(2),
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 8,
+    alignItems: 'center',
+  },
+  statBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statDivider: {
+    width: 1,
+    height: hp(4),
+    backgroundColor: '#E2E8F0',
+  },
+  statLabel: {
+    fontSize: 10,
+    fontFamily: 'Poppins-Regular',
+    color: '#94A3B8',
+    marginBottom: 3,
+    textAlign: 'center',
+  },
+  statValue: {
+    fontSize: 13,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#11418A',
+    textAlign: 'center',
+  },
+
+  /* ── Content ── */
   container: {
     padding: wp(4),
+    paddingTop: hp(2.5),
     paddingBottom: hp(6),
-    backgroundColor: '#F8FAFC',
-    flex: 1,
-  },
-  measurements: {
-    textAlign: 'center',
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#475569',
-    letterSpacing: 0.2,
   },
   card: {
     padding: wp(4),
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginTop: hp(2),
+    borderRadius: 16,
     borderLeftWidth: 4,
     borderLeftColor: '#11418A',
     borderTopWidth: 1,
@@ -198,65 +294,25 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 15,
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     marginBottom: hp(2),
     color: '#1E293B',
     letterSpacing: 0.2,
   },
   sectionTitleSpaced: {
     fontSize: 15,
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     marginBottom: hp(2),
     marginTop: hp(3),
     color: '#1E293B',
     letterSpacing: 0.2,
   },
   stepSection: {
-    marginBottom: hp(3),
-  },
-  recipeHeader: {
-    alignItems: 'center',
-    marginBottom: hp(3),
-  },
-  recipeTitle: {
-    fontSize: 22,
-    fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
-    textAlign: 'center',
-    marginBottom: hp(1),
-    letterSpacing: 0.2,
-  },
-  timeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: wp(10),
-    marginTop: hp(1),
-  },
-  timeBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(4),
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  timeLabel: {
-    fontSize: 12,
-    fontFamily: 'Poppins-Regular',
-    color: '#11418A',
-    marginBottom: hp(0.5),
-    letterSpacing: 0.2,
-  },
-  timeValue: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
-    letterSpacing: 0.2,
+    marginBottom: hp(2),
   },
   stepHeading: {
-    fontSize: 16,
-    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    fontFamily: 'Poppins-SemiBold',
     color: '#11418A',
     marginBottom: hp(1),
     letterSpacing: 0.2,
@@ -269,21 +325,21 @@ const styles = StyleSheet.create({
   stepBadge: {
     backgroundColor: '#11418A',
     borderRadius: 20,
-    paddingHorizontal: wp(2),
-    paddingVertical: hp(0.5),
-    marginRight: wp(2),
+    minWidth: wp(5.5),
+    height: wp(5.5),
+    marginRight: wp(2.5),
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepBadgeText: {
     color: '#FFFFFF',
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 10,
     letterSpacing: 0.2,
   },
   stepText: {
     flex: 1,
-    fontSize: 14.5,
+    fontSize: 14,
     fontFamily: 'Poppins-Regular',
     color: '#475569',
     lineHeight: 22,
@@ -293,10 +349,10 @@ const styles = StyleSheet.create({
   ingredientRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: hp(1),
+    marginBottom: hp(1.2),
   },
   ingredientText: {
-    fontSize: 14.5,
+    fontSize: 14,
     fontFamily: 'Poppins-Regular',
     color: '#475569',
     lineHeight: 22,

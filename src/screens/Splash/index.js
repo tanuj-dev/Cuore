@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Image, Animated, Easing } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { setUserData } from '../../redux/Auth/slice';
 import { hp, wp, Images } from '../../utilities';
@@ -9,70 +9,85 @@ import { hp, wp, Images } from '../../utilities';
 const Splash = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [checkingAuth, setCheckingAuth] = useState(true);
 
-  const authState = useSelector(state => state.auth);
+  const fadeAnim  = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const dotAnim1  = useRef(new Animated.Value(0.3)).current;
+  const dotAnim2  = useRef(new Animated.Value(0.3)).current;
+  const dotAnim3  = useRef(new Animated.Value(0.3)).current;
+
+  // Entrance animations
   useEffect(() => {
-    console.log('Redux auth state:', authState);
-  }, [authState]);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 700,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 6,
+        tension: 60,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 700,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start();
 
+    const pulseDot = (anim, delay) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, { toValue: 1,   duration: 400, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0.3, duration: 400, useNativeDriver: true }),
+        ]),
+      ).start();
+
+    pulseDot(dotAnim1, 0);
+    pulseDot(dotAnim2, 200);
+    pulseDot(dotAnim3, 400);
+  }, []);
+
+  // Auth check
   useEffect(() => {
     const checkLoginStatus = async () => {
-      console.log('Checking auth tokens in storage...');
       try {
         const tokenData = await EncryptedStorage.getItem('auth_tokens');
-        console.log('Token data retrieved:', tokenData);
 
         if (tokenData) {
           const parsed = JSON.parse(tokenData);
-          console.log('Parsed token data:', parsed);
-
           const access_token = parsed.accessToken;
-          console.log('Access Token:', access_token);
 
           if (!access_token) {
             await EncryptedStorage.removeItem('auth_tokens');
-            setTimeout(() => {
-              navigation.replace('Login');
-            }, 3000);
+            setTimeout(() => navigation.replace('Login'), 3000);
             return;
           }
 
           if (parsed.onboardingStatus !== 'complete') {
-            console.log('Onboarding not complete, navigating to Login');
-            setTimeout(() => {
-              navigation.replace('Login');
-            }, 3000);
+            setTimeout(() => navigation.replace('Login'), 3000);
             return;
           }
 
-          // Onboarding is complete, now check payment status
           dispatch(setUserData(parsed));
 
           if (parsed.paymentStatus === 'pending') {
-            console.log('Payment pending, navigating to Checkout');
-            setTimeout(() => {
-              navigation.replace('Checkout');
-            }, 3000);
+            setTimeout(() => navigation.replace('Checkout'), 3000);
           } else {
-            // Payment completed/waived or no payment status - navigate to Home
-            console.log('Payment status:', parsed.paymentStatus, '- navigating to Home');
-            setTimeout(() => {
-              navigation.replace('Home');
-            }, 3000);
+            setTimeout(() => navigation.replace('Home'), 3000);
           }
         } else {
-          setTimeout(() => {
-            navigation.replace('Login');
-          }, 3000);
+          setTimeout(() => navigation.replace('Login'), 3000);
         }
       } catch (err) {
         console.log('Error reading token:', err.message);
-        setTimeout(() => {
-          navigation.replace('Login');
-        }, 3000);
-      } finally {
-        setCheckingAuth(false);
+        setTimeout(() => navigation.replace('Login'), 3000);
       }
     };
 
@@ -81,34 +96,47 @@ const Splash = () => {
 
   return (
     <View style={styles.container}>
-      {/* Content overlay - renders immediately */}
-      <View style={styles.contentContainer}>
-        <View style={styles.logoShadowWrapper}>
-          <View style={styles.logoWrapper}>
-            <Image
-              source={Images.CUORE}
-              style={styles.centeredLogo}
-              defaultSource={Images.CUORE}
-            />
-          </View>
+      {/* Decorative circles */}
+      <View style={[styles.circle, styles.circleTopRight]} />
+      <View style={[styles.circle, styles.circleBottomLeft]} />
+      <View style={[styles.circleSm, styles.circleTopLeft]} />
+
+      {/* Logo + App name */}
+      <Animated.View
+        style={[
+          styles.contentContainer,
+          { opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
+        ]}
+      >
+        <View style={styles.logoCard}>
+          <Image
+            source={Images.CUORE_SINGLE}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
+        <Text style={styles.appName}>Cuore</Text>
+      </Animated.View>
 
-        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
-          Your Everyday Health Companion
+      {/* Taglines */}
+      <Animated.View
+        style={[
+          styles.taglineContainer,
+          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+        ]}
+      >
+        <Text style={styles.title}>Your Everyday Health Companion</Text>
+        <View style={styles.divider} />
+        <Text style={styles.subtitle}>
+          Small Steps. Smart Guidance. Better Health.
         </Text>
-        <Text style={styles.subtitle} numberOfLines={1} adjustsFontSizeToFit>
-          Small Steps. Smart Guidance. Better Health
-        </Text>
+      </Animated.View>
 
-        {checkingAuth && (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator
-              size="large"
-              color="#2563EB"
-              style={styles.loader}
-            />
-          </View>
-        )}
+      {/* Animated dots loader */}
+      <View style={styles.dotsRow}>
+        <Animated.View style={[styles.dot, { opacity: dotAnim1 }]} />
+        <Animated.View style={[styles.dot, { opacity: dotAnim2 }]} />
+        <Animated.View style={[styles.dot, { opacity: dotAnim3 }]} />
       </View>
     </View>
   );
@@ -119,72 +147,111 @@ export default Splash;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#FFFFFF',
   },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: wp(8),
-    zIndex: 1,
+
+  /* Decorative background circles */
+  circle: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(17,65,138,0.05)',
   },
-  logoShadowWrapper: {
-    height: wp(50),
-    width: wp(50),
-    marginBottom: hp(4),
-    justifyContent: 'center',
-    alignItems: 'center',
-    // iOS shadow - applied to wrapper so it's not clipped
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    // Android shadow
-    elevation: 8,
+  circleSm: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(17,65,138,0.04)',
   },
-  logoWrapper: {
-    height: wp(35),
-    width: wp(35),
-    borderRadius: wp(25),
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: wp(3),
-    overflow: 'hidden', // This is fine now since shadow is on parent
-    elevation: 8,
+  circleTopRight: {
+    width: wp(70),
+    height: wp(70),
+    top: -wp(20),
+    right: -wp(20),
+  },
+  circleBottomLeft: {
+    width: wp(60),
+    height: wp(60),
+    bottom: -wp(15),
+    left: -wp(15),
+  },
+  circleTopLeft: {
+    width: wp(30),
+    height: wp(30),
+    top: hp(12),
+    left: -wp(8),
   },
 
-  centeredLogo: {
-    height: hp(50),
-    width: wp(50),
-    resizeMode: 'contain',
+  /* Logo area */
+  contentContainer: {
+    alignItems: 'center',
+    marginBottom: hp(4),
+  },
+  logoCard: {
+    width: wp(32),
+    height: wp(32),
+    borderRadius: wp(16),
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    marginBottom: hp(2.5),
+  },
+  logo: {
+    width: wp(22),
+    height: wp(22),
+  },
+  appName: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: hp(4),
+    color: '#11418A',
+    letterSpacing: 2,
+  },
+
+  /* Taglines */
+  taglineContainer: {
+    alignItems: 'center',
+    paddingHorizontal: wp(8),
+    marginBottom: hp(8),
   },
   title: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: hp(2),
-    fontWeight: '700',
-    color: '#111827',
+    fontFamily: 'Poppins-Medium',
+    fontSize: hp(1.9),
+    color: '#1E293B',
     textAlign: 'center',
-    marginBottom: hp(1.5),
-    letterSpacing: 0.5,
-    paddingHorizontal: wp(2),
+    letterSpacing: 0.4,
+    marginBottom: hp(1.2),
+  },
+  divider: {
+    width: wp(10),
+    height: 1.5,
+    backgroundColor: '#CBD5E1',
+    marginBottom: hp(1.2),
+    borderRadius: 2,
   },
   subtitle: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: hp(1.8),
-    color: '#4B5563',
+    fontFamily: 'Poppins-Regular',
+    fontSize: hp(1.6),
+    color: '#64748B',
     textAlign: 'center',
-    paddingHorizontal: wp(2),
+    letterSpacing: 0.3,
   },
-  loaderContainer: {
-    marginTop: hp(4),
-    padding: wp(3),
-    borderRadius: wp(2),
+
+  /* Dots loader */
+  dotsRow: {
+    position: 'absolute',
+    bottom: hp(6),
+    flexDirection: 'row',
+    gap: wp(2.5),
   },
-  loader: {
-    transform: [{ scale: 1.2 }],
+  dot: {
+    width: wp(2),
+    height: wp(2),
+    borderRadius: wp(1),
+    backgroundColor: '#11418A',
   },
 });

@@ -126,6 +126,7 @@ const images = {
 
   // Additional Icons
   CAMERA: require('../assets/images/camera.png'),
+  CUORE_SINGLE: require('../assets/images/cuore-app-icon.png'),
 };
 
 export default images;

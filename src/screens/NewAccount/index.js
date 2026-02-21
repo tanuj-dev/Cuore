@@ -76,10 +76,7 @@ const CreateAccountScreen = () => {
 
     // 🔹 Terms and Conditions check
     if (!isChecked) {
-      alert(
-        'Terms Required',
-        'Please agree to the Terms and Conditions.',
-      );
+      alert('Terms Required', 'Please agree to the Terms and Conditions.');
       return;
     }
 
@@ -148,181 +145,183 @@ const CreateAccountScreen = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* 🔙 Back Button */}
-          <Pressable
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            style={styles.backArrow}
-            onPress={() => navigation.goBack()}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled"
           >
+            {/* 🔙 Back Button */}
+            <Pressable
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+              style={styles.backArrow}
+              onPress={() => navigation.goBack()}
+            >
+              <Image
+                source={Images.BACK_BUTTON}
+                style={{
+                  height: hp(3.5),
+                  width: wp(4),
+                  resizeMode: 'contain',
+                }}
+              />
+            </Pressable>
+
+            {/* 🩺 Logo */}
             <Image
-              source={Images.BACK_BUTTON}
               style={{
-                height: hp(3.5),
-                width: wp(4),
                 resizeMode: 'contain',
+                height: hp(4.5),
+                width: wp(30),
+                alignSelf: 'center',
+                marginBottom: hp(2.5),
+              }}
+              source={images.APP_LOGO}
+            />
+
+            {/* 🧾 Title */}
+            <Text style={styles.title}>Create Account</Text>
+
+            {/* Full Name */}
+            <Text style={styles.label}>
+              Full Name <Text style={styles.optional}>(Required)</Text>
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter user’s full name"
+              placeholderTextColor="#94A3B8"
+              value={fullName}
+              onChangeText={setFullName}
+            />
+
+            {/* Mobile Number */}
+            <Text style={styles.label}>
+              Mobile Number <Text style={styles.optional}>(Required)</Text>
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your registered mobile number"
+              placeholderTextColor="#94A3B8"
+              keyboardType="phone-pad"
+              value={mobileNumber}
+              onChangeText={text => {
+                const digitsOnly = text.replace(/[^0-9]/g, '');
+                if (digitsOnly.length <= 10) {
+                  setMobileNumber(digitsOnly);
+                } else {
+                  setToast({
+                    message: 'Mobile number must be 10 digits only',
+                    type: 'error',
+                  });
+                }
               }}
             />
-          </Pressable>
-
-          {/* 🩺 Logo */}
-          <Image
-            style={{
-              resizeMode: 'contain',
-              height: hp(4.5),
-              width: wp(30),
-              alignSelf: 'center',
-              marginBottom: hp(2.5),
-            }}
-            source={images.APP_LOGO}
-          />
-
-          {/* 🧾 Title */}
-          <Text style={styles.title}>Create Account</Text>
-
-          {/* Full Name */}
-          <Text style={styles.label}>
-            Full Name <Text style={styles.optional}>(Required)</Text>
-          </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter user’s full name"
-            placeholderTextColor="#94A3B8"
-            value={fullName}
-            onChangeText={setFullName}
-          />
-
-          {/* Mobile Number */}
-          <Text style={styles.label}>
-            Mobile Number <Text style={styles.optional}>(Required)</Text>
-          </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your registered mobile number"
-            placeholderTextColor="#94A3B8"
-            keyboardType="phone-pad"
-            value={mobileNumber}
-            onChangeText={text => {
-              const digitsOnly = text.replace(/[^0-9]/g, '');
-              if (digitsOnly.length <= 10) {
-                setMobileNumber(digitsOnly);
-              } else {
-                setToast({
-                  message: 'Mobile number must be 10 digits only',
-                  type: 'error',
-                });
-              }
-            }}
-          />
-          {toast && (
-            <Toast
-              message={toast.message}
-              type={toast.type}
-              onHide={() => setToast(null)}
-              top={100}
+            {toast && (
+              <Toast
+                message={toast.message}
+                type={toast.type}
+                onHide={() => setToast(null)}
+                top={100}
+              />
+            )}
+            {/* Family member's mobile */}
+            <Text style={styles.label}>Family member's mobile number</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="So they can see your progress"
+              placeholderTextColor="#94A3B8"
+              keyboardType="phone-pad"
+              value={familyNumber}
+              onChangeText={text => {
+                const digitsOnly = text.replace(/[^0-9]/g, '');
+                if (digitsOnly.length <= 10) {
+                  setFamilyNumber(digitsOnly);
+                } else {
+                  setToast({
+                    message: 'Mobile number must be 10 digits only',
+                    type: 'error',
+                  });
+                }
+              }}
             />
-          )}
-          {/* Family member's mobile */}
-          <Text style={styles.label}>Family member's mobile number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="So they can see your progress"
-            placeholderTextColor="#94A3B8"
-            keyboardType="phone-pad"
-            value={familyNumber}
-            onChangeText={text => {
-              const digitsOnly = text.replace(/[^0-9]/g, '');
-              if (digitsOnly.length <= 10) {
-                setFamilyNumber(digitsOnly);
-              } else {
-                setToast({
-                  message: 'Mobile number must be 10 digits only',
-                  type: 'error',
-                });
-              }
-            }}
-          />
 
-          {/* Doctor's code */}
-          <Text style={styles.label}>Doctor's Code</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Connect to partnered doctor for supervision"
-            placeholderTextColor="#94A3B8"
-            value={doctorCode}
-            onChangeText={setDoctorCode}
-          />
+            {/* Doctor's code */}
+            <Text style={styles.label}>Doctor's Code</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Link to your doctor for supervision"
+              placeholderTextColor="#94A3B8"
+              value={doctorCode}
+              onChangeText={setDoctorCode}
+            />
 
-          {/* Corporate code */}
-          <Text style={styles.label}>Corporate Code</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Only for corporate plan users"
-            placeholderTextColor="#94A3B8"
-            value={corporateCode}
-            onChangeText={setCorporateCode}
-          />
+            {/* Corporate code */}
+            <Text style={styles.label}>Corporate Code</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Only for corporate plan users"
+              placeholderTextColor="#94A3B8"
+              value={corporateCode}
+              onChangeText={setCorporateCode}
+            />
 
-          {/* Info */}
-          <Text style={styles.infoText}>
-            By entering your caregiver’s and doctor’s contact details, you
-            authorize Cuore to share relevant health information with them to
-            enable coordinated, personalized care as part of your program.
-          </Text>
+            {/* Info */}
+            <Text style={styles.infoText}>
+              By entering your caregiver’s and doctor’s contact details, you
+              authorize Cuore to share relevant health information with them to
+              enable coordinated, personalized care as part of your program.
+            </Text>
 
-          {/* Terms Checkbox */}
-          <View style={styles.checkboxContainer}>
-            <TouchableOpacity
-              style={styles.customCheckbox}
-              onPress={() => setIsChecked(!isChecked)}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.checkboxBox,
-                  isChecked && styles.checkboxBoxChecked,
-                ]}
+            {/* Terms Checkbox */}
+            <View style={styles.checkboxContainer}>
+              <TouchableOpacity
+                style={styles.customCheckbox}
+                onPress={() => setIsChecked(!isChecked)}
+                activeOpacity={0.7}
               >
-                {isChecked && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-            </TouchableOpacity>
-            <Text style={styles.checkboxLabel}>
-              By clicking, I accept the{' '}
-              <Text
-                style={styles.link}
-                onPress={() => Linking.openURL('https://cuore.health/terms')}
-              >
-                Terms & Conditions
-              </Text>{' '}
-              and{' '}
-              <Text
-                style={styles.link}
-                onPress={() => Linking.openURL('https://cuore.health/privacy')}
-              >
-                Privacy
+                <View
+                  style={[
+                    styles.checkboxBox,
+                    isChecked && styles.checkboxBoxChecked,
+                  ]}
+                >
+                  {isChecked && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+              </TouchableOpacity>
+              <Text style={styles.checkboxLabel}>
+                By clicking, I accept the{' '}
+                <Text
+                  style={styles.link}
+                  onPress={() => Linking.openURL('https://cuore.health/terms')}
+                >
+                  Terms & Conditions
+                </Text>{' '}
+                and{' '}
+                <Text
+                  style={styles.link}
+                  onPress={() =>
+                    Linking.openURL('https://cuore.health/privacy')
+                  }
+                >
+                  Privacy
+                </Text>
               </Text>
-            </Text>
-          </View>
+            </View>
 
-          {/* Verify Button */}
-          <TouchableOpacity
-            onPress={handleCreateAccount}
-            style={[
-              styles.verifyButton,
-              { backgroundColor: loading ? '#94A3B8' : '#11418A' },
-            ]}
-            disabled={loading}
-          >
-            <Text style={styles.verifyText}>
-              {loading ? 'Creating...' : 'Verify'}
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+            {/* Verify Button */}
+            <TouchableOpacity
+              onPress={handleCreateAccount}
+              style={[
+                styles.verifyButton,
+                { backgroundColor: loading ? '#94A3B8' : '#11418A' },
+              ]}
+              disabled={loading}
+            >
+              <Text style={styles.verifyText}>
+                {loading ? 'Creating...' : 'Verify'}
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </>
   );

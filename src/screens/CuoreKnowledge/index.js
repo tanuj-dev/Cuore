@@ -214,9 +214,10 @@ const styles = StyleSheet.create({
   description: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    marginTop: hp(0.5),
-    color: '#64748B',
+    marginTop: hp(1),
+    color: '#334155',
     letterSpacing: 0.2,
+    lineHeight: 21,
   },
 });
 

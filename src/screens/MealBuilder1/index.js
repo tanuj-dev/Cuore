@@ -28,6 +28,7 @@ const MealBuilder1 = ({ navigation, route }) => {
   console.log('Route params:', route.params);
   const { dishes, targetCalories, sumofCalories, activeTab, activeCuisine } =
     route.params;
+  console.log('Dishes:', dishes);
 
   const TargetCalories = targetCalories;
   const [loading, setLoading] = useState(false);
@@ -87,7 +88,7 @@ const MealBuilder1 = ({ navigation, route }) => {
       section: item.section,
       cuisine: activeCuisine,
       mealTime: activeTab,
-      recipeLink: item.recepieId?._id ?? null,
+      recipeLink: item.id ?? null,
     }));
 
     console.log('Cart Items to adjust:', cartItems);
@@ -121,118 +122,118 @@ const MealBuilder1 = ({ navigation, route }) => {
     <>
       {AlertComponent}
       <ScrollView style={styles.scroll}>
-      <ImageBackground
-        style={styles.backgroundImage}
-        source={Images.BACKGROUND_IMAGE_NUTRITION}
-      >
-        <View style={styles.headerOverlay} />
-        <TouchableOpacity
-          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          onPress={() => navigation.goBack()}
-          style={styles.headerContainer}
+        <ImageBackground
+          style={styles.backgroundImage}
+          source={Images.BACKGROUND_IMAGE_NUTRITION}
         >
-          <Image style={styles.backButton} source={Images.BACK_BUTTON} />
-        </TouchableOpacity>
+          <View style={styles.headerOverlay} />
+          <TouchableOpacity
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            onPress={() => navigation.goBack()}
+            style={styles.headerContainer}
+          >
+            <Image style={styles.backButton} source={Images.BACK_BUTTON} />
+          </TouchableOpacity>
 
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Cuore MealBuilder</Text>
-        </View>
-
-        <View style={styles.headerRow}>
-          <View style={styles.headerRowLeft}>
-            <Text style={styles.itemsSelectedText} numberOfLines={1}>
-              {selectedItems.length} items selected
-            </Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Cuore plate</Text>
           </View>
-          {selectedItems.length > maxAllowed && (
-            <View style={styles.warningRow}>
-              <Image
-                style={styles.warningIcon}
-                source={Images.WARNING}
-              />
-              <Text style={styles.warningText}>max 4 allowed</Text>
+
+          <View style={styles.headerRow}>
+            <View style={styles.headerRowLeft}>
+              <Text style={styles.itemsSelectedText} numberOfLines={1}>
+                {selectedItems.length} items selected
+              </Text>
             </View>
-          )}
-        </View>
-      </ImageBackground>
+            {selectedItems.length > maxAllowed && (
+              <View style={styles.warningRow}>
+                <Image style={styles.warningIcon} source={Images.WARNING} />
+                <Text style={styles.warningText}>max 4 allowed</Text>
+              </View>
+            )}
+          </View>
+        </ImageBackground>
 
-      {selectedItems.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Image source={Images.EMPTY_CART} style={styles.emptyImage} />
-          <Text style={styles.emptyText}>No items selected.</Text>
-        </View>
-      ) : null}
+        {selectedItems.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Image source={Images.EMPTY_CART} style={styles.emptyImage} />
+            <Text style={styles.emptyText}>No items selected.</Text>
+          </View>
+        ) : null}
 
-      <View style={styles.contentWrap}>
-        <FlatList
-          data={selectedItems}
-          keyExtractor={(item, index) => String(item?.id ?? item?.dishname ?? index)}
-          renderItem={({ item }) => (
-            <View style={styles.dishCard}>
-              <View style={styles.dishRow}>
-                <View style={styles.dishDot} />
-                <View style={styles.dishInfo}>
-                  <Text style={styles.dishName}>{item?.dishname}</Text>
-                  <Text style={styles.dishCal}>{item?.calories} cal</Text>
+        <View style={styles.contentWrap}>
+          <FlatList
+            data={selectedItems}
+            keyExtractor={(item, index) =>
+              String(item?.id ?? item?.dishname ?? index)
+            }
+            renderItem={({ item }) => (
+              <View style={styles.dishCard}>
+                <View style={styles.dishRow}>
+                  <View style={styles.dishDot} />
+                  <View style={styles.dishInfo}>
+                    <Text style={styles.dishName}>{item?.dishname}</Text>
+                    <Text style={styles.dishCal}>{item?.calories} cal</Text>
+                  </View>
+                </View>
+
+                <View style={styles.portionRow}>
+                  <TouchableOpacity
+                    onPress={() => decrement(item?.id)}
+                    style={styles.portionBtn}
+                  >
+                    <Text style={styles.portionBtnText}>−</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.countText}>{item.count}</Text>
+                  <TouchableOpacity
+                    onPress={() => increment(item.id)}
+                    style={styles.portionBtn}
+                  >
+                    <Text style={styles.portionBtnText}>+</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
+            )}
+          />
 
-              <View style={styles.portionRow}>
-                <TouchableOpacity
-                  onPress={() => decrement(item?.id)}
-                  style={styles.portionBtn}
-                >
-                  <Text style={styles.portionBtnText}>−</Text>
-                </TouchableOpacity>
-                <Text style={styles.countText}>{item.count}</Text>
-                <TouchableOpacity
-                  onPress={() => increment(item.id)}
-                  style={styles.portionBtn}
-                >
-                  <Text style={styles.portionBtnText}>+</Text>
-                </TouchableOpacity>
-              </View>
+          {selectedItems?.length > 0 && (
+            <View style={styles.summaryBox}>
+              <Text style={styles.summaryText}>
+                Total Calories:{' '}
+                <Text style={styles.summaryBold}>{totalCalories}</Text>
+              </Text>
+              {totalCalories > TargetCalories && (
+                <Text style={styles.extraText}>
+                  Extra: {totalCalories - TargetCalories} calories
+                </Text>
+              )}
+              {selectedItems?.length < 2 && (
+                <Text style={styles.noteText}>
+                  Note: Balance your meal by adding more dishes
+                </Text>
+              )}
             </View>
           )}
+
+          {selectedItems?.length > 0 && (
+            <TouchableOpacity
+              onPress={handleAdjustPortions}
+              style={styles.adjustButton}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.adjustButtonText}>Adjust Portions</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+        <LimitExceededModal
+          visible={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
         />
-
-        {selectedItems?.length > 0 && (
-          <View style={styles.summaryBox}>
-            <Text style={styles.summaryText}>
-              Total Calories: <Text style={styles.summaryBold}>{totalCalories}</Text>
-            </Text>
-            {totalCalories > TargetCalories && (
-              <Text style={styles.extraText}>
-                Extra: {totalCalories - TargetCalories} calories
-              </Text>
-            )}
-            {selectedItems?.length < 2 && (
-              <Text style={styles.noteText}>
-                Note: Balance your meal by adding more dishes
-              </Text>
-            )}
-          </View>
-        )}
-
-        {selectedItems?.length > 0 && (
-          <TouchableOpacity
-            onPress={handleAdjustPortions}
-            style={styles.adjustButton}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.adjustButtonText}>Adjust Portions</Text>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
-      <LimitExceededModal
-        visible={showLimitModal}
-        onClose={() => setShowLimitModal(false)}
-      />
-    </ScrollView>
+      </ScrollView>
     </>
   );
 };

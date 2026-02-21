@@ -11,6 +11,7 @@ import {
   Linking,
   Platform,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Images, hp, wp } from '../../utilities';
 import { sendOtp, loginCaregiverThunk } from '../../redux/slices';
 import Toast from '../../components/Toast';
@@ -72,7 +73,13 @@ const Login = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAwareScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      enableOnAndroid
+      showsVerticalScrollIndicator={false}
+    >
       {AlertComponent}
       <Image source={Images.APP_LOGO} style={styles.logo} />
       <Text style={styles.loginText}>
@@ -140,7 +147,6 @@ const Login = ({ navigation }) => {
             onHide={() => setToast(null)}
           />
         )}
-        {/* {error ? <Text style={styles.errorText}>{error}</Text> : null} */}
 
         {tab === 'User' && (
           <TouchableOpacity onPress={() => navigation.navigate('NewAccount')}>
@@ -179,18 +185,23 @@ const Login = ({ navigation }) => {
           </Text>
         </Text>
       </View>
-    </View>
+    </KeyboardAwareScrollView>
   );
 };
 
 export default Login;
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    // marginTop: hp(8),
+  },
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingBottom: hp(20),
     paddingHorizontal: wp(6),
+    backgroundColor: '#FFFFFF',
   },
   logo: {
     width: wp(30),

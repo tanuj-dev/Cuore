@@ -89,15 +89,22 @@ const Search = ({ navigation }) => {
       </Text> */}
 
       <View style={styles.metaRow}>
-        <Text style={styles.metaText}>
-          Prep: {item?.prepTime?.replace(/\t/g, '') || 'N/A'}
-        </Text>
-        <Text style={styles.metaText}>
-          Ingredients: {item?.ingredients?.length || 0}
-        </Text>
-        <Text style={styles.metaText}>
-          Steps: {item?.instructions?.length || 0}
-        </Text>
+        <View style={styles.metaCol}>
+          <Text style={styles.metaLabel}>Prep Time</Text>
+          <Text style={styles.metaValue}>
+            {item?.prepTime?.replace(/\t/g, '') || 'N/A'}
+          </Text>
+        </View>
+        <View style={styles.metaDivider} />
+        <View style={styles.metaCol}>
+          <Text style={styles.metaLabel}>Ingredients</Text>
+          <Text style={styles.metaValue}>{item?.ingredients?.length || 0}</Text>
+        </View>
+        <View style={styles.metaDivider} />
+        <View style={styles.metaCol}>
+          <Text style={styles.metaLabel}>Steps</Text>
+          <Text style={styles.metaValue}>{item?.instructions?.length || 0}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -271,13 +278,31 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   metaRow: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    marginTop: hp(0.5),
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: hp(1.5),
+    paddingTop: hp(1.2),
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
   },
-  metaText: {
+  metaCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  metaDivider: {
+    width: 1,
+    height: hp(4),
+    backgroundColor: '#E2E8F0',
+  },
+  metaLabel: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 12,
-    color: '#475569',
+    fontSize: 11,
+    color: '#94A3B8',
+    marginBottom: 3,
+  },
+  metaValue: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14,
+    color: '#11418A',
   },
 });
