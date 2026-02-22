@@ -881,7 +881,7 @@ const Today = ({ navigation, route }) => {
 
         {/* Streak Section */}
         <View style={styles.streakContainer}>
-          <Image source={Images.FIRE} style={styles.fireIcon} />
+          {/* <Image source={Images.FIRE} style={styles.fireIcon} /> */}
           <Text style={styles.streakTitle}>
             {homeData?.streak}-Day Streak 🔥
           </Text>

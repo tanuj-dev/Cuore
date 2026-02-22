@@ -173,7 +173,7 @@ const Predict = ({ navigation }) => {
   );
 
   const getStepForTitle = useCallback(
-    title => TITLE_TO_STEP_MAP[title] || 7,
+    title => (title === 'Cuore Score' ? 2 : TITLE_TO_STEP_MAP[title] || 7),
     [],
   );
 
