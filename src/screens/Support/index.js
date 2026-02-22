@@ -17,43 +17,40 @@ const Support = ({ navigation }) => {
   return (
     <>
       {AlertComponent}
-    <View style={styles.wrapper}>
-      <ProfileHeader navigation={navigation} title="Support" />
+      <View style={styles.wrapper}>
+        <ProfileHeader navigation={navigation} title="Support" />
 
-      <View style={styles.container}>
-        <Text style={styles.heading}>Call our support team</Text>
-        <View style={styles.centerSection}>
-          <View style={styles.iconContainer}>
-            <Image source={Images.PHONE} style={styles.phoneIcon} />
+        <View style={styles.container}>
+          <Text style={styles.heading}>Call our support team</Text>
+          <View style={styles.centerSection}>
+            <View style={styles.iconContainer}>
+              <Image source={Images.PHONE} style={styles.phoneIcon} />
+            </View>
+            <Text style={styles.supportLineText}>Support Line</Text>
+            <TouchableOpacity
+              onPress={async () => {
+                const url = 'tel:+918595220225';
+                const supported = await Linking.canOpenURL(url);
+                if (supported) {
+                  Linking.openURL(url);
+                } else {
+                  alert('Error', 'Phone dialer not supported on this device');
+                }
+              }}
+              style={styles.continueBtn}
+            >
+              <Text style={styles.continueText}>📞 Call +91 85952 20225</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.supportLineText}>Support Line</Text>
-          <TouchableOpacity
-            onPress={async () => {
-              const url = `tel:${1 - 800 - 123 - 4567}`;
-              const supported = await Linking.canOpenURL(url);
-              if (supported) {
-                Linking.openURL(url);
-              } else {
-                alert(
-                  'Error',
-                  'Phone dialer not supported on this device',
-                );
-              }
-            }}
-            style={styles.continueBtn}
-          >
-            <Text style={styles.continueText}>📞 Call 1-800-123-4567</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.hoursContainer}>
-          <Text style={styles.hoursTitle}>Support Hours</Text>
+          <View style={styles.hoursContainer}>
+            <Text style={styles.hoursTitle}>Support Hours</Text>
 
-          <View style={styles.hoursContent}>
-            <Text style={styles.hoursDay}>Monday - Saturday</Text>
-            <Text style={styles.hoursTime}>9:00 AM - 6:00 PM</Text>
+            <View style={styles.hoursContent}>
+              <Text style={styles.hoursDay}>Monday - Saturday</Text>
+              <Text style={styles.hoursTime}>9:00 AM - 6:00 PM</Text>
+            </View>
           </View>
         </View>
-      </View>
       </View>
     </>
   );

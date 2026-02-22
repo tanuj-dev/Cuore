@@ -466,7 +466,7 @@ const Today = ({ navigation, route }) => {
 
         {/* Progress Section */}
         <View style={styles.progressContainer}>
-          <Text style={styles.progressTitle}>Your Progress</Text>
+          <Text style={styles.progressTitle}>Stability </Text>
           <TouchableOpacity
             disabled={isCaregiver}
             onPress={() => {

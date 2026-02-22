@@ -93,8 +93,8 @@ android {
         applicationId "com.cuore"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 21
-        versionName "1.1.6"
+        versionCode 25
+        versionName "1.2.2"
     }
     signingConfigs {
         debug {

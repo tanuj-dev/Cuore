@@ -1411,8 +1411,9 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontSize: 14,
-    color: '#4B5563',
+    color: '#11418A',
     fontFamily: 'Poppins-Medium',
+    fontWeight: 'bold',
   },
   flatHistoryRow: {
     flexDirection: 'row',
