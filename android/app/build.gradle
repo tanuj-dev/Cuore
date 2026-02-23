@@ -114,10 +114,10 @@ android {
     }
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
+            // Use release signing so Google Play Billing works during local development
+            signingConfig signingConfigs.release
         }
         release {
-            // Signing with release keystore
             signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"

@@ -93,10 +93,11 @@ const Checkout = ({ navigation }) => {
         });
       } catch (err) {
         console.error('IAP init error:', err);
-        // In debug/dev builds this error is expected — IAP only works with
-        // a signed release build installed via Play Store internal testing.
         if (!__DEV__) {
-          alert('Error', 'Failed to set up payment. Please try again.');
+          alert(
+            'Payment Error',
+            `Code: ${err?.code || 'unknown'}\n${err?.message || 'Failed to set up payment.'}`,
+          );
         }
       }
     };
