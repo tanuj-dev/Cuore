@@ -105,6 +105,7 @@ const Today = ({ navigation, route }) => {
   const userId = useSelector(state => state.auth.userId);
   const role = useSelector(state => state.auth.role);
   const profileData = useSelector(state => state.profile.data?.data?.user);
+  const doctorProfile = useSelector(state => state.home.data?.doctor);
 
   // Memoize derived data
   const homeData = useMemo(() => data || null, [data]);
@@ -417,8 +418,19 @@ const Today = ({ navigation, route }) => {
             >
               <View style={styles.buttonIconWrapper}>
                 <Image
-                  source={Images.DOCTOR_PROFILE}
-                  style={styles.healthIcon}
+                  source={
+                    doctorProfile?.profileImage || doctorProfile?.photoUrl
+                      ? {
+                          uri:
+                            doctorProfile?.profileImage ||
+                            doctorProfile?.photoUrl,
+                        }
+                      : Images.DEFAULT_DOCTOR
+                  }
+                  style={[
+                    styles.healthIcon,
+                    { tintColor: doctorProfile?.profileImage ? '' : '#DC2626' },
+                  ]}
                 />
               </View>
               <Text style={styles.healthButtonText}>Cuore{'\n'}Health</Text>
@@ -1260,7 +1272,7 @@ const styles = StyleSheet.create({
   healthIcon: {
     height: hp(2),
     width: hp(2),
-    tintColor: '#DC2626',
+    // tintColor: '#DC2626',
   },
   addReminderText: {
     fontSize: 11.5,
