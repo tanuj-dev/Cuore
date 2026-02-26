@@ -46,7 +46,6 @@ const Recipe = ({ navigation, route }) => {
   return (
     <ScrollView style={styles.scroll} bounces={false}>
       <View style={styles.screen}>
-
         {/* ── Hero Header ── */}
         <View style={styles.heroHeader}>
           <View style={styles.heroTopRow}>
@@ -59,8 +58,12 @@ const Recipe = ({ navigation, route }) => {
             </TouchableOpacity>
 
             {dietPref && (
-              <View style={[styles.dietBadge, { backgroundColor: badgeColors.bg }]}>
-                <Text style={[styles.dietBadgeText, { color: badgeColors.text }]}>
+              <View
+                style={[styles.dietBadge, { backgroundColor: badgeColors.bg }]}
+              >
+                <Text
+                  style={[styles.dietBadgeText, { color: badgeColors.text }]}
+                >
                   {dietPref === 'Eggetarian' ? 'Egg' : dietPref}
                 </Text>
               </View>
@@ -69,7 +72,7 @@ const Recipe = ({ navigation, route }) => {
 
           <Text style={styles.heroTitle}>{recipeData?.name}</Text>
           <Text style={styles.heroMeasurements}>
-            1 katori = 150ml  •  1 Cup = 200ml  •  1 Bowl = 300ml
+            1 katori = 150ml • 1 Cup = 200ml • 1 Bowl = 300ml
           </Text>
         </View>
 
@@ -88,7 +91,7 @@ const Recipe = ({ navigation, route }) => {
               {recipeData?.cookTime?.replace(/\t/g, '') || 'N/A'}
             </Text>
           </View>
-          <View style={styles.statDivider} />
+          {/* <View style={styles.statDivider} />
           <View style={styles.statBox}>
             <Text style={styles.statLabel}>Ingredients</Text>
             <Text style={styles.statValue}>{ingredients?.length ?? 0}</Text>
@@ -97,7 +100,7 @@ const Recipe = ({ navigation, route }) => {
           <View style={styles.statBox}>
             <Text style={styles.statLabel}>Steps</Text>
             <Text style={styles.statValue}>{totalSteps}</Text>
-          </View>
+          </View> */}
         </View>
 
         {/* ── Content ── */}
@@ -138,7 +141,6 @@ const Recipe = ({ navigation, route }) => {
             ))}
           </View>
         </View>
-
       </View>
     </ScrollView>
   );

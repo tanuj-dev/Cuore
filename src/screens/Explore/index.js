@@ -122,6 +122,8 @@ const Explore = ({ navigation }) => {
       state?.profile?.data?.data?.user?.photoUrl,
   );
 
+  const doctorProfile = useSelector(state => state.home.data?.doctor);
+
   // ✅ SAFE IMAGE SOURCE
   const profileImageSource = useMemo(
     () => (profileImage ? { uri: profileImage } : Images.UNCLE),
@@ -148,7 +150,18 @@ const Explore = ({ navigation }) => {
             style={styles.healthButton}
             activeOpacity={0.7}
           >
-            <Image source={Images.DOCTOR_PROFILE} style={styles.doctorIcon} />
+            <Image
+              source={
+                doctorProfile?.profileImage || doctorProfile?.photoUrl
+                  ? {
+                      uri:
+                        doctorProfile?.profileImage || doctorProfile?.photoUrl,
+                    }
+                  : Images.DOCTOR_PROFILE
+              }
+              style={styles.doctorIcon}
+              resizeMode="cover"
+            />
             <Text style={styles.heading}>Cuore Health</Text>
           </TouchableOpacity>
 
@@ -163,18 +176,18 @@ const Explore = ({ navigation }) => {
     <>
       {AlertComponent}
       <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <FlatList
-        data={MODULES}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        numColumns={2}
-        ListHeaderComponent={renderListHeader}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.grid}
-        showsVerticalScrollIndicator={false}
-        style={styles.list}
-      />
-    </SafeAreaView>
+        <FlatList
+          data={MODULES}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          numColumns={2}
+          ListHeaderComponent={renderListHeader}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.grid}
+          showsVerticalScrollIndicator={false}
+          style={styles.list}
+        />
+      </SafeAreaView>
     </>
   );
 };
@@ -239,9 +252,11 @@ const styles = StyleSheet.create({
     }),
   },
   doctorIcon: {
-    height: hp(2.5),
-    width: wp(6),
-    tintColor: '#FFFFFF',
+    height: hp(3.5),
+    width: hp(3.5),
+    borderRadius: hp(1.75),
+    overflow: 'hidden',
+    marginRight: wp(1.5),
   },
   heading: {
     fontSize: 17,

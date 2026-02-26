@@ -421,16 +421,22 @@ const Today = ({ navigation, route }) => {
                   source={
                     doctorProfile?.profileImage || doctorProfile?.photoUrl
                       ? {
-                          uri:
-                            doctorProfile?.profileImage ||
-                            doctorProfile?.photoUrl,
-                        }
+                        uri:
+                          doctorProfile?.profileImage ||
+                          doctorProfile?.photoUrl,
+                      }
                       : Images.DEFAULT_DOCTOR
                   }
-                  style={[
-                    styles.healthIcon,
-                    { tintColor: doctorProfile?.profileImage ? '' : '#DC2626' },
-                  ]}
+                  style={
+                    doctorProfile?.profileImage || doctorProfile?.photoUrl
+                      ? styles.healthIconFull
+                      : styles.healthIcon
+                  }
+                  resizeMode={
+                    doctorProfile?.profileImage || doctorProfile?.photoUrl
+                      ? 'cover'
+                      : 'contain'
+                  }
                 />
               </View>
               <Text style={styles.healthButtonText}>Cuore{'\n'}Health</Text>
@@ -478,7 +484,7 @@ const Today = ({ navigation, route }) => {
 
         {/* Progress Section */}
         <View style={styles.progressContainer}>
-          <Text style={styles.progressTitle}>Stability </Text>
+          {/* <Text style={styles.progressTitle}>Stability </Text> */}
           <TouchableOpacity
             disabled={isCaregiver}
             onPress={() => {
@@ -521,8 +527,8 @@ const Today = ({ navigation, route }) => {
                     item?.type === 'red'
                       ? '#FEE4E4'
                       : item?.type === 'yellow'
-                      ? '#FFFFC5'
-                      : '#f4ba62ff',
+                        ? '#FFFFC5'
+                        : '#f4ba62ff',
                   position: 'relative',
                 }}
               >
@@ -535,8 +541,8 @@ const Today = ({ navigation, route }) => {
                       item?.type === 'red'
                         ? '#EF4444'
                         : item?.type === 'yellow'
-                        ? '#FFCE1B'
-                        : '#A16207',
+                          ? '#FFCE1B'
+                          : '#A16207',
                     marginRight: hp(0.5),
                   }}
                   source={Images.WARNING}
@@ -547,8 +553,8 @@ const Today = ({ navigation, route }) => {
                       item?.type === 'red'
                         ? '#B91C1C'
                         : item?.type === 'yellow'
-                        ? '#A16207'
-                        : '#A16207',
+                          ? '#A16207'
+                          : '#A16207',
                     marginRight: hp(2),
                   }}
                 >
@@ -624,9 +630,9 @@ const Today = ({ navigation, route }) => {
                   prev.map(reminder =>
                     reminder.id === item.id
                       ? {
-                          ...reminder,
-                          alarm_notified: !reminder.alarm_notified,
-                        }
+                        ...reminder,
+                        alarm_notified: !reminder.alarm_notified,
+                      }
                       : reminder,
                   ),
                 );
@@ -1000,7 +1006,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
   },
   biomarkerButton: {
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'center',
     backgroundColor: '#ECFDF5',
     paddingVertical: hp(1.2),
@@ -1255,6 +1261,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(1.5),
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 1 },
@@ -1272,7 +1279,12 @@ const styles = StyleSheet.create({
   healthIcon: {
     height: hp(2),
     width: hp(2),
-    // tintColor: '#DC2626',
+    tintColor: '#DC2626',
+  },
+  healthIconFull: {
+    width: hp(3.5),
+    height: hp(3.5),
+    borderRadius: hp(1.75),
   },
   addReminderText: {
     fontSize: 11.5,

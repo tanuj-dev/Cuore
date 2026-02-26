@@ -120,6 +120,7 @@ const Predict = ({ navigation }) => {
   const dispatch = useDispatch();
 
   const userId = useSelector(state => state.auth?.userId);
+  const doctorProfile = useSelector(state => state.home?.data?.doctor);
   const predictData = useSelector(
     state => state?.predictData?.data?.data?.graphs,
   );
@@ -363,7 +364,27 @@ const Predict = ({ navigation }) => {
             onPress={handleNavigateToHealth}
             style={styles.footerButton}
           >
-            <Image style={styles.footerIcon} source={Images.DOCTOR_PROFILE} />
+            <Image
+              source={
+                doctorProfile?.profileImage || doctorProfile?.photoUrl
+                  ? {
+                      uri:
+                        doctorProfile?.profileImage ||
+                        doctorProfile?.photoUrl,
+                    }
+                  : Images.DOCTOR_PROFILE
+              }
+              style={
+                doctorProfile?.profileImage || doctorProfile?.photoUrl
+                  ? [styles.footerIcon, styles.footerDoctorIconFull]
+                  : [styles.footerIcon, styles.footerDoctorIcon]
+              }
+              resizeMode={
+                doctorProfile?.profileImage || doctorProfile?.photoUrl
+                  ? 'cover'
+                  : 'contain'
+              }
+            />
             <Text style={styles.footerText}>Cuore Health</Text>
           </TouchableOpacity>
           {/* <View style={styles.card1}>
@@ -622,6 +643,17 @@ const styles = StyleSheet.create({
     height: hp(2.5),
     marginRight: hp(1.2),
     tintColor: '#11418A',
+  },
+  footerDoctorIcon: {
+    tintColor: undefined,
+    width: wp(8),
+    height: wp(8),
+  },
+  footerDoctorIconFull: {
+    tintColor: undefined,
+    width: wp(8),
+    height: wp(8),
+    borderRadius: wp(4),
   },
   tabContainer: {
     flexDirection: 'row',

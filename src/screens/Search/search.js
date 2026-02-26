@@ -97,23 +97,16 @@ const Search = ({ navigation }) => {
         </View>
         <View style={styles.metaDivider} />
         <View style={styles.metaCol}>
-          <Text style={styles.metaLabel}>Ingredients</Text>
-          <Text style={styles.metaValue}>{item?.ingredients?.length || 0}</Text>
+          <Text style={styles.metaLabel}>Cook Time</Text>
+          <Text style={styles.metaValue}>{item?.cookTime || 0}</Text>
         </View>
-        <View style={styles.metaDivider} />
-        <View style={styles.metaCol}>
-          <Text style={styles.metaLabel}>Steps</Text>
-          <Text style={styles.metaValue}>{item?.instructions?.length || 0}</Text>
-        </View>
+        {/* <View style={styles.metaDivider} /> */}
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={styles.safeArea}
-    >
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Search Recipes</Text>

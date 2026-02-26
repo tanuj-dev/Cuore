@@ -29,6 +29,8 @@ import { getHealthRecord, updateAISummary } from '../../redux/slices';
 import { updateLastConsulted } from '../../redux/Home/homeThunk';
 import { shareData } from '../../redux/slices';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
+import { postApiCall } from '../../utilities/Services';
+import EndPoints from '../../utilities/Endpoints';
 
 // Constants
 const HIT_SLOP = { top: 20, bottom: 20, left: 20, right: 20 };
@@ -109,34 +111,47 @@ const Health = ({ navigation }) => {
     }
     setFlatFeedbackSubmitting(true);
     try {
-      // TODO: Wire to your API - e.g. dispatch(submitSummaryFeedback({ userId, options: flatFeedbackSelected }))
+      const selectedLabels = FLAT_FEEDBACK_OPTIONS.filter(o =>
+        flatFeedbackSelected.includes(o.id),
+      ).map(o => o.label);
+
       const payload = {
-        userId,
-        section: 'flat_history',
-        options: flatFeedbackSelected,
-        labels: FLAT_FEEDBACK_OPTIONS.filter(o =>
-          flatFeedbackSelected.includes(o.id),
-        ).map(o => o.label),
+        healthRecordId: healthRecordId,
+        reasons: selectedLabels,
       };
-      // Placeholder: log for now; replace with API call when endpoint is ready
-      if (__DEV__) {
-        console.log('Summary feedback submitted:', payload);
+
+      const response = await postApiCall(EndPoints.REPORT_SUMMARY, payload);
+
+      if (response?.status === 200 || response?.status === 201) {
+        handleCloseFlatFeedback();
+        alert(
+          'Thank you',
+          'Your feedback has been submitted to our support team.',
+        );
+      } else {
+        const message =
+          response?.data?.message ||
+          'Failed to submit feedback. Please try again.';
+        alert('Error', message);
       }
-      handleCloseFlatFeedback();
-      alert(
-        'Thank you',
-        'Your feedback has been submitted to our support team.',
-      );
     } catch (err) {
       alert('Error', 'Failed to submit feedback. Please try again.');
     } finally {
       setFlatFeedbackSubmitting(false);
     }
-  }, [flatFeedbackSelected, userId, alert, handleCloseFlatFeedback]);
+  }, [flatFeedbackSelected, healthRecordId, alert, handleCloseFlatFeedback]);
 
   const healthObservations = useSelector(
     state => state.health?.data?.data?.data?.healthObservations,
   );
+  const healthRecordId = useSelector(
+    state => state.health?.data?.data?.data?.healthRecords?.healthRecordId,
+  );
+  const statusofSummary = useSelector(
+    state => state.health?.data?.data?.
+    status
+    )
+  console.log(healthRecordId, 'healthRecordId');
   const healtRecords = useSelector(
     state => state.health?.data?.data?.data?.healthRecords,
   );
@@ -840,18 +855,40 @@ const Health = ({ navigation }) => {
                   {isSummaryExpanded && (
                     <View style={{ marginTop: hp(2) }}>
                       <TouchableOpacity
-                        style={styles.flatFeedbackTapRow}
+                        style={[
+                          styles.flatFeedbackTapRow,
+                          statusofSummary && statusofSummary !== 'solved' &&
+                            styles.flatFeedbackTapRowDisabled,
+                        ]}
                         onPress={handleOpenFlatFeedback}
                         activeOpacity={0.7}
+                        disabled={
+                          !!(statusofSummary && statusofSummary !== 'solved')
+                        }
                       >
                         <Image
                           source={Images.FLAG}
-                          style={styles.flatHistoryFlag}
+                          style={[
+                            styles.flatHistoryFlag,
+                            statusofSummary && statusofSummary !== 'solved' &&
+                              { tintColor: '#9CA3AF' },
+                          ]}
                           resizeMode="contain"
                         />
-                        <Text style={styles.flatFeedbackTapText}>
+                        <Text
+                          style={[
+                            styles.flatFeedbackTapText,
+                            statusofSummary && statusofSummary !== 'solved' &&
+                              { color: '#9CA3AF' },
+                          ]}
+                        >
                           Report Inaccuracy
                         </Text>
+                        {statusofSummary && statusofSummary !== 'solved' && (
+                          <Text style={styles.flatFeedbackPendingBadge}>
+                            Pending review
+                          </Text>
+                        )}
                       </TouchableOpacity>
                       <Text
                         style={{
@@ -1430,10 +1467,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: hp(1.5),
   },
+  flatFeedbackTapRowDisabled: {
+    opacity: 0.5,
+  },
   flatFeedbackTapText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
     color: '#11418A',
+  },
+  flatFeedbackPendingBadge: {
+    marginLeft: wp(2),
+    fontSize: 11,
+    fontFamily: 'Poppins-Regular',
+    color: '#F59E0B',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: wp(2),
+    paddingVertical: 2,
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   flatFeedbackOverlay: {
     flex: 1,

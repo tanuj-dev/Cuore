@@ -7,7 +7,8 @@ let API_VERSION_2 = 'api/2.0';
 
 let MAIN_URL = MAIN_URL_QA_A2;
 
-let BASE_URL = 'https://cuore-backend-47918528-0531-42f2-b756-49be6a3fc69a.lowcloud.co';
+let BASE_URL =
+  'https://cuore-backend-47918528-0531-42f2-b756-49be6a3fc69a.lowcloud.co';
 let BASE_URL_V2 = MAIN_URL + API_VERSION_2;
 
 let IS_PRODUCTION = MAIN_URL === MAIN_URL_PRODUCTION ? true : false;
@@ -26,7 +27,30 @@ const REGEX = {
   FULLNAME: /^[a-zA-Z]{2,40}( [a-zA-Z]{2,40})+$/,
 };
 
+const SHARE_BASE_URL = 'https://cuore-backend-1.onrender.com';
+
 const Constants = {
   BASEURL: BASE_URL,
+  SHARE_BASE_URL,
 };
 export default Constants;
+
+// ─── In-App Purchase ────────────────────────────────────────────────────────
+
+export const IAP_SUBSCRIPTION_ID = 'pro_membership_annual';
+
+export const IAP_GST_RATE = 0.18;
+
+export const IAP_PLANS = [
+  {
+    title: 'Thrive',
+    subtitle: 'Commit to lasting health and sustained results',
+    duration: '12 Months',
+    oldPrice: 1999,
+    newPrice: 1499,
+    daily: '₹4.1/day',
+    discount: '25%',
+    productId: IAP_SUBSCRIPTION_ID,
+    topPick: true,
+  },
+];

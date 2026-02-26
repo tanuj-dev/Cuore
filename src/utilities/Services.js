@@ -3,7 +3,7 @@ import EndPoints from './Endpoints';
 import notifee, { TriggerType } from '@notifee/react-native';
 import dailyRoutines from './Common';
 import { Platform } from 'react-native';
-
+import Constants from './Constants';
 import EncryptedStorage from 'react-native-encrypted-storage';
 
 async function setupHeaders(isPost = true, endPoint = '') {
@@ -99,6 +99,24 @@ export async function postApiCall(endPoint, params) {
     console.log('POST API ERROR:', error);
     console.log('POST API ERROR details:', error.message);
     return error.response;
+  }
+}
+
+/** POST to a specific base URL (e.g. share API on Render). Returns { status, data }. */
+export async function postApiCallWithBaseUrl(baseUrl, endPoint, params) {
+  try {
+    const headers = await setupHeaders(true, endPoint);
+    const fullUrl = baseUrl.replace(/\/$/, '') + endPoint;
+    const res = await fetch(fullUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+    });
+    const data = await res.json().catch(() => ({}));
+    return { status: res.status, data };
+  } catch (error) {
+    console.log('POST API (custom base) ERROR:', error);
+    return { status: 0, data: error?.response?.data || null };
   }
 }
 

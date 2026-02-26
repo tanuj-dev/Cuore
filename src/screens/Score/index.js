@@ -20,6 +20,7 @@ import { WebView } from 'react-native-webview';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
+import EncryptedStorage from 'react-native-encrypted-storage';
 import { hp, wp, Images } from '../../utilities';
 
 const MEDICAL_REFERENCES = [
@@ -112,10 +113,9 @@ import GaugeMeter from '../../components/SpeedpMeter';
 import Loader from '../../components/Loader';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
-const Score = ({ navigation, route }) => {
+const Score = ({ navigation }) => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
-  const navigateTo = route.params?.navigateTo;
 
   // Combine selectors for better performance
   const { userId, role } = useSelector(state => ({
@@ -275,8 +275,20 @@ const Score = ({ navigation, route }) => {
     }
   }, [dispatch, userId]);
 
-  const handleContinue = useCallback(() => {
-    if (paymentStatus === 'completed' || paymentStatus === 'waived') {
+  const handleContinue = useCallback(async () => {
+    let status = paymentStatus;
+    if (status == null) {
+      try {
+        const tokenData = await EncryptedStorage.getItem('auth_tokens');
+        if (tokenData) {
+          const parsed = JSON.parse(tokenData);
+          status = parsed.paymentStatus;
+        }
+      } catch (_) {}
+    }
+    const isPaid =
+      status === 'complete' || status === 'completed' || status === 'waived';
+    if (isPaid) {
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
@@ -284,7 +296,7 @@ const Score = ({ navigation, route }) => {
     } else {
       navigation.navigate('Checkout');
     }
-  }, [navigation, navigateTo]);
+  }, [navigation, paymentStatus]);
 
   const handleReassess = useCallback(() => {
     navigation.navigate('OnBoarding', {
@@ -369,7 +381,7 @@ const Score = ({ navigation, route }) => {
                       onPress={handleShareScreenshot}
                     >
                       <Image
-                        source={Images.SHARE_4}
+                        source={require('../../assets/images/share4.png')}
                         style={styles.shareIcon}
                         resizeMode="contain"
                       />
@@ -801,6 +813,7 @@ const styles = StyleSheet.create({
   shareIcon: {
     resizeMode: 'contain',
     height: hp(2),
+    // width: wp(4),
     tintColor: '#1E293B',
   },
   profileIcon: {

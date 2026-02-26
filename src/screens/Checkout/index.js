@@ -12,46 +12,40 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { Linking } from 'react-native';
 import {
   initConnection,
   endConnection,
-  getSubscriptions,
-  requestSubscription,
+  fetchProducts,
+  requestPurchase,
   purchaseUpdatedListener,
   purchaseErrorListener,
   finishTransaction,
-  flushFailedPurchasesCachedAsPendingAndroid,
 } from 'react-native-iap';
+import EncryptedStorage from 'react-native-encrypted-storage';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUserData } from '../../redux/Auth/slice';
 import { hp, wp, Images } from '../../utilities';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
-
-// Subscription product ID — must match Google Play Console exactly
-const SUBSCRIPTION_ID = 'pro_membership_annual';
-
-const plans = [
-  {
-    title: 'Cuore Annual',
-    subtitle: 'Complete health and wellness program',
-    duration: '12 Months',
-    oldPrice: 1999,
-    newPrice: 1499,
-    daily: '₹4.1/day',
-    discount: '25%',
-    productId: SUBSCRIPTION_ID,
-    topPick: true,
-  },
-];
+import { postApiCall } from '../../utilities/Services';
+import EndPoints from '../../utilities/Endpoints';
+import {
+  IAP_SUBSCRIPTION_ID,
+  IAP_GST_RATE,
+  IAP_PLANS,
+} from '../../utilities/Constants';
 
 const Checkout = ({ navigation }) => {
-  const [selectedPlan, setSelectedPlan] = useState('Cuore Annual');
+  const dispatch = useDispatch();
+  const [selectedPlan, setSelectedPlan] = useState('Thrive');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [products, setProducts] = useState([]);
   const [isIAPInitialized, setIsIAPInitialized] = useState(false);
   const { alert, AlertComponent } = useCustomAlert();
+  const userId = useSelector(state => state.auth?.userId);
 
-  const selected = plans.find(p => p.title === selectedPlan);
-  const GST = 0.18;
-  const gstAmount = selected ? selected.newPrice * GST : 0;
+  const selected = IAP_PLANS.find(p => p.title === selectedPlan);
+  const gstAmount = selected ? selected.newPrice * IAP_GST_RATE : 0;
 
   // Initialize IAP connection
   useEffect(() => {
@@ -62,12 +56,12 @@ const Checkout = ({ navigation }) => {
       try {
         await initConnection();
 
-        if (Platform.OS === 'android') {
-          await flushFailedPurchasesCachedAsPendingAndroid();
-        }
-
-        const subs = await getSubscriptions({ skus: [SUBSCRIPTION_ID] });
-        console.log('Subscriptions fetched:', subs);
+        // v14 API: fetchProducts with type 'subs'
+        const subs = await fetchProducts({
+          skus: [IAP_SUBSCRIPTION_ID],
+          type: 'subs',
+        });
+        console.log('Subscriptions fetched:', JSON.stringify(subs));
         setProducts(subs);
         setIsIAPInitialized(true);
 
@@ -79,7 +73,10 @@ const Checkout = ({ navigation }) => {
             handleSuccessfulPurchase(purchase);
           } catch (err) {
             console.error('Finish transaction error:', err);
-            alert('Purchase Error', 'Could not complete your purchase. Please try again.');
+            alert(
+              'Purchase Error',
+              'Could not complete your purchase. Please try again.',
+            );
           }
         });
 
@@ -88,7 +85,10 @@ const Checkout = ({ navigation }) => {
           console.error('Purchase error:', err);
           setIsProcessingPayment(false);
           if (err.code !== 'E_USER_CANCELLED') {
-            alert('Purchase Failed', err.message || 'Something went wrong. Please try again.');
+            alert(
+              'Purchase Failed',
+              err.message || 'Something went wrong. Please try again.',
+            );
           }
         });
       } catch (err) {
@@ -96,7 +96,9 @@ const Checkout = ({ navigation }) => {
         if (!__DEV__) {
           alert(
             'Payment Error',
-            `Code: ${err?.code || 'unknown'}\n${err?.message || 'Failed to set up payment.'}`,
+            `Code: ${err?.code || 'unknown'}\n${
+              err?.message || 'Failed to set up payment.'
+            }`,
           );
         }
       }
@@ -112,36 +114,151 @@ const Checkout = ({ navigation }) => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSuccessfulPurchase = useCallback(
-    purchase => {
-      setIsProcessingPayment(false);
-      alert(
-        'Subscription Active!',
-        'Thank you for subscribing to Cuore. Your account has been upgraded.',
-        [
-          {
-            text: 'Get Started',
-            onPress: () =>
-              navigation.reset({ index: 0, routes: [{ name: 'Home' }] }),
-          },
-        ],
-      );
+    async purchase => {
+      try {
+        const payload = {
+          userId,
+          platform: Platform.OS,
+          productId: purchase.productId,
+          purchaseToken: purchase.transactionReceipt || purchase.purchaseToken,
+          orderId: purchase.transactionId,
+          purchaseTime: purchase.transactionDate,
+        };
+
+        console.log('Verifying subscription with backend:', payload);
+        const response = await postApiCall(
+          EndPoints.VERIFY_SUBSCRIPTION,
+          payload,
+        );
+        console.log(
+          'Subscription verify response:',
+          response?.status,
+          response?.data,
+        );
+
+        if (response?.status === 200 || response?.status === 201) {
+          console.log('Subscription verified successfully');
+          // Handle successful verification
+          const verificationData = response.data;
+          if (verificationData?.payment === 'done') {
+            console.log(
+              'Payment confirmed, expiry date:',
+              verificationData.expiryDate,
+            );
+            // Persist payment status so Score/Splash see completed state
+            try {
+              const tokenData = await EncryptedStorage.getItem('auth_tokens');
+              if (tokenData) {
+                const parsed = JSON.parse(tokenData);
+                parsed.paymentStatus = 'completed';
+                await EncryptedStorage.setItem(
+                  'auth_tokens',
+                  JSON.stringify(parsed),
+                );
+                dispatch(setUserData(parsed));
+              }
+            } catch (e) {
+              console.warn('Could not persist payment status:', e);
+            }
+            // Show success alert after successful verification
+            alert(
+              'Subscription Active!',
+              'Thank you for subscribing to Cuore. Your account has been upgraded.',
+              [
+                {
+                  text: 'Get Started',
+                  onPress: () =>
+                    navigation.reset({ index: 0, routes: [{ name: 'Home' }] }),
+                },
+              ],
+            );
+          }
+        } else {
+          console.warn('Subscription verify failed:', response?.data?.message);
+          throw new Error(response?.data?.message || 'Verification failed');
+        }
+      } catch (err) {
+        console.error('Subscription verify error:', err);
+        throw err; // Re-throw to be caught by the outer catch block
+      }
     },
-    [navigation, alert],
+    [navigation, alert, userId, dispatch],
   );
 
   const handlePlanSelect = planTitle => {
     setSelectedPlan(planTitle);
   };
 
+  const handleRestorePurchases = async () => {
+    if (isProcessingPayment) return;
+
+    try {
+      setIsProcessingPayment(true);
+
+      // For iOS, we can check existing purchases
+      if (Platform.OS === 'ios') {
+        // In a real implementation, you would check for existing purchases
+        // and restore them if found
+        console.log('Restoring purchases for iOS');
+
+        // Simulate API call to restore purchases
+        const response = await postApiCall(EndPoints.RESTORE_PURCHASES, {
+          userId,
+          platform: 'ios',
+        });
+
+        if (response?.status === 200) {
+          alert('Success', 'Your purchases have been restored successfully.', [
+            {
+              text: 'OK',
+              onPress: () =>
+                navigation.reset({ index: 0, routes: [{ name: 'Home' }] }),
+            },
+          ]);
+        } else {
+          alert(
+            'No Purchases Found',
+            'No previous purchases were found for your account.',
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Restore purchases error:', err);
+      alert('Error', 'Failed to restore purchases. Please try again.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
   const handleCheckout = async () => {
-    if (!isIAPInitialized) {
-      alert('Not Ready', 'Payment system is still loading. Please wait a moment.');
+    if (__DEV__) {
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
       return;
     }
 
-    const subscription = products.find(p => p.productId === selected.productId);
+    if (!isIAPInitialized) {
+      alert(
+        'Not Ready',
+        'Payment system is still loading. Please wait a moment.',
+      );
+      return;
+    }
+
+    // v14 uses `id` as the primary field (not `productId`)
+    const subscription = products.find(
+      p => p.id === selected.productId || p.productId === selected.productId,
+    );
+    console.log(
+      'Products in state:',
+      products.map(p => ({ id: p.id, productId: p.productId })),
+    );
+    console.log('Looking for:', selected.productId, '| Found:', !!subscription);
+
     if (!subscription) {
-      alert('Unavailable', 'This subscription is not available right now. Please try again later.');
+      alert(
+        'Unavailable',
+        'This subscription is not available right now. Please try again later.',
+      );
       return;
     }
 
@@ -149,18 +266,39 @@ const Checkout = ({ navigation }) => {
       setIsProcessingPayment(true);
 
       if (Platform.OS === 'android') {
-        // Android requires offerToken from the base plan
+        // v14 API: subscriptionOfferDetailsAndroid holds offer tokens
         const offerToken =
-          subscription?.subscriptionOfferDetails?.[0]?.offerToken;
+          subscription?.subscriptionOfferDetailsAndroid?.[0]?.offerToken;
 
-        await requestSubscription({
-          sku: selected.productId,
-          ...(offerToken && {
-            subscriptionOffers: [{ sku: selected.productId, offerToken }],
-          }),
+        console.log('offerToken:', offerToken);
+
+        if (!offerToken) {
+          setIsProcessingPayment(false);
+          alert(
+            'Unavailable',
+            'No valid offer found for this subscription. Please try again later.',
+          );
+          return;
+        }
+
+        // v14 API: requestPurchase replaces requestSubscription
+        await requestPurchase({
+          type: 'subs',
+          request: {
+            android: {
+              skus: [selected.productId],
+              subscriptionOffers: [{ sku: selected.productId, offerToken }],
+            },
+          },
         });
       } else {
-        await requestSubscription({ sku: selected.productId });
+        // iOS
+        await requestPurchase({
+          type: 'subs',
+          request: {
+            apple: { sku: selected.productId },
+          },
+        });
       }
     } catch (err) {
       console.error('Purchase request error:', err);
@@ -221,107 +359,11 @@ const Checkout = ({ navigation }) => {
             </View> */}
 
             {/* Plan Selection */}
-            <Text style={styles.sectionTitle}>Choose Your Plan</Text>
-            <View style={styles.planContainer}>
-              {plans.map(plan => {
-                const isSelected = plan.title === selectedPlan;
-                return (
-                  <TouchableOpacity
-                    key={plan.title}
-                    style={[
-                      styles.planBox,
-                      isSelected && styles.selectedBox,
-                      plan.topPick && styles.topPickPlan,
-                    ]}
-                    onPress={() => handlePlanSelect(plan.title)}
-                  >
-                    {plan.topPick && (
-                      <Text style={styles.topPick}>BEST VALUE</Text>
-                    )}
-
-                    <View style={styles.planHeaderRow}>
-                      <Text
-                        style={[
-                          styles.planTitle,
-                          isSelected && styles.selectedPlanTitleText,
-                        ]}
-                      >
-                        {plan.title}
-                      </Text>
-                      {plan.discount && (
-                        <View
-                          style={[
-                            styles.discountBadge,
-                            isSelected && styles.discountBadgeSelected,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.discount,
-                              isSelected && styles.selectedText,
-                            ]}
-                          >
-                            {plan.discount}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-
-                    <Text
-                      style={[
-                        styles.planSubtitle,
-                        isSelected && styles.selectedText,
-                      ]}
-                    >
-                      {plan.subtitle}
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.planDuration,
-                        isSelected && styles.selectedText,
-                      ]}
-                    >
-                      {plan.duration}
-                    </Text>
-
-                    <View style={styles.priceRow}>
-                      <Text
-                        style={[
-                          styles.priceOld,
-                          isSelected && styles.selectedText,
-                        ]}
-                      >
-                        {/* ₹{plan.oldPrice} */}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.priceNew,
-                          isSelected && styles.selectedText,
-                        ]}
-                      >
-                        ₹{plan.newPrice}
-                      </Text>
-                    </View>
-
-                    <Text
-                      style={[
-                        styles.dailyPrice,
-                        isSelected && styles.selectedText,
-                      ]}
-                    >
-                      {plan.daily}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            {/* <Text style={styles.sectionTitle}>Choose Your Plan</Text> */}
 
             {/* Selected Plan Summary */}
             <View style={styles.selectedPlanCard}>
-              <Text style={styles.selectedPlanTitle}>
-                {selected.title} Plan
-              </Text>
+              <Text style={styles.selectedPlanTitle}>{selected.title}</Text>
               <Text style={styles.selectedPlanSubtitle}>
                 {selected.subtitle}
               </Text>
@@ -402,9 +444,10 @@ const Checkout = ({ navigation }) => {
               onPress={handleCheckout}
               style={[
                 styles.checkoutButton,
-                (isProcessingPayment || !isIAPInitialized) && styles.checkoutButtonDisabled,
+                (isProcessingPayment || (!__DEV__ && !isIAPInitialized)) &&
+                  styles.checkoutButtonDisabled,
               ]}
-              disabled={isProcessingPayment || !isIAPInitialized}
+              disabled={isProcessingPayment || (!__DEV__ && !isIAPInitialized)}
             >
               {isProcessingPayment ? (
                 <>
@@ -420,7 +463,7 @@ const Checkout = ({ navigation }) => {
             </TouchableOpacity>
 
             {/* IAP Status */}
-            {!isIAPInitialized && (
+            {!__DEV__ && !isIAPInitialized && (
               <View style={styles.statusContainer}>
                 <ActivityIndicator size="small" color="#11418A" />
                 <Text style={styles.statusText}>
@@ -435,16 +478,43 @@ const Checkout = ({ navigation }) => {
               <Text style={styles.sslText}>100% Secure In-App Purchase</Text>
             </View>
 
-            {/* IAP Footer */}
+            {/* Restore Purchases Button (iOS only) */}
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity
+                onPress={handleRestorePurchases}
+                style={styles.restoreButton}
+                disabled={isProcessingPayment}
+              >
+                <Text style={styles.restoreButtonText}>Restore Purchases</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* IAP Footer with Terms & Privacy Links */}
             <View style={styles.iapFooter}>
               <Text style={styles.iapFooterText}>
-                Subscriptions will be charged to your Apple ID/Google Account at
+                Subscriptions will be charged to your{' '}
+                {Platform.OS === 'ios' ? 'Apple ID' : 'Google Account'} at
                 confirmation of purchase.
               </Text>
               <Text style={styles.iapFooterText}>
                 Subscription automatically renews unless auto-renew is turned
                 off at least 24-hours before the end of the current period.
               </Text>
+              <View style={styles.termsContainer}>
+                <TouchableOpacity
+                  onPress={() => Linking.openURL('https://cuore.health/terms')}
+                >
+                  <Text style={styles.termsLink}>Terms of Use</Text>
+                </TouchableOpacity>
+                <Text style={styles.linkSeparator}> • </Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    Linking.openURL('https://cuore.health/privacy')
+                  }
+                >
+                  <Text style={styles.termsLink}>Privacy Policy</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -690,6 +760,7 @@ const styles = StyleSheet.create({
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 10,
   },
   paymentMethodCard: {
@@ -878,6 +949,37 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
     lineHeight: 18,
     letterSpacing: 0.1,
+  },
+  restoreButton: {
+    alignSelf: 'center',
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(4),
+    marginBottom: hp(2),
+  },
+  restoreButtonText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#11418A',
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+  },
+  termsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: hp(1),
+    flexWrap: 'wrap',
+  },
+  termsLink: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#11418A',
+    textDecorationLine: 'underline',
+  },
+  linkSeparator: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#64748B',
   },
 });
 

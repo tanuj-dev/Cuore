@@ -28,6 +28,9 @@ const Endpoints = {
   DELETE_RECORD: '/api/delete-record', // DELETE /api/delete-record/:recordId
   REFRESH_TOKEN: '/api/v1/auth/refresh-token',
   DISMISS_ALERT: '/api/v1/timeline', // PUT /api/v1/timeline/:userId/dismiss-alert/:alertId
+  REPORT_SUMMARY: '/api/summary/report',
+  VERIFY_SUBSCRIPTION: '/api/subscription/verify',
+  RESTORE_PURCHASES: '/api/subscription/restore',
 };
 
 export default Endpoints;

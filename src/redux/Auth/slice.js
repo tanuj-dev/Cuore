@@ -12,6 +12,8 @@ const initialState = {
   loading: false,
   error: null,
   sessionExpired: false,
+  paymentStatus: null,
+  onboardingStatus: null,
 };
 
 const authSlice = createSlice({
@@ -19,8 +21,16 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setUserData: (state, action) => {
-      const { accessToken, refreshToken, userId, expiresIn, newUser, role } =
-        action.payload;
+      const {
+        accessToken,
+        refreshToken,
+        userId,
+        expiresIn,
+        newUser,
+        role,
+        paymentStatus,
+        onboardingStatus,
+      } = action.payload;
       state.accessToken = accessToken;
       state.refreshToken = refreshToken;
       state.userId = userId;
@@ -28,6 +38,8 @@ const authSlice = createSlice({
       state.newUser = newUser;
       state.error = null;
       state.role = role;
+      if (paymentStatus != null) state.paymentStatus = paymentStatus;
+      if (onboardingStatus != null) state.onboardingStatus = onboardingStatus;
     },
 
     logout: state => {

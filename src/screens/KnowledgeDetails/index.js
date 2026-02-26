@@ -41,18 +41,30 @@ const KnowledgeDetails = ({ navigation, route }) => {
               source={{ html: detailsHtml }}
               tagsStyles={{
                 p: {
-                  fontSize: 14,
+                  fontSize: 15,
                   color: '#475569',
-                  lineHeight: 22,
+                  lineHeight: 24,
                   fontFamily: 'Poppins-Regular',
+                  marginTop: 0,
+                  marginBottom: 12,
                 },
-                ul: { paddingLeft: 20, marginBottom: 10 },
-                ol: { paddingLeft: 20, marginBottom: 10 },
+                ul: {
+                  paddingLeft: 24,
+                  marginBottom: 16,
+                  marginTop: 8,
+                },
+                ol: {
+                  paddingLeft: 24,
+                  marginBottom: 16,
+                  marginTop: 8,
+                },
                 li: {
-                  marginBottom: 6,
-                  fontSize: 14,
+                  marginBottom: 10,
+                  fontSize: 15,
                   color: '#475569',
+                  lineHeight: 24,
                   fontFamily: 'Poppins-Regular',
+                  paddingLeft: 4,
                 },
                 strong: {
                   fontFamily: 'Poppins-Medium',
@@ -64,16 +76,32 @@ const KnowledgeDetails = ({ navigation, route }) => {
                   fontFamily: 'Poppins-Regular',
                 },
                 h1: {
-                  fontSize: 22,
-                  fontFamily: 'Poppins-Medium',
+                  fontSize: 24,
+                  fontFamily: 'Poppins-SemiBold',
+                  marginBottom: 14,
+                  marginTop: 4,
+                  color: '#EA580C',
+                },
+                h2: {
+                  fontSize: 20,
+                  fontFamily: 'Poppins-SemiBold',
                   marginBottom: 12,
-                  color: '#11418A',
+                  marginTop: 4,
+                  color: '#EA580C',
                 },
                 h3: {
+                  fontSize: 18,
+                  fontFamily: 'Poppins-Medium',
+                  marginBottom: 10,
+                  marginTop: 4,
+                  color: '#EA580C',
+                },
+                h4: {
                   fontSize: 16,
                   fontFamily: 'Poppins-Medium',
                   marginBottom: 8,
-                  color: '#1E293B',
+                  marginTop: 4,
+                  color: '#EA580C',
                 },
               }}
             />
