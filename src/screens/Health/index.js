@@ -148,9 +148,8 @@ const Health = ({ navigation }) => {
     state => state.health?.data?.data?.data?.healthRecords?.healthRecordId,
   );
   const statusofSummary = useSelector(
-    state => state.health?.data?.data?.
-    status
-    )
+    state => state.health?.data?.data?.status,
+  );
   console.log(healthRecordId, 'healthRecordId');
   const healtRecords = useSelector(
     state => state.health?.data?.data?.data?.healthRecords,
@@ -857,7 +856,8 @@ const Health = ({ navigation }) => {
                       <TouchableOpacity
                         style={[
                           styles.flatFeedbackTapRow,
-                          statusofSummary && statusofSummary !== 'solved' &&
+                          statusofSummary &&
+                            statusofSummary !== 'solved' &&
                             styles.flatFeedbackTapRowDisabled,
                         ]}
                         onPress={handleOpenFlatFeedback}
@@ -870,16 +870,20 @@ const Health = ({ navigation }) => {
                           source={Images.FLAG}
                           style={[
                             styles.flatHistoryFlag,
-                            statusofSummary && statusofSummary !== 'solved' &&
-                              { tintColor: '#9CA3AF' },
+                            statusofSummary &&
+                              statusofSummary !== 'solved' && {
+                                tintColor: '#9CA3AF',
+                              },
                           ]}
                           resizeMode="contain"
                         />
                         <Text
                           style={[
                             styles.flatFeedbackTapText,
-                            statusofSummary && statusofSummary !== 'solved' &&
-                              { color: '#9CA3AF' },
+                            statusofSummary &&
+                              statusofSummary !== 'solved' && {
+                                color: '#9CA3AF',
+                              },
                           ]}
                         >
                           Report Inaccuracy

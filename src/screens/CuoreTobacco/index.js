@@ -346,8 +346,9 @@ const styles = StyleSheet.create({
   quote: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#475569',
+    color: '#11418A',
     letterSpacing: 0.2,
+    fontWeight: 'bold',
   },
   challengeBox: {
     backgroundColor: '#F1F5F9',

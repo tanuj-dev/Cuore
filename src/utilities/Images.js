@@ -85,7 +85,7 @@ const images = {
   APPLE: require('../assets/images/apple.png'),
   CUP: require('../assets/images/cup.png'),
   THUNDER: require('../assets/images/thunder.png'),
-  SHARE_4: require('../assets/images/share3.png'),
+  SHARE_4: require('../assets/images/share4.png'),
   SHARE_SCORE: require('../assets/images/share3.png'),
   YELLOW_CUP: require('../assets/images/yellowcup.png'),
   KNIFE: require('../assets/images/knife.png'),

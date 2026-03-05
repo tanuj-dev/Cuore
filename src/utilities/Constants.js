@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 let MAIN_URL_QA_UAT = 'https://uatcom.edureka.in/';
 let MAIN_URL_QA_A2 = 'https://a2com.edureka.in/';
 
@@ -37,7 +39,7 @@ export default Constants;
 
 // ─── In-App Purchase ────────────────────────────────────────────────────────
 
-export const IAP_SUBSCRIPTION_ID = 'pro_membership_annual';
+export const IAP_SUBSCRIPTION_ID = Platform.OS === 'ios' ? 'pro.membership.annual' : 'pro_membership_annual';
 
 export const IAP_GST_RATE = 0.18;
 

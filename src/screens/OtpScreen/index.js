@@ -100,32 +100,19 @@ const OtpScreen = () => {
         paymentStatus: paymentStatus,
       };
 
-      // ✅ Save token securely
-      await EncryptedStorage.setItem(
-        'auth_tokens',
-        JSON.stringify(tokenPayload),
-      );
-      console.log('Token saved to EncryptedStorage');
-
-      // ✅ Read it back immediately for confirmation
-      const storedToken = await EncryptedStorage.getItem('auth_tokens');
-      console.log('Retrieved token from storage:', JSON.parse(storedToken));
-
-      // Determine navigation based on user status
-      // Priority order: 1. Onboarding status, 2. Caregiver check, 3. Payment status
-      
       // Step 1: Check onboardingStatus first
       if (onboardingStatus !== 'complete') {
-        // Check if user is caregiver with incomplete onboarding
         if (userRole === 'caregiver') {
-          // Show popup message for caregivers - they can't complete onboarding
           alert(
             'Onboarding Pending',
             "You can't proceed ahead because onboarding is pending and caregiver can't onboard.",
           );
           return;
         }
-        // For regular users, navigate to onboarding
+        await EncryptedStorage.setItem(
+          'auth_tokens',
+          JSON.stringify(tokenPayload),
+        );
         navigation.reset({
           index: 0,
           routes: [{ name: 'OnBoarding' }],
@@ -133,9 +120,24 @@ const OtpScreen = () => {
         return;
       }
 
-      // Step 2: Onboarding is complete, now check paymentStatus
+      // Step 2: Caregiver with pending payment — block login, don't save token
+      if (userRole === 'caregiver' && paymentStatus === 'pending') {
+        alert(
+          'Payment Pending',
+          'The account subscription payment is pending. Caregiver cannot complete the payment. Please ask the account owner to complete the payment.',
+        );
+        return;
+      }
+
+      // Step 3: Save token for all other cases
+      await EncryptedStorage.setItem(
+        'auth_tokens',
+        JSON.stringify(tokenPayload),
+      );
+      console.log('Token saved to EncryptedStorage');
+
+      // Step 4: Redirect non-caregiver pending payment users to Checkout
       if (paymentStatus === 'pending') {
-        // Payment pending - redirect to checkout (for both caregivers and regular users)
         navigation.reset({
           index: 0,
           routes: [{ name: 'Checkout' }],
@@ -143,11 +145,8 @@ const OtpScreen = () => {
         return;
       }
 
-      // Step 3: If payment is completed/waived and onboarding is complete, go to Home
-      if (
-        paymentStatus === 'completed' ||
-        paymentStatus === 'waived'
-      ) {
+      // Step 5: Payment completed/waived — go to Home
+      if (paymentStatus === 'completed' || paymentStatus === 'waived') {
         navigation.reset({
           index: 0,
           routes: [{ name: 'Home' }],
@@ -155,7 +154,7 @@ const OtpScreen = () => {
         return;
       }
 
-      // Default fallback - navigate to Home
+      // Default fallback
       console.warn('Unexpected user state - navigating to Home as fallback');
       navigation.reset({
         index: 0,

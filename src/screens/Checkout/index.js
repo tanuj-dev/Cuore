@@ -56,12 +56,13 @@ const Checkout = ({ navigation }) => {
       try {
         await initConnection();
 
-        // v14 API: fetchProducts with type 'subs'
+        // iOS product is Non-Consumable (inapp); Android is a subscription (subs)
+        const iapType = Platform.OS === 'ios' ? 'inapp' : 'subs';
         const subs = await fetchProducts({
           skus: [IAP_SUBSCRIPTION_ID],
-          type: 'subs',
+          type: iapType,
         });
-        console.log('Subscriptions fetched:', JSON.stringify(subs));
+        console.log('Products fetched:', JSON.stringify(subs));
         setProducts(subs);
         setIsIAPInitialized(true);
 
@@ -292,9 +293,9 @@ const Checkout = ({ navigation }) => {
           },
         });
       } else {
-        // iOS
+        // iOS — product is Non-Consumable (inapp type)
         await requestPurchase({
-          type: 'subs',
+          type: 'inapp',
           request: {
             apple: { sku: selected.productId },
           },

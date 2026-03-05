@@ -421,10 +421,10 @@ const Today = ({ navigation, route }) => {
                   source={
                     doctorProfile?.profileImage || doctorProfile?.photoUrl
                       ? {
-                        uri:
-                          doctorProfile?.profileImage ||
-                          doctorProfile?.photoUrl,
-                      }
+                          uri:
+                            doctorProfile?.profileImage ||
+                            doctorProfile?.photoUrl,
+                        }
                       : Images.DEFAULT_DOCTOR
                   }
                   style={
@@ -527,8 +527,8 @@ const Today = ({ navigation, route }) => {
                     item?.type === 'red'
                       ? '#FEE4E4'
                       : item?.type === 'yellow'
-                        ? '#FFFFC5'
-                        : '#f4ba62ff',
+                      ? '#FFFFC5'
+                      : '#f4ba62ff',
                   position: 'relative',
                 }}
               >
@@ -541,8 +541,8 @@ const Today = ({ navigation, route }) => {
                       item?.type === 'red'
                         ? '#EF4444'
                         : item?.type === 'yellow'
-                          ? '#FFCE1B'
-                          : '#A16207',
+                        ? '#FFCE1B'
+                        : '#A16207',
                     marginRight: hp(0.5),
                   }}
                   source={Images.WARNING}
@@ -553,8 +553,8 @@ const Today = ({ navigation, route }) => {
                       item?.type === 'red'
                         ? '#B91C1C'
                         : item?.type === 'yellow'
-                          ? '#A16207'
-                          : '#A16207',
+                        ? '#A16207'
+                        : '#A16207',
                     marginRight: hp(2),
                   }}
                 >
@@ -630,9 +630,9 @@ const Today = ({ navigation, route }) => {
                   prev.map(reminder =>
                     reminder.id === item.id
                       ? {
-                        ...reminder,
-                        alarm_notified: !reminder.alarm_notified,
-                      }
+                          ...reminder,
+                          alarm_notified: !reminder.alarm_notified,
+                        }
                       : reminder,
                   ),
                 );
@@ -904,7 +904,7 @@ const Today = ({ navigation, route }) => {
             {homeData?.streak}-Day Streak 🔥
           </Text>
           <Text style={styles.streakSubtitle}>
-            Maintain your progress,{'\n'}log today's tasks by 12:30 AM
+            Before you sleep, update today's details.
           </Text>
         </View>
 
