@@ -31,6 +31,7 @@ const Endpoints = {
   REPORT_SUMMARY: '/api/summary/report',
   VERIFY_SUBSCRIPTION: '/api/subscription/verify',
   RESTORE_PURCHASES: '/api/subscription/restore',
+  NOTES: '/api/v1/notes',
 };
 
 export default Endpoints;

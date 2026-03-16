@@ -20,6 +20,7 @@ import {
   tobaccoSlice,
 } from './Explore/slice';
 import { predictSlice } from './Predict/slice';
+import notesSlice from './Notes/slice';
 
 const store = configureStore({
   reducer: {
@@ -40,6 +41,7 @@ const store = configureStore({
     predictData: predictSlice.reducer,
     health: getHealth.reducer,
     doctors: doctorsSlice.reducer,
+    notes: notesSlice.reducer,
   },
   // Enable Redux DevTools in development
   devTools: __DEV__,

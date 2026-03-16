@@ -52,6 +52,7 @@ import Recipe from '../screens/Recipe';
 import Doctor from '../screens/Doctor';
 import Health from '../screens/Health';
 import Search from '../screens/Search/search';
+import Notes from '../screens/Notes';
 
 import { ExploreStack } from './ExploreStack';
 
@@ -143,8 +144,8 @@ function BottomTabNavigator() {
         />
 
         <Tab.Screen
-          name="Chat"
-          component={Support}
+          name="Notes"
+          component={Notes}
           options={{
             tabBarIcon: ({ color, size }) => (
               <Image

@@ -94,6 +94,11 @@ export async function showImmediateNotification(title, body) {
   });
 }
 
+export async function cancelNotification(id) {
+  await notifee.cancelNotification(id);
+  console.log(`🔕 Notification cancelled: ${id}`);
+}
+
 export async function cancelAllNotifications() {
   await notifee.cancelAllNotifications();
   console.log('🧹 All notifications cancelled');

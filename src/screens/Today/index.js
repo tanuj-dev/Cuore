@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -231,6 +237,34 @@ const Today = ({ navigation, route }) => {
     }
   }, [homeData?.dailySchedule]);
 
+  // Auto-schedule or cancel notifications based on alarm_notified flag
+  useEffect(() => {
+    if (!reminderList.length) return;
+
+    reminderList.forEach(item => {
+      const notificationId = `reminder-${(item?.time || '').replace(/[: ]/g, '-')}`;
+      const timeToUse = item?.alarm_notified_time || item?.time;
+
+      if (item?.alarm_notified && timeToUse) {
+        const timeParsed = moment(timeToUse, ['h:mm A', 'h:mmA', 'H:mm', 'HH:mm']);
+        if (!timeParsed.isValid()) return;
+
+        const hours = timeParsed.hours();
+        const minutes = timeParsed.minutes();
+
+        scheduleNotificationAtTime(
+          notificationId,
+          item?.title,
+          item?.description,
+          hours,
+          minutes,
+        );
+      } else {
+        cancelNotification(notificationId);
+      }
+    });
+  }, [reminderList]);
+
   // Auto-refresh every 30 minutes and on new day
   const lastRefreshRef = useRef(Date.now());
   const lastRefreshDateRef = useRef(new Date().toDateString());
@@ -279,15 +313,19 @@ const Today = ({ navigation, route }) => {
   }, [userId, silentRefresh]);
 
   const handleScheduleAtTime = useCallback(async (time, title, body) => {
-    // Parse the time string (e.g., "8:00 AM") to get hours and minutes
-    const [timePart, period] = time.split(' ');
-    let [hours, minutes] = timePart.split(':').map(Number);
-
-    if (period === 'PM' && hours !== 12) {
-      hours += 12;
-    } else if (period === 'AM' && hours === 12) {
-      hours = 0;
+    // Parse robustly: handles "8:00 AM", "8:00AM", "8:00 am", "20:00", "08:00", etc.
+    const parsed = moment(time, ['h:mm A', 'h:mmA', 'H:mm', 'HH:mm'], true);
+    if (!parsed.isValid()) {
+      // Fallback: try without strict mode
+      const fallback = moment(time, ['h:mm A', 'h:mmA', 'H:mm', 'HH:mm']);
+      if (!fallback.isValid()) {
+        console.warn('Invalid time format:', time);
+        return;
+      }
     }
+    const timeParsed = moment(time, ['h:mm A', 'h:mmA', 'H:mm', 'HH:mm']);
+    const hours = timeParsed.hours();
+    const minutes = timeParsed.minutes();
 
     // Create a Date object for today at the specified time
     const now = new Date();
@@ -313,7 +351,6 @@ const Today = ({ navigation, route }) => {
       hours,
       minutes,
     );
-    console.log(scheduledTime, 'helo there hello');
     setToast(
       `we will notify you at ${moment(scheduledTime).format('hh:mm A')}`,
     );
