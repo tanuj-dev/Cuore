@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   quoteBox: {
     borderLeftWidth: 4,
     borderLeftColor: '#11418A',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FEE2E2',
     padding: wp(4),
     borderRadius: 12,
     marginBottom: hp(2),

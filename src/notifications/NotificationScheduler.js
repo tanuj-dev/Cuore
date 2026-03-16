@@ -1,5 +1,5 @@
 // src/notifications/scheduleHelpers.js
-import notifee, { TriggerType } from '@notifee/react-native';
+import notifee, { TriggerType, RepeatFrequency } from '@notifee/react-native';
 
 export async function scheduleNotificationAfterMinutes(
   id,
@@ -143,6 +143,7 @@ export async function scheduleNotificationAtTime(
   const trigger = {
     type: TriggerType.TIMESTAMP,
     timestamp: date.getTime(),
+    repeatFrequency: RepeatFrequency.DAILY,
   };
 
   await notifee.createTriggerNotification(
@@ -151,15 +152,15 @@ export async function scheduleNotificationAtTime(
       title,
       body,
       data: {
-        screen: 'Today', // Navigate to Today screen on press
+        screen: 'Today',
       },
       android: {
         channelId: 'health-schedule',
-        smallIcon: 'ic_launcher', // make sure this icon exists in android/app/src/main/res/
+        smallIcon: 'ic_launcher',
         pressAction: {
           id: 'default',
         },
-        sound: 'doorbell', // Notifee default notification sound on Android
+        sound: 'doorbell',
       },
       ios: {
         categoryId: 'default',

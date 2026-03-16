@@ -100,7 +100,7 @@ const Search = ({ navigation }) => {
           <Text style={styles.metaLabel}>Cook Time</Text>
           <Text style={styles.metaValue}>{item?.cookTime || 0}</Text>
         </View>
-        {/* <View style={styles.metaDivider} /> */}
+        {/* <View styl3e={styles.metaDivider} /> */}
       </View>
     </TouchableOpacity>
   );

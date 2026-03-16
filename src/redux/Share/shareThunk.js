@@ -3,14 +3,15 @@ import { postApiCallWithBaseUrl } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
 import Constants from '../../utilities/Constants';
 
-const SHARE_BASE_URL = Constants.SHARE_BASE_URL || 'https://cuore-backend-1.onrender.com';
+const BASE_URL = Constants.BASEURL;
 
 export const shareData = createAsyncThunk(
   'share/shareData',
   async (data, { rejectWithValue }) => {
     try {
+      console.log('Share API URL:', BASE_URL + EndPoints.SHARE_DATA);
       const response = await postApiCallWithBaseUrl(
-        SHARE_BASE_URL,
+        BASE_URL,
         EndPoints.SHARE_DATA,
         data,
       );

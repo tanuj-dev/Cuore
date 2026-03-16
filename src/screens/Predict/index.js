@@ -177,6 +177,7 @@ const Predict = ({ navigation }) => {
     title => (title === 'Cuore Score' ? 2 : TITLE_TO_STEP_MAP[title] || 7),
     [],
   );
+  const role = useSelector(state => state.auth?.role);
 
   // if (loading) {
   //   return <Loader />;
@@ -281,6 +282,7 @@ const Predict = ({ navigation }) => {
                     }
                     style={[styles.button, styles.buttonRow]}
                     activeOpacity={0.8}
+                    disabled={role === 'caregiver'}
                   >
                     <Image style={styles.buttonIcon} source={Images.EDIT} />
                     <Text style={styles.buttonText}>
@@ -369,8 +371,7 @@ const Predict = ({ navigation }) => {
                 doctorProfile?.profileImage || doctorProfile?.photoUrl
                   ? {
                       uri:
-                        doctorProfile?.profileImage ||
-                        doctorProfile?.photoUrl,
+                        doctorProfile?.profileImage || doctorProfile?.photoUrl,
                     }
                   : Images.DOCTOR_PROFILE
               }

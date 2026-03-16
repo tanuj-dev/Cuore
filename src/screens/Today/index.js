@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   FlatList,
   StatusBar,
   Platform,
+  AppState,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import ProgressBarWithImage from '../../components/ProgressBar';
@@ -229,6 +230,53 @@ const Today = ({ navigation, route }) => {
       setReminderList(homeData.dailySchedule);
     }
   }, [homeData?.dailySchedule]);
+
+  // Auto-refresh every 30 minutes and on new day
+  const lastRefreshRef = useRef(Date.now());
+  const lastRefreshDateRef = useRef(new Date().toDateString());
+
+  const silentRefresh = useCallback(() => {
+    if (!userId) return;
+    lastRefreshRef.current = Date.now();
+    lastRefreshDateRef.current = new Date().toDateString();
+    dispatch(getHomeData(userId));
+    dispatch(getProfile(userId));
+    dispatch(getMind(userId));
+    dispatch(getTobacco(userId));
+  }, [dispatch, userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const THIRTY_MINUTES = 30 * 60 * 1000;
+
+    // Interval fires every 30 minutes
+    const intervalId = setInterval(() => {
+      silentRefresh();
+    }, THIRTY_MINUTES);
+
+    // AppState listener: refresh if 30+ min passed OR date changed since last refresh
+    const appStateSubscription = AppState.addEventListener(
+      'change',
+      nextState => {
+        if (nextState === 'active') {
+          const now = Date.now();
+          const todayString = new Date().toDateString();
+          const elapsed = now - lastRefreshRef.current;
+          const isNewDay = todayString !== lastRefreshDateRef.current;
+
+          if (isNewDay || elapsed >= THIRTY_MINUTES) {
+            silentRefresh();
+          }
+        }
+      },
+    );
+
+    return () => {
+      clearInterval(intervalId);
+      appStateSubscription.remove();
+    };
+  }, [userId, silentRefresh]);
 
   const handleScheduleAtTime = useCallback(async (time, title, body) => {
     // Parse the time string (e.g., "8:00 AM") to get hours and minutes

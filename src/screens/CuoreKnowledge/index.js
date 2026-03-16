@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
     marginTop: hp(0.6),
-    color: '#64748B',
+    color: 'black',
     letterSpacing: 0.1,
     lineHeight: 20,
   },

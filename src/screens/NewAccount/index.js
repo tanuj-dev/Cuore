@@ -86,7 +86,7 @@ const CreateAccountScreen = () => {
     const payload = {
       phone: `+91${mobileNumber}`,
       display_name: fullName,
-      caregiver_mobile: `+91${familyNumber}`,
+      caregiver_mobile: familyNumber.trim() ? `+91${familyNumber.trim()}` : '',
       doctor_code: doctorCode.toString(),
       corporate_code: corporateCode.toString(),
       consent_flags: {
