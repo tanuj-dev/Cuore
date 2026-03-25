@@ -35,6 +35,7 @@ import { logout } from '../../redux/Auth/slice';
 import {
   scheduleNotificationAtTime,
   cancelNotification,
+  getScheduledNotificationIds,
 } from '../../notifications/NotificationScheduler';
 import { getBuilderItems } from '../../redux/slices';
 import SessionExpiredModal from '../../components/SessionExpired';
@@ -137,9 +138,9 @@ const Today = ({ navigation, route }) => {
 
   // Handle dismiss alert
   const handleDismissAlert = useCallback(
-    async ({ userId, alertId, itemIndex }) => {
-      if (!userId || !alertId) {
-        console.log('Missing userId or alertId', { userId, alertId });
+    async ({ userId: alertUserId, alertId, itemIndex }) => {
+      if (!alertUserId || !alertId) {
+        console.log('Missing userId or alertId', { alertUserId, alertId });
         return;
       }
 
@@ -154,24 +155,21 @@ const Today = ({ navigation, route }) => {
           setLocalAlerts(updatedAlerts);
         }
 
-        console.log('Dismissing alert:', alertId, 'for user:', userId);
+        console.log('Dismissing alert:', alertId, 'for user:', alertUserId);
         const result = await dispatch(
-          dismissAlert({ userId, alertId }),
+          dismissAlert({ userId: alertUserId, alertId }),
         ).unwrap();
 
         if (result.success) {
           console.log('Alert dismissed successfully');
           setToast('Alert dismissed successfully');
           setToastType('success');
-          // Don't refresh the whole page - the optimistic update already handled the UI
-          // Just keep the local state updated
         }
       } catch (error) {
         console.log('Error dismissing alert:', error);
         setToast(error.message || 'Failed to dismiss alert');
         setToastType('error');
-        // If API fails, refresh data to revert any optimistic changes
-        dispatch(getHomeData(userId));
+        dispatch(getHomeData(alertUserId));
       }
     },
     [dispatch, localAlerts],
@@ -241,28 +239,37 @@ const Today = ({ navigation, route }) => {
   useEffect(() => {
     if (!reminderList.length) return;
 
-    reminderList.forEach(item => {
-      const notificationId = `reminder-${(item?.time || '').replace(/[: ]/g, '-')}`;
-      const timeToUse = item?.alarm_notified_time || item?.time;
+    const syncNotifications = async () => {
+      const scheduledIds = await getScheduledNotificationIds();
 
-      if (item?.alarm_notified && timeToUse) {
-        const timeParsed = moment(timeToUse, ['h:mm A', 'h:mmA', 'H:mm', 'HH:mm']);
-        if (!timeParsed.isValid()) return;
+      reminderList.forEach(item => {
+        const notificationId = `reminder-${(item?.time || '').replace(/[: ]/g, '-')}`;
+        const timeToUse = item?.alarm_notified_time || item?.time;
 
-        const hours = timeParsed.hours();
-        const minutes = timeParsed.minutes();
+        if (item?.alarm_notified && timeToUse) {
+          // Only schedule if not already queued — prevents all-at-once firing on app open
+          if (scheduledIds.includes(notificationId)) return;
 
-        scheduleNotificationAtTime(
-          notificationId,
-          item?.title,
-          item?.description,
-          hours,
-          minutes,
-        );
-      } else {
-        cancelNotification(notificationId);
-      }
-    });
+          const timeParsed = moment(timeToUse, ['h:mm A', 'h:mmA', 'H:mm', 'HH:mm']);
+          if (!timeParsed.isValid()) return;
+
+          scheduleNotificationAtTime(
+            notificationId,
+            item?.title,
+            item?.description,
+            timeParsed.hours(),
+            timeParsed.minutes(),
+          );
+        } else {
+          // Only cancel if it was actually scheduled
+          if (scheduledIds.includes(notificationId)) {
+            cancelNotification(notificationId);
+          }
+        }
+      });
+    };
+
+    syncNotifications();
   }, [reminderList]);
 
   // Auto-refresh every 30 minutes and on new day

@@ -5,6 +5,7 @@ import dailyRoutines from './Common';
 import { Platform } from 'react-native';
 import Constants from './Constants';
 import EncryptedStorage from 'react-native-encrypted-storage';
+import ApiLogger from './ApiLogger';
 
 async function setupHeaders(isPost = true, endPoint = '') {
   const headers = {
@@ -33,30 +34,19 @@ async function setupHeaders(isPost = true, endPoint = '') {
 
 // 🔸 POST API
 export async function postApiCall(endPoint, params) {
+  const startTime = Date.now();
   try {
     const headers = await setupHeaders(true, endPoint);
     
-    // Check if params is FormData (React Native FormData has _parts property)
     const isFormData = params && typeof params === 'object' && params._parts;
     
-    console.log('🔸 POST API Call:', endPoint);
-    console.log('🔸 Params type:', typeof params);
-    console.log('🔸 Is FormData:', isFormData);
+    ApiLogger.log({ method: 'POST', url: endPoint, body: isFormData ? '[FormData]' : params, status: 'pending' });
     
     if (isFormData) {
-      // Use fetch API for FormData in React Native (axios has issues)
-      console.log('🔸 ✅ Using fetch API for FormData upload');
-      
       const fullUrl = `${Common.axiosInstance.defaults.baseURL}${endPoint}`;
-      console.log('🔸 Full URL:', fullUrl);
       
-      // Don't set Content-Type for FormData - fetch will set it with boundary
-      const fetchHeaders = {
-        ...headers
-      };
+      const fetchHeaders = { ...headers };
       delete fetchHeaders['Content-Type'];
-      
-      console.log('🔸 Fetch headers:', fetchHeaders);
       
       const fetchResponse = await fetch(fullUrl, {
         method: 'POST',
@@ -64,102 +54,80 @@ export async function postApiCall(endPoint, params) {
         body: params,
       });
       
-      console.log('🔸 Fetch response status:', fetchResponse.status);
-      console.log('🔸 Fetch response headers:', fetchResponse.headers);
-      
-      // Get response text first
       const responseText = await fetchResponse.text();
-      console.log('🔸 Response text (first 500 chars):', responseText.substring(0, 500));
       
       let responseData;
       try {
         responseData = JSON.parse(responseText);
       } catch (e) {
-        console.log('🔸 ⚠️ Response is not JSON, likely HTML error page');
         responseData = {
           error: 'Server returned non-JSON response',
           statusCode: fetchResponse.status,
-          message: responseText.substring(0, 200), // First 200 chars of error
+          message: responseText.substring(0, 200),
         };
       }
       
-      // Return in axios response format
-      return {
-        status: fetchResponse.status,
-        data: responseData,
-        headers: fetchResponse.headers,
-      };
+      const result = { status: fetchResponse.status, data: responseData, headers: fetchResponse.headers };
+      ApiLogger.log({ method: 'POST', url: endPoint, body: '[FormData]', status: fetchResponse.status, response: responseData, duration: Date.now() - startTime });
+      return result;
     } else {
-      console.log('🔸 Using axios for JSON data');
       const config = { headers };
       const response = await Common.axiosInstance.post(endPoint, params, config);
+      ApiLogger.log({ method: 'POST', url: endPoint, body: params, status: response?.status, response: response?.data, duration: Date.now() - startTime });
       return response;
     }
   } catch (error) {
-    console.log('POST API ERROR:', error);
-    console.log('POST API ERROR details:', error.message);
+    ApiLogger.log({ method: 'POST', url: endPoint, body: params, status: error?.response?.status || 'ERR', response: error?.response?.data || error.message, duration: Date.now() - startTime });
     return error.response;
   }
 }
 
 /** POST to a specific base URL (e.g. share API on Render). Returns { status, data }. */
 export async function postApiCallWithBaseUrl(baseUrl, endPoint, params) {
+  const startTime = Date.now();
+  const fullUrl = baseUrl.replace(/\/$/, '') + endPoint;
   try {
     const headers = await setupHeaders(true, endPoint);
-    const fullUrl = baseUrl.replace(/\/$/, '') + endPoint;
     const res = await fetch(fullUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(params),
     });
     const data = await res.json().catch(() => ({}));
+    ApiLogger.log({ method: 'POST', url: fullUrl, body: params, status: res.status, response: data, duration: Date.now() - startTime });
     return { status: res.status, data };
   } catch (error) {
-    console.log('POST API (custom base) ERROR:', error);
+    ApiLogger.log({ method: 'POST', url: fullUrl, body: params, status: 'ERR', response: error.message, duration: Date.now() - startTime });
     return { status: 0, data: error?.response?.data || null };
   }
 }
 
 // 🔸 GET API
 export async function getApiCall(endPoint, paramsData = '') {
+  const startTime = Date.now();
+  const fullEndpoint = endPoint + paramsData;
   try {
     const headers = await setupHeaders(false, endPoint);
-    const response = await Common.axiosInstance.get(endPoint + paramsData, {
-      headers,
-    });
+    const response = await Common.axiosInstance.get(fullEndpoint, { headers });
+    ApiLogger.log({ method: 'GET', url: fullEndpoint, status: response?.status, response: response?.data, duration: Date.now() - startTime });
     return response;
   } catch (error) {
-    console.log('GET API ERROR:', error);
+    ApiLogger.log({ method: 'GET', url: fullEndpoint, status: error?.response?.status || 'ERR', response: error?.response?.data || error.message, duration: Date.now() - startTime });
     return error.response;
   }
 }
 
 // 🔸 PUT API (for profile update, etc.)
 export async function putApiCall(endPoint, params) {
+  const startTime = Date.now();
   try {
     const headers = await setupHeaders(true, endPoint);
-    
-    // Check if params is FormData (React Native FormData has _parts property)
     const isFormData = params && typeof params === 'object' && params._parts;
     
-    console.log('🔸 PUT API Call:', endPoint);
-    console.log('🔸 Params type:', typeof params);
-    console.log('🔸 Is FormData:', isFormData);
-    
     if (isFormData) {
-      // Use fetch API for FormData in React Native (axios has issues)
-      console.log('🔸 ✅ Using fetch API for FormData upload');
-      
       const fullUrl = `${Common.axiosInstance.defaults.baseURL}${endPoint}`;
-      console.log('🔸 Full URL:', fullUrl);
-      
-      // Don't set Content-Type for FormData - fetch will set it with boundary
-      const fetchHeaders = {
-        ...headers
-      };
+      const fetchHeaders = { ...headers };
       delete fetchHeaders['Content-Type'];
-      
-      console.log('🔸 Fetch headers:', fetchHeaders);
       
       const fetchResponse = await fetch(fullUrl, {
         method: 'PUT',
@@ -167,54 +135,42 @@ export async function putApiCall(endPoint, params) {
         body: params,
       });
       
-      console.log('🔸 Fetch response status:', fetchResponse.status);
-      
-      // Get response text first
       const responseText = await fetchResponse.text();
-      console.log('🔸 Response text (first 500 chars):', responseText.substring(0, 500));
-      
       let responseData;
       try {
         responseData = JSON.parse(responseText);
       } catch (e) {
-        console.log('🔸 ⚠️ Response is not JSON, likely HTML error page');
         responseData = {
           error: 'Server returned non-JSON response',
           statusCode: fetchResponse.status,
-          message: responseText.substring(0, 200), // First 200 chars of error
+          message: responseText.substring(0, 200),
         };
       }
       
-      // Return in axios response format
-      return {
-        status: fetchResponse.status,
-        data: responseData,
-        headers: fetchResponse.headers,
-      };
+      const result = { status: fetchResponse.status, data: responseData, headers: fetchResponse.headers };
+      ApiLogger.log({ method: 'PUT', url: endPoint, body: '[FormData]', status: fetchResponse.status, response: responseData, duration: Date.now() - startTime });
+      return result;
     } else {
-      console.log('🔸 Using axios for JSON data');
-      const response = await Common.axiosInstance.put(endPoint, params, {
-        headers,
-      });
+      const response = await Common.axiosInstance.put(endPoint, params, { headers });
+      ApiLogger.log({ method: 'PUT', url: endPoint, body: params, status: response?.status, response: response?.data, duration: Date.now() - startTime });
       return response;
     }
   } catch (error) {
-    console.log('PUT API ERROR:', error);
+    ApiLogger.log({ method: 'PUT', url: endPoint, body: params, status: error?.response?.status || 'ERR', response: error?.response?.data || error.message, duration: Date.now() - startTime });
     return error.response;
   }
 }
 
 // 🔸 DELETE API
-
 export async function deleteApiCall(endPoint) {
+  const startTime = Date.now();
   try {
     const headers = await setupHeaders(true, endPoint);
-    const response = await Common.axiosInstance.delete(endPoint, {
-      headers,
-    });
+    const response = await Common.axiosInstance.delete(endPoint, { headers });
+    ApiLogger.log({ method: 'DELETE', url: endPoint, status: response?.status, response: response?.data, duration: Date.now() - startTime });
     return response;
   } catch (error) {
-    console.log('DELETE API ERROR:', error);
+    ApiLogger.log({ method: 'DELETE', url: endPoint, status: error?.response?.status || 'ERR', response: error?.response?.data || error.message, duration: Date.now() - startTime });
     return error.response;
   }
 }

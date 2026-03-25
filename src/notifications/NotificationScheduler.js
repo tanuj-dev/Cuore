@@ -104,6 +104,14 @@ export async function cancelAllNotifications() {
   console.log('🧹 All notifications cancelled');
 }
 
+export async function getScheduledNotificationIds() {
+  try {
+    return await notifee.getTriggerNotificationIds();
+  } catch {
+    return [];
+  }
+}
+
 export async function scheduleAll() {
   console.log('📅 Scheduling all health reminders...');
   const reminders = [

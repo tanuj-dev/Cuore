@@ -33,21 +33,11 @@ const profileOptions = [
     section: 'ACCOUNT & PRIVACY',
   },
   {
-    title: 'Select Persona',
-    icon: Images.SELECT_PERSONA,
-    section: 'ACCOUNT & PRIVACY',
-  },
-  {
     title: 'Health Records',
     icon: Images.HEALTH_RECORD,
     section: 'ACCOUNT & PRIVACY',
   },
 
-  {
-    title: 'Renew Subscription',
-    icon: Images.RENEW_SUBSCRIPTION,
-    section: 'GENERAL',
-  },
   {
     title: 'Delete Account',
     icon: Images.DELETE_ACCOUNT,
@@ -85,9 +75,7 @@ const Profile = ({ navigation }) => {
   const filteredOptions = profileOptions.filter(item => {
     if (isCaregiver) {
       return (
-        item.title !== 'Select Persona' &&
-        item.title !== 'Delete Account' &&
-        item.title !== 'Renew Subscription'
+        item.title !== 'Delete Account'
       );
     }
     return true;
@@ -102,9 +90,7 @@ const Profile = ({ navigation }) => {
   const routeMap = {
     Caregiver: 'EditCaregiver',
     Doctor: 'EditDoctor',
-    'Select Persona': 'SelectPersona',
     'Health Records': 'HealthRecords',
-    'Renew Subscription': 'Checkout',
     'Delete Account': 'DeleteAccount',
     Support: 'Support',
     'Terms and Conditions': 'TermsAndConditions',
@@ -119,7 +105,6 @@ const Profile = ({ navigation }) => {
 
       {items.map((item, index) => (
         <TouchableOpacity
-          disabled={item.title === 'Select Persona' ? true : false}
           onPress={() => {
             const route = routeMap[item.title]; // Corrected here
 
@@ -145,11 +130,7 @@ const Profile = ({ navigation }) => {
               styles.itemIcon,
               {
                 tintColor:
-                  item.title === 'Logout'
-                    ? '#EF4444'
-                    : item.title === 'Select Persona'
-                    ? '#94A3B8'
-                    : '#64748B',
+                  item.title === 'Logout' ? '#EF4444' : '#64748B',
               },
             ]}
             resizeMode="contain"
@@ -159,11 +140,7 @@ const Profile = ({ navigation }) => {
               styles.itemText,
               {
                 color:
-                  item.title === 'Logout'
-                    ? '#EF4444'
-                    : item.title === 'Select Persona'
-                    ? '#94A3B8'
-                    : '#1E293B',
+                  item.title === 'Logout' ? '#EF4444' : '#1E293B',
               },
             ]}
           >
@@ -175,11 +152,7 @@ const Profile = ({ navigation }) => {
               styles.arrowIcon,
               {
                 tintColor:
-                  item.title === 'Logout'
-                    ? '#EF4444'
-                    : item.title === 'Select Persona'
-                    ? '#94A3B8'
-                    : '#94A3B8',
+                  item.title === 'Logout' ? '#EF4444' : '#94A3B8',
               },
             ]}
           />

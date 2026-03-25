@@ -39,7 +39,8 @@ export default Constants;
 
 // ─── In-App Purchase ────────────────────────────────────────────────────────
 
-export const IAP_SUBSCRIPTION_ID = Platform.OS === 'ios' ? 'pro_membership_annual' : 'pro_membership_annual';
+export const IAP_SUBSCRIPTION_ID =
+  Platform.OS === 'ios' ? 'com.cuore.annual1499' : 'pro_membership_annual';
 
 export const IAP_GST_RATE = 0.18;
 

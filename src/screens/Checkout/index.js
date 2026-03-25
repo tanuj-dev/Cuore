@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,15 +13,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Linking } from 'react-native';
-import {
-  initConnection,
-  endConnection,
-  fetchProducts,
-  requestPurchase,
-  purchaseUpdatedListener,
-  purchaseErrorListener,
-  finishTransaction,
-} from 'react-native-iap';
+import { useIAP, getAvailablePurchases } from 'react-native-iap';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserData } from '../../redux/Auth/slice';
@@ -39,80 +31,153 @@ const Checkout = ({ navigation }) => {
   const dispatch = useDispatch();
   const [selectedPlan, setSelectedPlan] = useState('Thrive');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [isIAPInitialized, setIsIAPInitialized] = useState(false);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const { alert, AlertComponent } = useCustomAlert();
   const userId = useSelector(state => state.auth?.userId);
 
   const selected = IAP_PLANS.find(p => p.title === selectedPlan);
   const gstAmount = selected ? selected.newPrice * IAP_GST_RATE : 0;
 
-  // Initialize IAP connection
-  useEffect(() => {
-    let purchaseUpdateSub = null;
-    let purchaseErrorSub = null;
+  // Ref to always have the latest subscriptions value (avoids stale closure in handleCheckout)
+  const subscriptionsRef = useRef([]);
 
-    const initIAP = async () => {
+  const {
+    connected,
+    subscriptions,
+    fetchProducts,
+    requestPurchase: iapRequestPurchase,
+    finishTransaction: iapFinishTransaction,
+  } = useIAP({
+    onPurchaseSuccess: async purchase => {
+      console.log('IAP: Purchase success:', purchase);
       try {
-        await initConnection();
-
-        // iOS product is Non-Consumable (inapp); Android is a subscription (subs)
-        const iapType = Platform.OS === 'ios' ? 'inapp' : 'subs';
-        const subs = await fetchProducts({
-          skus: [IAP_SUBSCRIPTION_ID],
-          type: iapType,
-        });
-        console.log('Products fetched:', JSON.stringify(subs));
-        setProducts(subs);
-        setIsIAPInitialized(true);
-
-        // Listen for successful purchases
-        purchaseUpdateSub = purchaseUpdatedListener(async purchase => {
-          console.log('Purchase updated:', purchase);
-          try {
-            await finishTransaction({ purchase, isConsumable: false });
-            handleSuccessfulPurchase(purchase);
-          } catch (err) {
-            console.error('Finish transaction error:', err);
-            alert(
-              'Purchase Error',
-              'Could not complete your purchase. Please try again.',
-            );
-          }
-        });
-
-        // Listen for purchase errors
-        purchaseErrorSub = purchaseErrorListener(err => {
-          console.error('Purchase error:', err);
-          setIsProcessingPayment(false);
-          if (err.code !== 'E_USER_CANCELLED') {
-            alert(
-              'Purchase Failed',
-              err.message || 'Something went wrong. Please try again.',
-            );
-          }
-        });
+        await iapFinishTransaction({ purchase, isConsumable: false });
+        await handleSuccessfulPurchase(purchase);
       } catch (err) {
-        console.error('IAP init error:', err);
-        if (!__DEV__) {
-          alert(
-            'Payment Error',
-            `Code: ${err?.code || 'unknown'}\n${
-              err?.message || 'Failed to set up payment.'
-            }`,
-          );
-        }
+        console.error('IAP: finishTransaction error:', err);
+        setIsProcessingPayment(false);
+        alert(
+          'Purchase Error',
+          'Could not complete your purchase. Please try again.',
+        );
       }
-    };
+    },
+    onPurchaseError: async err => {
+      console.error('IAP: Purchase error:', err);
+      setIsProcessingPayment(false);
 
-    initIAP();
+      if (err.code === 'already-owned' || err.code === 'E_ALREADY_OWNED') {
+        console.log('IAP: Item already owned, verifying with backend...');
+        try {
+          const purchases = await getAvailablePurchases({
+            onlyIncludeActiveItemsIOS: true,
+          });
+          const relevantPurchase = purchases?.find(
+            p => p.productId === IAP_SUBSCRIPTION_ID,
+          );
 
-    return () => {
-      purchaseUpdateSub?.remove();
-      purchaseErrorSub?.remove();
-      endConnection();
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+          if (relevantPurchase) {
+            const payload = {
+              userId,
+              platform: Platform.OS,
+              productId: relevantPurchase.productId,
+              purchaseToken:
+                relevantPurchase.transactionReceipt ||
+                relevantPurchase.purchaseToken,
+              orderId: relevantPurchase.transactionId,
+              purchaseTime: relevantPurchase.transactionDate,
+            };
+
+            console.log('IAP: Verifying already-owned purchase:', payload);
+            const response = await postApiCall(
+              EndPoints.VERIFY_SUBSCRIPTION,
+              payload,
+            );
+
+            if (response?.status === 200) {
+              try {
+                const tokenData = await EncryptedStorage.getItem('auth_tokens');
+                if (tokenData) {
+                  const parsed = JSON.parse(tokenData);
+                  parsed.paymentStatus = 'completed';
+                  await EncryptedStorage.setItem(
+                    'auth_tokens',
+                    JSON.stringify(parsed),
+                  );
+                  dispatch(setUserData(parsed));
+                }
+              } catch (e) {
+                console.warn('Could not persist payment status:', e);
+              }
+              navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+            } else {
+              alert(
+                'Subscription In Use',
+                'This Apple ID subscription is already linked to another account. Please use a different Apple ID or log in with the original account.',
+              );
+            }
+            return;
+          }
+        } catch (restoreErr) {
+          console.warn('Could not verify already-owned purchase:', restoreErr);
+        }
+
+        alert(
+          'Subscription In Use',
+          'This Apple ID subscription is already linked to another account. Please use a different Apple ID or log in with the original account.',
+        );
+        return;
+      }
+
+      if (err.code !== 'E_USER_CANCELLED' && err.code !== 'user-cancelled') {
+        alert(
+          'Purchase Failed',
+          err.message || 'Something went wrong. Please try again.',
+        );
+      }
+    },
+    onError: err => {
+      console.error(
+        'IAP: Internal error (fetchProducts/etc):',
+        err?.message || err,
+      );
+    },
+  });
+
+  // Keep ref in sync with latest subscriptions state
+  useEffect(() => {
+    subscriptionsRef.current = subscriptions;
+    if (subscriptions?.length > 0) {
+      console.log(
+        'IAP: subscriptions updated:',
+        subscriptions.map(s => s.productId || s.id),
+      );
+    } else if (connected) {
+      console.log(
+        'IAP: subscriptions array is empty (products may not be available in the store)',
+      );
+    }
+  }, [subscriptions, connected]);
+
+  // Fetch subscription once IAP is connected
+  useEffect(() => {
+    if (connected) {
+      console.log('IAP: Connected, fetching:', IAP_SUBSCRIPTION_ID);
+      setIsLoadingProducts(true);
+      fetchProducts({ skus: [IAP_SUBSCRIPTION_ID], type: 'subs' })
+        .then(result => {
+          console.log(
+            'IAP: fetchProducts (subs) done, result:',
+            JSON.stringify(result),
+          );
+          setIsLoadingProducts(false);
+        })
+        .catch(e => {
+          console.error('IAP: fetchProducts error:', JSON.stringify(e));
+          setIsLoadingProducts(false);
+        });
+    }
+  }, [connected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSuccessfulPurchase = useCallback(
     async purchase => {
@@ -137,53 +202,46 @@ const Checkout = ({ navigation }) => {
           response?.data,
         );
 
-        if (response?.status === 200 || response?.status === 201) {
-          console.log('Subscription verified successfully');
-          // Handle successful verification
-          const verificationData = response.data;
-          if (verificationData?.payment === 'done') {
-            console.log(
-              'Payment confirmed, expiry date:',
-              verificationData.expiryDate,
+        // Persist payment status and navigate to Home
+        try {
+          const tokenData = await EncryptedStorage.getItem('auth_tokens');
+          if (tokenData) {
+            const parsed = JSON.parse(tokenData);
+            parsed.paymentStatus = 'completed';
+            await EncryptedStorage.setItem(
+              'auth_tokens',
+              JSON.stringify(parsed),
             );
-            // Persist payment status so Score/Splash see completed state
-            try {
-              const tokenData = await EncryptedStorage.getItem('auth_tokens');
-              if (tokenData) {
-                const parsed = JSON.parse(tokenData);
-                parsed.paymentStatus = 'completed';
-                await EncryptedStorage.setItem(
-                  'auth_tokens',
-                  JSON.stringify(parsed),
-                );
-                dispatch(setUserData(parsed));
-              }
-            } catch (e) {
-              console.warn('Could not persist payment status:', e);
-            }
-            // Show success alert after successful verification
-            alert(
-              'Subscription Active!',
-              'Thank you for subscribing to Cuore. Your account has been upgraded.',
-              [
-                {
-                  text: 'Get Started',
-                  onPress: () =>
-                    navigation.reset({ index: 0, routes: [{ name: 'Home' }] }),
-                },
-              ],
-            );
+            dispatch(setUserData(parsed));
           }
-        } else {
-          console.warn('Subscription verify failed:', response?.data?.message);
-          throw new Error(response?.data?.message || 'Verification failed');
+        } catch (e) {
+          console.warn('Could not persist payment status:', e);
         }
+
+        setIsProcessingPayment(false);
+        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
       } catch (err) {
         console.error('Subscription verify error:', err);
-        throw err; // Re-throw to be caught by the outer catch block
+        // Payment was successful with Apple/Google, persist status and navigate even if backend fails
+        try {
+          const tokenData = await EncryptedStorage.getItem('auth_tokens');
+          if (tokenData) {
+            const parsed = JSON.parse(tokenData);
+            parsed.paymentStatus = 'completed';
+            await EncryptedStorage.setItem(
+              'auth_tokens',
+              JSON.stringify(parsed),
+            );
+            dispatch(setUserData(parsed));
+          }
+        } catch (e) {
+          console.warn('Could not persist payment status:', e);
+        }
+        setIsProcessingPayment(false);
+        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
       }
     },
-    [navigation, alert, userId, dispatch],
+    [navigation, userId, dispatch],
   );
 
   const handlePlanSelect = planTitle => {
@@ -195,33 +253,82 @@ const Checkout = ({ navigation }) => {
 
     try {
       setIsProcessingPayment(true);
+      console.log('Restore: fetching available purchases from store...');
 
-      // For iOS, we can check existing purchases
-      if (Platform.OS === 'ios') {
-        // In a real implementation, you would check for existing purchases
-        // and restore them if found
-        console.log('Restoring purchases for iOS');
+      const purchases = await getAvailablePurchases({
+        onlyIncludeActiveItemsIOS: true,
+      });
 
-        // Simulate API call to restore purchases
-        const response = await postApiCall(EndPoints.RESTORE_PURCHASES, {
-          userId,
-          platform: 'ios',
-        });
+      console.log('Restore: available purchases:', JSON.stringify(purchases));
 
-        if (response?.status === 200) {
-          alert('Success', 'Your purchases have been restored successfully.', [
-            {
-              text: 'OK',
-              onPress: () =>
-                navigation.reset({ index: 0, routes: [{ name: 'Home' }] }),
-            },
-          ]);
-        } else {
-          alert(
-            'No Purchases Found',
-            'No previous purchases were found for your account.',
-          );
+      if (!purchases || purchases.length === 0) {
+        alert(
+          'No Purchases Found',
+          'No active subscriptions were found for your account.',
+        );
+        return;
+      }
+
+      const relevantPurchase = purchases.find(
+        p => p.productId === IAP_SUBSCRIPTION_ID,
+      );
+
+      if (!relevantPurchase) {
+        alert(
+          'No Purchases Found',
+          'No active subscription for this app was found.',
+        );
+        return;
+      }
+
+      console.log('Restore: found relevant purchase, verifying with backend...');
+
+      const payload = {
+        userId,
+        platform: Platform.OS,
+        productId: relevantPurchase.productId,
+        purchaseToken:
+          relevantPurchase.transactionReceipt ||
+          relevantPurchase.purchaseToken,
+        orderId: relevantPurchase.transactionId,
+        purchaseTime: relevantPurchase.transactionDate,
+      };
+
+      console.log('Restore: verify payload:', JSON.stringify(payload));
+      const response = await postApiCall(
+        EndPoints.VERIFY_SUBSCRIPTION,
+        payload,
+      );
+      console.log('Restore: verify response:', response?.status, response?.data);
+
+      if (response?.status === 200) {
+        try {
+          const tokenData = await EncryptedStorage.getItem('auth_tokens');
+          if (tokenData) {
+            const parsed = JSON.parse(tokenData);
+            parsed.paymentStatus = 'completed';
+            await EncryptedStorage.setItem(
+              'auth_tokens',
+              JSON.stringify(parsed),
+            );
+            dispatch(setUserData(parsed));
+          }
+        } catch (e) {
+          console.warn('Restore: could not persist payment status:', e);
         }
+
+        alert('Success', 'Your subscription has been restored successfully.', [
+          {
+            text: 'OK',
+            onPress: () =>
+              navigation.reset({ index: 0, routes: [{ name: 'Home' }] }),
+          },
+        ]);
+      } else {
+        alert(
+          'Subscription In Use',
+          'This Apple ID subscription is already linked to another account. Please use a different Apple ID or log in with the original account.',
+        );
       }
     } catch (err) {
       console.error('Restore purchases error:', err);
@@ -232,12 +339,7 @@ const Checkout = ({ navigation }) => {
   };
 
   const handleCheckout = async () => {
-    if (__DEV__) {
-      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-      return;
-    }
-
-    if (!isIAPInitialized) {
+    if (!connected) {
       alert(
         'Not Ready',
         'Payment system is still loading. Please wait a moment.',
@@ -245,45 +347,29 @@ const Checkout = ({ navigation }) => {
       return;
     }
 
-    // v14 uses `id` as the primary field (not `productId`)
-    const subscription = products.find(
-      p => p.id === selected.productId || p.productId === selected.productId,
-    );
     console.log(
-      'Products in state:',
-      products.map(p => ({ id: p.id, productId: p.productId })),
+      'IAP: subscriptions state:',
+      subscriptions?.map(p => p.productId),
     );
-    console.log('Looking for:', selected.productId, '| Found:', !!subscription);
-
-    if (!subscription) {
-      alert(
-        'Unavailable',
-        'This subscription is not available right now. Please try again later.',
-      );
-      return;
-    }
+    console.log('IAP: Attempting purchase for:', selected.productId);
 
     try {
       setIsProcessingPayment(true);
 
       if (Platform.OS === 'android') {
-        // v14 API: subscriptionOfferDetailsAndroid holds offer tokens
+        const subscription = subscriptions?.find(
+          p =>
+            p.productId === selected.productId || p.id === selected.productId,
+        );
         const offerToken =
           subscription?.subscriptionOfferDetailsAndroid?.[0]?.offerToken;
-
-        console.log('offerToken:', offerToken);
-
+        console.log('IAP: Android offerToken:', offerToken);
         if (!offerToken) {
           setIsProcessingPayment(false);
-          alert(
-            'Unavailable',
-            'No valid offer found for this subscription. Please try again later.',
-          );
+          alert('Unavailable', 'No valid offer found. Please try again later.');
           return;
         }
-
-        // v14 API: requestPurchase replaces requestSubscription
-        await requestPurchase({
+        await iapRequestPurchase({
           type: 'subs',
           request: {
             android: {
@@ -293,16 +379,42 @@ const Checkout = ({ navigation }) => {
           },
         });
       } else {
-        // iOS — product is Non-Consumable (inapp type)
-        await requestPurchase({
-          type: 'inapp',
+        // iOS — ensure subscription is fetched before purchase
+        if (
+          !subscriptionsRef.current ||
+          subscriptionsRef.current.length === 0
+        ) {
+          console.log(
+            'IAP: subscriptions empty, re-fetching before purchase...',
+          );
+          await fetchProducts({ skus: [selected.productId], type: 'subs' });
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        console.log(
+          'IAP: subscriptions after fetch:',
+          subscriptionsRef.current?.length,
+        );
+        // Guard: abort if product still not loaded (not configured in App Store Connect)
+        if (
+          !subscriptionsRef.current ||
+          subscriptionsRef.current.length === 0
+        ) {
+          setIsProcessingPayment(false);
+          alert(
+            'Product Unavailable',
+            'The subscription could not be loaded from the App Store. Please check your internet connection and try again.',
+          );
+          return;
+        }
+        await iapRequestPurchase({
+          type: 'subs',
           request: {
             apple: { sku: selected.productId },
           },
         });
       }
     } catch (err) {
-      console.error('Purchase request error:', err);
+      console.error('IAP: iapRequestPurchase error:', err);
       setIsProcessingPayment(false);
       if (err.code !== 'E_USER_CANCELLED') {
         alert('Purchase Error', err.message || 'Failed to start purchase.');
@@ -330,7 +442,12 @@ const Checkout = ({ navigation }) => {
                   marginTop: Platform.OS === 'ios' ? hp(0) : 0,
                   marginBottom: hp(2),
                 }}
-                onPress={() => navigation.goBack()}
+                onPress={async () => {
+                  try {
+                    await EncryptedStorage.removeItem('auth_tokens');
+                  } catch (_) {}
+                  navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+                }}
               >
                 <Image
                   source={Images.BACK_BUTTON}
@@ -445,10 +562,10 @@ const Checkout = ({ navigation }) => {
               onPress={handleCheckout}
               style={[
                 styles.checkoutButton,
-                (isProcessingPayment || (!__DEV__ && !isIAPInitialized)) &&
+                (isProcessingPayment || !connected || isLoadingProducts) &&
                   styles.checkoutButtonDisabled,
               ]}
-              disabled={isProcessingPayment || (!__DEV__ && !isIAPInitialized)}
+              disabled={isProcessingPayment || !connected || isLoadingProducts}
             >
               {isProcessingPayment ? (
                 <>
@@ -464,11 +581,13 @@ const Checkout = ({ navigation }) => {
             </TouchableOpacity>
 
             {/* IAP Status */}
-            {!__DEV__ && !isIAPInitialized && (
+            {(!connected || isLoadingProducts) && (
               <View style={styles.statusContainer}>
                 <ActivityIndicator size="small" color="#11418A" />
                 <Text style={styles.statusText}>
-                  Setting up secure payment...
+                  {!connected
+                    ? 'Setting up secure payment...'
+                    : 'Loading subscription...'}
                 </Text>
               </View>
             )}

@@ -30,6 +30,10 @@ const formatDate = date => {
   return `${day} ${month} ${year}`;
 };
 
+const MAX_WORDS = 180;
+
+const countWords = text => text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+
 const Notes = () => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -38,13 +42,21 @@ const Notes = () => {
   const [inputText, setInputText] = useState('');
   const [editingId, setEditingId] = useState(null);
 
+  const wordCount = countWords(inputText);
+
   useEffect(() => {
     dispatch(fetchNotes());
   }, [dispatch]);
 
+  const handleTextChange = useCallback(text => {
+    if (countWords(text) <= MAX_WORDS) {
+      setInputText(text);
+    }
+  }, []);
+
   const handleSave = useCallback(() => {
     const text = inputText.trim();
-    if (!text || text.length < 180) return;
+    if (!text) return;
 
     if (editingId) {
       dispatch(updateNote({ id: editingId, text }));
@@ -118,22 +130,21 @@ const Notes = () => {
             placeholder="Add anything you'd like to discuss at your next visit."
             placeholderTextColor="#94A3B8"
             multiline
-            maxLength={300}
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={handleTextChange}
             blurOnSubmit={false}
           />
           {inputText.length > 0 && (
             <Text
               style={[
                 styles.charCount,
-                inputText.length < 180 && styles.charCountWarning,
+                wordCount >= MAX_WORDS && styles.charCountWarning,
               ]}
             >
-              {inputText.length}/300{inputText.length < 180 ? ' (min 180)' : ''}
+              {wordCount}/{MAX_WORDS} words
             </Text>
           )}
-          {inputText.trim().length >= 180 && (
+          {inputText.trim().length > 0 && (
             <TouchableOpacity
               style={styles.addBtn}
               onPress={handleSave}

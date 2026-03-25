@@ -8,6 +8,7 @@ import { initializeNotifee } from './src/notifications/NotificationService';
 import NetworkError from './src/components/NetworkError';
 import SessionExpiredModal from './src/components/SessionExpired';
 import ReduxDebugger from './src/components/ReduxDebugger';
+import ApiDebugger from './src/components/ApiDebugger';
 import { Common } from './src/utilities';
 import { setSessionExpired, logout } from './src/redux/Auth/slice';
 import EncryptedStorage from 'react-native-encrypted-storage';
@@ -157,6 +158,7 @@ const AppContent = () => {
       />
       {/* Redux Store Debugger - Remove in production */}
       {/* {__DEV__ && <ReduxDebugger />} */}
+      {__DEV__ && <ApiDebugger />}
     </View>
   );
 };

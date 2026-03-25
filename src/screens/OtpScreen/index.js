@@ -13,6 +13,7 @@ import { hp, wp, Images } from '../../utilities';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { verifyOtp, sendOtp } from '../../redux/slices';
+import { setUserData } from '../../redux/Auth/slice';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import Endpoints from '../../utilities/Endpoints';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
@@ -113,6 +114,7 @@ const OtpScreen = () => {
           'auth_tokens',
           JSON.stringify(tokenPayload),
         );
+        dispatch(setUserData(tokenPayload));
         navigation.reset({
           index: 0,
           routes: [{ name: 'OnBoarding' }],
@@ -120,8 +122,8 @@ const OtpScreen = () => {
         return;
       }
 
-      // Step 2: Caregiver with pending payment — block login, don't save token
-      if (userRole === 'caregiver' && paymentStatus === 'pending') {
+      // Step 2: Caregiver without completed payment — block login, don't save token
+      if (userRole === 'caregiver' && paymentStatus !== 'completed' && paymentStatus !== 'waived') {
         alert(
           'Payment Pending',
           'The account subscription payment is pending. Caregiver cannot complete the payment. Please ask the account owner to complete the payment.',
@@ -129,23 +131,15 @@ const OtpScreen = () => {
         return;
       }
 
-      // Step 3: Save token for all other cases
+      // Step 3: Save token and set Redux state
       await EncryptedStorage.setItem(
         'auth_tokens',
         JSON.stringify(tokenPayload),
       );
-      console.log('Token saved to EncryptedStorage');
+      dispatch(setUserData(tokenPayload));
+      console.log('Token saved, paymentStatus:', paymentStatus);
 
-      // Step 4: Redirect non-caregiver pending payment users to Checkout
-      if (paymentStatus === 'pending') {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Checkout' }],
-        });
-        return;
-      }
-
-      // Step 5: Payment completed/waived — go to Home
+      // Step 4: Only completed/waived goes to Home
       if (paymentStatus === 'completed' || paymentStatus === 'waived') {
         navigation.reset({
           index: 0,
@@ -154,11 +148,11 @@ const OtpScreen = () => {
         return;
       }
 
-      // Default fallback
-      console.warn('Unexpected user state - navigating to Home as fallback');
+      // Step 5: Any other status (pending, none, null, etc.) — go to Checkout
+      console.log('paymentStatus is not completed/waived, going to Checkout');
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Home' }],
+        routes: [{ name: 'Checkout' }],
       });
     } catch (err) {
       console.log('OTP verification failed:', err.message);

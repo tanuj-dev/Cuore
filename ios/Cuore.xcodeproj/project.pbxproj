@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		1884F14D2F6BE5510027AC81 /* Cuore.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 1884F14C2F6BE5510027AC81 /* Cuore.storekit */; };
 		18D5E5112F2C6FE000183BAE /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 18D5E5102F2C6FE000183BAE /* StoreKit.framework */; };
 		254CE764BA51468389F3EE90 /* Poppins-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC9264D655A44D58B2E73DB9 /* Poppins-Medium.ttf */; };
 		6446B810C28F11D211345965 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
@@ -27,6 +28,7 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Cuore/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = Cuore/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		17DE3443B67868420FA1D37C /* Pods-Cuore.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Cuore.debug.xcconfig"; path = "Target Support Files/Pods-Cuore/Pods-Cuore.debug.xcconfig"; sourceTree = "<group>"; };
+		1884F14C2F6BE5510027AC81 /* Cuore.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Cuore.storekit; sourceTree = "<group>"; };
 		18D5E5102F2C6FE000183BAE /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		3CACD3D3F4A8BDEBF3EFEA76 /* libPods-Cuore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Cuore.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Cuore/AppDelegate.swift; sourceTree = "<group>"; };
@@ -57,6 +59,7 @@
 		13B07FAE1A68108700A75B9A /* Cuore */ = {
 			isa = PBXGroup;
 			children = (
+				1884F14C2F6BE5510027AC81 /* Cuore.storekit */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
@@ -197,6 +200,7 @@
 				EE737F3667604A6EA51DB2DA /* Poppins-Regular.ttf in Resources */,
 				C330A65CFADC4B73BC48634B /* Poppins-Bold.ttf in Resources */,
 				DB05F4C06344457DB23121C3 /* Poppins-SemiBold.ttf in Resources */,
+				1884F14D2F6BE5510027AC81 /* Cuore.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,7 +309,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JMS43MWJJW;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Cuore/Info.plist;
@@ -314,7 +318,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 3.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -337,7 +341,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JMS43MWJJW;
 				INFOPLIST_FILE = Cuore/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -345,7 +349,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 3.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

@@ -10,12 +10,12 @@ const Splash = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  const fadeAnim  = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
-  const dotAnim1  = useRef(new Animated.Value(0.3)).current;
-  const dotAnim2  = useRef(new Animated.Value(0.3)).current;
-  const dotAnim3  = useRef(new Animated.Value(0.3)).current;
+  const dotAnim1 = useRef(new Animated.Value(0.3)).current;
+  const dotAnim2 = useRef(new Animated.Value(0.3)).current;
+  const dotAnim3 = useRef(new Animated.Value(0.3)).current;
 
   // Entrance animations
   useEffect(() => {
@@ -44,8 +44,16 @@ const Splash = () => {
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(anim, { toValue: 1,   duration: 400, useNativeDriver: true }),
-          Animated.timing(anim, { toValue: 0.3, duration: 400, useNativeDriver: true }),
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0.3,
+            duration: 400,
+            useNativeDriver: true,
+          }),
         ]),
       ).start();
 
@@ -56,42 +64,72 @@ const Splash = () => {
 
   // Auth check
   useEffect(() => {
+    let hasNavigated = false;
+    const navigateTo = (screen, delay = 3000) => {
+      if (hasNavigated) return;
+      hasNavigated = true;
+      setTimeout(() => navigation.replace(screen), delay);
+    };
+
     const checkLoginStatus = async () => {
       try {
+        console.log('Splash: reading auth_tokens...');
         const tokenData = await EncryptedStorage.getItem('auth_tokens');
+        console.log('Splash: auth_tokens read, has data:', !!tokenData);
 
         if (tokenData) {
           const parsed = JSON.parse(tokenData);
           const access_token = parsed.accessToken;
+          console.log('Splash: paymentStatus:', parsed.paymentStatus, 'onboardingStatus:', parsed.onboardingStatus);
 
           if (!access_token) {
             await EncryptedStorage.removeItem('auth_tokens');
-            setTimeout(() => navigation.replace('Login'), 3000);
+            navigateTo('Login');
             return;
           }
 
-          if (parsed.onboardingStatus !== 'complete') {
-            setTimeout(() => navigation.replace('Login'), 3000);
+            if (parsed.onboardingStatus !== 'complete') {
+            if (parsed.role === 'caregiver') {
+              await EncryptedStorage.removeItem('auth_tokens');
+              navigateTo('Login');
+            } else {
+              dispatch(setUserData(parsed));
+              navigateTo('OnBoarding');
+            }
+            return;
+          }
+
+          if (parsed.role === 'caregiver' && parsed.paymentStatus !== 'completed' && parsed.paymentStatus !== 'waived') {
+            await EncryptedStorage.removeItem('auth_tokens');
+            navigateTo('Login');
             return;
           }
 
           dispatch(setUserData(parsed));
 
-          if (parsed.paymentStatus === 'pending') {
-            setTimeout(() => navigation.replace('Checkout'), 3000);
+          if (parsed.paymentStatus === 'completed' || parsed.paymentStatus === 'waived') {
+            navigateTo('Home');
           } else {
-            setTimeout(() => navigation.replace('Home'), 3000);
+            navigateTo('Checkout');
           }
         } else {
-          setTimeout(() => navigation.replace('Login'), 3000);
+          navigateTo('Login');
         }
       } catch (err) {
-        console.log('Error reading token:', err.message);
-        setTimeout(() => navigation.replace('Login'), 3000);
+        console.log('Splash: error reading token:', err.message);
+        navigateTo('Login');
       }
     };
 
+    // Safety timeout — if nothing navigates within 6 seconds, force to Login
+    const safetyTimer = setTimeout(() => {
+      console.log('Splash: safety timeout triggered');
+      navigateTo('Login', 0);
+    }, 6000);
+
     checkLoginStatus();
+
+    return () => clearTimeout(safetyTimer);
   }, [dispatch, navigation]);
 
   return (

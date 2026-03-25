@@ -286,15 +286,17 @@ const Score = ({ navigation }) => {
         }
       } catch (_) {}
     }
-    const isPaid =
-      status === 'complete' || status === 'completed' || status === 'waived';
-    if (isPaid) {
+    console.log('Score: handleContinue paymentStatus:', status);
+    if (status === 'completed' || status === 'waived') {
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
       });
     } else {
-      navigation.navigate('Checkout');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Checkout' }],
+      });
     }
   }, [navigation, paymentStatus]);
 
