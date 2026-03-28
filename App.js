@@ -5,12 +5,13 @@ import { NavigationContainer } from '@react-navigation/native';
 import store from './src/redux/store';
 import Navigator from './src/navigation';
 import { initializeNotifee } from './src/notifications/NotificationService';
+import FCMService from './src/notifications/FCMService';
 import NetworkError from './src/components/NetworkError';
 import SessionExpiredModal from './src/components/SessionExpired';
 import ReduxDebugger from './src/components/ReduxDebugger';
 import ApiDebugger from './src/components/ApiDebugger';
 import { Common } from './src/utilities';
-import { setSessionExpired, logout } from './src/redux/Auth/slice';
+import { setSessionExpired, logout, setFCMToken } from './src/redux/Auth/slice';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import notifee, { EventType } from '@notifee/react-native';
 
@@ -83,10 +84,51 @@ const AppContent = () => {
       dispatch(setSessionExpired(true));
     });
 
-    // Initialize Notifee for notifications
+    // Initialize Notifee for local notifications
     initializeNotifee();
 
-    // Token refresh initialization removed - no automatic refresh needed
+    // ── Firebase Cloud Messaging (Push Notifications) ──────────
+    let cleanupFCM = () => {};
+    FCMService.init({
+      onToken: token => {
+        console.log('✅ FCM Token ready — saved to Redux:', token);
+        dispatch(setFCMToken(token));
+      },
+      onForeground: async remoteMessage => {
+        console.log('📩 FCM Foreground:', remoteMessage);
+        // FCM does NOT show notifications automatically in foreground
+        // We manually display it using notifee
+        await notifee.displayNotification({
+          title: remoteMessage.notification?.title || 'Notification',
+          body: remoteMessage.notification?.body || '',
+          android: {
+            channelId: 'health-schedule',
+            smallIcon: 'ic_launcher',
+            pressAction: { id: 'default' },
+          },
+        });
+      },
+      onOpenedFromBg: remoteMessage => {
+        console.log('🔔 FCM opened from background:', remoteMessage);
+        if (navigationRef.current) {
+          navigationRef.current.navigate('Today');
+        }
+      },
+      onOpenedFromQuit: remoteMessage => {
+        console.log('🚀 FCM opened from quit:', remoteMessage);
+        setTimeout(() => {
+          if (navigationRef.current) {
+            navigationRef.current.navigate('Today');
+          }
+        }, 500);
+      },
+      onRefreshToken: newToken => {
+        console.log('🔄 FCM Token refreshed — updated in Redux:', newToken);
+        dispatch(setFCMToken(newToken));
+      },
+    }).then(cleanup => {
+      cleanupFCM = cleanup;
+    });
 
     // Check initial connectivity
     checkConnectivity();
@@ -139,6 +181,7 @@ const AppContent = () => {
     return () => {
       unsubscribeNetInfo();
       unsubscribeNotification();
+      cleanupFCM();
     };
   }, [checkConnectivity, dispatch]);
 

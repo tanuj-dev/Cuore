@@ -14,6 +14,7 @@ const initialState = {
   sessionExpired: false,
   paymentStatus: null,
   onboardingStatus: null,
+  fcmToken: null,        // Firebase Cloud Messaging device token
 };
 
 const authSlice = createSlice({
@@ -42,8 +43,14 @@ const authSlice = createSlice({
       if (onboardingStatus != null) state.onboardingStatus = onboardingStatus;
     },
 
+    setFCMToken: (state, action) => {
+      state.fcmToken = action.payload;
+    },
     logout: state => {
+      // Keep fcmToken on logout so it's available for next login
+      const fcmToken = state.fcmToken;
       Object.assign(state, initialState);
+      state.fcmToken = fcmToken;
     },
     setSessionExpired: (state, action) => {
       state.sessionExpired = action.payload;
@@ -119,7 +126,7 @@ const userDataInitialState = {
   user: null, // will hold user info after login/signup
 };
 
-export const { logout, setUserData, setSessionExpired } = authSlice.actions;
+export const { logout, setUserData, setSessionExpired, setFCMToken } = authSlice.actions;
 export const { resetCreateAccount } = createAccountSlice.actions;
 
 // export default userDataSlice.reducer;

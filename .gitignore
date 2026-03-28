@@ -73,3 +73,5 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+cuore-pn-firebase-adminsdk-fbsvc-6884ca0a64.json
+get-fcm-token.js

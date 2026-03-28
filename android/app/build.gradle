@@ -1,6 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply plugin: "com.google.gms.google-services"
 
 // Set REACT_NATIVE_NODE_MODULES_DIR and REACT_NATIVE_WORKLETS_NODE_MODULES_DIR for react-native-reanimated
 // This must be set BEFORE the react block to ensure it's available when react-native-reanimated evaluates

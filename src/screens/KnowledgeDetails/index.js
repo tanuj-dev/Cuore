@@ -5,6 +5,8 @@ import {
   ScrollView,
   StyleSheet,
   Image,
+  Text,
+  Linking,
   useWindowDimensions,
   Platform,
 } from 'react-native';
@@ -13,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import RenderHTML from 'react-native-render-html';
 
 const KnowledgeDetails = ({ navigation, route }) => {
-  const { details } = route?.params || {};
+  const { details, referenceLinks } = route?.params || {};
   const { width } = useWindowDimensions();
   const detailsHtml =
     typeof details === 'string' ? details : '<p>No content available.</p>';
@@ -105,6 +107,20 @@ const KnowledgeDetails = ({ navigation, route }) => {
                 },
               }}
             />
+
+            {referenceLinks?.length > 0 && (
+              <View style={styles.referencesContainer}>
+                <Text style={styles.referencesLabel}>References</Text>
+                {referenceLinks.map((link, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => Linking.openURL(link)}
+                  >
+                    <Text style={styles.referenceLink}>{link}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -220,6 +236,26 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: wp(3.6),
     letterSpacing: 0.2,
+  },
+  referencesContainer: {
+    marginTop: hp(3),
+    paddingTop: hp(2),
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  referencesLabel: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 16,
+    color: '#1E293B',
+    marginBottom: hp(1),
+  },
+  referenceLink: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#2563EB',
+    textDecorationLine: 'underline',
+    marginBottom: hp(1),
+    lineHeight: 22,
   },
 });
 

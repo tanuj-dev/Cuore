@@ -3,10 +3,11 @@ import { postApiCall, putApiCall } from '../../utilities/Services';
 
 export const getNotification = createAsyncThunk(
   'notification/set',
-  async ({ userId, reminderId, time }, { rejectWithValue }) => {
+  async ({ userId, reminderId, time, title }, { rejectWithValue }) => {
     try {
       const payload = {
         time: time,
+        title: title,
       };
 
       const response = await putApiCall(

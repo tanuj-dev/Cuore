@@ -77,10 +77,18 @@ export const sendOtp = createAsyncThunk(
 // ✅ CREATE ACCOUNT THUNK
 export const createAccountThunk = createAsyncThunk(
   'auth/createAccount',
-  async (payload, { rejectWithValue }) => {
+  async (payload, { rejectWithValue, getState }) => {
     try {
+      // Attach FCM token to signup payload so backend can link it to the new user
+      const fcmToken = getState()?.auth?.fcmToken || null;
+      const enrichedPayload = {
+        ...payload,
+        ...(fcmToken && { fcm_token: fcmToken }),
+      };
+      console.log('[createAccount] FCM Token attached:', fcmToken);
+
       // Example: payload = { name, email, phone, password }
-      const response = await postApiCall(EndPoints.CREATEACCOUNT, payload);
+      const response = await postApiCall(EndPoints.CREATEACCOUNT, enrichedPayload);
 
       if (response?.status === 200 || response?.status === 201) {
         return response.data;

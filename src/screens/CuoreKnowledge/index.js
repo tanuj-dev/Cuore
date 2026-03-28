@@ -38,6 +38,7 @@ const CuoreKnowledge = ({ navigation }) => {
       onPress={() =>
         navigation.navigate('KnowledgeDetails', {
           details: item?.details || null,
+          referenceLinks: item?.referenceLinks || [],
         })
       }
       style={styles.card}

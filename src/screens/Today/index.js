@@ -32,11 +32,7 @@ import moment from 'moment';
 import { getOnboardingThunk } from '../../redux/slices';
 import { Fonts } from '../../utilities';
 import { logout } from '../../redux/Auth/slice';
-import {
-  scheduleNotificationAtTime,
-  cancelNotification,
-  getScheduledNotificationIds,
-} from '../../notifications/NotificationScheduler';
+// Local notification scheduling removed — reminders are sent via Firebase push notifications from the backend
 import { getBuilderItems } from '../../redux/slices';
 import SessionExpiredModal from '../../components/SessionExpired';
 import {
@@ -99,7 +95,6 @@ const Today = ({ navigation, route }) => {
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [requestId, setRequestId] = useState(null);
-  const [, setAlarmTime] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(true);
   const [toast, setToast] = useState(null);
   const [reminderList, setReminderList] = useState([]);
@@ -235,42 +230,8 @@ const Today = ({ navigation, route }) => {
     }
   }, [homeData?.dailySchedule]);
 
-  // Auto-schedule or cancel notifications based on alarm_notified flag
-  useEffect(() => {
-    if (!reminderList.length) return;
-
-    const syncNotifications = async () => {
-      const scheduledIds = await getScheduledNotificationIds();
-
-      reminderList.forEach(item => {
-        const notificationId = `reminder-${(item?.time || '').replace(/[: ]/g, '-')}`;
-        const timeToUse = item?.alarm_notified_time || item?.time;
-
-        if (item?.alarm_notified && timeToUse) {
-          // Only schedule if not already queued — prevents all-at-once firing on app open
-          if (scheduledIds.includes(notificationId)) return;
-
-          const timeParsed = moment(timeToUse, ['h:mm A', 'h:mmA', 'H:mm', 'HH:mm']);
-          if (!timeParsed.isValid()) return;
-
-          scheduleNotificationAtTime(
-            notificationId,
-            item?.title,
-            item?.description,
-            timeParsed.hours(),
-            timeParsed.minutes(),
-          );
-        } else {
-          // Only cancel if it was actually scheduled
-          if (scheduledIds.includes(notificationId)) {
-            cancelNotification(notificationId);
-          }
-        }
-      });
-    };
-
-    syncNotifications();
-  }, [reminderList]);
+  // Notification scheduling is handled by the backend via Firebase push notifications.
+  // The backend uses the stored fcm_token to send push at the correct time.
 
   // Auto-refresh every 30 minutes and on new day
   const lastRefreshRef = useRef(Date.now());
@@ -319,58 +280,7 @@ const Today = ({ navigation, route }) => {
     };
   }, [userId, silentRefresh]);
 
-  const handleScheduleAtTime = useCallback(async (time, title, body) => {
-    // Parse robustly: handles "8:00 AM", "8:00AM", "8:00 am", "20:00", "08:00", etc.
-    const parsed = moment(time, ['h:mm A', 'h:mmA', 'H:mm', 'HH:mm'], true);
-    if (!parsed.isValid()) {
-      // Fallback: try without strict mode
-      const fallback = moment(time, ['h:mm A', 'h:mmA', 'H:mm', 'HH:mm']);
-      if (!fallback.isValid()) {
-        console.warn('Invalid time format:', time);
-        return;
-      }
-    }
-    const timeParsed = moment(time, ['h:mm A', 'h:mmA', 'H:mm', 'HH:mm']);
-    const hours = timeParsed.hours();
-    const minutes = timeParsed.minutes();
 
-    // Create a Date object for today at the specified time
-    const now = new Date();
-    const scheduledTime = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      hours,
-      minutes,
-      0,
-      0,
-    );
-
-    // If the scheduled time has already passed today, set it for tomorrow
-    if (scheduledTime <= now) {
-      scheduledTime.setDate(scheduledTime.getDate() + 1);
-    }
-
-    await scheduleNotificationAtTime(
-      `reminder-${time.replace(/[: ]/g, '-')}`, // Unique ID
-      title,
-      body,
-      hours,
-      minutes,
-    );
-    setToast(
-      `we will notify you at ${moment(scheduledTime).format('hh:mm A')}`,
-    );
-    setToastType('success');
-    setAlarmTime(true);
-  }, []);
-
-  const handleCancel = useCallback(async id => {
-    await cancelNotification(id);
-    setToast('Alarm cancelled');
-    setToastType('error');
-    setAlarmTime(false);
-  }, []);
 
   const handleLoginRedirect = useCallback(async () => {
     setSessionExpired(false);
@@ -712,10 +622,6 @@ const Today = ({ navigation, route }) => {
                 if (isCaregiver) return;
 
                 const isCurrentlyOn = item?.alarm_notified;
-                const notificationId = `reminder-${item?.time.replace(
-                  /[: ]/g,
-                  '-',
-                )}`;
 
                 // Optimistically update local state
                 setReminderList(prev =>
@@ -729,24 +635,23 @@ const Today = ({ navigation, route }) => {
                   ),
                 );
 
-                // Fire API/background work
+                // Notify backend — it will schedule/cancel the FCM push notification
                 dispatch(
                   getNotification({
                     userId,
                     reminderId: item?.id,
                     time: item?.time,
+                    title: item?.title,
                   }),
                 );
 
-                // If turning ON, schedule notification; if turning OFF, cancel it
+                // Show toast
                 if (isCurrentlyOn) {
-                  handleCancel(notificationId);
+                  setToast('Reminder cancelled');
+                  setToastType('error');
                 } else {
-                  handleScheduleAtTime(
-                    item?.time,
-                    item?.title,
-                    item?.description,
-                  );
+                  setToast(`Reminder set! You'll be notified at ${item?.time}`);
+                  setToastType('success');
                 }
               };
 

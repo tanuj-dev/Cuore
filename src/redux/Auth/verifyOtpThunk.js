@@ -4,8 +4,12 @@ import EndPoints from '../../utilities/Endpoints';
 
 export const verifyOtp = createAsyncThunk(
   'auth/verifyOtp',
-  async ({ endpoint, requestId, testOtp }, { rejectWithValue }) => {
+  async ({ endpoint, requestId, testOtp }, { rejectWithValue, getState }) => {
     console.log('[verifyOtp] Triggered with:', { requestId, testOtp });
+
+    // Get FCM token from Redux state (set by FCMService.init on app start)
+    const fcmToken = getState()?.auth?.fcmToken || null;
+    console.log('[verifyOtp] FCM Token:', fcmToken);
 
     try {
       const payload = {
@@ -14,10 +18,12 @@ export const verifyOtp = createAsyncThunk(
         client_info: {
           app_version: '1.0',
         },
+        ...(fcmToken && { fcm_token: fcmToken }),
       };
       const payload2 = {
         request_id: requestId,
         otp_code: testOtp,
+        ...(fcmToken && { fcm_token: fcmToken }),
       };
 
       console.log('[verifyOtp] Sending payload:', payload);

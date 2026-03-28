@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "375153095117",
+    "project_id": "cuore-pn",
+    "storage_bucket": "cuore-pn.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:375153095117:android:7ec2f69782177e7cf49484",
+        "android_client_info": {
+          "package_name": "com.cuore"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNATagv9gkxVKQtK_5wEaMDwwME_qYXT8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

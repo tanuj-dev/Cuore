@@ -1,10 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Image, Animated, Easing, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
+import { initConnection, getAvailablePurchases, endConnection } from 'react-native-iap';
 import { setUserData } from '../../redux/Auth/slice';
 import { hp, wp, Images } from '../../utilities';
+import { IAP_SUBSCRIPTION_ID } from '../../utilities/Constants';
+import { postApiCall } from '../../utilities/Services';
+import EndPoints from '../../utilities/Endpoints';
 
 const Splash = () => {
   const navigation = useNavigation();
@@ -108,6 +112,53 @@ const Splash = () => {
           dispatch(setUserData(parsed));
 
           if (parsed.paymentStatus === 'completed' || parsed.paymentStatus === 'waived') {
+            // iOS only: verify subscription is still active via backend
+            if (Platform.OS === 'ios' && parsed.paymentStatus === 'completed') {
+              try {
+                console.log('Splash: initializing IAP connection...');
+                await initConnection();
+                console.log('Splash: checking iOS active subscriptions...');
+                const purchases = await getAvailablePurchases({ onlyIncludeActiveItemsIOS: true });
+                await endConnection();
+                const activeSub = purchases?.find(p => p.productId === IAP_SUBSCRIPTION_ID);
+                console.log('Splash: iOS active subscription found:', !!activeSub);
+
+                if (!activeSub) {
+                  // No active subscription on device — expired
+                  parsed.paymentStatus = null;
+                  await EncryptedStorage.setItem('auth_tokens', JSON.stringify(parsed));
+                  dispatch(setUserData(parsed));
+                  navigateTo('Checkout');
+                  return;
+                }
+
+                // Send purchaseToken to backend — backend decodes receipt and confirms expiry
+                // Bearer token is sent automatically via setupHeaders in postApiCall
+                const payload = {
+                  userId: parsed.userId,
+                  platform: 'ios',
+                  productId: activeSub.productId,
+                  purchaseToken: activeSub.transactionReceipt || activeSub.purchaseToken,
+                  orderId: activeSub.transactionId,
+                  purchaseTime: activeSub.transactionDate,
+                };
+                console.log('Splash: verifying purchase token with backend...');
+                const response = await postApiCall(EndPoints.VERIFY_SUBSCRIPTION, payload);
+                console.log('Splash: backend verify response:', response?.status);
+
+                if (response?.status !== 200) {
+                  // Backend says expired or invalid
+                  parsed.paymentStatus = null;
+                  await EncryptedStorage.setItem('auth_tokens', JSON.stringify(parsed));
+                  dispatch(setUserData(parsed));
+                  navigateTo('Checkout');
+                  return;
+                }
+              } catch (iosErr) {
+                // On error (e.g. no internet), don't block — let user through
+                console.log('Splash: iOS subscription check failed, proceeding to Home:', iosErr.message);
+              }
+            }
             navigateTo('Home');
           } else {
             navigateTo('Checkout');
@@ -125,7 +176,7 @@ const Splash = () => {
     const safetyTimer = setTimeout(() => {
       console.log('Splash: safety timeout triggered');
       navigateTo('Login', 0);
-    }, 6000);
+    }, 10000);
 
     checkLoginStatus();
 
