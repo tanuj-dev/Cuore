@@ -39,7 +39,7 @@ const Support = ({ navigation }) => {
               }}
               style={styles.continueBtn}
             >
-              <Text style={styles.continueText}>📞 Call +91 85952 20225</Text>
+              <Text style={styles.continueText}> Call +91 85952 20225</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.hoursContainer}>

@@ -14,8 +14,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { hp, wp, Images } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../redux/Auth/slice';
-import EncryptedStorage from 'react-native-encrypted-storage';
+import { logoutUser } from '../../redux/Auth/authThunk';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getProfile } from '../../redux/slices';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
@@ -172,13 +171,7 @@ const Profile = ({ navigation }) => {
         style: 'destructive',
         onPress: async () => {
           console.log('LOGOUT CONFIRMED');
-          console.log(
-            'Existing auth_tokens before logout:',
-            await EncryptedStorage.getItem('auth_tokens'),
-          );
-          await EncryptedStorage.removeItem('auth_tokens');
-          // await EncryptedStorage.removeItem('userid');
-          dispatch(logout());
+          await dispatch(logoutUser());
           // dispatch(resetCreateAccount());
           // Make sure we navigate on the root navigator, not just the Profile stack
           const rootNavigation = navigation.getParent()?.getParent();

@@ -52,6 +52,10 @@ const HealthRecords = ({ navigation }) => {
   const [isEditingFilename, setIsEditingFilename] = useState(false);
   const [deletingRecordId, setDeletingRecordId] = useState(null);
 
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [consentToggle, setConsentToggle] = useState(false);
+  const [hasConsented, setHasConsented] = useState(false);
+
   const MAX_FILE_SIZE_MB = 10;
   const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
   const MAX_FILES_PER_UPLOAD = 10;
@@ -580,7 +584,14 @@ const HealthRecords = ({ navigation }) => {
                   styles.uploadBox,
                   isCaregiver && styles.uploadBoxDisabled,
                 ]}
-                onPress={() => !isCaregiver && setShowUploadModal(true)}
+                onPress={() => {
+                  if (isCaregiver) return;
+                  if (!hasConsented) {
+                    setShowConsentModal(true);
+                  } else {
+                    setShowUploadModal(true);
+                  }
+                }}
                 disabled={isCaregiver}
                 activeOpacity={isCaregiver ? 1 : 0.7}
               >
@@ -614,7 +625,8 @@ const HealthRecords = ({ navigation }) => {
                 >
                   {isCaregiver
                     ? 'Only the account holder can upload or manage records'
-                    : 'Make sure the uploaded health record belongs to you'}
+                    : `Make sure the uploaded health record belongs to you.
+Your document will be processed using AI (LLaMA 4 Scout via Groq) for text extraction and summarization. Only the document content is sent — no personal identifiers. Groq does not store your data. See Privacy Policy.`}
                 </Text>
               </TouchableOpacity>
 
@@ -888,6 +900,252 @@ const HealthRecords = ({ navigation }) => {
                   onLoadStart={() => setIsImageLoading(true)}
                   onLoadEnd={() => setIsImageLoading(false)}
                 />
+              </View>
+            </View>
+          </Modal>
+
+          {/* AI Data Processing Consent Modal */}
+          <Modal
+            visible={showConsentModal}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => {
+              setShowConsentModal(false);
+              setConsentToggle(false);
+            }}
+          >
+            <View style={styles.consentOverlay}>
+              <View style={styles.consentContainer}>
+                <ScrollView
+                  style={styles.consentScroll}
+                  showsVerticalScrollIndicator={true}
+                >
+                  <Text style={styles.consentTitle}>
+                    AI Data Processing Consent
+                  </Text>
+
+                  <Text style={styles.consentBrainIcon}>🧠</Text>
+
+                  <Text style={styles.consentSubtitle}>
+                    How Your Documents Are Processed
+                  </Text>
+                  <Text style={styles.consentBody}>
+                    Before you upload any health records, please read how your
+                    documents are handled.
+                  </Text>
+
+                  <View style={styles.consentDivider} />
+
+                  <Text style={styles.consentSectionTitle}>📄 What We Do</Text>
+                  <Text style={styles.consentBody}>
+                    When you upload a prescription, lab report, or doctor's
+                    note, we use AI to extract the text and create a summary so
+                    you can easily review and organize your health records
+                    within the app.
+                  </Text>
+
+                  <Text style={styles.consentSectionTitle}>
+                    🖥️ Who Processes Your Documents
+                  </Text>
+                  <Text style={styles.consentBody}>
+                    Your documents are processed using the LLaMA 4 Scout AI
+                    model, hosted by Groq, Inc. — a third-party cloud inference
+                    provider based in the United States.
+                  </Text>
+                  <Text style={styles.consentBody}>
+                    Groq is a third-party service and is not owned or operated
+                    by Cuore Health.
+                  </Text>
+
+                  <Text style={styles.consentSectionTitle}>
+                    📤 What Is Sent to Groq
+                  </Text>
+                  <View style={styles.consentListItem}>
+                    <Text style={styles.consentCheckMark}>✓</Text>
+                    <Text style={styles.consentListText}>
+                      The document image or PDF you upload — this is the ONLY
+                      data sent to Groq
+                    </Text>
+                  </View>
+                  <View style={styles.consentListItem}>
+                    <Text style={styles.consentCrossMark}>✗</Text>
+                    <Text style={styles.consentListText}>
+                      Your name is NOT sent
+                    </Text>
+                  </View>
+                  <View style={styles.consentListItem}>
+                    <Text style={styles.consentCrossMark}>✗</Text>
+                    <Text style={styles.consentListText}>
+                      Your email is NOT sent
+                    </Text>
+                  </View>
+                  <View style={styles.consentListItem}>
+                    <Text style={styles.consentCrossMark}>✗</Text>
+                    <Text style={styles.consentListText}>
+                      Your phone number is NOT sent
+                    </Text>
+                  </View>
+                  <View style={styles.consentListItem}>
+                    <Text style={styles.consentCrossMark}>✗</Text>
+                    <Text style={styles.consentListText}>
+                      Your device ID is NOT sent
+                    </Text>
+                  </View>
+                  <View style={styles.consentListItem}>
+                    <Text style={styles.consentCrossMark}>✗</Text>
+                    <Text style={styles.consentListText}>
+                      Your vitals, nutrition, and fitness data are NOT sent
+                    </Text>
+                  </View>
+
+                  <Text style={styles.consentSectionTitle}>
+                    🔒 How Your Data Is Protected
+                  </Text>
+                  <View style={styles.consentBulletItem}>
+                    <Text style={styles.consentBullet}>•</Text>
+                    <Text style={styles.consentListText}>
+                      All documents are encrypted during transmission using TLS
+                      1.3 encryption.
+                    </Text>
+                  </View>
+                  <View style={styles.consentBulletItem}>
+                    <Text style={styles.consentBullet}>•</Text>
+                    <Text style={styles.consentListText}>
+                      Groq processes your data as a data processor on behalf of
+                      Cuore Health, governed by their Services Agreement and
+                      Data Processing Addendum.
+                    </Text>
+                  </View>
+                  <View style={styles.consentBulletItem}>
+                    <Text style={styles.consentBullet}>•</Text>
+                    <Text style={styles.consentListText}>
+                      Only the document content is sent — no personal
+                      identifiers such as your name, email, or phone number are
+                      included.
+                    </Text>
+                  </View>
+                  <View style={styles.consentBulletItem}>
+                    <Text style={styles.consentBullet}>•</Text>
+                    <Text style={styles.consentListText}>
+                      The AI-generated summary is stored securely on Cuore's own
+                      servers, linked to your account.
+                    </Text>
+                  </View>
+                  <View style={styles.consentBulletItem}>
+                    <Text style={styles.consentBullet}>•</Text>
+                    <Text style={styles.consentListText}>
+                      Your document content may be processed on servers located
+                      in the United States.
+                    </Text>
+                  </View>
+                  <View style={styles.consentBulletItem}>
+                    <Text style={styles.consentBullet}>•</Text>
+                    <Text style={styles.consentListText}>
+                      You can delete your uploaded records at any time from the
+                      Health Records screen in the app.
+                    </Text>
+                  </View>
+
+                  <Text style={styles.consentSectionTitle}>
+                    ⚠️ Important Disclaimer
+                  </Text>
+                  <Text style={styles.consentBody}>
+                    AI-generated summaries are for informational and
+                    organizational purposes only. They are NOT a medical
+                    diagnosis, treatment recommendation, or clinical advice. AI
+                    text extraction may contain errors or omissions. Always
+                    verify the summary against your original document and
+                    consult your healthcare provider before making any medical
+                    decisions.
+                  </Text>
+
+                  <View style={styles.consentDivider} />
+
+                  <TouchableOpacity
+                    style={styles.consentToggleRow}
+                    activeOpacity={0.7}
+                    onPress={() => setConsentToggle(!consentToggle)}
+                  >
+                    <View
+                      style={[
+                        styles.consentToggleTrack,
+                        consentToggle && styles.consentToggleTrackActive,
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.consentToggleThumb,
+                          consentToggle && styles.consentToggleThumbActive,
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.consentToggleLabel}>
+                      I understand and consent
+                    </Text>
+                  </TouchableOpacity>
+
+                  <Text style={styles.consentAgreementText}>
+                    I agree that my uploaded health documents will be sent to
+                    Groq, Inc. (a third-party provider based in the United
+                    States) for AI-powered text extraction and summarization. I
+                    understand that only the document content is shared and no
+                    personal identifiers are included. Processing is governed by
+                    Groq's Services Agreement and Data Processing Addendum.
+                  </Text>
+
+                  <View style={styles.consentLinksRow}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        Linking.openURL('https://cuore.health/privacy')
+                      }
+                    >
+                      <Text style={styles.consentLink}>Privacy Policy</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() =>
+                        Linking.openURL('https://groq.com/terms-of-use')
+                      }
+                    >
+                      <Text style={styles.consentLink}>Groq Terms of Use</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.consentAgreeBtn,
+                      !consentToggle && styles.consentAgreeBtnDisabled,
+                    ]}
+                    disabled={!consentToggle}
+                    onPress={() => {
+                      setHasConsented(true);
+                      setShowConsentModal(false);
+                      setShowUploadModal(true);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.consentAgreeBtnText,
+                        !consentToggle && styles.consentAgreeBtnTextDisabled,
+                      ]}
+                    >
+                      Agree & Continue
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.consentCancelBtn}
+                    onPress={() => {
+                      setShowConsentModal(false);
+                      setConsentToggle(false);
+                    }}
+                  >
+                    <Text style={styles.consentCancelText}>
+                      Cancel — Don't Upload
+                    </Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.consentBottomSpacer} />
+                </ScrollView>
               </View>
             </View>
           </Modal>
@@ -1281,5 +1539,198 @@ const styles = StyleSheet.create({
   imageLoader: {
     position: 'absolute',
     zIndex: 5,
+  },
+  consentOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  consentContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    width: wp(92),
+    maxHeight: hp(88),
+    overflow: 'hidden',
+  },
+  consentScroll: {
+    paddingHorizontal: 24,
+    paddingTop: 28,
+  },
+  consentTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 20,
+    color: '#1E293B',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  consentBrainIcon: {
+    fontSize: 36,
+    textAlign: 'center',
+    marginVertical: 12,
+  },
+  consentSubtitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16,
+    color: '#1E293B',
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: -0.2,
+  },
+  consentBody: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13.5,
+    color: '#475569',
+    lineHeight: 21,
+    marginBottom: 12,
+    letterSpacing: 0.1,
+  },
+  consentDivider: {
+    height: 1,
+    backgroundColor: '#E2E8F0',
+    marginVertical: 16,
+  },
+  consentSectionTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#1E293B',
+    marginBottom: 8,
+    marginTop: 4,
+    letterSpacing: -0.1,
+  },
+  consentListItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+    paddingLeft: 4,
+  },
+  consentCheckMark: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#047857',
+    marginRight: 10,
+    marginTop: 2,
+  },
+  consentCrossMark: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#EF4444',
+    marginRight: 10,
+    marginTop: 2,
+  },
+  consentListText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13.5,
+    color: '#475569',
+    flex: 1,
+    lineHeight: 21,
+    letterSpacing: 0.1,
+  },
+  consentBulletItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    paddingLeft: 4,
+  },
+  consentBullet: {
+    fontSize: 14,
+    color: '#475569',
+    marginRight: 10,
+    marginTop: 1,
+  },
+  consentToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  consentToggleTrack: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#CBD5E1',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  consentToggleTrackActive: {
+    backgroundColor: '#11418A',
+  },
+  consentToggleThumb: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  consentToggleThumbActive: {
+    alignSelf: 'flex-end',
+  },
+  consentToggleLabel: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#1E293B',
+    marginLeft: 12,
+    letterSpacing: -0.1,
+  },
+  consentAgreementText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12.5,
+    color: '#64748B',
+    lineHeight: 19,
+    marginBottom: 16,
+    letterSpacing: 0.1,
+  },
+  consentLinksRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  consentLink: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#11418A',
+    textDecorationLine: 'underline',
+    letterSpacing: 0.1,
+  },
+  consentAgreeBtn: {
+    backgroundColor: '#11418A',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#11418A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  consentAgreeBtnDisabled: {
+    backgroundColor: '#CBD5E1',
+    shadowOpacity: 0,
+  },
+  consentAgreeBtnText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  consentAgreeBtnTextDisabled: {
+    color: '#94A3B8',
+  },
+  consentCancelBtn: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  consentCancelText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#EF4444',
+    letterSpacing: 0.2,
+  },
+  consentBottomSpacer: {
+    height: 20,
   },
 });

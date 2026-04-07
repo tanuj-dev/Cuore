@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { View, StyleSheet, Platform } from 'react-native';
+import axios from 'axios';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
 import store from './src/redux/store';
@@ -8,13 +9,25 @@ import { initializeNotifee } from './src/notifications/NotificationService';
 import FCMService from './src/notifications/FCMService';
 import NetworkError from './src/components/NetworkError';
 import SessionExpiredModal from './src/components/SessionExpired';
+import AppUpdateModal from './src/components/AppUpdateModal';
 import ReduxDebugger from './src/components/ReduxDebugger';
 import ApiDebugger from './src/components/ApiDebugger';
 import { Common } from './src/utilities';
-import { setSessionExpired, logout, setFCMToken } from './src/redux/Auth/slice';
-import EncryptedStorage from 'react-native-encrypted-storage';
+import Constants, { APP_VERSION, STORE_URL } from './src/utilities/Constants';
+import Endpoints from './src/utilities/Endpoints';
+import { setSessionExpired, setFCMToken } from './src/redux/Auth/slice';
+import { logoutUser } from './src/redux/Auth/authThunk';
 import notifee, { EventType } from '@notifee/react-native';
 
+const isOutdated = (current, minimum) => {
+  const c = current.split('.').map(Number);
+  const m = minimum.split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if ((c[i] || 0) < (m[i] || 0)) return true;
+    if ((c[i] || 0) > (m[i] || 0)) return false;
+  }
+  return false;
+};
 
 // Navigation ref to access navigation from outside components
 export const navigationRef = React.createRef();
@@ -23,7 +36,32 @@ export const navigationRef = React.createRef();
 const AppContent = () => {
   const dispatch = useDispatch();
   const [isConnected, setIsConnected] = useState(true);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateStoreUrl, setUpdateStoreUrl] = useState('');
   const sessionExpired = useSelector(state => state.auth?.sessionExpired);
+
+  useEffect(() => {
+    const checkAppVersion = async () => {
+      try {
+        const res = await axios.get(
+          Constants.BASEURL + Endpoints.CHECK_APP_VERSION,
+          { timeout: 5000 },
+        );
+        const platformData =
+          Platform.OS === 'ios' ? res.data?.ios : res.data?.android;
+        if (
+          platformData?.minVersion &&
+          isOutdated(APP_VERSION, platformData.minVersion)
+        ) {
+          setUpdateStoreUrl(platformData.storeUrl || STORE_URL);
+          setShowUpdateModal(true);
+        }
+      } catch (_err) {
+        // API unreachable — skip silently
+      }
+    };
+    checkAppVersion();
+  }, []);
 
   // Log entire Redux store state
   useEffect(() => {
@@ -58,15 +96,7 @@ const AppContent = () => {
 
   const handleSessionExpired = useCallback(async () => {
     console.log('Session expired - clearing tokens and navigating to login');
-    // Clear tokens
-    try {
-      await EncryptedStorage.removeItem('auth_tokens');
-    } catch (error) {
-      console.warn('Error clearing tokens:', error);
-    }
-
-    // Dispatch logout to clear Redux state
-    dispatch(logout());
+    await dispatch(logoutUser({ skipRemote: true }));
     dispatch(setSessionExpired(false));
 
     // Navigate to Login using navigation ref
@@ -89,32 +119,43 @@ const AppContent = () => {
 
     // ── Firebase Cloud Messaging (Push Notifications) ──────────
     let cleanupFCM = () => {};
+    let cancelled = false;
     FCMService.init({
       onToken: token => {
+        if (cancelled) return;
         console.log('✅ FCM Token ready — saved to Redux:', token);
         dispatch(setFCMToken(token));
       },
       onForeground: async remoteMessage => {
+        if (cancelled) return;
         console.log('📩 FCM Foreground:', remoteMessage);
-        // FCM does NOT show notifications automatically in foreground
-        // We manually display it using notifee
-        await notifee.displayNotification({
-          title: remoteMessage.notification?.title || 'Notification',
-          body: remoteMessage.notification?.body || '',
-          android: {
-            channelId: 'health-schedule',
-            smallIcon: 'ic_launcher',
-            pressAction: { id: 'default' },
-          },
-        });
+        // iOS: willPresent in AppDelegate shows the banner automatically.
+        // Android: FCM does not show foreground notifications — use Notifee.
+        if (Platform.OS === 'android') {
+          const id =
+            remoteMessage.messageId ||
+            `${remoteMessage.notification?.title || ''}-${Date.now()}`;
+          await notifee.displayNotification({
+            id,
+            title: remoteMessage.notification?.title || 'Notification',
+            body: remoteMessage.notification?.body || '',
+            android: {
+              channelId: 'health-schedule',
+              smallIcon: 'ic_launcher',
+              pressAction: { id: 'default' },
+            },
+          });
+        }
       },
       onOpenedFromBg: remoteMessage => {
+        if (cancelled) return;
         console.log('🔔 FCM opened from background:', remoteMessage);
         if (navigationRef.current) {
           navigationRef.current.navigate('Today');
         }
       },
       onOpenedFromQuit: remoteMessage => {
+        if (cancelled) return;
         console.log('🚀 FCM opened from quit:', remoteMessage);
         setTimeout(() => {
           if (navigationRef.current) {
@@ -123,11 +164,16 @@ const AppContent = () => {
         }, 500);
       },
       onRefreshToken: newToken => {
+        if (cancelled) return;
         console.log('🔄 FCM Token refreshed — updated in Redux:', newToken);
         dispatch(setFCMToken(newToken));
       },
     }).then(cleanup => {
-      cleanupFCM = cleanup;
+      if (cancelled) {
+        cleanup();
+      } else {
+        cleanupFCM = cleanup;
+      }
     });
 
     // Check initial connectivity
@@ -179,6 +225,7 @@ const AppContent = () => {
     });
 
     return () => {
+      cancelled = true;
       unsubscribeNetInfo();
       unsubscribeNotification();
       cleanupFCM();
@@ -199,6 +246,7 @@ const AppContent = () => {
         visible={sessionExpired}
         onLogin={handleSessionExpired}
       />
+      <AppUpdateModal visible={showUpdateModal} storeUrl={updateStoreUrl} />
       {/* Redux Store Debugger - Remove in production */}
       {/* {__DEV__ && <ReduxDebugger />} */}
       {__DEV__ && <ApiDebugger />}

@@ -1,14 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Animated, Easing, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Animated,
+  Easing,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
-import { initConnection, getAvailablePurchases, endConnection } from 'react-native-iap';
 import { setUserData } from '../../redux/Auth/slice';
 import { hp, wp, Images } from '../../utilities';
-import { IAP_SUBSCRIPTION_ID } from '../../utilities/Constants';
-import { postApiCall } from '../../utilities/Services';
-import EndPoints from '../../utilities/Endpoints';
 
 const Splash = () => {
   const navigation = useNavigation();
@@ -81,91 +84,67 @@ const Splash = () => {
         const tokenData = await EncryptedStorage.getItem('auth_tokens');
         console.log('Splash: auth_tokens read, has data:', !!tokenData);
 
-        if (tokenData) {
-          const parsed = JSON.parse(tokenData);
-          const access_token = parsed.accessToken;
-          console.log('Splash: paymentStatus:', parsed.paymentStatus, 'onboardingStatus:', parsed.onboardingStatus);
-
-          if (!access_token) {
-            await EncryptedStorage.removeItem('auth_tokens');
-            navigateTo('Login');
-            return;
-          }
-
-            if (parsed.onboardingStatus !== 'complete') {
-            if (parsed.role === 'caregiver') {
-              await EncryptedStorage.removeItem('auth_tokens');
-              navigateTo('Login');
-            } else {
-              dispatch(setUserData(parsed));
-              navigateTo('OnBoarding');
-            }
-            return;
-          }
-
-          if (parsed.role === 'caregiver' && parsed.paymentStatus !== 'completed' && parsed.paymentStatus !== 'waived') {
-            await EncryptedStorage.removeItem('auth_tokens');
-            navigateTo('Login');
-            return;
-          }
-
-          dispatch(setUserData(parsed));
-
-          if (parsed.paymentStatus === 'completed' || parsed.paymentStatus === 'waived') {
-            // iOS only: verify subscription is still active via backend
-            if (Platform.OS === 'ios' && parsed.paymentStatus === 'completed') {
-              try {
-                console.log('Splash: initializing IAP connection...');
-                await initConnection();
-                console.log('Splash: checking iOS active subscriptions...');
-                const purchases = await getAvailablePurchases({ onlyIncludeActiveItemsIOS: true });
-                await endConnection();
-                const activeSub = purchases?.find(p => p.productId === IAP_SUBSCRIPTION_ID);
-                console.log('Splash: iOS active subscription found:', !!activeSub);
-
-                if (!activeSub) {
-                  // No active subscription on device — expired
-                  parsed.paymentStatus = null;
-                  await EncryptedStorage.setItem('auth_tokens', JSON.stringify(parsed));
-                  dispatch(setUserData(parsed));
-                  navigateTo('Checkout');
-                  return;
-                }
-
-                // Send purchaseToken to backend — backend decodes receipt and confirms expiry
-                // Bearer token is sent automatically via setupHeaders in postApiCall
-                const payload = {
-                  userId: parsed.userId,
-                  platform: 'ios',
-                  productId: activeSub.productId,
-                  purchaseToken: activeSub.transactionReceipt || activeSub.purchaseToken,
-                  orderId: activeSub.transactionId,
-                  purchaseTime: activeSub.transactionDate,
-                };
-                console.log('Splash: verifying purchase token with backend...');
-                const response = await postApiCall(EndPoints.VERIFY_SUBSCRIPTION, payload);
-                console.log('Splash: backend verify response:', response?.status);
-
-                if (response?.status !== 200) {
-                  // Backend says expired or invalid
-                  parsed.paymentStatus = null;
-                  await EncryptedStorage.setItem('auth_tokens', JSON.stringify(parsed));
-                  dispatch(setUserData(parsed));
-                  navigateTo('Checkout');
-                  return;
-                }
-              } catch (iosErr) {
-                // On error (e.g. no internet), don't block — let user through
-                console.log('Splash: iOS subscription check failed, proceeding to Home:', iosErr.message);
-              }
-            }
-            navigateTo('Home');
-          } else {
-            navigateTo('Checkout');
-          }
-        } else {
+        // Step 1: No token → Login
+        if (!tokenData) {
+          console.log('Splash: no token found → Login');
           navigateTo('Login');
+          return;
         }
+
+        const parsed = JSON.parse(tokenData);
+        const access_token = parsed.accessToken;
+        console.log(
+          'Splash: paymentStatus:',
+          parsed.paymentStatus,
+          'onboardingStatus:',
+          parsed.onboardingStatus,
+        );
+
+        if (!access_token) {
+          console.log('Splash: no access token → Login');
+          await EncryptedStorage.removeItem('auth_tokens');
+          navigateTo('Login');
+          return;
+        }
+
+        // Step 2: Has token but onboarding not complete → OnBoarding
+        if (parsed.onboardingStatus !== 'complete') {
+          if (parsed.role === 'caregiver') {
+            await EncryptedStorage.removeItem('auth_tokens');
+            navigateTo('Login');
+          } else {
+            dispatch(setUserData(parsed));
+            navigateTo('OnBoarding');
+          }
+          return;
+        }
+
+        // Caregiver without valid payment → Login
+        if (
+          parsed.role === 'caregiver' &&
+          parsed.paymentStatus !== 'completed' &&
+          parsed.paymentStatus !== 'waived'
+        ) {
+          await EncryptedStorage.removeItem('auth_tokens');
+          navigateTo('Login');
+          return;
+        }
+
+        dispatch(setUserData(parsed));
+
+        // Step 3: Has token + onboarding complete + payment not done → Checkout
+        if (
+          parsed.paymentStatus !== 'completed' &&
+          parsed.paymentStatus !== 'waived'
+        ) {
+          console.log('Splash: payment incomplete → Checkout');
+          navigateTo('Checkout');
+          return;
+        }
+
+        // Step 4: All checks passed → Home
+        console.log('Splash: all checks passed → Home');
+        navigateTo('Home');
       } catch (err) {
         console.log('Splash: error reading token:', err.message);
         navigateTo('Login');

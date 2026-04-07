@@ -12,10 +12,47 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { hp, wp, Images } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateFitnessTime } from '../../redux/slices';
+import { updateFitnessTime, getFitness } from '../../redux/slices';
 import ToastMessage from '../../components/Toast';
 import ApiError from '../../components/ApiError';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SkeletonBox from '../../components/SkeletonBox';
+
+const FitnessSkeleton = () => (
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+    {/* Header */}
+    <View style={{ backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', paddingHorizontal: wp(2), paddingVertical: hp(1.5) }}>
+      <SkeletonBox width={44} height={28} borderRadius={6} />
+      <SkeletonBox width={130} height={22} style={{ flex: 1, alignSelf: 'center', marginHorizontal: 8 }} />
+      <SkeletonBox width={44} height={28} borderRadius={6} />
+    </View>
+    <View style={{ flex: 1, padding: wp(4), gap: hp(2) }}>
+      {/* Time card */}
+      <View style={{ backgroundColor: '#FFF', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(1.5) }}>
+        <SkeletonBox width={200} height={18} />
+        <SkeletonBox width={140} height={14} borderRadius={6} />
+        <SkeletonBox width="100%" height={44} borderRadius={10} />
+        <SkeletonBox width="100%" height={40} borderRadius={10} />
+      </View>
+      {/* Day tabs */}
+      <View style={{ backgroundColor: '#FFF', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: hp(0.6), flexDirection: 'row', gap: 8 }}>
+        {days.map(d => (
+          <SkeletonBox key={d} width={36} height={32} borderRadius={20} />
+        ))}
+      </View>
+      {/* Workout cards */}
+      {[1, 2, 3, 4].map(i => (
+        <View key={i} style={{ backgroundColor: '#FFF', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(1) }}>
+          <SkeletonBox width={160} height={16} />
+          <View style={{ flexDirection: 'row', gap: wp(4) }}>
+            <SkeletonBox width={80} height={14} borderRadius={6} />
+            <SkeletonBox width={80} height={14} borderRadius={6} />
+          </View>
+        </View>
+      ))}
+    </View>
+  </SafeAreaView>
+);
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -64,6 +101,12 @@ const Fitness = ({ navigation, route }) => {
 
   const dispatch = useDispatch();
   const data = useSelector(state => state.fitness.data);
+
+  useEffect(() => {
+    if (!data) {
+      dispatch(getFitness());
+    }
+  }, [dispatch, data]);
   const role = useSelector(state => state.auth.role);
   const fitnessData = data?.schedule;
 
@@ -131,6 +174,12 @@ const Fitness = ({ navigation, route }) => {
       setTime(new Date(data.preferredTime));
     }
   }, [data?.preferredTime]);
+
+  const fitnessLoading = useSelector(state => state.fitness.loading);
+
+  if (fitnessLoading && !data) {
+    return <FitnessSkeleton />;
+  }
 
   if (!fitnessData) {
     return (

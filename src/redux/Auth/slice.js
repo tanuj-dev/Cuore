@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { verifyOtp } from './verifyOtpThunk';
-import { createAccountThunk, refreshTokenThunk } from './authThunk';
+import { createAccountThunk, logoutUser } from './authThunk';
 
 const initialState = {
   accessToken: null,
@@ -88,6 +88,11 @@ const authSlice = createSlice({
       .addCase(verifyOtp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || 'OTP verification failed';
+      })
+      .addCase(logoutUser.fulfilled, state => {
+        const fcmToken = state.fcmToken;
+        Object.assign(state, initialState);
+        state.fcmToken = fcmToken;
       });
   },
 });

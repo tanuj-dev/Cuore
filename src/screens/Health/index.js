@@ -18,12 +18,15 @@ import {
   Platform,
   Modal,
   TextInput,
+  Linking,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
 
 import { hp, wp, Images } from '../../utilities';
+import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
+import { Info } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { getHealthRecord, updateAISummary } from '../../redux/slices';
 import { updateLastConsulted } from '../../redux/Home/homeThunk';
@@ -41,6 +44,52 @@ const FLAT_FEEDBACK_OPTIONS = [
   { id: 'missing', label: 'Missing key information' },
   { id: 'terminology', label: 'Incorrect medical terminology' },
 ];
+
+const MEDICAL_REFERENCES = [
+  {
+    parameter: 'Blood Pressure',
+    source: 'American Heart Association – High Blood Pressure',
+    url: 'https://www.heart.org/en/health-topics/high-blood-pressure',
+    context:
+      'Blood pressure categories are interpreted within a broader cardiovascular risk context. Cuore presents BP values for awareness and longitudinal tracking, not for diagnostic classification.',
+  },
+  {
+    parameter: 'Blood Glucose & Diabetes Risk',
+    source: 'American Diabetes Association – Diagnosis',
+    url: 'https://diabetes.org/about-diabetes/diagnosis',
+    context:
+      'Blood glucose values, including fasting glucose and HbA1c, are interpreted within a broader metabolic risk context. Cuore presents these values for awareness and trend tracking, not for diagnostic use.',
+  },
+  {
+    parameter: 'Lipid & Cardiovascular Risk',
+    source: 'American Heart Association – Cholesterol Overview',
+    url: 'https://www.heart.org/en/health-topics/cholesterol',
+    context:
+      'Lipid markers, including triglycerides and HDL cholesterol, are interpreted within broader cardiovascular risk context. Cuore presents lipid values for awareness and longitudinal trend tracking rather than diagnostic classification.',
+  },
+  {
+    parameter: 'Longitudinal Cardiometabolic Research',
+    source: 'Framingham Heart Study',
+    url: 'https://framinghamheartstudy.org',
+    context:
+      "Cuore's trend summaries and projections reflect general population research examining associations between lifestyle factors and cardiometabolic risk.",
+  },
+  {
+    parameter: 'Heart Rate & Cardiovascular Context',
+    source: 'American Heart Association – Target Heart Rates',
+    url: 'https://www.heart.org/en/healthy-living/fitness/fitness-basics/target-heart-rates',
+    context:
+      'Heart rate is presented as a general indicator of cardiovascular response and fitness. Cuore tracks heart rate trends for awareness and longitudinal monitoring, not for diagnostic classification.',
+  },
+  {
+    parameter: 'Inflammation & Cardiometabolic Risk (hsCRP)',
+    source: 'Mayo Clinic – C-reactive Protein (CRP) Test',
+    url: 'https://www.mayoclinic.org/tests-procedures/c-reactive-protein-test/about/pac-20385228',
+    context:
+      'C-reactive protein (hsCRP) is a marker associated with inflammation and cardiovascular risk. Cuore presents hsCRP values for awareness and trend tracking within a broader risk context, not for diagnostic use.',
+  },
+];
+
 const formatDate = date => {
   if (!date) return '';
   const d = new Date(date);
@@ -64,7 +113,7 @@ const formatDate = date => {
   const month = monthNames[d.getMonth()];
   const year = String(d.getFullYear()).slice(-2);
 
-  return `${day}/${month}/${year}`; // e.g. 04/Dec/25
+  return `${day}/${month}/${year}`;
 };
 
 const Health = ({ navigation }) => {
@@ -84,6 +133,7 @@ const Health = ({ navigation }) => {
   const [showFlatFeedbackModal, setShowFlatFeedbackModal] = useState(false);
   const [flatFeedbackSelected, setFlatFeedbackSelected] = useState([]);
   const [flatFeedbackSubmitting, setFlatFeedbackSubmitting] = useState(false);
+  const [showReferencesModal, setShowReferencesModal] = useState(false);
   const viewShotRef = useRef(null);
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -164,7 +214,6 @@ const Health = ({ navigation }) => {
       state?.profile?.data?.data?.user?.photoUrl,
   );
 
-  // Memoize derived data
   const profileImageSource = profileImage
     ? { uri: profileImage }
     : Images.UNCLE;
@@ -176,10 +225,6 @@ const Health = ({ navigation }) => {
         ? profile.medications.join(', ')
         : 'No medications listed',
     [profile?.medications],
-  );
-  const smokerText = useMemo(
-    () => (profile?.smoker === 'Quit >6 months ago' ? 'Past Smoker' : 'Smoker'),
-    [profile?.smoker],
   );
 
   const getHealthObservationsData = useCallback(observations => {
@@ -252,14 +297,12 @@ const Health = ({ navigation }) => {
       setLastConsulted(currentDate);
       setShowDatePicker(false);
 
-      // Format date as YYYY-MM-DD
       const formattedDate = currentDate.toISOString().split('T')[0];
 
       const payload = {
         lastConsultedDate: formattedDate,
       };
 
-      // Dispatch with both userId (in URL) and payload (in body)
       await dispatch(updateLastConsulted({ userId, payload }));
     },
     [dispatch, userId, lastConsulted],
@@ -287,7 +330,6 @@ const Health = ({ navigation }) => {
       const response = await dispatch(shareData(payload));
       console.log(response.payload, 'response');
 
-      // Check if response is successful and contains PDF data
       if (
         response.payload &&
         response.payload.success &&
@@ -295,7 +337,6 @@ const Health = ({ navigation }) => {
       ) {
         const pdfData = response.payload.data;
 
-        // Determine if pdfData is a URL string or an object with URL
         let pdfUrl;
         if (typeof pdfData === 'string') {
           pdfUrl = pdfData;
@@ -319,7 +360,6 @@ const Health = ({ navigation }) => {
         alert('Error', 'Failed to generate PDF for sharing');
       }
     } catch (error) {
-      // User cancelled sharing - don't show error
       if (error.message !== 'User did not share') {
         console.error('Error sharing PDF:', error);
         alert('Error', 'Failed to share PDF');
@@ -333,7 +373,6 @@ const Health = ({ navigation }) => {
     navigation.goBack();
   }, [navigation]);
 
-  // Initialize edited summary when entering edit mode
   const handleEnterEditMode = useCallback(() => {
     setEditedSummary({
       past_history: healtRecords?.summary?.past_history?.join(', ') || '',
@@ -344,7 +383,6 @@ const Health = ({ navigation }) => {
     setIsEditingMode(true);
   }, [healtRecords]);
 
-  // Cancel edit mode
   const handleCancelEdit = useCallback(() => {
     setIsEditingMode(false);
     setEditedSummary({
@@ -355,7 +393,6 @@ const Health = ({ navigation }) => {
     });
   }, []);
 
-  // Update a specific field in the edited summary
   const handleUpdateField = useCallback((field, value) => {
     setEditedSummary(prev => ({
       ...prev,
@@ -363,12 +400,10 @@ const Health = ({ navigation }) => {
     }));
   }, []);
 
-  // Save edited summary
   const handleSaveSummary = useCallback(async () => {
     try {
       setIsSaving(true);
 
-      // Convert comma-separated strings to arrays
       const summaryData = {
         past_history: editedSummary.past_history
           .split(',')
@@ -398,7 +433,6 @@ const Health = ({ navigation }) => {
       if (response?.success) {
         alert('Success', 'Summary updated successfully');
         setIsEditingMode(false);
-        // Refresh health records
         dispatch(getHealthRecord(userId));
       } else {
         alert('Error', response?.message || 'Failed to update summary');
@@ -496,8 +530,6 @@ const Health = ({ navigation }) => {
             }}
           >
             <View style={{ flex: 1 }}>
-              {/* Patient Info */}
-
               <View style={styles.container}>
                 <View style={styles.card}>
                   {/* Name + Age + Smoker */}
@@ -511,7 +543,6 @@ const Health = ({ navigation }) => {
                         borderRadius: wp(6),
                       }}
                     />
-
                     <View style={{ marginLeft: hp(3) }}>
                       <Text style={styles.name}>{profile?.name}</Text>
                       <Text style={styles.detail}>
@@ -625,8 +656,9 @@ const Health = ({ navigation }) => {
                     source={Images.NOTICE}
                   />
                   <Text style={styles.observationsDisclaimer}>
-                    Indicators reflect general public health reference ranges.
-                    They are not diagnostic classifications.
+                    Values are manually entered by you. Status indicators
+                    reflect general public health reference ranges and are not
+                    diagnostic classifications.
                   </Text>
                 </View>
                 <View style={styles.card}>
@@ -709,7 +741,6 @@ const Health = ({ navigation }) => {
                         >
                           <Text
                             style={{
-                              // backgroundColor: 'pink',
                               width: hp(17),
                               fontSize: 14,
                               color: '#000000',
@@ -718,10 +749,8 @@ const Health = ({ navigation }) => {
                           >
                             {item?.parameter}
                           </Text>
-
                           <Text
                             style={{
-                              // backgroundColor: 'yellow',
                               marginLeft: hp(2),
                               width: hp(17),
                               fontSize: 14,
@@ -731,20 +760,9 @@ const Health = ({ navigation }) => {
                           >
                             {item?.value ?? '-'}
                           </Text>
-                          <View
-                            style={{
-                              width: hp(17),
-                              // alignItems: 'flex-start',
-                              // justifyContent: 'flex-start',
-                              // right: hp(0.3),
-                              // alignSelf: 'center',
-                              // marginleft: hp(2),
-                            }}
-                          >
+                          <View style={{ width: hp(17) }}>
                             <View
                               style={{
-                                // alignSelf: 'center',
-
                                 height: hp(2),
                                 width: hp(2),
                                 borderRadius: hp(4),
@@ -757,6 +775,26 @@ const Health = ({ navigation }) => {
                     )}
                   />
                 </View>
+
+                {/* Medical References Card */}
+                <TouchableOpacity
+                  style={[styles.card, styles.referencesCard]}
+                  onPress={() => setShowReferencesModal(true)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.referencesCardInner}>
+                    <Info
+                      size={Math.max(16, hp(1.85))}
+                      color="#94A3B8"
+                      strokeWidth={2}
+                      style={styles.referencesInfoIcon}
+                    />
+                    <Text style={styles.referencesCardText}>
+                      {CLINICAL_REFERENCES_LABEL}
+                    </Text>
+                    <Text style={styles.referencesCardChevron}>›</Text>
+                  </View>
+                </TouchableOpacity>
 
                 {/* Health Records */}
                 <TouchableOpacity
@@ -783,13 +821,12 @@ const Health = ({ navigation }) => {
                     style={styles.button}
                   >
                     <Image
-                      source={Images.CAMERA} // Replace with actual key in your `images` object
+                      source={Images.CAMERA}
                       style={{
                         tintColor: 'white',
                         resizeMode: 'contain',
                         height: hp(2.5),
                         width: hp(4),
-                        // marginLeft: hp(-1.8),
                       }}
                       resizeMode="contain"
                     />
@@ -838,18 +875,6 @@ const Health = ({ navigation }) => {
                       </View>
                     </View>
                   </TouchableOpacity>
-
-                  {/* Credit Text */}
-                  {/* <Text
-                    style={{
-                      fontSize: 12,
-                      color: '#6B7280',
-                      marginTop: hp(1),
-                      fontStyle: 'italic',
-                    }}
-                  >
-                    Powered by AI - Summary generated from your health records
-                  </Text> */}
 
                   {isSummaryExpanded && (
                     <View style={{ marginTop: hp(2) }}>
@@ -907,9 +932,7 @@ const Health = ({ navigation }) => {
                         with your original report.
                       </Text>
                       {isEditingMode ? (
-                        // Edit Mode - Show TextInputs
                         <View>
-                          {/* Past History Input */}
                           <View style={{ marginBottom: hp(2) }}>
                             <View style={styles.flatHistoryRow}>
                               <Text style={styles.bold}>
@@ -928,7 +951,6 @@ const Health = ({ navigation }) => {
                             />
                           </View>
 
-                          {/* Medications Input */}
                           <View style={{ marginBottom: hp(2) }}>
                             <Text style={styles.bold}>
                               Medications (as listed in records):
@@ -945,7 +967,6 @@ const Health = ({ navigation }) => {
                             />
                           </View>
 
-                          {/* Labs Input */}
                           <View style={{ marginBottom: hp(2) }}>
                             <Text style={styles.bold}>
                               Lab values (as recorded in reports):
@@ -962,7 +983,6 @@ const Health = ({ navigation }) => {
                             />
                           </View>
 
-                          {/* Imaging Input */}
                           <View style={{ marginBottom: hp(2) }}>
                             <Text style={styles.bold}>
                               Imaging findings (as recorded in reports):
@@ -979,7 +999,6 @@ const Health = ({ navigation }) => {
                             />
                           </View>
 
-                          {/* Save and Cancel Buttons */}
                           <View style={{ flexDirection: 'row', gap: hp(1) }}>
                             <TouchableOpacity
                               style={{
@@ -1036,9 +1055,7 @@ const Health = ({ navigation }) => {
                           </View>
                         </View>
                       ) : (
-                        // View Mode - Show Data
                         <View>
-                          {/* Past History */}
                           {healtRecords?.summary?.past_history &&
                             Array.isArray(healtRecords.summary.past_history) &&
                             healtRecords.summary.past_history.length > 0 && (
@@ -1063,7 +1080,6 @@ const Health = ({ navigation }) => {
                               </View>
                             )}
 
-                          {/* Medications */}
                           {healtRecords?.summary?.medications &&
                             Array.isArray(healtRecords.summary.medications) &&
                             healtRecords.summary.medications.length > 0 && (
@@ -1084,7 +1100,6 @@ const Health = ({ navigation }) => {
                               </View>
                             )}
 
-                          {/* Labs */}
                           {healtRecords?.summary?.labs &&
                             Array.isArray(healtRecords.summary.labs) &&
                             healtRecords.summary.labs.length > 0 && (
@@ -1105,7 +1120,6 @@ const Health = ({ navigation }) => {
                               </View>
                             )}
 
-                          {/* Imaging */}
                           {healtRecords?.summary?.imaging &&
                             Array.isArray(healtRecords.summary.imaging) &&
                             healtRecords.summary.imaging.length > 0 && (
@@ -1127,7 +1141,6 @@ const Health = ({ navigation }) => {
                               </View>
                             )}
 
-                          {/* Show message if no data */}
                           {(!healtRecords?.summary ||
                             ((!healtRecords.summary.past_history ||
                               healtRecords.summary.past_history.length === 0) &&
@@ -1152,7 +1165,6 @@ const Health = ({ navigation }) => {
                             </Text>
                           )}
 
-                          {/* Edit Button */}
                           <TouchableOpacity
                             style={{
                               backgroundColor: '#11418A',
@@ -1180,99 +1192,116 @@ const Health = ({ navigation }) => {
                     </View>
                   )}
                 </View>
-                {/* <View style={styles.card}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Text style={styles.sectionTitle}>
-                      Disease Progression Risk
+
+                {/* AI & Data Disclaimer */}
+                <View style={styles.card}>
+                  <View style={styles.aiDisclaimerHeader}>
+                    <Image
+                      style={styles.aiDisclaimerIcon}
+                      source={Images.NOTICE}
+                    />
+                    <Text style={styles.aiDisclaimerTitle}>
+                      About AI & Data Usage
                     </Text>
-                    <View
-                      style={{ flexDirection: 'row', alignItems: 'center' }}
-                    >
-                    
-                    </View>
                   </View>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '400',
-                      color: '#4B5563',
-                    }}
-                  >
-                    You may have a 52% chance of developing diabetes and early
-                    kidney issues within the next 4 years.
-                  </Text>
-
-             
-                </View> */}
-                <View style={[styles.card, { flexDirection: 'row' }]}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    {/* <Text style={styles.sectionTitle}>
-                      Disease Progression Risk
-                    </Text> */}
-                    <View
-                      style={{ flexDirection: 'row', alignItems: 'center' }}
-                    >
-                      {/* <Image
-                  style={{
-                    height: hp(1.5),
-                    width: hp(2),
-                    resizeMode: 'contain',
-                    marginHorizontal: hp(1),
-                  }}
-                  source={Images.NOTICE}></Image> */}
-                      {/* <Text style={{width: wp(45), fontSize: 12, color: '#6B7280'}}>
-                  Accuracy depends on clarity and legibility of handwriting.
-                </Text> */}
-                    </View>
-                  </View>
-
-                  <Image
-                    style={{
-                      marginRight: hp(1),
-                      height: hp(1.5),
-                      width: hp(2),
-                      resizeMode: 'contain',
-                      marginHorizontal: hp(1),
-                    }}
-                    source={Images.NOTICE}
-                  />
-
-                  <Text>
-                    This is an AI-generated summary for awareness only. It is
+                  <Text style={styles.aiDisclaimerText}>
+                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
+                      AI Summary:{' '}
+                    </Text>
+                    The "Summary of Records" is generated by Cuore's in-house
+                    AI pipeline using OCR to extract text from your uploaded
+                    health documents. This summary is for awareness only and is
                     not a medical diagnosis or treatment plan. Please verify all
                     information with your healthcare provider.
                   </Text>
-
-                  {/* <Text style={styles.bold}>History: </Text>
-           
-
-            <Text style={[styles.bold, {marginTop: hp(1)}]}>Medications:</Text>
-            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
-              Diabetes on metformin   Hypertension (HTN) on Cardace
-            </Text>
-
-            <Text style={[styles.label, {marginTop: hp(1)}]}>
-              <Text style={styles.bold}>Labs:</Text>
-            </Text>
-            <Text style={{fontSize: 14, fontWeight: '400', color: '#4B5563'}}>
-              RBS: 230
-            </Text> */}
+                  <Text style={styles.aiDisclaimerText}>
+                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
+                      Third-party AI:{' '}
+                    </Text>
+                    To improve accuracy, document text may be processed by
+                    third-party AI services (e.g., large language model
+                    providers). No personally identifiable information (name,
+                    contact details) is shared. By uploading health records you
+                    consent to this processing, as described in our Privacy
+                    Policy.
+                  </Text>
+                  <Text style={styles.aiDisclaimerText}>
+                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
+                      Health Observations source:{' '}
+                    </Text>
+                    Values shown (Heart Rate, Blood Pressure, Blood Sugar, etc.)
+                    are entered manually by you during onboarding or via "Update
+                    Readings". The app does not connect to any external medical
+                    hardware or devices.
+                  </Text>
                 </View>
               </View>
             </View>
           </ScrollView>
         </View>
       </ViewShot>
+
+      {/* Medical References Modal */}
+      <Modal
+        visible={showReferencesModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowReferencesModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.referencesOverlay}
+          activeOpacity={1}
+          onPress={() => setShowReferencesModal(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={e => e.stopPropagation()}
+            style={styles.referencesBox}
+          >
+            <Text style={styles.referencesModalTitle}>
+              {CLINICAL_REFERENCES_LABEL}
+            </Text>
+            <Text style={styles.referencesModalSubtitle}>
+              Status indicators in Health Observations are based on the
+              following internationally recognised guidelines:
+            </Text>
+            <ScrollView
+              style={styles.referencesScroll}
+              showsVerticalScrollIndicator={false}
+            >
+              {MEDICAL_REFERENCES.map((ref, index) => (
+                <View key={index} style={styles.referenceItem}>
+                  <Text style={styles.referenceParameter}>{ref.parameter}</Text>
+                  <Text
+                    style={[styles.referenceSource, styles.referenceLink]}
+                    onPress={() => Linking.openURL(ref.url)}
+                  >
+                    {ref.source}
+                  </Text>
+                  <Text style={styles.referenceContext}>{ref.context}</Text>
+                </View>
+              ))}
+              <Text style={styles.referencesFootnote}>
+                Cuore organizes user-provided health data into a longitudinal
+                timeline and provides general public health context for
+                awareness. Trend projections reflect general population research
+                patterns and are not medical predictions.{'\n\n'}Cuore does not
+                diagnose, treat, or prescribe. All insights, scores, and
+                projections are informational and should be interpreted in
+                consultation with a qualified healthcare professional.
+              </Text>
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.referencesCloseBtn}
+              onPress={() => setShowReferencesModal(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.referencesCloseBtnText}>Close</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Flat History feedback popup */}
       <Modal
         visible={showFlatFeedbackModal}
@@ -1386,8 +1415,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
   },
   fixedButton: {
-    // backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    // borderRadius: hp(1.5),
     padding: hp(0.5),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1443,11 +1470,9 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   label: {
-    // overflow: 'hidden',
     fontSize: 14,
     marginVertical: 2,
     color: '#6B7280',
-    // backgroundColor: 'red',
     width: hp(25),
   },
   bold: {
@@ -1597,7 +1622,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     letterSpacing: 0.2,
   },
-
   progressTitle: {
     fontSize: 12.5,
     fontFamily: 'Poppins-Regular',
@@ -1617,21 +1641,18 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontFamily: 'Poppins-Medium',
   },
-
   columnHeader: {
     fontSize: 14,
     color: '#374151',
     fontFamily: 'Poppins-Medium',
     width: hp(17),
   },
-
   cellText: {
     fontSize: 14,
     color: '#374151',
     fontFamily: 'Poppins-Regular',
     width: hp(17),
   },
-
   observationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1726,6 +1747,137 @@ const styles = StyleSheet.create({
     minHeight: hp(8),
     textAlignVertical: 'top',
     marginTop: hp(0.5),
+  },
+  // References card
+  referencesCard: {
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+    backgroundColor: '#EFF6FF',
+  },
+  referencesCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  referencesInfoIcon: {
+    marginRight: hp(1),
+  },
+  referencesCardText: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#94A3B8',
+    letterSpacing: 0.15,
+    lineHeight: 18,
+  },
+  referencesCardChevron: {
+    fontSize: 22,
+    color: '#94A3B8',
+    marginLeft: hp(1),
+  },
+  // References modal
+  referencesOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  referencesBox: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: hp(2.5),
+    maxHeight: '80%',
+  },
+  referencesModalTitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#64748B',
+    letterSpacing: 0.15,
+    marginBottom: hp(0.5),
+  },
+  referencesModalSubtitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: hp(2),
+    lineHeight: 18,
+  },
+  referencesScroll: {
+    maxHeight: hp(45),
+  },
+  referenceItem: {
+    marginBottom: hp(1.5),
+    paddingBottom: hp(1.5),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  referenceParameter: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13.5,
+    color: '#11418A',
+    marginBottom: 2,
+  },
+  referenceSource: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12.5,
+    color: '#475569',
+    lineHeight: 18,
+  },
+  referenceLink: {
+    color: '#11418A',
+    textDecorationLine: 'underline',
+  },
+  referenceContext: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 11.5,
+    color: '#64748B',
+    lineHeight: 17,
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  referencesFootnote: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 11,
+    color: '#94A3B8',
+    fontStyle: 'italic',
+    marginTop: hp(1),
+    marginBottom: hp(2),
+    lineHeight: 16,
+  },
+  referencesCloseBtn: {
+    backgroundColor: '#11418A',
+    borderRadius: 10,
+    paddingVertical: hp(1.5),
+    alignItems: 'center',
+    marginTop: hp(1),
+  },
+  referencesCloseBtnText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#FFFFFF',
+  },
+  // AI disclaimer card
+  aiDisclaimerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(1.5),
+  },
+  aiDisclaimerIcon: {
+    height: hp(1.8),
+    width: hp(2),
+    resizeMode: 'contain',
+    marginRight: hp(1),
+  },
+  aiDisclaimerTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#1E293B',
+  },
+  aiDisclaimerText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12.5,
+    color: '#475569',
+    lineHeight: 18,
+    marginBottom: hp(1),
   },
 });
 

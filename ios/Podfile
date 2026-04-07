@@ -35,5 +35,38 @@ target 'Cuore' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |build_config|
+        build_config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+      end
+    end
+
+    fmt_base = File.join(__dir__, 'Pods', 'fmt', 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      content = File.read(fmt_base)
+      patched = content.gsub(
+        'defined(__apple_build_version__) && __apple_build_version__ < 14000029L',
+        'defined(__apple_build_version__)'
+      )
+      File.write(fmt_base, patched) if patched != content
+    end
+
+    # Fix duplicate modulemap conflicts in shared Headers directories.
+    # When two pods share the same module_name, their modulemaps conflict.
+    # Rewrite the secondary modulemap as an empty module with a unique name.
+    duplicates = {
+      'React-jsitooling' => ['react_runtime', 'react_jsitooling'],
+      'React-RuntimeApple' => ['ReactCommon', 'react_runtimeapple'],
+    }
+    duplicates.each do |pod_name, (shared_dir, new_module_name)|
+      header_map = File.join(__dir__, 'Pods', 'Headers', 'Public', shared_dir, "#{pod_name}.modulemap")
+      source_map = File.join(__dir__, 'Pods', 'Target Support Files', pod_name, "#{pod_name}.modulemap")
+      [header_map, source_map].each do |path|
+        if File.exist?(path)
+          File.write(path, "module #{new_module_name} {\n}\n")
+        end
+      end
+    end
   end
 end

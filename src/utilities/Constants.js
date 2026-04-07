@@ -1,5 +1,15 @@
 import { Platform } from 'react-native';
 
+/** Shown on Score, Today, and Health for the references / sources entry + modals */
+export const CLINICAL_REFERENCES_LABEL = 'Clinical References & Sources';
+
+export const APP_VERSION = Platform.OS === 'ios' ? '1.0.0' : '1.0.0';
+
+export const APP_STORE_URL = 'https://apps.apple.com/app/cuore/id6744594718';
+export const PLAY_STORE_URL = 'market://details?id=com.cuore';
+
+export const STORE_URL = Platform.OS === 'ios' ? APP_STORE_URL : PLAY_STORE_URL;
+
 let MAIN_URL_QA_UAT = 'https://uatcom.edureka.in/';
 let MAIN_URL_QA_A2 = 'https://a2com.edureka.in/';
 
@@ -9,8 +19,7 @@ let API_VERSION_2 = 'api/2.0';
 
 let MAIN_URL = MAIN_URL_QA_A2;
 
-let BASE_URL =
-  'https://cuore-backend-47918528-0531-42f2-b756-49be6a3fc69a.lowcloud.co';
+let BASE_URL = 'https://cuore-backend-995g.onrender.com';
 let BASE_URL_V2 = MAIN_URL + API_VERSION_2;
 
 let IS_PRODUCTION = MAIN_URL === MAIN_URL_PRODUCTION ? true : false;

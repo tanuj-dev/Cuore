@@ -18,6 +18,41 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getNourish, getRecipe } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
 import Toast from '../../components/Toast';
+import SkeletonBox from '../../components/SkeletonBox';
+
+const NutritionSkeleton = () => (
+  <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    {/* Fixed header */}
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: hp(2), paddingVertical: hp(1) }}>
+      <SkeletonBox width={wp(4)} height={hp(3)} borderRadius={4} />
+      <SkeletonBox width={wp(4)} height={hp(2)} borderRadius={4} />
+    </View>
+    {/* Image background area */}
+    <View style={{ backgroundColor: '#CBD5E1', padding: hp(2), gap: hp(2) }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: hp(2) }}>
+        <SkeletonBox width={wp(36)} height={hp(5.5)} borderRadius={12} />
+        <SkeletonBox width={wp(36)} height={hp(5.5)} borderRadius={12} />
+      </View>
+      <SkeletonBox width="100%" height={hp(5.5)} borderRadius={12} />
+      <SkeletonBox width="80%" height={14} borderRadius={6} style={{ alignSelf: 'center' }} />
+    </View>
+    {/* Meal cards */}
+    <ScrollView scrollEnabled={false} contentContainerStyle={{ padding: wp(5), gap: hp(2) }}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <View key={i} style={{ backgroundColor: '#FFF', borderRadius: 12, padding: wp(4), borderLeftWidth: 3, borderLeftColor: '#E2E8F0' }}>
+          <SkeletonBox width="65%" height={16} style={{ marginBottom: hp(1) }} />
+          <SkeletonBox width="90%" height={12} borderRadius={4} style={{ marginBottom: hp(0.6) }} />
+          <SkeletonBox width="75%" height={12} borderRadius={4} style={{ marginBottom: hp(0.6) }} />
+          <SkeletonBox width="55%" height={12} borderRadius={4} style={{ marginBottom: hp(1.5) }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: hp(1) }}>
+            <SkeletonBox width={wp(13)} height={hp(2.5)} borderRadius={4} />
+            <SkeletonBox width={60} height={14} borderRadius={4} />
+          </View>
+        </View>
+      ))}
+    </ScrollView>
+  </View>
+);
 
 const Nutrition = ({ navigation, route }) => {
   const mealTime = route?.params?.mealTime || 'Breakfast';
@@ -31,6 +66,7 @@ const Nutrition = ({ navigation, route }) => {
 
   const dispatch = useDispatch();
   const nourishData = useSelector(state => state.nourish.data);
+  const nourishLoading = useSelector(state => state.nourish.loading);
   const [receipeData, setRecipeData] = useState(null);
 
   useEffect(() => {
@@ -213,6 +249,10 @@ const Nutrition = ({ navigation, route }) => {
       </TouchableOpacity>
     );
   };
+
+  if (nourishLoading && !nourishData) {
+    return <NutritionSkeleton />;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>

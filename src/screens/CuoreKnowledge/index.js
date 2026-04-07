@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,12 +16,42 @@ import { useSelector, useDispatch } from 'react-redux';
 import { getKnowledge } from '../../redux/slices';
 import ApiError from '../../components/ApiError';
 import Loader from '../../components/Loader';
+import SkeletonBox from '../../components/SkeletonBox';
+
+const KnowledgeSkeleton = () => (
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#FFF' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', paddingVertical: hp(1) }}>
+      <SkeletonBox width={wp(4)} height={hp(3.5)} borderRadius={4} style={{ marginLeft: hp(2) }} />
+      <View style={{ flex: 1, alignItems: 'center', marginRight: hp(4) }}>
+        <SkeletonBox width={hp(6)} height={hp(6)} borderRadius={hp(3)} style={{ marginBottom: hp(1) }} />
+        <SkeletonBox width={180} height={20} borderRadius={6} />
+      </View>
+    </View>
+    <ScrollView scrollEnabled={false} style={{ backgroundColor: '#F8FAFC' }} contentContainerStyle={{ padding: wp(4) }}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <View key={i} style={{ backgroundColor: '#FFF', borderRadius: 12, flexDirection: 'row', marginBottom: hp(2), padding: wp(3), borderWidth: 1, borderColor: '#E2E8F0' }}>
+          <SkeletonBox width={wp(18)} height={wp(18)} borderRadius={10} />
+          <View style={{ flex: 1, marginLeft: wp(3), justifyContent: 'center', gap: hp(1) }}>
+            <SkeletonBox width="80%" height={15} borderRadius={6} />
+            <SkeletonBox width="60%" height={13} borderRadius={6} />
+          </View>
+        </View>
+      ))}
+    </ScrollView>
+  </SafeAreaView>
+);
 
 const CuoreKnowledge = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const dispatch = useDispatch();
   const userId = useSelector(state => state.auth.userId);
   const knowledgeData = useSelector(state => state.knowledge.data?.data?.cards);
+
+  useEffect(() => {
+    if (userId && !knowledgeData) {
+      dispatch(getKnowledge(userId));
+    }
+  }, [dispatch, userId, knowledgeData]);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -57,6 +87,12 @@ const CuoreKnowledge = ({ navigation }) => {
       </View>
     </TouchableOpacity>
   );
+
+  const knowledgeLoading = useSelector(state => state.knowledge.loading);
+
+  if (knowledgeLoading && !knowledgeData) {
+    return <KnowledgeSkeleton />;
+  }
 
   if (!knowledgeData) {
     return (

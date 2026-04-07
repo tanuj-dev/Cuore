@@ -180,3 +180,30 @@ export const deleteAccountThunk = createAsyncThunk(
   },
 );
 
+/**
+ * POST /api/v1/auth/logout — invalidates session on the server (Bearer from storage).
+ * Always clears EncryptedStorage auth_tokens and lets auth slice reset on fulfilled.
+ * @param {{ skipRemote?: boolean }} options — set skipRemote true when tokens are already invalid (e.g. session expired).
+ */
+export const logoutUser = createAsyncThunk('auth/logoutUser', async (options = {}) => {
+  const { skipRemote = false } = options;
+  try {
+    if (!skipRemote) {
+      const res = await postApiCall(EndPoints.LOGOUT, {});
+      const status = res?.status;
+      if (status !== 200 && status !== 204) {
+        console.warn('[logoutUser] API non-success:', status, res?.data);
+      }
+    }
+  } catch (e) {
+    console.warn('[logoutUser] API error:', e?.message || e);
+  } finally {
+    try {
+      await EncryptedStorage.removeItem('auth_tokens');
+    } catch (e) {
+      console.warn('[logoutUser] EncryptedStorage:', e?.message || e);
+    }
+  }
+  return true;
+});
+

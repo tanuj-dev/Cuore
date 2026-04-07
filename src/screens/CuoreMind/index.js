@@ -16,6 +16,47 @@ import { useSelector, useDispatch } from 'react-redux';
 import { getMind } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SkeletonBox from '../../components/SkeletonBox';
+
+const MindSkeleton = () => (
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    {/* Header */}
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: hp(2), paddingVertical: hp(1), backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
+      <SkeletonBox width={wp(4)} height={hp(3.5)} borderRadius={4} />
+      <SkeletonBox width={140} height={20} borderRadius={6} style={{ marginLeft: hp(10) }} />
+    </View>
+    <ScrollView scrollEnabled={false} style={{ backgroundColor: '#F9FAFB' }} contentContainerStyle={{ padding: wp(4) }}>
+      {/* Score gauges */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: hp(2) }}>
+        <View style={{ alignItems: 'center', gap: hp(1) }}>
+          <SkeletonBox width={wp(32)} height={wp(20)} borderRadius={wp(16)} />
+          <SkeletonBox width={80} height={14} borderRadius={6} />
+        </View>
+        <View style={{ alignItems: 'center', gap: hp(1) }}>
+          <SkeletonBox width={wp(32)} height={wp(20)} borderRadius={wp(16)} />
+          <SkeletonBox width={80} height={14} borderRadius={6} />
+        </View>
+      </View>
+      {/* Reassess button */}
+      <SkeletonBox width={wp(50)} height={40} borderRadius={8} style={{ alignSelf: 'center', marginVertical: hp(2) }} />
+      {/* Reflection card */}
+      <SkeletonBox width="100%" height={70} borderRadius={8} style={{ marginBottom: hp(2) }} />
+      {/* Section title */}
+      <SkeletonBox width={220} height={18} borderRadius={6} style={{ marginBottom: hp(1) }} />
+      {/* Horizontal cards */}
+      <View style={{ flexDirection: 'row', gap: wp(2), marginBottom: hp(2) }}>
+        <SkeletonBox width={wp(50)} height={hp(12)} borderRadius={8} />
+        <SkeletonBox width={wp(50)} height={hp(12)} borderRadius={8} />
+      </View>
+      {/* Second section */}
+      <SkeletonBox width={200} height={18} borderRadius={6} style={{ marginBottom: hp(1) }} />
+      <View style={{ flexDirection: 'row', gap: wp(2) }}>
+        <SkeletonBox width={wp(50)} height={hp(12)} borderRadius={8} />
+        <SkeletonBox width={wp(50)} height={hp(12)} borderRadius={8} />
+      </View>
+    </ScrollView>
+  </SafeAreaView>
+);
 
 const COLOR_SCHEMES = [
   { borderColor: '#11418A', backgroundColor: '#E8EEF7' },
@@ -100,15 +141,8 @@ const Mind = ({ navigation }) => {
     [handleCardPress],
   );
 
-  if (loading && !data) {
-    return (
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#11418A" />
-          <Text style={styles.loadingText}>Loading your mind data...</Text>
-        </View>
-      </SafeAreaView>
-    );
+  if (!data) {
+    return <MindSkeleton />;
   }
 
   if (error && !data) {

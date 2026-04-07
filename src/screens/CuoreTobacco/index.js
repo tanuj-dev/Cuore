@@ -10,7 +10,7 @@ import {
   RefreshControl,
   Platform,
 } from 'react-native';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { hp, wp, Images } from '../../utilities';
 import Header from '../../components/Header';
 import ToastMessage from '../../components/Toast';
@@ -20,6 +20,45 @@ import {
   updateTobaccoProfile,
   logTobaccoUsage,
 } from '../../redux/slices';
+import SkeletonBox from '../../components/SkeletonBox';
+
+const TobaccoSkeleton = () => (
+  <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    {/* Header placeholder */}
+    <View style={{ height: hp(7), backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', justifyContent: 'center', paddingHorizontal: hp(2) }}>
+      <SkeletonBox width={140} height={20} />
+    </View>
+    <ScrollView scrollEnabled={false} contentContainerStyle={{ padding: wp(4), backgroundColor: '#F8FAFC', gap: hp(2) }}>
+      {/* Main box */}
+      <View style={{ backgroundColor: '#F1F5F9', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(2) }}>
+        <SkeletonBox width={160} height={16} />
+        <SkeletonBox width="100%" height={50} borderRadius={10} />
+        <SkeletonBox width={80} height={36} borderRadius={10} style={{ alignSelf: 'flex-end' }} />
+        <SkeletonBox width={100} height={16} />
+      </View>
+      {/* Quote box */}
+      <SkeletonBox width="100%" height={56} borderRadius={12} />
+      {/* Challenge box */}
+      <View style={{ backgroundColor: '#F1F5F9', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(1.5) }}>
+        <SkeletonBox width={160} height={20} />
+        <SkeletonBox width="90%" height={18} borderRadius={6} />
+        <SkeletonBox width="70%" height={16} borderRadius={6} />
+      </View>
+      {/* Profile box */}
+      <View style={{ backgroundColor: '#E2E8F0', padding: wp(4), borderRadius: 12, gap: hp(1.5) }}>
+        <SkeletonBox width={160} height={18} />
+        <SkeletonBox width="100%" height={44} borderRadius={10} />
+        <SkeletonBox width="100%" height={44} borderRadius={10} />
+        <SkeletonBox width="100%" height={44} borderRadius={10} />
+      </View>
+      {/* Stats grid */}
+      <View style={{ flexDirection: 'row', gap: wp(2) }}>
+        <SkeletonBox width="48%" height={90} borderRadius={12} />
+        <SkeletonBox width="48%" height={90} borderRadius={12} />
+      </View>
+    </ScrollView>
+  </View>
+);
 
 const Tobacco = ({ navigation }) => {
   const [yesterdayCount, setYesterdayCount] = useState('');
@@ -53,6 +92,19 @@ const Tobacco = ({ navigation }) => {
   console.log('Tobacco Profile Data from Redux:', profileData);
 
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (userId && !data) {
+      dispatch(getTobacco(userId));
+    }
+  }, [dispatch, userId, data]);
+
+  const tobaccoLoading = useSelector(state => state.tobacco.loading);
+
+  if (!data) {
+    return <TobaccoSkeleton />;
+  }
+
   const handleSubmit = async () => {
     setLoading(true);
     const payload = {

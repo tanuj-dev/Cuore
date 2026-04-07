@@ -73,14 +73,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     )
   }
 
-  // ── Show notification while app is in foreground ─────────────
+  // ── Foreground push: do not let the system show a banner here.
+  // JS (Notifee in App.js onMessage) displays one notification — presenting
+  // [.banner, ...] as well would show the same push twice.
   func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification,
     withCompletionHandler completionHandler:
       @escaping (UNNotificationPresentationOptions) -> Void
   ) {
-    completionHandler([.banner, .badge, .sound])
+    completionHandler([.banner, .sound, .badge])
   }
 
   // ── User tapped a notification ────────────────────────────────

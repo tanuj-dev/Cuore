@@ -27,11 +27,13 @@ const Endpoints = {
   EDIT_FILENAME: '/api/edit-filename', // PUT /api/edit-filename/:recordId - body: { fileName }
   DELETE_RECORD: '/api/delete-record', // DELETE /api/delete-record/:recordId
   REFRESH_TOKEN: '/api/v1/auth/refresh-token',
+  LOGOUT: '/api/v1/auth/logout',
   DISMISS_ALERT: '/api/v1/timeline', // PUT /api/v1/timeline/:userId/dismiss-alert/:alertId
   REPORT_SUMMARY: '/api/summary/report',
   VERIFY_SUBSCRIPTION: '/api/subscription/verify',
   RESTORE_PURCHASES: '/api/subscription/restore',
   NOTES: '/api/v1/notes',
+  CHECK_APP_VERSION: '/api/v1/app/version',
 };
 
 export default Endpoints;

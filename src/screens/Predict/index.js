@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,31 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getPredict } from '../../redux/slices';
 import Loader from '../../components/Loader';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SkeletonBox from '../../components/SkeletonBox';
+
+const PredictSkeleton = () => (
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <View style={{ backgroundColor: '#FFF', paddingHorizontal: hp(2), paddingVertical: hp(2), borderBottomWidth: 1, borderBottomColor: '#E2E8F0', alignItems: 'center' }}>
+      <SkeletonBox width={80} height={22} />
+    </View>
+    <ScrollView scrollEnabled={false} style={{ backgroundColor: '#F8FAFC' }} contentContainerStyle={{ alignItems: 'center', padding: hp(2) }}>
+      <SkeletonBox width={wp(90)} height={64} borderRadius={16} style={{ marginBottom: hp(2.5) }} />
+      {[1, 2, 3].map(i => (
+        <View key={i} style={{ backgroundColor: '#FFF', borderRadius: 16, paddingHorizontal: wp(4), paddingVertical: hp(2), marginBottom: hp(2.5), width: wp(90) }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: hp(1.5) }}>
+            <SkeletonBox width={100} height={16} />
+            <SkeletonBox width={70} height={32} borderRadius={10} />
+          </View>
+          <SkeletonBox width={wp(82)} height={hp(25)} borderRadius={8} style={{ marginBottom: hp(1) }} />
+          <View style={{ flexDirection: 'row', gap: hp(2), marginTop: hp(1) }}>
+            <SkeletonBox width={60} height={14} borderRadius={6} />
+            <SkeletonBox width={80} height={14} borderRadius={6} />
+          </View>
+        </View>
+      ))}
+    </ScrollView>
+  </SafeAreaView>
+);
 
 // Constants
 const TITLES_WITH_TABS = ['Blood Pressure & Heart Rate', 'Blood Sugar'];
@@ -126,6 +151,12 @@ const Predict = ({ navigation }) => {
   );
   const loading = useSelector(state => state?.predict?.loading);
 
+  useEffect(() => {
+    if (userId && !predictData) {
+      dispatch(getPredict(userId));
+    }
+  }, [dispatch, userId, predictData]);
+
   const onRefresh = useCallback(async () => {
     if (!userId) return;
     setRefreshing(true);
@@ -179,9 +210,9 @@ const Predict = ({ navigation }) => {
   );
   const role = useSelector(state => state.auth?.role);
 
-  // if (loading) {
-  //   return <Loader />;
-  // }
+  if (!predictData) {
+    return <PredictSkeleton />;
+  }
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>

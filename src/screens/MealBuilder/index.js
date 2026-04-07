@@ -20,6 +20,47 @@ import images from '../../utilities/Images';
 import { useDispatch, useSelector } from 'react-redux';
 import { getBuilderItems } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
+import SkeletonBox from '../../components/SkeletonBox';
+
+const MealBuilderSkeleton = () => (
+  <View style={{ flex: 1 }}>
+    {/* Background header */}
+    <View style={{ height: hp(20), backgroundColor: '#CBD5E1', padding: hp(2), justifyContent: 'space-between' }}>
+      <SkeletonBox width={wp(4)} height={hp(3.5)} borderRadius={4} />
+      <View style={{ alignItems: 'center', gap: hp(1) }}>
+        <SkeletonBox width={120} height={20} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: hp(2), width: '100%', justifyContent: 'space-around' }}>
+          <SkeletonBox width={50} height={30} borderRadius={6} />
+          <SkeletonBox width={hp(20)} height={hp(1)} borderRadius={4} style={{ flex: 1 }} />
+          <SkeletonBox width={60} height={30} borderRadius={6} />
+        </View>
+      </View>
+    </View>
+    <ScrollView scrollEnabled={false} style={{ backgroundColor: '#F8FAFC' }}>
+      {/* Meal type tabs */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: hp(2), gap: wp(2) }}>
+        <SkeletonBox width={wp(42)} height={hp(5)} borderRadius={10} />
+        <SkeletonBox width={wp(42)} height={hp(5)} borderRadius={10} />
+      </View>
+      {/* Search */}
+      <SkeletonBox width="90%" height={44} borderRadius={12} style={{ alignSelf: 'center', marginBottom: hp(2) }} />
+      {/* Cuisine tabs */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: hp(2), marginBottom: hp(2) }}>
+        <SkeletonBox width={hp(18)} height={hp(5)} borderRadius={hp(0.6)} />
+        <SkeletonBox width={hp(18)} height={hp(5)} borderRadius={hp(0.6)} />
+      </View>
+      {/* Category cards */}
+      {[1, 2, 3, 4].map(i => (
+        <View key={i} style={{ backgroundColor: '#FFF', borderWidth: 1, borderRadius: 12, borderColor: '#E2E8F0', marginHorizontal: hp(2), marginBottom: hp(1.5), padding: hp(2) }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <SkeletonBox width={120} height={16} />
+            <SkeletonBox width={16} height={16} borderRadius={4} />
+          </View>
+        </View>
+      ))}
+    </ScrollView>
+  </View>
+);
 
 const tagColors = {
   Include: '#22C55E',
@@ -46,6 +87,23 @@ const MealBuilder = ({ navigation, route }) => {
   }, [mealItem]);
 
   // Redux data
+  const itemsByCombo = useSelector(state => state.builder.itemsByCombo);
+
+  useEffect(() => {
+    const COMBOS = [
+      { mealTime: 'Breakfast', cuisine: 'Indian' },
+      { mealTime: 'Breakfast', cuisine: 'Global' },
+      { mealTime: 'Lunch', cuisine: 'Indian' },
+      { mealTime: 'Lunch', cuisine: 'Global' },
+    ];
+    COMBOS.forEach(combo => {
+      const key = `${combo.mealTime}_${combo.cuisine}`;
+      if (!itemsByCombo?.[key]) {
+        dispatch(getBuilderItems(combo));
+      }
+    });
+  }, [dispatch, itemsByCombo]);
+
   const {
     BreakfastIndian,
     BreakfastGlobal,
@@ -77,30 +135,24 @@ const MealBuilder = ({ navigation, route }) => {
   );
 
   // Select dataset based on tab + cuisine
-  let selectedData = {};
-  if (activeTab === 'Breakfast' && activeCuisine === 'Indian') {
-    selectedData = BreakfastIndian;
-  } else if (activeTab === 'Breakfast' && activeCuisine === 'Global') {
-    selectedData = BreakfastGlobal;
-  } else if (activeTab === 'LunchDinner' && activeCuisine === 'Indian') {
-    selectedData = DinnerIndian;
-  } else if (activeTab === 'LunchDinner' && activeCuisine === 'Global') {
-    selectedData = DinnerGlobal;
-  }
+  const selectedData = useMemo(() => {
+    if (activeTab === 'Breakfast' && activeCuisine === 'Indian') return BreakfastIndian;
+    if (activeTab === 'Breakfast' && activeCuisine === 'Global') return BreakfastGlobal;
+    if (activeTab === 'LunchDinner' && activeCuisine === 'Indian') return DinnerIndian;
+    if (activeTab === 'LunchDinner' && activeCuisine === 'Global') return DinnerGlobal;
+    return {};
+  }, [activeTab, activeCuisine, BreakfastIndian, BreakfastGlobal, DinnerIndian, DinnerGlobal]);
 
-  // ✅ Filter data by search text
+  // Filter data by search text
   const sectionedData = useMemo(() => {
     const lowerSearch = searchText.toLowerCase().trim();
-    const categoryNames = Object.keys(selectedData);
-    return categoryNames
+    return Object.keys(selectedData)
       .map(category => {
         const items = selectedData[category] || [];
         const filteredItems = lowerSearch
           ? items.filter(i => i.name?.toLowerCase().includes(lowerSearch))
           : items;
-        return filteredItems.length > 0
-          ? { category, items: filteredItems }
-          : null;
+        return filteredItems.length > 0 ? { category, items: filteredItems } : null;
       })
       .filter(Boolean);
   }, [selectedData, searchText]);
@@ -269,9 +321,9 @@ const MealBuilder = ({ navigation, route }) => {
     }
   };
 
-  // if (!sectionedData || sectionedData.length === 0) {
-  //   return <ApiErrorFallback message="No meals found" onRetry={onRefresh} />;
-  // }
+  if (!itemsByCombo || Object.keys(itemsByCombo).length === 0) {
+    return <MealBuilderSkeleton />;
+  }
 
   return (
     <View style={{ flex: 1 }}>

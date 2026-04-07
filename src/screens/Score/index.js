@@ -22,6 +22,8 @@ import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { hp, wp, Images } from '../../utilities';
+import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
+import { Info } from 'lucide-react-native';
 
 const MEDICAL_REFERENCES = [
   {
@@ -574,12 +576,14 @@ const Score = ({ navigation }) => {
                   onPress={() => setShowReferencesModal(true)}
                   activeOpacity={0.8}
                 >
-                  <Image
-                    style={styles.referencesNoticeIcon}
-                    source={Images.NOTICE}
+                  <Info
+                    size={Math.max(16, hp(1.85))}
+                    color="#94A3B8"
+                    strokeWidth={2}
+                    style={styles.referencesInfoIcon}
                   />
                   <Text style={styles.referencesCardText}>
-                    Cuore – Medical References & Source Guidance
+                    {CLINICAL_REFERENCES_LABEL}
                   </Text>
                 </TouchableOpacity>
 
@@ -625,7 +629,7 @@ const Score = ({ navigation }) => {
           <SafeAreaView style={styles.refModalSafe}>
             <View style={styles.refModalHeader}>
               <Text style={styles.refModalTitle}>
-                Cuore – Medical References & Source Guidance
+                {CLINICAL_REFERENCES_LABEL}
               </Text>
               <TouchableOpacity
                 style={styles.refModalCloseBtn}
@@ -1163,19 +1167,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  referencesNoticeIcon: {
+  referencesInfoIcon: {
     marginRight: hp(1),
-    height: hp(1.5),
-    width: hp(2),
-    resizeMode: 'contain',
-    marginHorizontal: hp(0.5),
   },
   referencesCardText: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 13,
-    color: '#64748B',
-    letterSpacing: 0.1,
-    lineHeight: 20,
+    fontSize: 12,
+    color: '#94A3B8',
+    letterSpacing: 0.15,
+    lineHeight: 18,
     flex: 1,
   },
   refModalSafe: {
@@ -1193,12 +1193,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   refModalTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 16,
-    color: '#1E293B',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#64748B',
     flex: 1,
     marginRight: wp(2),
-    letterSpacing: 0.2,
+    letterSpacing: 0.15,
   },
   refModalCloseBtn: {
     width: 40,

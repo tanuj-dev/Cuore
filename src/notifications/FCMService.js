@@ -9,9 +9,9 @@ import messaging from '@react-native-firebase/messaging';
 import { Platform, Alert } from 'react-native';
 
 const FCMService = {
-  // ─────────────────────────────────────────────────────────────
-  // 1. Request permission (iOS asks the user; Android ≥ 13 too)
-  // ─────────────────────────────────────────────────────────────
+  _initialized: false,
+  _cleanup: null,
+
   async requestPermission() {
     const authStatus = await messaging().requestPermission();
 
@@ -93,32 +93,36 @@ const FCMService = {
   //    Returns cleanup function to unsubscribe listeners
   // ─────────────────────────────────────────────────────────────
   async init({
-    onToken,            // (token: string) => void
-    onForeground,       // (remoteMessage) => void  — optional
-    onOpenedFromBg,     // (remoteMessage) => void  — optional
-    onOpenedFromQuit,   // (remoteMessage) => void  — optional
-    onRefreshToken,     // (newToken: string) => void — optional
+    onToken,
+    onForeground,
+    onOpenedFromBg,
+    onOpenedFromQuit,
+    onRefreshToken,
   } = {}) {
-    // Request permission
-    const permitted = await this.requestPermission();
-    if (!permitted) return () => {};
+    if (this._initialized) {
+      console.log('⚠️ FCMService.init() already called — skipping duplicate');
+      return this._cleanup || (() => {});
+    }
+    this._initialized = true;
 
-    // Get token and pass to caller (save to backend/redux/storage)
+    const permitted = await this.requestPermission();
+    if (!permitted) {
+      this._initialized = false;
+      return () => {};
+    }
+
     const token = await this.getToken();
     if (token && onToken) onToken(token);
 
-    // Token refresh listener
     const unsubRefresh = this.onTokenRefresh(newToken => {
       if (onRefreshToken) onRefreshToken(newToken);
-      if (onToken) onToken(newToken); // re-save refreshed token
+      if (onToken) onToken(newToken);
     });
 
-    // Foreground message listener
     const unsubForeground = this.onForegroundMessage(msg => {
       if (onForeground) {
         onForeground(msg);
       } else {
-        // Default: show a simple alert for foreground messages
         Alert.alert(
           msg.notification?.title || 'Notification',
           msg.notification?.body || '',
@@ -126,22 +130,23 @@ const FCMService = {
       }
     });
 
-    // Background tap listener
     const unsubBackground = this.onBackgroundOpen(msg => {
       if (onOpenedFromBg) onOpenedFromBg(msg);
     });
 
-    // Quit state check
     await this.checkInitialNotification(msg => {
       if (onOpenedFromQuit) onOpenedFromQuit(msg);
     });
 
-    // Return cleanup function
-    return () => {
+    this._cleanup = () => {
       unsubRefresh();
       unsubForeground();
       unsubBackground();
+      this._initialized = false;
+      this._cleanup = null;
     };
+
+    return this._cleanup;
   },
 };
 

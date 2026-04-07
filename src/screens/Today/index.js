@@ -18,43 +18,33 @@ import {
   StatusBar,
   Platform,
   AppState,
+  Linking,
+  Modal,
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
+import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
+import { Info } from 'lucide-react-native';
 import ProgressBarWithImage from '../../components/ProgressBar';
 import Reminder from '../../components/Reminder';
 import { useDispatch, useSelector } from 'react-redux';
-import EncryptedStorage from 'react-native-encrypted-storage';
 import { getHomeData, getProfile } from '../../redux/slices';
 import ReminderEditor from '../../components/ReminderEditor';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from '../../components/Toast';
 import moment from 'moment';
-import { getOnboardingThunk } from '../../redux/slices';
 import { Fonts } from '../../utilities';
-import { logout } from '../../redux/Auth/slice';
-// Local notification scheduling removed — reminders are sent via Firebase push notifications from the backend
-import { getBuilderItems } from '../../redux/slices';
+import { logoutUser } from '../../redux/Auth/authThunk';
 import SessionExpiredModal from '../../components/SessionExpired';
-import {
-  getFitness,
-  getKnowledge,
-  getMind,
-  getTobacco,
-  getPredict,
-  getCuoreScoreThunk,
-} from '../../redux/slices';
 import { checkReminderThunk } from '../../redux/slices';
 import { getNotification } from '../../redux/Home/notificationThunk';
 import { dismissAlert } from '../../redux/Home/homeThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
-// Constants extracted outside component
-const MEAL_COMBOS = [
-  { mealTime: 'Breakfast', cuisine: 'Indian' },
-  { mealTime: 'Breakfast', cuisine: 'Global' },
-  { mealTime: 'Lunch', cuisine: 'Indian' },
-  { mealTime: 'Lunch', cuisine: 'Global' },
-];
+// Module-level fetch cache — survives re-mounts within the same JS session
+const _fetchTs = {};
+const CRITICAL_TTL = 5 * 60 * 1000; // 5 min — home + profile
+const isFresh = (key, ttl) => !!_fetchTs[key] && Date.now() - _fetchTs[key] < ttl;
+const stamp = key => { _fetchTs[key] = Date.now(); };
 
 const TITLE_TO_ROUTE_MAP = {
   'Wake Up': 'Mind',
@@ -89,8 +79,134 @@ const TITLES_WITH_PAYLOAD = [
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const REASSESS_STEP = 7;
 
+const ALERT_REFERENCES = [
+  {
+    label: 'Chest Pain / Breathlessness',
+    alert: 'Chest discomfort noted. Seek medical review',
+    source: 'American Heart Association (AHA)',
+    url: 'https://www.heart.org/en/health-topics/heart-attack/warning-signs-of-a-heart-attack',
+  },
+  {
+    label: 'Increased Hunger / Thirst / Urination',
+    alert: 'Increased frequency noted. Seek medical review',
+    source: 'American Diabetes Association (ADA)',
+    url: 'https://diabetes.org/about-diabetes/symptoms',
+  },
+  {
+    label: 'Blood Pressure',
+    source: 'American Heart Association (AHA)',
+    url: 'https://www.heart.org/en/health-topics/high-blood-pressure',
+  },
+  {
+    label: 'Pulse Rate',
+    source: 'American Heart Association (AHA)',
+    url: 'https://www.heart.org/en/healthy-living/fitness/fitness-basics/target-heart-rates',
+  },
+  {
+    label: 'Blood Sugar – Fasting',
+    source: 'American Diabetes Association (ADA)',
+    url: 'https://diabetes.org/living-with-diabetes/treatment-care/checking-your-blood-sugar',
+  },
+  {
+    label: 'Blood Sugar – After Meal',
+    source: 'American Diabetes Association (ADA)',
+    url: 'https://diabetes.org/living-with-diabetes/treatment-care/checking-your-blood-sugar',
+  },
+  {
+    label: 'Undiagnosed High Sugar',
+    source: 'American Diabetes Association (ADA)',
+    url: 'https://diabetes.org/about-diabetes/diagnosis',
+  },
+  {
+    label: 'Oxygen Saturation (SpO₂)',
+    source: 'World Health Organization (WHO)',
+    url: 'https://www.who.int/publications/i/item/WHO-2011-oxygen-therapy-guidelines',
+  },
+  {
+    label: 'hsCRP',
+    source: 'American Heart Association (AHA)',
+    url: 'https://www.heart.org/en/health-topics/heart-attack/diagnosing-a-heart-attack',
+  },
+  {
+    label: 'Cholesterol (HDL, LDL, Triglycerides)',
+    source: 'American Heart Association (AHA)',
+    url: 'https://www.heart.org/en/health-topics/cholesterol',
+  },
+];
+
+import SkeletonBox from '../../components/SkeletonBox';
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+const TodaySkeleton = () => (
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+    {/* Header */}
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: hp(2), paddingVertical: hp(1.5), backgroundColor: '#FFF' }}>
+      <SkeletonBox width={120} height={22} />
+      <View style={{ flexDirection: 'row', gap: wp(2) }}>
+        <SkeletonBox width={80} height={44} borderRadius={12} />
+        <SkeletonBox width={80} height={44} borderRadius={12} />
+      </View>
+    </View>
+
+    {/* Tabs */}
+    <View style={{ paddingHorizontal: hp(2), paddingVertical: hp(1.2), borderBottomWidth: 2, borderBottomColor: '#E2E8F0' }}>
+      <SkeletonBox width={90} height={18} />
+    </View>
+
+    <ScrollView scrollEnabled={false} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: hp(4) }}>
+      {/* Progress card */}
+      <View style={{ marginHorizontal: hp(2), marginVertical: hp(1.5), backgroundColor: '#FFF', borderRadius: 16, padding: hp(2) }}>
+        <SkeletonBox width={160} height={18} style={{ marginBottom: hp(1) }} />
+        <SkeletonBox width={80} height={36} borderRadius={10} style={{ alignSelf: 'flex-end' }} />
+      </View>
+
+      {/* Progress bar */}
+      <View style={{ marginHorizontal: hp(2), marginBottom: hp(1.5) }}>
+        <SkeletonBox width="100%" height={60} borderRadius={12} />
+      </View>
+
+      {/* Quote */}
+      <View style={{ marginHorizontal: hp(2.5), marginBottom: hp(1.5) }}>
+        <SkeletonBox width="100%" height={64} borderRadius={12} />
+      </View>
+
+      {/* Alert chips */}
+      <View style={{ flexDirection: 'row', marginHorizontal: hp(2), marginBottom: hp(1.5), gap: hp(1) }}>
+        {[120, 150, 110].map((w, i) => (
+          <SkeletonBox key={i} width={w} height={48} borderRadius={8} />
+        ))}
+      </View>
+
+      {/* Refs card */}
+      <View style={{ marginHorizontal: hp(2), marginBottom: hp(2) }}>
+        <SkeletonBox width="100%" height={44} borderRadius={14} />
+      </View>
+
+      {/* Task rows */}
+      {[1, 2, 3, 4, 5, 6].map(i => (
+        <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: hp(2), paddingHorizontal: hp(2) }}>
+          <View style={{ width: hp(9), marginRight: hp(1) }}>
+            <SkeletonBox width={55} height={14} borderRadius={6} style={{ marginBottom: hp(1) }} />
+            <SkeletonBox width={24} height={24} borderRadius={12} />
+          </View>
+          <SkeletonBox width={hp(2)} height={hp(2)} borderRadius={hp(1)} style={{ marginTop: hp(1), marginHorizontal: hp(1.5) }} />
+          <View style={{ flex: 1, backgroundColor: '#FFF', borderRadius: 12, padding: hp(1.5), minHeight: hp(8.5) }}>
+            <SkeletonBox width="60%" height={15} style={{ marginBottom: hp(0.8) }} />
+            <SkeletonBox width="85%" height={12} borderRadius={6} style={{ marginBottom: hp(0.5) }} />
+            <SkeletonBox width="70%" height={12} borderRadius={6} />
+          </View>
+        </View>
+      ))}
+    </ScrollView>
+  </SafeAreaView>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const Today = ({ navigation, route }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const [showAlertRefsModal, setShowAlertRefsModal] = useState(false);
   const [activeTab, setActiveTab] = useState('Feb 26');
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -193,8 +309,6 @@ const Today = ({ navigation, route }) => {
       await Promise.all([
         dispatch(getProfile(userId)),
         dispatch(getHomeData(userId)),
-        dispatch(getMind(userId)),
-        dispatch(getTobacco(userId)),
       ]);
     } catch (err) {
       // Error handling without console.log in production
@@ -206,21 +320,12 @@ const Today = ({ navigation, route }) => {
   useEffect(() => {
     if (!userId) return;
 
-    // Dispatch all data fetching in parallel
-    dispatch(getHomeData(userId));
-    dispatch(getProfile(userId));
-    dispatch(getPredict(userId));
-    dispatch(getKnowledge(userId));
-    dispatch(getMind(userId));
-    dispatch(getTobacco(userId));
-    dispatch(getCuoreScoreThunk(userId));
-    dispatch(getFitness());
-    dispatch(getOnboardingThunk());
-
-    // Dispatch meal builder items
-    MEAL_COMBOS.forEach(combo => {
-      dispatch(getBuilderItems(combo));
-    });
+    // Only fetch what Today actually needs — all other data is fetched by their own screens
+    if (!isFresh(`critical-${userId}`, CRITICAL_TTL)) {
+      stamp(`critical-${userId}`);
+      dispatch(getHomeData(userId));
+      dispatch(getProfile(userId));
+    }
   }, [dispatch, userId]);
 
   // Update reminder list when homeData changes
@@ -243,8 +348,6 @@ const Today = ({ navigation, route }) => {
     lastRefreshDateRef.current = new Date().toDateString();
     dispatch(getHomeData(userId));
     dispatch(getProfile(userId));
-    dispatch(getMind(userId));
-    dispatch(getTobacco(userId));
   }, [dispatch, userId]);
 
   useEffect(() => {
@@ -284,8 +387,7 @@ const Today = ({ navigation, route }) => {
 
   const handleLoginRedirect = useCallback(async () => {
     setSessionExpired(false);
-    await EncryptedStorage.removeItem('auth_tokens');
-    dispatch(logout());
+    await dispatch(logoutUser({ skipRemote: true }));
     const rootNavigation = navigation.getParent();
     if (rootNavigation) {
       rootNavigation.reset({
@@ -355,14 +457,9 @@ const Today = ({ navigation, route }) => {
     [navigation],
   );
 
-  // ✅ Show loader if fetching data
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#11418A" />
-        <Text style={styles.loadingText}>Loading your data...</Text>
-      </View>
-    );
+  // Show skeleton only on first load — not on background refetches where data already exists
+  if (loading && !data) {
+    return <TodaySkeleton />;
   }
 
   if (sessionExpiredMessage && sessionExpired) {
@@ -588,6 +685,24 @@ const Today = ({ navigation, route }) => {
             ))}
           </ScrollView>
         </View>
+
+        {/* Alert References Card */}
+        <TouchableOpacity
+          style={styles.alertRefsCard}
+          onPress={() => setShowAlertRefsModal(true)}
+          activeOpacity={0.8}
+        >
+          <Info
+            size={Math.max(16, hp(1.85))}
+            color="#94A3B8"
+            strokeWidth={2}
+            style={styles.alertRefsInfoIcon}
+          />
+          <Text style={styles.alertRefsCardText}>
+            {CLINICAL_REFERENCES_LABEL}
+          </Text>
+          <Text style={styles.alertRefsCardChevron}>›</Text>
+        </TouchableOpacity>
 
         {/* Daily Schedule */}
         <View style={{ backgroundColor: '#F9FAFB' }}>
@@ -927,6 +1042,64 @@ const Today = ({ navigation, route }) => {
           />
         </View>
       )}
+      {/* Alert References Modal */}
+      <Modal
+        visible={showAlertRefsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAlertRefsModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.referencesOverlay}
+          activeOpacity={1}
+          onPress={() => setShowAlertRefsModal(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={e => e.stopPropagation()}
+            style={styles.referencesBox}
+          >
+            <Text style={styles.referencesModalTitle}>
+              {CLINICAL_REFERENCES_LABEL}
+            </Text>
+            <Text style={styles.referencesModalSubtitle}>
+              Health alerts in Cuore are based on the following internationally
+              recognised guidelines:
+            </Text>
+            <ScrollView
+              style={styles.referencesScroll}
+              showsVerticalScrollIndicator={false}
+            >
+              {ALERT_REFERENCES.map((ref, index) => (
+                <View key={index} style={styles.referenceItem}>
+                  <Text style={styles.referenceParameter}>{ref.label}</Text>
+                  {ref.alert ? (
+                    <Text style={styles.alertRefAlert}>{ref.alert}</Text>
+                  ) : null}
+                  <Text
+                    style={[styles.referenceSource, styles.referenceLink]}
+                    onPress={() => Linking.openURL(ref.url)}
+                  >
+                    Source: {ref.source}
+                  </Text>
+                </View>
+              ))}
+              <Text style={styles.referencesFootnote}>
+                Cuore does not diagnose, treat, or prescribe. All alerts and
+                insights are informational and should be interpreted in
+                consultation with a qualified healthcare professional.
+              </Text>
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.referencesCloseBtn}
+              onPress={() => setShowAlertRefsModal(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.referencesCloseBtnText}>Close</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1375,6 +1548,113 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: hp(2.5),
     lineHeight: 20,
+  },
+  alertRefsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: wp(4),
+    marginVertical: hp(1.5),
+    borderRadius: 14,
+    padding: hp(1.8),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  alertRefsInfoIcon: {
+    marginRight: hp(1),
+  },
+  alertRefsCardText: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#94A3B8',
+    letterSpacing: 0.15,
+    lineHeight: 18,
+  },
+  alertRefsCardChevron: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 20,
+    color: '#94A3B8',
+    marginLeft: 8,
+  },
+  alertRefAlert: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 11.5,
+    color: '#DC2626',
+    marginBottom: 2,
+    fontStyle: 'italic',
+  },
+  referencesOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  referencesBox: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: hp(2.5),
+    maxHeight: '80%',
+  },
+  referencesModalTitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#64748B',
+    letterSpacing: 0.15,
+    marginBottom: hp(0.5),
+  },
+  referencesModalSubtitle: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: hp(2),
+    lineHeight: 18,
+  },
+  referencesScroll: {
+    maxHeight: hp(45),
+  },
+  referenceItem: {
+    marginBottom: hp(1.5),
+    paddingBottom: hp(1.5),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  referenceParameter: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13.5,
+    color: '#11418A',
+    marginBottom: 2,
+  },
+  referenceSource: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12.5,
+    color: '#475569',
+    lineHeight: 18,
+  },
+  referenceLink: {
+    color: '#11418A',
+    textDecorationLine: 'underline',
+  },
+  referencesFootnote: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 11,
+    color: '#94A3B8',
+    fontStyle: 'italic',
+    marginTop: hp(1),
+    marginBottom: hp(2),
+    lineHeight: 16,
+  },
+  referencesCloseBtn: {
+    backgroundColor: '#11418A',
+    borderRadius: 10,
+    paddingVertical: hp(1.5),
+    alignItems: 'center',
+    marginTop: hp(1),
+  },
+  referencesCloseBtnText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#FFFFFF',
   },
 });
 

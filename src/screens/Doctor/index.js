@@ -99,6 +99,11 @@ const Doctor = ({ navigation }) => {
           <View style={styles.cardTop}>
             <View style={styles.details}>
               <Text style={styles.name}>{item.name}</Text>
+              {String(item.specialization || '').trim() ? (
+                <Text style={styles.specialization}>
+                  {String(item.specialization).trim()}
+                </Text>
+              ) : null}
               <View style={styles.addressRow}>
                 <Text style={styles.addressText}>
                   {[
@@ -430,7 +435,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
     color: '#1E293B',
-    marginBottom: hp(0.4),
+    marginBottom: hp(0.3),
+    textTransform: 'capitalize',
+  },
+  specialization: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 12,
+    color: '#11418A',
+    marginBottom: hp(0.45),
     textTransform: 'capitalize',
   },
   addressRow: {

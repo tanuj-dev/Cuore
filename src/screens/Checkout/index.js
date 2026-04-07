@@ -281,15 +281,16 @@ const Checkout = ({ navigation }) => {
         return;
       }
 
-      console.log('Restore: found relevant purchase, verifying with backend...');
+      console.log(
+        'Restore: found relevant purchase, verifying with backend...',
+      );
 
       const payload = {
         userId,
         platform: Platform.OS,
         productId: relevantPurchase.productId,
         purchaseToken:
-          relevantPurchase.transactionReceipt ||
-          relevantPurchase.purchaseToken,
+          relevantPurchase.transactionReceipt || relevantPurchase.purchaseToken,
         orderId: relevantPurchase.transactionId,
         purchaseTime: relevantPurchase.transactionDate,
       };
@@ -299,7 +300,11 @@ const Checkout = ({ navigation }) => {
         EndPoints.VERIFY_SUBSCRIPTION,
         payload,
       );
-      console.log('Restore: verify response:', response?.status, response?.data);
+      console.log(
+        'Restore: verify response:',
+        response?.status,
+        response?.data,
+      );
 
       if (response?.status === 200) {
         try {
@@ -486,13 +491,40 @@ const Checkout = ({ navigation }) => {
                 {selected.subtitle}
               </Text>
               <Text style={styles.selectedPlanDuration}>
-                Duration: {selected.duration}
+                Duration: {selected.duration} · Auto-renews annually
               </Text>
 
               <View style={styles.priceRow}>
                 <Text style={styles.priceOld}>₹{selected.oldPrice}</Text>
                 <Text style={styles.priceNew}>₹{selected.newPrice}</Text>
               </View>
+
+              {/* What's included */}
+              <View style={styles.featuresDivider} />
+              <Text style={styles.featuresHeading}>What you get</Text>
+              {[
+                {
+                  title: 'Track & stay consistent',
+                  desc: 'Track BP, sugar, daily guidance',
+                },
+                {
+                  title: 'Understand your health clearly',
+                  desc: 'Clear trends, insights, simple summaries',
+                },
+                {
+                  title: 'Be prepared & stay ahead',
+                  desc: 'Doctor updates, alerts, records organized',
+                },
+              ].map(item => (
+                <View key={item.title} style={styles.featureRow}>
+                  <Text style={styles.featureCheck}>✓</Text>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.featureTitle}>{item.title}</Text>
+                    <Text style={styles.featureDescription}>{item.desc}</Text>
+                  </View>
+                </View>
+              ))}
             </View>
 
             {/* Payment Method */}
@@ -1100,6 +1132,51 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
     color: '#64748B',
+  },
+  featuresDivider: {
+    height: 1,
+    backgroundColor: '#E2E8F0',
+    marginVertical: hp(1.5),
+  },
+  featuresHeading: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#1E293B',
+    marginBottom: hp(1),
+    letterSpacing: 0.2,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: hp(0.8),
+  },
+  featureCheck: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#10B981',
+    marginRight: hp(1),
+    lineHeight: 20,
+  },
+  featureText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: '#475569',
+    flex: 1,
+    lineHeight: 20,
+    letterSpacing: 0.1,
+  },
+  featureTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#1E293B',
+    marginBottom: 2,
+  },
+
+  featureDescription: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 18,
   },
 });
 

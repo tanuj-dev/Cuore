@@ -11,6 +11,7 @@ import {
   Dimensions,
   SafeAreaView,
   Share,
+  Platform,
 } from 'react-native';
 import ApiLogger from '../../utilities/ApiLogger';
 
@@ -193,7 +194,9 @@ const ApiDebugger = () => {
         <Text style={styles.fabIcon}>API</Text>
         {count > 0 && (
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
+            <Text style={styles.badgeText} numberOfLines={1}>
+              {count > 99 ? '99+' : String(count)}
+            </Text>
           </View>
         )}
       </Animated.View>
@@ -241,6 +244,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E293B',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'visible',
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -256,20 +260,25 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: 4,
+    right: 4,
     backgroundColor: '#EF4444',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    borderRadius: 11,
+    minWidth: 22,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#1E293B',
   },
   badgeText: {
     color: '#FFF',
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
+    textAlign: 'center',
+    flexShrink: 0,
+    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
   },
   modal: {
     flex: 1,

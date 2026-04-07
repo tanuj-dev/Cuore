@@ -21,6 +21,36 @@ import {
   updateNote,
   deleteNote,
 } from '../../redux/Notes/notesThunk';
+import SkeletonBox from '../../components/SkeletonBox';
+
+const NotesSkeleton = () => (
+  <SafeAreaView style={{ flex: 1, backgroundColor: '#F1F5F9' }}>
+    <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 22, color: '#1E293B', textAlign: 'center', paddingVertical: hp(2), backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
+      Notes
+    </Text>
+    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, margin: wp(4), padding: hp(2), shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, ...Platform.select({ android: { elevation: 1 } }) }}>
+      <SkeletonBox width="100%" height={hp(10)} borderRadius={8} style={{ marginBottom: hp(1.5) }} />
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+        <SkeletonBox width={wp(20)} height={hp(4)} borderRadius={8} />
+      </View>
+    </View>
+    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, marginHorizontal: wp(4), padding: hp(2), shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, ...Platform.select({ android: { elevation: 1 } }) }}>
+      {[1, 2, 3].map(i => (
+        <View key={i} style={{ marginBottom: i < 3 ? hp(1.5) : 0 }}>
+          <View style={{ borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: hp(1.5) }}>
+            <SkeletonBox width={80} height={14} borderRadius={6} style={{ marginBottom: hp(0.8) }} />
+            <SkeletonBox width="100%" height={14} borderRadius={6} style={{ marginBottom: hp(0.5) }} />
+            <SkeletonBox width="75%" height={14} borderRadius={6} />
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: hp(0.5), gap: wp(3) }}>
+            <SkeletonBox width={20} height={20} borderRadius={4} />
+            <SkeletonBox width={20} height={20} borderRadius={4} />
+          </View>
+        </View>
+      ))}
+    </View>
+  </SafeAreaView>
+);
 
 const formatDate = date => {
   const d = new Date(date);
@@ -91,6 +121,10 @@ const Notes = () => {
     },
     [editingId, dispatch, alert],
   );
+
+  if (loading && notes.length === 0) {
+    return <NotesSkeleton />;
+  }
 
   const renderNote = ({ item }) => (
     <View style={styles.noteWrapper}>
