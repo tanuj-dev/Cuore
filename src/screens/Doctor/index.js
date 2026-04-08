@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Images, hp, wp } from '../../utilities';
@@ -16,13 +17,52 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getDoctors, searchDoctors } from '../../redux/Profile/profileThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
+/** Labels match product picker; `value` is sent as ?specialization= (e.g. cardio) */
+const DOCTOR_SPECIALIZATIONS = [
+  { label: 'General Physician', value: 'general_physician' },
+  { label: 'General Practitioner', value: 'general_practitioner' },
+  { label: 'Family Physician', value: 'family_physician' },
+  { label: 'Internal Medicine Specialist', value: 'internal_medicine' },
+  { label: 'Cardiologist', value: 'cardio' },
+  { label: 'Interventional Cardiologist', value: 'interventional_cardio' },
+  { label: 'Diabetologist', value: 'diabetologist' },
+  { label: 'Endocrinologist', value: 'endocrinologist' },
+  { label: 'Nephrologist', value: 'nephrologist' },
+  { label: 'Pulmonologist', value: 'pulmonologist' },
+  { label: 'Geriatrician', value: 'geriatrician' },
+  {
+    label: 'Obstetrician & Gynecologist',
+    value: 'obstetrician_gynecologist',
+  },
+  { label: 'Bariatric / Obesity Specialist', value: 'bariatric' },
+  { label: 'Pediatrician', value: 'pediatrician' },
+];
+
+function doctorMatchesNameQuery(doc, rawQuery) {
+  const q = String(rawQuery || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  if (!q) return true;
+  const name = String(doc?.name || '').toLowerCase();
+  return name.includes(q);
+}
+
 const Doctor = ({ navigation }) => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   const { data, loading } = useSelector(state => state.doctors);
 
   const [doctors, setDoctors] = useState([]);
-  const [search, setSearch] = useState('');
+  const [specialization, setSpecialization] = useState(null);
+  const [specModalVisible, setSpecModalVisible] = useState(false);
+  /** Client-side only; filters current list (API has no name search) */
+  const [nameSearch, setNameSearch] = useState('');
+
+  const filteredDoctors = useMemo(
+    () => doctors.filter(d => doctorMatchesNameQuery(d, nameSearch)),
+    [doctors, nameSearch],
+  );
 
   useEffect(() => {
     dispatch(getDoctors());
@@ -37,23 +77,38 @@ const Doctor = ({ navigation }) => {
     setDoctors(prev => prev.map(doc => ({ ...doc, selected: doc._id === id })));
   };
 
-  const handleSearch = async () => {
-    if (search.trim() === '') {
+  const applyDoctorList = (result, fallbackMessage) => {
+    if (result?.success) {
+      setDoctors(
+        (result?.data?.data || []).map(d => ({ ...d, selected: false })),
+      );
+    } else {
+      alert('Search', result?.message || fallbackMessage);
+    }
+  };
+
+  const fetchBySpecialization = async specValue => {
+    try {
+      const result = await dispatch(searchDoctors(specValue)).unwrap();
+      applyDoctorList(result, 'No doctors found.');
+    } catch (e) {
+      const msg =
+        typeof e === 'string'
+          ? e
+          : e?.message || e?.payload?.message || 'Search failed.';
+      alert('Error', msg);
+    }
+  };
+
+  const handlePickSpecialization = async item => {
+    setSpecModalVisible(false);
+    if (item == null) {
+      setSpecialization(null);
       dispatch(getDoctors());
       return;
     }
-    try {
-      const result = await dispatch(searchDoctors(search.trim())).unwrap();
-      if (result?.success) {
-        setDoctors(
-          (result?.data?.data || []).map(d => ({ ...d, selected: false })),
-        );
-      } else {
-        alert('Search', result?.message || 'No doctors found.');
-      }
-    } catch (e) {
-      alert('Error', e?.message || 'Search failed.');
-    }
+    setSpecialization(item);
+    await fetchBySpecialization(item.value);
   };
 
   const handleRequestSupervision = () => {
@@ -123,21 +178,6 @@ const Doctor = ({ navigation }) => {
               </View>
             )}
           </View>
-
-          <View style={styles.feesBox}>
-            <Text style={styles.feesLabel}>Fees</Text>
-            <View style={styles.feesList}>
-              {feeParts.length > 0 ? (
-                feeParts.map((part, i) => (
-                  <View key={i} style={styles.feeChip}>
-                    <Text style={styles.feesItem}>{part.trim()}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.feesItem}>—</Text>
-              )}
-            </View>
-          </View>
         </TouchableOpacity>
       </View>
     );
@@ -178,26 +218,48 @@ const Doctor = ({ navigation }) => {
             </View>
           </View>
 
-          <View style={styles.searchBox}>
-            <Image style={styles.searchIcon} source={Images.SEARCH} />
+          <Text style={styles.filterLabel}>Filter by specialization</Text>
+          <TouchableOpacity
+            style={styles.dropdownField}
+            onPress={() => setSpecModalVisible(true)}
+            activeOpacity={0.75}
+          >
+            <Text
+              style={[
+                styles.dropdownFieldText,
+                !specialization && styles.dropdownPlaceholder,
+              ]}
+              numberOfLines={1}
+            >
+              {specialization
+                ? specialization.label
+                : 'All specializations — tap to filter'}
+            </Text>
+            <Text style={styles.dropdownChevron}>▼</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.filterLabel}>Search by name</Text>
+          <Text style={styles.nameSearchHint}>
+            Filters the doctors above on your device — names only.
+          </Text>
+          <View style={styles.nameSearchBox}>
+            <Image style={styles.nameSearchIcon} source={Images.SEARCH} />
             <TextInput
-              value={search}
-              onChangeText={setSearch}
+              value={nameSearch}
+              onChangeText={setNameSearch}
               placeholderTextColor="#94A3B8"
-              placeholder="Search your doctor..."
-              style={styles.searchInput}
-              onSubmitEditing={handleSearch}
+              placeholder="Type a doctor's name..."
+              style={styles.nameSearchInput}
+              autoCorrect={false}
+              autoCapitalize="words"
               returnKeyType="search"
             />
-            {search.length > 0 && (
+            {nameSearch.length > 0 && (
               <TouchableOpacity
-                onPress={() => {
-                  setSearch('');
-                  dispatch(getDoctors());
-                }}
+                onPress={() => setNameSearch('')}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Text style={styles.clearText}>✕</Text>
+                <Text style={styles.nameSearchClear}>✕</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -216,15 +278,81 @@ const Doctor = ({ navigation }) => {
             <View style={styles.emptyWrap}>
               <Text style={styles.emptyText}>No doctors found.</Text>
               <Text style={styles.emptySubText}>
-                Try a different search term.
+                Try another specialization or view all doctors.
+              </Text>
+            </View>
+          ) : filteredDoctors.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Text style={styles.emptyText}>No name match</Text>
+              <Text style={styles.emptySubText}>
+                No doctor in this list matches “{nameSearch.trim()}”. Clear the
+                name search or pick another specialization.
               </Text>
             </View>
           ) : (
             <View style={styles.listWrap}>
-              {doctors.map((item, index) => renderDoctorCard(item, index))}
+              {filteredDoctors.map((item, index) =>
+                renderDoctorCard(item, index),
+              )}
             </View>
           )}
         </ScrollView>
+
+        <Modal
+          visible={specModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSpecModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.specModalOverlay}
+            activeOpacity={1}
+            onPress={() => setSpecModalVisible(false)}
+          >
+            <View
+              onStartShouldSetResponder={() => true}
+              style={styles.specModalSheet}
+            >
+              <Text style={styles.specModalTitle}>Specialization</Text>
+              <ScrollView
+                style={styles.specModalScroll}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                <TouchableOpacity
+                  style={styles.specRow}
+                  onPress={() => handlePickSpecialization(null)}
+                  activeOpacity={0.7}
+                >
+                  {!specialization ? (
+                    <Text style={styles.specRowCheck}>✓</Text>
+                  ) : (
+                    <View style={styles.specRowCheckSpacer} />
+                  )}
+                  <Text style={styles.specRowLabel}>All specializations</Text>
+                </TouchableOpacity>
+                {DOCTOR_SPECIALIZATIONS.map(item => {
+                  const selected = specialization?.value === item.value;
+                  return (
+                    <TouchableOpacity
+                      key={item.value}
+                      style={styles.specRow}
+                      onPress={() => handlePickSpecialization(item)}
+                      activeOpacity={0.7}
+                    >
+                      {selected ? (
+                        <Text style={styles.specRowCheck}>✓</Text>
+                      ) : (
+                        <View style={styles.specRowCheckSpacer} />
+                      )}
+                      <Text style={styles.specRowLabel}>{item.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </TouchableOpacity>
+        </Modal>
 
         <View style={styles.footer}>
           <TouchableOpacity
@@ -314,15 +442,22 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 20,
   },
-  searchBox: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+  filterLabel: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    color: '#475569',
     marginHorizontal: wp(4),
     marginTop: hp(2),
-    paddingVertical: hp(1.2),
+    marginBottom: hp(0.6),
+  },
+  dropdownField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: wp(4),
+    paddingVertical: hp(1.4),
     paddingHorizontal: wp(3),
     borderRadius: 12,
-    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     ...Platform.select({
@@ -335,24 +470,116 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  searchIcon: {
+  dropdownFieldText: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#1E293B',
+  },
+  dropdownPlaceholder: {
+    color: '#94A3B8',
+  },
+  dropdownChevron: {
+    fontSize: 10,
+    color: '#64748B',
+    marginLeft: wp(2),
+  },
+  nameSearchHint: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 11,
+    color: '#94A3B8',
+    marginHorizontal: wp(4),
+    marginTop: -hp(0.3),
+    marginBottom: hp(0.8),
+    lineHeight: 16,
+  },
+  nameSearchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: wp(4),
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(3),
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...Platform.select({
+      android: { elevation: 1 },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+      },
+    }),
+  },
+  nameSearchIcon: {
     height: hp(2.2),
     width: wp(4.5),
     marginRight: wp(2),
     resizeMode: 'contain',
     tintColor: '#94A3B8',
   },
-  searchInput: {
+  nameSearchInput: {
     flex: 1,
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
     color: '#1E293B',
     paddingVertical: 0,
   },
-  clearText: {
+  nameSearchClear: {
     fontSize: 14,
     color: '#94A3B8',
     paddingLeft: wp(2),
+  },
+  specModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  specModalSheet: {
+    backgroundColor: '#3F3F46',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '72%',
+    paddingBottom: hp(2),
+  },
+  specModalTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 15,
+    color: '#FAFAFA',
+    paddingHorizontal: wp(4),
+    paddingTop: hp(2),
+    paddingBottom: hp(1),
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.12)',
+  },
+  specModalScroll: {
+    maxHeight: hp(48),
+  },
+  specRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: hp(1.35),
+    paddingHorizontal: wp(4),
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  specRowCheck: {
+    width: wp(6),
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontFamily: 'Poppins-Medium',
+  },
+  specRowCheckSpacer: {
+    width: wp(6),
+  },
+  specRowLabel: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 15,
+    color: '#FFFFFF',
+    lineHeight: 22,
   },
   listHeader: {
     flexDirection: 'row',

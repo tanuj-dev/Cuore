@@ -43,8 +43,11 @@ import { useCustomAlert } from '../../hooks/useCustomAlert';
 // Module-level fetch cache — survives re-mounts within the same JS session
 const _fetchTs = {};
 const CRITICAL_TTL = 5 * 60 * 1000; // 5 min — home + profile
-const isFresh = (key, ttl) => !!_fetchTs[key] && Date.now() - _fetchTs[key] < ttl;
-const stamp = key => { _fetchTs[key] = Date.now(); };
+const isFresh = (key, ttl) =>
+  !!_fetchTs[key] && Date.now() - _fetchTs[key] < ttl;
+const stamp = key => {
+  _fetchTs[key] = Date.now();
+};
 
 const TITLE_TO_ROUTE_MAP = {
   'Wake Up': 'Mind',
@@ -141,7 +144,16 @@ import SkeletonBox from '../../components/SkeletonBox';
 const TodaySkeleton = () => (
   <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
     {/* Header */}
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: hp(2), paddingVertical: hp(1.5), backgroundColor: '#FFF' }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: hp(2),
+        paddingVertical: hp(1.5),
+        backgroundColor: '#FFF',
+      }}
+    >
       <SkeletonBox width={120} height={22} />
       <View style={{ flexDirection: 'row', gap: wp(2) }}>
         <SkeletonBox width={80} height={44} borderRadius={12} />
@@ -150,15 +162,39 @@ const TodaySkeleton = () => (
     </View>
 
     {/* Tabs */}
-    <View style={{ paddingHorizontal: hp(2), paddingVertical: hp(1.2), borderBottomWidth: 2, borderBottomColor: '#E2E8F0' }}>
+    <View
+      style={{
+        paddingHorizontal: hp(2),
+        paddingVertical: hp(1.2),
+        borderBottomWidth: 2,
+        borderBottomColor: '#E2E8F0',
+      }}
+    >
       <SkeletonBox width={90} height={18} />
     </View>
 
-    <ScrollView scrollEnabled={false} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: hp(4) }}>
+    <ScrollView
+      scrollEnabled={false}
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingBottom: hp(4) }}
+    >
       {/* Progress card */}
-      <View style={{ marginHorizontal: hp(2), marginVertical: hp(1.5), backgroundColor: '#FFF', borderRadius: 16, padding: hp(2) }}>
+      <View
+        style={{
+          marginHorizontal: hp(2),
+          marginVertical: hp(1.5),
+          backgroundColor: '#FFF',
+          borderRadius: 16,
+          padding: hp(2),
+        }}
+      >
         <SkeletonBox width={160} height={18} style={{ marginBottom: hp(1) }} />
-        <SkeletonBox width={80} height={36} borderRadius={10} style={{ alignSelf: 'flex-end' }} />
+        <SkeletonBox
+          width={80}
+          height={36}
+          borderRadius={10}
+          style={{ alignSelf: 'flex-end' }}
+        />
       </View>
 
       {/* Progress bar */}
@@ -172,7 +208,14 @@ const TodaySkeleton = () => (
       </View>
 
       {/* Alert chips */}
-      <View style={{ flexDirection: 'row', marginHorizontal: hp(2), marginBottom: hp(1.5), gap: hp(1) }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          marginHorizontal: hp(2),
+          marginBottom: hp(1.5),
+          gap: hp(1),
+        }}
+      >
         {[120, 150, 110].map((w, i) => (
           <SkeletonBox key={i} width={w} height={48} borderRadius={8} />
         ))}
@@ -185,15 +228,50 @@ const TodaySkeleton = () => (
 
       {/* Task rows */}
       {[1, 2, 3, 4, 5, 6].map(i => (
-        <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: hp(2), paddingHorizontal: hp(2) }}>
+        <View
+          key={i}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            marginTop: hp(2),
+            paddingHorizontal: hp(2),
+          }}
+        >
           <View style={{ width: hp(9), marginRight: hp(1) }}>
-            <SkeletonBox width={55} height={14} borderRadius={6} style={{ marginBottom: hp(1) }} />
+            <SkeletonBox
+              width={55}
+              height={14}
+              borderRadius={6}
+              style={{ marginBottom: hp(1) }}
+            />
             <SkeletonBox width={24} height={24} borderRadius={12} />
           </View>
-          <SkeletonBox width={hp(2)} height={hp(2)} borderRadius={hp(1)} style={{ marginTop: hp(1), marginHorizontal: hp(1.5) }} />
-          <View style={{ flex: 1, backgroundColor: '#FFF', borderRadius: 12, padding: hp(1.5), minHeight: hp(8.5) }}>
-            <SkeletonBox width="60%" height={15} style={{ marginBottom: hp(0.8) }} />
-            <SkeletonBox width="85%" height={12} borderRadius={6} style={{ marginBottom: hp(0.5) }} />
+          <SkeletonBox
+            width={hp(2)}
+            height={hp(2)}
+            borderRadius={hp(1)}
+            style={{ marginTop: hp(1), marginHorizontal: hp(1.5) }}
+          />
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: '#FFF',
+              borderRadius: 12,
+              padding: hp(1.5),
+              minHeight: hp(8.5),
+            }}
+          >
+            <SkeletonBox
+              width="60%"
+              height={15}
+              style={{ marginBottom: hp(0.8) }}
+            />
+            <SkeletonBox
+              width="85%"
+              height={12}
+              borderRadius={6}
+              style={{ marginBottom: hp(0.5) }}
+            />
             <SkeletonBox width="70%" height={12} borderRadius={6} />
           </View>
         </View>
@@ -383,8 +461,6 @@ const Today = ({ navigation, route }) => {
     };
   }, [userId, silentRefresh]);
 
-
-
   const handleLoginRedirect = useCallback(async () => {
     setSessionExpired(false);
     await dispatch(logoutUser({ skipRemote: true }));
@@ -441,10 +517,6 @@ const Today = ({ navigation, route }) => {
               title === 'short nap or walk' ||
               title === 'after-dinner walk'
             ) {
-              const walkDayKey = DAY_KEYS[new Date().getDay()];
-              navigation.navigate(targetRoute, {
-                initialTab: walkDayKey,
-              });
             }
             break;
         }

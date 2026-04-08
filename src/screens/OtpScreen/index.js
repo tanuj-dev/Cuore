@@ -18,6 +18,22 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 import Endpoints from '../../utilities/Endpoints';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
+const OTP_LENGTH = 6;
+const createEmptyOtp = () => Array(OTP_LENGTH).fill('');
+
+/** When backend returns test_otp_code (dev/staging), pre-fill the six boxes. */
+const digitsFromTestOtp = testOtp => {
+  if (testOtp == null || testOtp === '') {
+    return createEmptyOtp();
+  }
+  const str = String(testOtp).replace(/\D/g, '');
+  const next = createEmptyOtp();
+  for (let i = 0; i < OTP_LENGTH && i < str.length; i++) {
+    next[i] = str[i];
+  }
+  return next;
+};
+
 const OtpScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -30,7 +46,7 @@ const OtpScreen = () => {
     route.params;
   console.log('Route params:', route.params);
 
-  const [otp, setOtp] = useState([...testOtp]);
+  const [otp, setOtp] = useState(() => digitsFromTestOtp(testOtp));
   const [timer, setTimer] = useState(retryAfter || 30);
   const [loader, setLoader] = useState(false);
 
@@ -45,22 +61,85 @@ const OtpScreen = () => {
     }
   }, [timer]);
 
+  const focusInput = i => {
+    if (i >= 0 && i < OTP_LENGTH) {
+      setTimeout(() => inputs.current[i]?.focus(), 0);
+    }
+  };
+
+  /** Digits & paste — backspace is handled in onKeyPress (reliable on Android). */
   const handleChange = (text, index) => {
-    const newOtp = [...otp];
-    if (text === '') {
-      newOtp[index] = '';
-      setOtp(newOtp);
-      if (index > 0) inputs.current[index - 1].focus();
-    } else if (/^\d$/.test(text)) {
-      newOtp[index] = text;
-      setOtp(newOtp);
-      if (index < 5) inputs.current[index + 1].focus();
+    const digitsOnly = text.replace(/\D/g, '');
+
+    if (digitsOnly.length === 0) {
+      setOtp(prev => {
+        const next = [...prev];
+        next[index] = '';
+        return next;
+      });
+      return;
+    }
+
+    setOtp(prev => {
+      const next = [...prev];
+      if (digitsOnly.length === 1) {
+        next[index] = digitsOnly;
+        return next;
+      }
+      let j = index;
+      for (let k = 0; k < digitsOnly.length && j < OTP_LENGTH; k++, j++) {
+        next[j] = digitsOnly[k];
+      }
+      return next;
+    });
+
+    if (digitsOnly.length === 1) {
+      if (index < OTP_LENGTH - 1) {
+        focusInput(index + 1);
+      }
+    } else {
+      const end = Math.min(index + digitsOnly.length - 1, OTP_LENGTH - 1);
+      focusInput(end);
     }
   };
 
   const handleKeyPress = (e, index) => {
-    if (e.nativeEvent.key === 'Backspace' && otp[index] === '') {
-      if (index > 0) inputs.current[index - 1].focus();
+    if (e.nativeEvent.key !== 'Backspace') return;
+
+    let focusPrevious = false;
+    setOtp(prev => {
+      const next = [...prev];
+      if (prev[index] !== '') {
+        next[index] = '';
+        return next;
+      }
+      if (index > 0) {
+        next[index - 1] = '';
+        focusPrevious = true;
+      }
+      return next;
+    });
+    if (focusPrevious) {
+      focusInput(index - 1);
+    }
+  };
+
+  /** iOS number-pad has no ⌫ — use this to fix typos without tapping the cell */
+  const removeLastFilledDigit = () => {
+    let focusIndex = -1;
+    setOtp(prev => {
+      const next = [...prev];
+      for (let i = OTP_LENGTH - 1; i >= 0; i--) {
+        if (next[i] !== '') {
+          next[i] = '';
+          focusIndex = i;
+          return next;
+        }
+      }
+      return prev;
+    });
+    if (focusIndex >= 0) {
+      focusInput(focusIndex);
     }
   };
 
@@ -123,7 +202,11 @@ const OtpScreen = () => {
       }
 
       // Step 2: Caregiver without completed payment — block login, don't save token
-      if (userRole === 'caregiver' && paymentStatus !== 'completed' && paymentStatus !== 'waived') {
+      if (
+        userRole === 'caregiver' &&
+        paymentStatus !== 'completed' &&
+        paymentStatus !== 'waived'
+      ) {
         alert(
           'Payment Pending',
           'The account subscription payment is pending. Caregiver cannot complete the payment. Please ask the account owner to complete the payment.',
@@ -148,7 +231,17 @@ const OtpScreen = () => {
         return;
       }
 
-      // Step 5: Any other status (pending, none, null, etc.) — go to Checkout
+      // Step 5: If payment is pending, go to Score (Continue → Checkout)
+      if (paymentStatus === 'pending') {
+        console.log('paymentStatus is pending, going to Score');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Score' }],
+        });
+        return;
+      }
+
+      // Step 6: Any other status (none, null, etc.) — go to Checkout
       console.log('paymentStatus is not completed/waived, going to Checkout');
       navigation.reset({
         index: 0,
@@ -169,7 +262,7 @@ const OtpScreen = () => {
       console.log('OTP resent:', result);
 
       setTimer(result.retryAfter || 30);
-      setOtp([...result.testOtp]);
+      setOtp(digitsFromTestOtp(result.testOtp));
     } catch (err) {
       console.log('Resend OTP failed:', err.message);
     } finally {
@@ -200,21 +293,46 @@ const OtpScreen = () => {
 
       <View style={styles.otpContainer}>
         {otp.map((digit, index) => (
-          <TextInput
+          <TouchableOpacity
             key={index}
-            ref={ref => (inputs.current[index] = ref)}
-            style={styles.otpInput}
-            keyboardType="numeric"
-            maxLength={1}
-            value={digit}
-            onChangeText={text => handleChange(text, index)}
-            onKeyPress={e => handleKeyPress(e, index)}
-          />
+            style={styles.otpCellOuter}
+            activeOpacity={0.85}
+            onPress={() => focusInput(index)}
+          >
+            <TextInput
+              ref={ref => {
+                inputs.current[index] = ref;
+              }}
+              style={styles.otpInput}
+              pointerEvents="none"
+              keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
+              value={digit}
+              onChangeText={text => handleChange(text, index)}
+              onKeyPress={e => handleKeyPress(e, index)}
+              textContentType="none"
+              autoComplete="off"
+              importantForAutofill="no"
+              blurOnSubmit={false}
+              selectTextOnFocus
+            />
+          </TouchableOpacity>
         ))}
       </View>
 
+      <TouchableOpacity
+        onPress={removeLastFilledDigit}
+        style={styles.removeLastRow}
+        hitSlop={{ top: 10, bottom: 10 }}
+      >
+        <Text style={styles.removeLastText}>⌫ Remove last digit</Text>
+      </TouchableOpacity>
+
       <Text style={styles.subtitle}>
-        OTP sent to your phone number. Valid for 5 minutes.
+        OTP sent to your phone number. Valid for 5 minutes.{'\n'}
+        {/* <Text style={styles.subtitleHint}>
+          Tap a box to edit that digit. On iPhone, use Remove last digit (the
+          number pad has no backspace key).
+        </Text> */}
       </Text>
 
       <TouchableOpacity
@@ -283,12 +401,15 @@ const styles = StyleSheet.create({
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: hp(2.5),
+    marginBottom: hp(1),
     gap: wp(2),
   },
-  otpInput: {
+  otpCellOuter: {
     flex: 1,
     maxWidth: wp(14),
+  },
+  otpInput: {
+    width: '100%',
     height: wp(14),
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
@@ -300,6 +421,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     letterSpacing: 2,
   },
+  removeLastRow: {
+    alignSelf: 'center',
+    paddingVertical: hp(1),
+    marginBottom: hp(1.5),
+  },
+  removeLastText: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14,
+    color: '#11418A',
+    letterSpacing: 0.2,
+  },
   subtitle: {
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
@@ -308,6 +440,11 @@ const styles = StyleSheet.create({
     marginBottom: hp(3),
     lineHeight: 20,
     letterSpacing: 0.2,
+  },
+  subtitleHint: {
+    fontSize: 12,
+    color: '#94A3B8',
+    lineHeight: 18,
   },
   submitButton: {
     backgroundColor: '#11418A',

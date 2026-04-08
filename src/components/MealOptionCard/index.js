@@ -6,11 +6,11 @@ const MealOptionCard = ({ title, details, calories, style }) => {
   return (
     <View style={[styles.card, style]}>
       <View style={styles.cardHeader}>
+        <Text style={styles.mealTitle}>{title}</Text>
         <View style={styles.kcalPill}>
           <Text style={styles.kcalText}>⚡ {calories} kcal</Text>
         </View>
       </View>
-      <Text style={styles.mealTitle}>{title}</Text>
       <Text style={styles.detail}>{details}</Text>
     </View>
   );
@@ -37,14 +37,17 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: hp(-2.5),
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: hp(0.8),
+    columnGap: wp(2),
   },
   kcalPill: {
     backgroundColor: '#ECFDF5',
     paddingVertical: hp(0.5),
     paddingHorizontal: wp(3),
     borderRadius: 12,
+    flexShrink: 0,
   },
   kcalText: {
     fontFamily: 'Poppins-Medium',
@@ -56,7 +59,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-SemiBold',
     fontSize: 15,
     color: '#1E293B',
-    marginBottom: hp(0.8),
+    flex: 1,
     letterSpacing: -0.2,
     lineHeight: 22,
   },

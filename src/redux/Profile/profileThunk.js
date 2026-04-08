@@ -89,20 +89,27 @@ export const getDoctors = createAsyncThunk(
 );
 export const searchDoctors = createAsyncThunk(
   'profile/searchDoctors',
-  async (search, { rejectWithValue }) => {
-    const endpoint = `/api/v1/users/find-doctor?search=${search}`;
-    const res = await getApiCall(endpoint);
-    const data = res?.data;
-    if (res?.status === 200) {
-      return {
-        success: true,
-        message: data?.message || 'Doctors fetched successfully',
-        data: data,
-      };
-    } else {
+  async (specialization, { rejectWithValue }) => {
+    try {
+      const q = encodeURIComponent(String(specialization).trim());
+      const endpoint = `/api/v1/users/find-doctor?specialization=${q}`;
+      const res = await getApiCall(endpoint);
+      const data = res?.data;
+      if (res?.status === 200) {
+        return {
+          success: true,
+          message: data?.message || 'Doctors fetched successfully',
+          data: data,
+        };
+      }
       return rejectWithValue({
         success: false,
         message: data?.message || 'Failed to fetch doctors',
+      });
+    } catch (err) {
+      return rejectWithValue({
+        success: false,
+        message: err?.message || 'Network error',
       });
     }
   },

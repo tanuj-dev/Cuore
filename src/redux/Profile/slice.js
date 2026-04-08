@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { getProfile } from './profileThunk';
-import { getDoctors } from './profileThunk';
+import { getDoctors, searchDoctors } from './profileThunk';
 
 const initialState = {
   loading: false,
@@ -65,6 +65,18 @@ export const doctorsSlice = createSlice({
         state.data = action.payload;
       })
       .addCase(getDoctors.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(searchDoctors.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(searchDoctors.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(searchDoctors.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

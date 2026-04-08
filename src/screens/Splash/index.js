@@ -67,7 +67,7 @@ const Splash = () => {
     pulseDot(dotAnim1, 0);
     pulseDot(dotAnim2, 200);
     pulseDot(dotAnim3, 400);
-  }, []);
+  }, [fadeAnim, scaleAnim, slideAnim, dotAnim1, dotAnim2, dotAnim3]);
 
   // Auth check
   useEffect(() => {
@@ -132,13 +132,18 @@ const Splash = () => {
 
         dispatch(setUserData(parsed));
 
-        // Step 3: Has token + onboarding complete + payment not done → Checkout
+        // Step 3: Has token + onboarding complete + payment not done → Score/Checkout
         if (
           parsed.paymentStatus !== 'completed' &&
           parsed.paymentStatus !== 'waived'
         ) {
-          console.log('Splash: payment incomplete → Checkout');
-          navigateTo('Checkout');
+          if (parsed.paymentStatus === 'pending') {
+            console.log('Splash: payment pending → Score');
+            navigateTo('Score');
+          } else {
+            console.log('Splash: payment incomplete → Checkout');
+            navigateTo('Checkout');
+          }
           return;
         }
 
