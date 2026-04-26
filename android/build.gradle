@@ -25,4 +25,41 @@ buildscript {
 ext.REACT_NATIVE_NODE_MODULES_DIR = file("${rootDir}/../node_modules/react-native")
 ext.REACT_NATIVE_WORKLETS_NODE_MODULES_DIR = file("${rootDir}/../node_modules/react-native-worklets")
 
+// Register before react-native root project evaluates subprojects (otherwise afterEvaluate is too late).
+// Gradle 8.14+: AGP CMake tasks expose outputs under paths that may not exist yet when Gradle
+// snapshots task state, causing "Cannot access output property 'soFolder'" and missing .so.
+// See: https://docs.gradle.org/current/userguide/incremental_build.html#sec:disable-state-tracking
+subprojects { sub ->
+    sub.afterEvaluate {
+        sub.tasks.configureEach { task ->
+            def n = task.name
+            if (n.contains("buildCMake") || n.contains("configureCMake")) {
+                try {
+                    task.doNotTrackState("CMake/Nitro: Gradle 8.14 output snapshot compatibility")
+                } catch (Throwable ignored) {
+                    // Gradle < 8.11
+                }
+            }
+        }
+    }
+}
+
+// Ensure Nitro prefab is built before react-native-iap native code (avoids races / missing libNitroIap.so).
+subprojects { sub ->
+    if (sub.name != "react-native-iap") {
+        return
+    }
+    sub.afterEvaluate {
+        def nitro = rootProject.findProject(":react-native-nitro-modules")
+        if (nitro == null) {
+            return
+        }
+        sub.tasks.matching { it.name.startsWith("buildCMake") }.configureEach { cmakeTask ->
+            nitro.tasks.matching { it.name == cmakeTask.name }.configureEach { nitroTask ->
+                cmakeTask.dependsOn(nitroTask)
+            }
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"

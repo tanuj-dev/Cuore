@@ -789,16 +789,11 @@ const Today = ({ navigation, route }) => {
             keyExtractor={(item, index) =>
               `${item?.id || item?.title || 'task'}-${index}`
             }
-            removeClippedSubviews={true}
+            removeClippedSubviews={false}
             maxToRenderPerBatch={10}
             updateCellsBatchingPeriod={50}
             initialNumToRender={10}
             windowSize={10}
-            getItemLayout={(_, index) => ({
-              length: hp(8) + hp(2),
-              offset: (hp(8) + hp(2)) * index,
-              index,
-            })}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>No items found.</Text>
@@ -894,25 +889,9 @@ const Today = ({ navigation, route }) => {
 
               return (
                 <View key={item?.id || itemIndex} style={styles.taskRow}>
-                  <View
-                    style={{
-                      width: hp(9),
-                      borderRightWidth: 1,
-                      height: hp(7),
-                      marginTop: hp(0.5),
-                      borderColor: '#E5E7EB',
-                    }}
-                  >
+                  <View style={styles.taskTimeColumn}>
                     <Text style={styles.time}>{item?.time}</Text>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginLeft: hp(3.5),
-                        marginTop: hp(1),
-                      }}
-                    >
+                    <View style={styles.notificationRow}>
                       <TouchableOpacity
                         disabled={isCaregiver}
                         onPress={handleNotificationToggle}
@@ -949,6 +928,7 @@ const Today = ({ navigation, route }) => {
                       loadingTaskId === 'all'
                     }
                     onPress={handleCompleteToggle}
+                    style={styles.taskDotWrap}
                   >
                     <View style={styles.blackDot}>
                       {loadingTaskId === item.id || loadingTaskId === 'all' ? (
@@ -966,13 +946,7 @@ const Today = ({ navigation, route }) => {
                     <View style={styles.taskHeader}>
                       <Text style={styles.taskIcon}>{item?.icon}</Text>
                     </View>
-                    <View
-                      style={{
-                        justifyContent: 'space-between',
-                        flexDirection: 'row',
-                        flex: 1,
-                      }}
-                    >
+                    <View style={styles.taskCardBody}>
                       <View style={styles.taskContent}>
                         <Text style={styles.taskTitle} numberOfLines={1}>
                           {item?.title?.length > 35
@@ -1314,12 +1288,29 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   taskRow: {
-    // backgroundColor: 'red',
-    // marginBottom: hp(2),
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginTop: hp(2),
     paddingHorizontal: hp(2),
+  },
+  taskTimeColumn: {
+    width: hp(9),
+    flexShrink: 0,
+    borderRightWidth: 1,
+    minHeight: hp(7),
+    marginTop: hp(0.5),
+    borderColor: '#E5E7EB',
+  },
+  notificationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: hp(1),
+    width: '100%',
+    gap: hp(0.8),
+  },
+  taskDotWrap: {
+    flexShrink: 0,
   },
 
   time: {
@@ -1331,6 +1322,7 @@ const styles = StyleSheet.create({
   },
   taskCard: {
     flex: 1,
+    minWidth: 0,
     minHeight: hp(8.5),
     borderLeftWidth: 3,
     backgroundColor: '#FFFFFF',
@@ -1346,6 +1338,12 @@ const styles = StyleSheet.create({
       ios: { elevation: 3 },
     }),
   },
+  taskCardBody: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flex: 1,
+    minWidth: 0,
+  },
   taskHeader: { flexDirection: 'row', alignItems: 'center' },
   taskIcon: {
     width: hp(3),
@@ -1358,7 +1356,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
     color: '#334155',
-    width: wp(43),
     letterSpacing: -0.2,
   },
   taskDescription: {
@@ -1366,17 +1363,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748B',
     fontFamily: 'Poppins-Regular',
-    width: wp(40),
     lineHeight: 18,
   },
   taskContent: {
     justifyContent: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   notificationIcon: {
     height: hp(2.5),
     resizeMode: 'contain',
-    marginLeft: -hp(6),
-    width: wp(10),
+    width: wp(6),
   },
   editIcon: {
     height: hp(2),

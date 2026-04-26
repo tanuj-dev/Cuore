@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, AppState } from 'react-native';
 import axios from 'axios';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
@@ -16,7 +16,7 @@ import { Common } from './src/utilities';
 import Constants, { APP_VERSION, STORE_URL } from './src/utilities/Constants';
 import Endpoints from './src/utilities/Endpoints';
 import { setSessionExpired, setFCMToken } from './src/redux/Auth/slice';
-import { logoutUser } from './src/redux/Auth/authThunk';
+import { logoutUser, sendHeartbeatThunk } from './src/redux/Auth/authThunk';
 import notifee, { EventType } from '@notifee/react-native';
 
 const isOutdated = (current, minimum) => {
@@ -39,6 +39,8 @@ const AppContent = () => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateStoreUrl, setUpdateStoreUrl] = useState('');
   const sessionExpired = useSelector(state => state.auth?.sessionExpired);
+  const userId = useSelector(state => state.auth?.userId);
+  const appStateRef = useRef(AppState.currentState);
 
   useEffect(() => {
     const checkAppVersion = async () => {
@@ -231,6 +233,36 @@ const AppContent = () => {
       cleanupFCM();
     };
   }, [checkConnectivity, dispatch]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const sendHeartbeat = () => {
+      dispatch(sendHeartbeatThunk());
+    };
+
+    // Send heartbeat when app is already active (cold start or login flow complete).
+    if (AppState.currentState === 'active') {
+      sendHeartbeat();
+    }
+
+    const appStateSubscription = AppState.addEventListener(
+      'change',
+      nextAppState => {
+        const wasBackgrounded =
+          appStateRef.current === 'background' ||
+          appStateRef.current === 'inactive';
+        if (wasBackgrounded && nextAppState === 'active') {
+          sendHeartbeat();
+        }
+        appStateRef.current = nextAppState;
+      },
+    );
+
+    return () => {
+      appStateSubscription.remove();
+    };
+  }, [dispatch, userId]);
 
   const handleRetry = useCallback(async () => {
     await checkConnectivity();

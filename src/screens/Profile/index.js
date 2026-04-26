@@ -15,7 +15,10 @@ import { WebView } from 'react-native-webview';
 import { hp, wp, Images } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../../redux/Auth/authThunk';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  SafeAreaProvider,
+} from 'react-native-safe-area-context';
 import { getProfile } from '../../redux/slices';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
@@ -48,6 +51,11 @@ const profileOptions = [
     section: 'GENERAL',
   },
   {
+    title: 'Subscription',
+    icon: Images.HEALTH_RECORD,
+    section: 'GENERAL',
+  },
+  {
     title: 'Terms and Conditions',
     icon: Images.TERMS_AND_CONDITION,
     section: 'GENERAL',
@@ -67,15 +75,14 @@ const Profile = ({ navigation }) => {
   const isCaregiver = role === 'caregiver';
   const [refreshing, setRefreshing] = useState(false);
   const [showWebViewModal, setShowWebViewModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [webViewUrl, setWebViewUrl] = useState('');
   const [isWebViewLoading, setIsWebViewLoading] = useState(false);
 
   // Filter out items that caregivers shouldn't see
   const filteredOptions = profileOptions.filter(item => {
     if (isCaregiver) {
-      return (
-        item.title !== 'Delete Account'
-      );
+      return item.title !== 'Delete Account';
     }
     return true;
   });
@@ -92,6 +99,7 @@ const Profile = ({ navigation }) => {
     'Health Records': 'HealthRecords',
     'Delete Account': 'DeleteAccount',
     Support: 'Support',
+    Subscription: 'SubscriptionDetails',
     'Terms and Conditions': 'TermsAndConditions',
     // Logout: 'Login', // Typically, logout wouldn't navigate to a screen
 
@@ -108,6 +116,10 @@ const Profile = ({ navigation }) => {
             const route = routeMap[item.title]; // Corrected here
 
             if (route) {
+              if (route === 'SubscriptionDetails') {
+                setShowSubscriptionModal(true);
+                return;
+              }
               if (route === 'TermsAndConditions') {
                 setWebViewUrl('https://cuore.health/terms');
                 setShowWebViewModal(true);
@@ -128,8 +140,7 @@ const Profile = ({ navigation }) => {
             style={[
               styles.itemIcon,
               {
-                tintColor:
-                  item.title === 'Logout' ? '#EF4444' : '#64748B',
+                tintColor: item.title === 'Logout' ? '#EF4444' : '#64748B',
               },
             ]}
             resizeMode="contain"
@@ -138,8 +149,7 @@ const Profile = ({ navigation }) => {
             style={[
               styles.itemText,
               {
-                color:
-                  item.title === 'Logout' ? '#EF4444' : '#1E293B',
+                color: item.title === 'Logout' ? '#EF4444' : '#1E293B',
               },
             ]}
           >
@@ -150,8 +160,7 @@ const Profile = ({ navigation }) => {
             style={[
               styles.arrowIcon,
               {
-                tintColor:
-                  item.title === 'Logout' ? '#EF4444' : '#94A3B8',
+                tintColor: item.title === 'Logout' ? '#EF4444' : '#94A3B8',
               },
             ]}
           />
@@ -190,6 +199,15 @@ const Profile = ({ navigation }) => {
   };
   const userID = useSelector(state => state?.auth?.userId);
   const userProfile = useSelector(state => state?.profile?.data?.data);
+  const payment = userProfile?.payment || {};
+  const toLabel = value =>
+    value
+      ? String(value)
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, c => c.toUpperCase())
+      : 'N/A';
+  const toDate = value =>
+    value ? new Date(value).toLocaleDateString() : 'N/A';
   console.log('userProfile', userProfile);
   console.log('userID', userID);
   useEffect(() => {
@@ -265,7 +283,15 @@ const Profile = ({ navigation }) => {
               ) : (
                 <Image source={Images.UNCLE} style={styles.profileImage} />
               )}
-              <Text style={styles.name}>{userProfile?.user?.display_name}</Text>
+              <View style={styles.nameWrapper}>
+                <Text
+                  style={styles.name}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {userProfile?.user?.display_name}
+                </Text>
+              </View>
               <Image source={Images.RIGHT_ARROW} style={styles.profileArrow} />
             </TouchableOpacity>
 
@@ -285,36 +311,81 @@ const Profile = ({ navigation }) => {
         </View>
       </ScrollView>
 
+      {/* Subscription Modal */}
+      <Modal
+        visible={showSubscriptionModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowSubscriptionModal(false)}
+      >
+        <SafeAreaProvider>
+          <SafeAreaView style={styles.webViewContainer} edges={['top', 'bottom']}>
+            <View style={styles.webViewHeader}>
+              <Text style={styles.webViewTitle}>Subscription</Text>
+              <TouchableOpacity
+                onPress={() => setShowSubscriptionModal(false)}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.subscriptionContent}>
+              <View style={styles.subscriptionCard}>
+                <Text style={styles.subscriptionTitle}>Current Plan</Text>
+                <Text style={styles.subscriptionRow}>
+                  Plan: {toLabel(payment?.productId)}
+                </Text>
+                <Text style={styles.subscriptionRow}>
+                  Status: {toLabel(payment?.status)}
+                </Text>
+                <Text style={styles.subscriptionRow}>
+                  Platform: {toLabel(payment?.platform)}
+                </Text>
+                <Text style={styles.subscriptionRow}>
+                  Start Date: {toDate(payment?.startDate)}
+                </Text>
+                <Text style={styles.subscriptionRow}>
+                  End Date: {toDate(payment?.endDate)}
+                </Text>
+              </View>
+            </View>
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </Modal>
+
       {/* WebView Modal for Terms and Conditions */}
       <Modal
         visible={showWebViewModal}
         animationType="slide"
+        presentationStyle="fullScreen"
         onRequestClose={() => setShowWebViewModal(false)}
       >
-        <SafeAreaView style={styles.webViewContainer}>
-          <View style={styles.webViewHeader}>
-            <Text style={styles.webViewTitle}>Terms and Conditions</Text>
-            <TouchableOpacity
-              onPress={() => setShowWebViewModal(false)}
-              style={styles.closeButton}
-            >
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          {isWebViewLoading && (
-            <ActivityIndicator
-              size="large"
-              color="#11418A"
-              style={styles.webViewLoader}
+        <SafeAreaProvider>
+          <SafeAreaView style={styles.webViewContainer} edges={['top', 'bottom']}>
+            <View style={styles.webViewHeader}>
+              <Text style={styles.webViewTitle}>Terms and Conditions</Text>
+              <TouchableOpacity
+                onPress={() => setShowWebViewModal(false)}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            {isWebViewLoading && (
+              <ActivityIndicator
+                size="large"
+                color="#11418A"
+                style={styles.webViewLoader}
+              />
+            )}
+            <WebView
+              source={{ uri: webViewUrl }}
+              onLoadStart={() => setIsWebViewLoading(true)}
+              onLoadEnd={() => setIsWebViewLoading(false)}
+              style={styles.webView}
             />
-          )}
-          <WebView
-            source={{ uri: webViewUrl }}
-            onLoadStart={() => setIsWebViewLoading(true)}
-            onLoadEnd={() => setIsWebViewLoading(false)}
-            style={styles.webView}
-          />
-        </SafeAreaView>
+          </SafeAreaView>
+        </SafeAreaProvider>
       </Modal>
     </SafeAreaView>
   );
@@ -372,12 +443,17 @@ const styles = StyleSheet.create({
     borderRadius: wp(7),
     borderWidth: 2,
     borderColor: '#CBD5E1',
+    flexShrink: 0,
+  },
+  nameWrapper: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: wp(3),
+    justifyContent: 'center',
   },
   name: {
     fontFamily: 'Poppins-Regular',
-    marginLeft: wp(3),
     fontSize: 16,
-    flex: 1,
     color: '#1E293B',
     letterSpacing: -0.3,
   },
@@ -386,6 +462,7 @@ const styles = StyleSheet.create({
     width: wp(5),
     height: wp(5),
     tintColor: '#64748B',
+    flexShrink: 0,
   },
   sectionContainer: {
     marginBottom: hp(2.5),
@@ -487,6 +564,28 @@ const styles = StyleSheet.create({
     marginLeft: -20,
     marginTop: -20,
     zIndex: 1,
+  },
+  subscriptionContent: {
+    padding: wp(4),
+  },
+  subscriptionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: wp(4),
+  },
+  subscriptionTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 16,
+    color: '#1E293B',
+    marginBottom: hp(1.2),
+  },
+  subscriptionRow: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#475569',
+    marginBottom: hp(0.8),
   },
 });
 

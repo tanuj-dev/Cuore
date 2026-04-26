@@ -240,7 +240,7 @@ const EditDoctor = ({ navigation }) => {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
   screen: {
     flex: 1,
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: wp(5),
-    minHeight: hp(80),
+    // minHeight: hp(80),
     margin: wp(4),
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 15,
     fontStyle: 'italic',
-    marginTop: hp(24),
+    // marginTop: hp(24),
     letterSpacing: 0.2,
   },
   findBtn: {

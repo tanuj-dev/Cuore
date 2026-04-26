@@ -21,19 +21,6 @@ import { useCustomAlert } from '../../hooks/useCustomAlert';
 const OTP_LENGTH = 6;
 const createEmptyOtp = () => Array(OTP_LENGTH).fill('');
 
-/** When backend returns test_otp_code (dev/staging), pre-fill the six boxes. */
-const digitsFromTestOtp = testOtp => {
-  if (testOtp == null || testOtp === '') {
-    return createEmptyOtp();
-  }
-  const str = String(testOtp).replace(/\D/g, '');
-  const next = createEmptyOtp();
-  for (let i = 0; i < OTP_LENGTH && i < str.length; i++) {
-    next[i] = str[i];
-  }
-  return next;
-};
-
 const OtpScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -42,11 +29,11 @@ const OtpScreen = () => {
 
   const loading = useSelector(state => state.auth.loading);
 
-  const { phone, role, requestId, retryAfter, testOtp, CreateAccountScreen } =
+  const { phone, role, requestId, retryAfter, CreateAccountScreen } =
     route.params;
   console.log('Route params:', route.params);
 
-  const [otp, setOtp] = useState(() => digitsFromTestOtp(testOtp));
+  const [otp, setOtp] = useState(() => createEmptyOtp());
   const [timer, setTimer] = useState(retryAfter || 30);
   const [loader, setLoader] = useState(false);
 
@@ -249,7 +236,10 @@ const OtpScreen = () => {
       });
     } catch (err) {
       console.log('OTP verification failed:', err.message);
-      // You might want to show an error alert here
+      const rawMessage = err?.message || 'OTP verification failed';
+      const match = rawMessage.match(/\((.+)\)/);
+      const displayMessage = match ? match[1] : rawMessage;
+      alert('Verification Failed', displayMessage);
     }
   };
 
@@ -262,7 +252,7 @@ const OtpScreen = () => {
       console.log('OTP resent:', result);
 
       setTimer(result.retryAfter || 30);
-      setOtp(digitsFromTestOtp(result.testOtp));
+      setOtp(createEmptyOtp());
     } catch (err) {
       console.log('Resend OTP failed:', err.message);
     } finally {

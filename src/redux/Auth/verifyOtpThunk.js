@@ -37,7 +37,7 @@ export const verifyOtp = createAsyncThunk(
 
       const status = res?.status;
       const data = res?.data;
-      const message = data?.message || 'OTP verification response received';
+      const message = data?.message || data?.error || 'OTP verification response received';
 
       if (status === 200) {
         console.log('[verifyOtp] OTP verified successfully');

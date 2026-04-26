@@ -19,18 +19,57 @@ import SkeletonBox from '../../components/SkeletonBox';
 
 const PredictSkeleton = () => (
   <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-    <View style={{ backgroundColor: '#FFF', paddingHorizontal: hp(2), paddingVertical: hp(2), borderBottomWidth: 1, borderBottomColor: '#E2E8F0', alignItems: 'center' }}>
+    <View
+      style={{
+        backgroundColor: '#FFF',
+        paddingHorizontal: hp(2),
+        paddingVertical: hp(2),
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+        alignItems: 'center',
+      }}
+    >
       <SkeletonBox width={80} height={22} />
     </View>
-    <ScrollView scrollEnabled={false} style={{ backgroundColor: '#F8FAFC' }} contentContainerStyle={{ alignItems: 'center', padding: hp(2) }}>
-      <SkeletonBox width={wp(90)} height={64} borderRadius={16} style={{ marginBottom: hp(2.5) }} />
+    <ScrollView
+      scrollEnabled={false}
+      style={{ backgroundColor: '#F8FAFC' }}
+      contentContainerStyle={{ alignItems: 'center', padding: hp(2) }}
+    >
+      <SkeletonBox
+        width={wp(90)}
+        height={64}
+        borderRadius={16}
+        style={{ marginBottom: hp(2.5) }}
+      />
       {[1, 2, 3].map(i => (
-        <View key={i} style={{ backgroundColor: '#FFF', borderRadius: 16, paddingHorizontal: wp(4), paddingVertical: hp(2), marginBottom: hp(2.5), width: wp(90) }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: hp(1.5) }}>
+        <View
+          key={i}
+          style={{
+            backgroundColor: '#FFF',
+            borderRadius: 16,
+            paddingHorizontal: wp(4),
+            paddingVertical: hp(2),
+            marginBottom: hp(2.5),
+            width: wp(90),
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginBottom: hp(1.5),
+            }}
+          >
             <SkeletonBox width={100} height={16} />
             <SkeletonBox width={70} height={32} borderRadius={10} />
           </View>
-          <SkeletonBox width={wp(82)} height={hp(25)} borderRadius={8} style={{ marginBottom: hp(1) }} />
+          <SkeletonBox
+            width={wp(82)}
+            height={hp(25)}
+            borderRadius={8}
+            style={{ marginBottom: hp(1) }}
+          />
           <View style={{ flexDirection: 'row', gap: hp(2), marginTop: hp(1) }}>
             <SkeletonBox width={60} height={14} borderRadius={6} />
             <SkeletonBox width={80} height={14} borderRadius={6} />
@@ -557,19 +596,18 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   footerButton: {
-    alignItems: 'center',
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: hp(3),
-    paddingVertical: hp(1.8),
-    borderRadius: 16,
-    marginTop: hp(3),
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(2.5),
+    borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#BFDBFE',
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    borderColor: '#FECACA',
+    shadowColor: '#DC2626',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
     ...Platform.select({
       android: { elevation: 0.5 },
       ios: { elevation: 3 },
@@ -577,8 +615,8 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
-    fontSize: 16,
+    color: '#DC2626',
+    fontSize: 14,
     letterSpacing: -0.2,
   },
   hintText: {

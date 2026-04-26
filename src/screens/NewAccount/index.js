@@ -110,7 +110,6 @@ const CreateAccountScreen = () => {
               onPress: () =>
                 navigation.navigate('OtpScreen', {
                   requestId: resultAction?.payload.request_id,
-                  testOtp: resultAction?.payload.test_otp_code,
                   CreateAccountScreen: true,
                   phone: mobileNumber,
                 }),

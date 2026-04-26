@@ -34,6 +34,8 @@ const Endpoints = {
   RESTORE_PURCHASES: '/api/subscription/restore',
   NOTES: '/api/v1/notes',
   CHECK_APP_VERSION: '/api/v1/app/version',
+  REQUEST_SUPERVISION: '/api/v1/users/request/supervision',
+  HEARTBEAT: '/api/v1/users/heartbeat',
 };
 
 export default Endpoints;

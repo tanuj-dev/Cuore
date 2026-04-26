@@ -82,33 +82,27 @@ const EditProfile = ({ navigation }) => {
     if (Platform.OS === 'android') {
       try {
         const androidVersion = Platform.Version;
-        let permission;
-        
-        // Android 13+ uses READ_MEDIA_IMAGES
+
+        // Android 13+: Photo Picker — READ_MEDIA_IMAGES not in manifest; do not request.
         if (androidVersion >= 33) {
-          permission = PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES;
-        } else {
-          // Android 12 and below use READ_EXTERNAL_STORAGE
-          permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+          return true;
         }
-        
-        // Check if permission is already granted
+
+        const permission =
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
         const checkResult = await PermissionsAndroid.check(permission);
         if (checkResult) {
           return true;
         }
-        
-        // Request permission
-        const granted = await PermissionsAndroid.request(
-          permission,
-          {
-            title: 'Gallery Permission',
-            message: 'This app needs access to your gallery to select profile photos.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          },
-        );
+
+        const granted = await PermissionsAndroid.request(permission, {
+          title: 'Gallery Permission',
+          message:
+            'This app needs access to your gallery to select profile photos.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        });
         return granted === PermissionsAndroid.RESULTS.GRANTED;
       } catch (err) {
         console.warn('Storage permission error:', err);

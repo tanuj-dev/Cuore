@@ -11,6 +11,9 @@ import {
 const { width } = Dimensions.get('window');
 
 const CustomAlert = ({ visible, title, message, buttons, onDismiss }) => {
+  const buttonList = buttons && buttons.length > 0 ? buttons : null;
+  const useVerticalActions = buttonList && buttonList.length > 2;
+
   return (
     <Modal
       visible={visible}
@@ -29,16 +32,23 @@ const CustomAlert = ({ visible, title, message, buttons, onDismiss }) => {
           {message && <Text style={styles.message}>{message}</Text>}
 
           {/* Buttons */}
-          <View style={styles.buttonContainer}>
-            {buttons && buttons.length > 0 ? (
-              buttons.map((button, index) => (
+          <View
+            style={[
+              styles.buttonContainer,
+              useVerticalActions && styles.buttonContainerStacked,
+            ]}
+          >
+            {buttonList ? (
+              buttonList.map((button, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.button,
+                    useVerticalActions && styles.buttonStacked,
+                    !useVerticalActions && styles.buttonRow,
                     button.style === 'cancel' && styles.cancelButton,
                     button.style === 'destructive' && styles.destructiveButton,
-                    buttons.length === 1 && styles.singleButton,
+                    buttonList.length === 1 && styles.singleButton,
                   ]}
                   onPress={() => {
                     if (button.onPress) button.onPress();
@@ -52,6 +62,7 @@ const CustomAlert = ({ visible, title, message, buttons, onDismiss }) => {
                       button.style === 'destructive' &&
                         styles.destructiveButtonText,
                     ]}
+                    numberOfLines={2}
                   >
                     {button.text || 'OK'}
                   </Text>
@@ -116,14 +127,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
+  buttonContainerStacked: {
+    flexDirection: 'column',
+    gap: 10,
+  },
   button: {
-    flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 10,
     backgroundColor: '#11418A',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonRow: {
+    flex: 1,
+    minWidth: 0,
+  },
+  buttonStacked: {
+    alignSelf: 'stretch',
+    width: '100%',
   },
   singleButton: {
     flex: 1,
@@ -139,6 +161,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     color: '#FFFFFF',
     letterSpacing: 0.2,
+    textAlign: 'center',
   },
   cancelButtonText: {
     color: '#475569',

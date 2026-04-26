@@ -210,33 +210,24 @@ const HealthRecords = ({ navigation }) => {
       try {
         const androidVersion = Platform.Version;
 
-        // Android 13+ (API 33+) uses READ_MEDIA_IMAGES
+        // Android 13+ (API 33+): manifest uses the system Photo Picker — READ_MEDIA_IMAGES
+        // is intentionally not declared (tools:node="remove"). Do not request it here or
+        // launchImageLibrary will never run.
         if (androidVersion >= 33) {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-            {
-              title: 'Gallery Permission',
-              message:
-                'Allow this app to access your photos to select health records.',
-              buttonPositive: 'Allow',
-              buttonNegative: 'Deny',
-            },
-          );
-          return granted === PermissionsAndroid.RESULTS.GRANTED;
-        } else {
-          // Android 12 and below use READ_EXTERNAL_STORAGE
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-            {
-              title: 'Gallery Permission',
-              message:
-                'Allow this app to access your photos to select health records.',
-              buttonPositive: 'Allow',
-              buttonNegative: 'Deny',
-            },
-          );
-          return granted === PermissionsAndroid.RESULTS.GRANTED;
+          return true;
         }
+
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          {
+            title: 'Gallery Permission',
+            message:
+              'Allow this app to access your photos to select health records.',
+            buttonPositive: 'Allow',
+            buttonNegative: 'Deny',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
       } catch (err) {
         console.error('Storage permission error:', err);
         return false;
@@ -617,17 +608,6 @@ const HealthRecords = ({ navigation }) => {
                     ? `${selectedFiles.length} file(s) selected`
                     : `PNG, JPG, PDF up to ${MAX_FILE_SIZE_MB}MB, max ${MAX_FILES_PER_UPLOAD} files`}
                 </Text>
-                <Text
-                  style={[
-                    styles.uploadDisclaimer,
-                    isCaregiver && styles.textDisabled,
-                  ]}
-                >
-                  {isCaregiver
-                    ? 'Only the account holder can upload or manage records'
-                    : `Make sure the uploaded health record belongs to you.
-Your document will be processed using AI (LLaMA 4 Scout via Groq) for text extraction and summarization. Only the document content is sent — no personal identifiers. Groq does not store your data. See Privacy Policy.`}
-                </Text>
               </TouchableOpacity>
 
               {/* Display Selected Files */}
@@ -924,139 +904,29 @@ Your document will be processed using AI (LLaMA 4 Scout via Groq) for text extra
                     AI Data Processing Consent
                   </Text>
 
-                  <Text style={styles.consentBrainIcon}>🧠</Text>
-
-                  <Text style={styles.consentSubtitle}>
-                    How Your Documents Are Processed
+                  <Text style={styles.consentBody}>
+                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
+                      How it works:{' '}
+                    </Text>
+                    {`We use AI to read your document and generate a summary for easy review.`}
                   </Text>
                   <Text style={styles.consentBody}>
-                    Before you upload any health records, please read how your
-                    documents are handled.
-                  </Text>
-
-                  <View style={styles.consentDivider} />
-
-                  <Text style={styles.consentSectionTitle}>📄 What We Do</Text>
-                  <Text style={styles.consentBody}>
-                    When you upload a prescription, lab report, or doctor's
-                    note, we use AI to extract the text and create a summary so
-                    you can easily review and organize your health records
-                    within the app.
-                  </Text>
-
-                  <Text style={styles.consentSectionTitle}>
-                    🖥️ Who Processes Your Documents
+                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
+                      What is shared:{' '}
+                    </Text>
+                    {`Only the document you upload is processed — no name, phone, email, device ID, or health logs are shared.`}
                   </Text>
                   <Text style={styles.consentBody}>
-                    Your documents are processed using the LLaMA 4 Scout AI
-                    model, hosted by Groq, Inc. — a third-party cloud inference
-                    provider based in the United States.
+                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
+                      Privacy & security:{' '}
+                    </Text>
+                    {`Processed securely by a trusted provider (Groq, US servers) on our behalf, only to create your summary. Your data is encrypted and stored in your Cuore account. You can delete it anytime.`}
                   </Text>
                   <Text style={styles.consentBody}>
-                    Groq is a third-party service and is not owned or operated
-                    by Cuore Health.
-                  </Text>
-
-                  <Text style={styles.consentSectionTitle}>
-                    📤 What Is Sent to Groq
-                  </Text>
-                  <View style={styles.consentListItem}>
-                    <Text style={styles.consentCheckMark}>✓</Text>
-                    <Text style={styles.consentListText}>
-                      The document image or PDF you upload — this is the ONLY
-                      data sent to Groq
+                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
+                      Important:{' '}
                     </Text>
-                  </View>
-                  <View style={styles.consentListItem}>
-                    <Text style={styles.consentCrossMark}>✗</Text>
-                    <Text style={styles.consentListText}>
-                      Your name is NOT sent
-                    </Text>
-                  </View>
-                  <View style={styles.consentListItem}>
-                    <Text style={styles.consentCrossMark}>✗</Text>
-                    <Text style={styles.consentListText}>
-                      Your email is NOT sent
-                    </Text>
-                  </View>
-                  <View style={styles.consentListItem}>
-                    <Text style={styles.consentCrossMark}>✗</Text>
-                    <Text style={styles.consentListText}>
-                      Your phone number is NOT sent
-                    </Text>
-                  </View>
-                  <View style={styles.consentListItem}>
-                    <Text style={styles.consentCrossMark}>✗</Text>
-                    <Text style={styles.consentListText}>
-                      Your device ID is NOT sent
-                    </Text>
-                  </View>
-                  <View style={styles.consentListItem}>
-                    <Text style={styles.consentCrossMark}>✗</Text>
-                    <Text style={styles.consentListText}>
-                      Your vitals, nutrition, and fitness data are NOT sent
-                    </Text>
-                  </View>
-
-                  <Text style={styles.consentSectionTitle}>
-                    🔒 How Your Data Is Protected
-                  </Text>
-                  <View style={styles.consentBulletItem}>
-                    <Text style={styles.consentBullet}>•</Text>
-                    <Text style={styles.consentListText}>
-                      All documents are encrypted during transmission using TLS
-                      1.3 encryption.
-                    </Text>
-                  </View>
-                  <View style={styles.consentBulletItem}>
-                    <Text style={styles.consentBullet}>•</Text>
-                    <Text style={styles.consentListText}>
-                      Groq processes your data as a data processor on behalf of
-                      Cuore Health, governed by their Services Agreement and
-                      Data Processing Addendum.
-                    </Text>
-                  </View>
-                  <View style={styles.consentBulletItem}>
-                    <Text style={styles.consentBullet}>•</Text>
-                    <Text style={styles.consentListText}>
-                      Only the document content is sent — no personal
-                      identifiers such as your name, email, or phone number are
-                      included.
-                    </Text>
-                  </View>
-                  <View style={styles.consentBulletItem}>
-                    <Text style={styles.consentBullet}>•</Text>
-                    <Text style={styles.consentListText}>
-                      The AI-generated summary is stored securely on Cuore's own
-                      servers, linked to your account.
-                    </Text>
-                  </View>
-                  <View style={styles.consentBulletItem}>
-                    <Text style={styles.consentBullet}>•</Text>
-                    <Text style={styles.consentListText}>
-                      Your document content may be processed on servers located
-                      in the United States.
-                    </Text>
-                  </View>
-                  <View style={styles.consentBulletItem}>
-                    <Text style={styles.consentBullet}>•</Text>
-                    <Text style={styles.consentListText}>
-                      You can delete your uploaded records at any time from the
-                      Health Records screen in the app.
-                    </Text>
-                  </View>
-
-                  <Text style={styles.consentSectionTitle}>
-                    ⚠️ Important Disclaimer
-                  </Text>
-                  <Text style={styles.consentBody}>
-                    AI-generated summaries are for informational and
-                    organizational purposes only. They are NOT a medical
-                    diagnosis, treatment recommendation, or clinical advice. AI
-                    text extraction may contain errors or omissions. Always
-                    verify the summary against your original document and
-                    consult your healthcare provider before making any medical
-                    decisions.
+                    {`This summary is for information only — not medical advice. Please verify with your doctor.`}
                   </Text>
 
                   <View style={styles.consentDivider} />
@@ -1085,12 +955,7 @@ Your document will be processed using AI (LLaMA 4 Scout via Groq) for text extra
                   </TouchableOpacity>
 
                   <Text style={styles.consentAgreementText}>
-                    I agree that my uploaded health documents will be sent to
-                    Groq, Inc. (a third-party provider based in the United
-                    States) for AI-powered text extraction and summarization. I
-                    understand that only the document content is shared and no
-                    personal identifiers are included. Processing is governed by
-                    Groq's Services Agreement and Data Processing Addendum.
+                    {`I agree that my uploaded document will be processed by a secure third-party AI service for summarization. No personal identifiers are shared.`}
                   </Text>
 
                   <View style={styles.consentLinksRow}>
@@ -1203,7 +1068,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   uploadIcon: {
-    tintColor: '#047857',
+    // tintColor: '#047857',
     height: hp(4),
     width: wp(7),
     resizeMode: 'contain',

@@ -1,9 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import EncryptedStorage from 'react-native-encrypted-storage';
-import { postApiCall, deleteApiCall } from '../../utilities/Services';
+import { postApiCall, deleteApiCall, putApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
 import Constants from '../../utilities/Constants';
+import FCMService from '../../notifications/FCMService';
+import { setFCMToken } from './slice';
 
 export const sendOtp = createAsyncThunk(
   'auth/sendOtp',
@@ -175,6 +177,57 @@ export const deleteAccountThunk = createAsyncThunk(
       console.log('DELETEACCOUNT ERROR:', error);
       return rejectWithValue(
         error?.response?.data || { message: 'Something went wrong' },
+      );
+    }
+  },
+);
+
+/**
+ * POST /api/v1/users/heartbeat
+ * Called when app comes to foreground so backend can track wakeups and schedule push notifications.
+ */
+export const sendHeartbeatThunk = createAsyncThunk(
+  'auth/sendHeartbeat',
+  async (_, { rejectWithValue, getState, dispatch }) => {
+    try {
+      const state = getState();
+      const userId = state?.auth?.userId;
+      let fcmToken = state?.auth?.fcmToken || null;
+
+      if (!userId) {
+        return rejectWithValue({ message: 'No user session for heartbeat' });
+      }
+
+      // Fallback: heartbeat may trigger before onToken stores token in Redux.
+      if (!fcmToken) {
+        const freshToken = await FCMService.getToken();
+        if (freshToken) {
+          fcmToken = freshToken;
+          dispatch(setFCMToken(freshToken));
+        }
+      }
+
+      const timezone = 'Asia/Kolkata';
+      const wakeupTime = new Date().toISOString();
+
+      const payload = {
+        timezone,
+        wakeupTime,
+        fcmToken,
+      };
+
+      const response = await putApiCall(EndPoints.HEARTBEAT, payload);
+
+      if (response?.status === 200 || response?.status === 201) {
+        return response.data;
+      }
+
+      return rejectWithValue(
+        response?.data || { message: 'Failed to send heartbeat' },
+      );
+    } catch (error) {
+      return rejectWithValue(
+        error?.response?.data || { message: 'Failed to send heartbeat' },
       );
     }
   },

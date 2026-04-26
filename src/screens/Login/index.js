@@ -52,7 +52,6 @@ const Login = ({ navigation }) => {
         role,
         requestId: result.requestId,
         retryAfter: result.retryAfter,
-        testOtp: result.testOtp,
       });
     } catch (err) {
       console.log('OTP failed:<=====', err.message);

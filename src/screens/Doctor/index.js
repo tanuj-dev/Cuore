@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Images, hp, wp } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
-import { getDoctors, searchDoctors } from '../../redux/Profile/profileThunk';
+import {
+  getDoctors,
+  requestSupervision,
+  searchDoctors,
+} from '../../redux/Profile/profileThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 /** Labels match product picker; `value` is sent as ?specialization= (e.g. cardio) */
@@ -38,103 +42,231 @@ const DOCTOR_SPECIALIZATIONS = [
   { label: 'Pediatrician', value: 'pediatrician' },
 ];
 
-function doctorMatchesNameQuery(doc, rawQuery) {
-  const q = String(rawQuery || '')
+const PAGE_SIZE = 10;
+
+const doctorRowId = doc => doc?._id ?? doc?.id;
+
+/** Only Active / Pending are shown; e.g. prohibited is hidden */
+const formatDoctorStatus = status => {
+  const s = String(status ?? '')
     .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
-  if (!q) return true;
-  const name = String(doc?.name || '').toLowerCase();
-  return name.includes(q);
-}
+    .toLowerCase();
+  if (s === 'active') return 'Active';
+  if (s === 'pending') return 'Pending';
+  return '';
+};
 
 const Doctor = ({ navigation }) => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
-  const { data, loading } = useSelector(state => state.doctors);
+  const { loading } = useSelector(state => state.doctors);
 
   const [doctors, setDoctors] = useState([]);
   const [specialization, setSpecialization] = useState(null);
   const [specModalVisible, setSpecModalVisible] = useState(false);
-  /** Client-side only; filters current list (API has no name search) */
   const [nameSearch, setNameSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [requestingSupervision, setRequestingSupervision] = useState(false);
 
-  const filteredDoctors = useMemo(
-    () => doctors.filter(d => doctorMatchesNameQuery(d, nameSearch)),
-    [doctors, nameSearch],
+  const selectedDoctor = useMemo(
+    () => doctors.find(d => d.selected),
+    [doctors],
   );
 
-  useEffect(() => {
-    dispatch(getDoctors());
-  }, [dispatch]);
-
-  useEffect(() => {
-    const list = data?.data?.data ?? [];
-    setDoctors(list.map(doc => ({ ...doc, selected: doc.selected === true })));
-  }, [data?.data?.data]);
-
   const toggleSelection = id => {
-    setDoctors(prev => prev.map(doc => ({ ...doc, selected: doc._id === id })));
+    if (id == null) return;
+    setDoctors(prev =>
+      prev.map(doc => ({ ...doc, selected: doctorRowId(doc) === id })),
+    );
   };
 
-  const applyDoctorList = (result, fallbackMessage) => {
-    if (result?.success) {
-      setDoctors(
-        (result?.data?.data || []).map(d => ({ ...d, selected: false })),
-      );
-    } else {
-      alert('Search', result?.message || fallbackMessage);
-    }
+  const getListFromResult = result => {
+    if (Array.isArray(result?.data?.data)) return result.data.data;
+    if (Array.isArray(result?.data?.items)) return result.data.items;
+    if (Array.isArray(result?.data)) return result.data;
+    return [];
   };
 
-  const fetchBySpecialization = async specValue => {
-    try {
-      const result = await dispatch(searchDoctors(specValue)).unwrap();
-      applyDoctorList(result, 'No doctors found.');
-    } catch (e) {
-      const msg =
-        typeof e === 'string'
-          ? e
-          : e?.message || e?.payload?.message || 'Search failed.';
-      alert('Error', msg);
-    }
+  const getPaginationFromResult = result =>
+    result?.data?.pagination || result?.data?.meta || {};
+
+  const fetchDoctors = useCallback(
+    async ({ nextPage = 1, append = false, searchValue, specValue } = {}) => {
+      const search = String(searchValue ?? nameSearch).trim();
+      const specializationValue = specValue ?? specialization?.value ?? '';
+      const filters = {
+        search,
+        specialization: specializationValue,
+        page: nextPage,
+        limit: PAGE_SIZE,
+      };
+
+      try {
+        const action = search || specializationValue ? searchDoctors : getDoctors;
+        const result = await dispatch(action(filters)).unwrap();
+        if (!result?.success) {
+          alert('Search', result?.message || 'No doctors found.');
+          return;
+        }
+
+        const list = getListFromResult(result).map(d => ({
+          ...d,
+          selected: false,
+        }));
+        const pagination = getPaginationFromResult(result);
+        const totalPages =
+          Number(pagination?.totalPages || pagination?.total_pages) || null;
+        const currentPage =
+          Number(
+            pagination?.page ||
+              pagination?.currentPage ||
+              pagination?.current_page,
+          ) || nextPage;
+
+        setDoctors(prev => {
+          if (!append) return list;
+          const existing = new Set(prev.map(d => d._id || d.id));
+          const merged = [...prev];
+          list.forEach(item => {
+            const key = item._id || item.id;
+            if (!existing.has(key)) merged.push(item);
+          });
+          return merged;
+        });
+
+        if (totalPages != null) {
+          setHasMore(currentPage < totalPages);
+        } else {
+          setHasMore(list.length >= PAGE_SIZE);
+        }
+
+        setPage(nextPage);
+      } catch (e) {
+        const msg =
+          typeof e === 'string'
+            ? e
+            : e?.message || e?.payload?.message || 'Search failed.';
+        alert('Error', msg);
+        if (!append) {
+          setDoctors([]);
+          setHasMore(false);
+        }
+      } finally {
+        if (append) setLoadingMore(false);
+      }
+    },
+    [alert, dispatch, nameSearch, specialization?.value],
+  );
+
+  const loadMore = async () => {
+    if (loading || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    await fetchDoctors({ nextPage: page + 1, append: true });
   };
 
   const handlePickSpecialization = async item => {
     setSpecModalVisible(false);
-    if (item == null) {
-      setSpecialization(null);
-      dispatch(getDoctors());
-      return;
-    }
-    setSpecialization(item);
-    await fetchBySpecialization(item.value);
+    setSpecialization(item || null);
   };
 
-  const handleRequestSupervision = () => {
-    alert(
-      'Request Sent',
-      "Your request has been sent. Someone from the doctor's office will get in touch with you.",
-      [
-        {
-          text: 'OK',
-          onPress: () =>
-            navigation.reset({ index: 0, routes: [{ name: 'Home' }] }),
-        },
-      ],
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHasMore(true);
+      fetchDoctors({
+        nextPage: 1,
+        append: false,
+        searchValue: nameSearch,
+        specValue: specialization?.value || '',
+      });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [nameSearch, specialization?.value, fetchDoctors]);
+
+  const hasFilters = useMemo(
+    () => Boolean(String(nameSearch).trim() || specialization?.value),
+    [nameSearch, specialization?.value],
+  );
+
+  /** Your doctor(s) first, then others; order within each group preserved */
+  const sortedDoctors = useMemo(() => {
+    const copy = [...doctors];
+    copy.sort((a, b) => {
+      const aMine = Boolean(a.isMyDoctor);
+      const bMine = Boolean(b.isMyDoctor);
+      if (aMine !== bMine) return aMine ? -1 : 1;
+      return 0;
+    });
+    return copy;
+  }, [doctors]);
+
+  const emptyText = hasFilters ? 'No doctors found for your filters.' : 'No doctors found.';
+  const emptySubText = hasFilters
+    ? 'Try another name or specialization.'
+    : 'Try again after some time.';
+
+  const renderLoadMore = () => {
+    if (!doctors.length || !hasMore) return null;
+    return (
+      <TouchableOpacity
+        onPress={loadMore}
+        style={styles.loadMoreButton}
+        disabled={loadingMore}
+        activeOpacity={0.85}
+      >
+        {loadingMore ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text style={styles.loadMoreText}>Load more</Text>
+        )}
+      </TouchableOpacity>
     );
+  };
+
+  const handleRequestSupervision = async () => {
+    const id = doctorRowId(selectedDoctor);
+    if (!id) {
+      alert('Select a doctor', 'Please choose a doctor to request supervision.');
+      return;
+    }
+    try {
+      setRequestingSupervision(true);
+      await dispatch(requestSupervision({ _id: id })).unwrap();
+      alert(
+        'Request sent',
+        "Your request has been sent. Someone from the doctor's office will get in touch with you.",
+        [
+          {
+            text: 'OK',
+            onPress: () =>
+              navigation.reset({ index: 0, routes: [{ name: 'Home' }] }),
+          },
+        ],
+      );
+    } catch (e) {
+      const msg =
+        typeof e === 'string'
+          ? e
+          : e?.message || e?.payload?.message || 'Could not send request.';
+      alert('Error', msg);
+    } finally {
+      setRequestingSupervision(false);
+    }
   };
 
   const renderDoctorCard = (item, index) => {
     const isSelected = item.selected;
-    const feeParts = String(item.fees || '')
-      .split('   ')
-      .filter(Boolean);
+    const isMyDoctor = Boolean(item.isMyDoctor);
+    const statusLabel = formatDoctorStatus(item.status);
+    const statusLower = String(item.status ?? '')
+      .trim()
+      .toLowerCase();
 
     return (
       <View key={item._id || item.id || index} style={styles.cardRow}>
         <TouchableOpacity
-          onPress={() => toggleSelection(item._id)}
+          onPress={() => toggleSelection(doctorRowId(item))}
           style={[
             styles.checkboxCircle,
             isSelected && styles.checkboxCircleSelected,
@@ -147,10 +279,46 @@ const Doctor = ({ navigation }) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.card, isSelected && styles.cardSelected]}
-          onPress={() => toggleSelection(item._id)}
+          style={[
+            styles.card,
+            isMyDoctor && styles.cardMyDoctor,
+            isSelected && styles.cardSelected,
+            isMyDoctor && isSelected && styles.cardMyDoctorSelected,
+          ]}
+          onPress={() => toggleSelection(doctorRowId(item))}
           activeOpacity={0.85}
         >
+          {statusLabel || isMyDoctor ? (
+            <View style={styles.cardStatusRow}>
+              {statusLabel ? (
+                <View
+                  style={[
+                    styles.statusBadge,
+                    statusLower === 'active' && styles.statusBadgeActive,
+                    statusLower === 'pending' && styles.statusBadgePending,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusBadgeText,
+                      statusLower === 'active' && styles.statusBadgeTextActive,
+                      statusLower === 'pending' &&
+                        styles.statusBadgeTextPending,
+                    ]}
+                  >
+                    {statusLabel}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.statusBadgeSpacer} />
+              )}
+              {isMyDoctor ? (
+                <View style={styles.myDoctorTag}>
+                  <Text style={styles.myDoctorTagText}>Your doctor</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
           <View style={styles.cardTop}>
             <View style={styles.details}>
               <Text style={styles.name}>{item.name}</Text>
@@ -182,6 +350,8 @@ const Doctor = ({ navigation }) => {
       </View>
     );
   };
+
+  const footerContent = renderLoadMore();
 
   return (
     <>
@@ -240,7 +410,7 @@ const Doctor = ({ navigation }) => {
 
           <Text style={styles.filterLabel}>Search by name</Text>
           <Text style={styles.nameSearchHint}>
-            Filters the doctors above on your device — names only.
+            Search doctors by name from server.
           </Text>
           <View style={styles.nameSearchBox}>
             <Image style={styles.nameSearchIcon} source={Images.SEARCH} />
@@ -276,24 +446,17 @@ const Doctor = ({ navigation }) => {
             </View>
           ) : doctors.length === 0 ? (
             <View style={styles.emptyWrap}>
-              <Text style={styles.emptyText}>No doctors found.</Text>
+              <Text style={styles.emptyText}>{emptyText}</Text>
               <Text style={styles.emptySubText}>
-                Try another specialization or view all doctors.
-              </Text>
-            </View>
-          ) : filteredDoctors.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <Text style={styles.emptyText}>No name match</Text>
-              <Text style={styles.emptySubText}>
-                No doctor in this list matches “{nameSearch.trim()}”. Clear the
-                name search or pick another specialization.
+                {emptySubText}
               </Text>
             </View>
           ) : (
             <View style={styles.listWrap}>
-              {filteredDoctors.map((item, index) =>
+              {sortedDoctors.map((item, index) =>
                 renderDoctorCard(item, index),
               )}
+              {footerContent}
             </View>
           )}
         </ScrollView>
@@ -354,15 +517,22 @@ const Doctor = ({ navigation }) => {
           </TouchableOpacity>
         </Modal>
 
-        <View style={styles.footer}>
-          <TouchableOpacity
-            onPress={handleRequestSupervision}
-            style={styles.button}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.buttonText}>Request Supervision</Text>
-          </TouchableOpacity>
-        </View>
+        {selectedDoctor ? (
+          <View style={styles.footer}>
+            <TouchableOpacity
+              onPress={handleRequestSupervision}
+              style={styles.button}
+              activeOpacity={0.85}
+              disabled={requestingSupervision}
+            >
+              {requestingSupervision ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>Request Supervision</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </SafeAreaView>
     </>
   );
@@ -602,6 +772,21 @@ const styles = StyleSheet.create({
   listWrap: {
     paddingHorizontal: wp(4),
   },
+  loadMoreButton: {
+    marginTop: hp(1),
+    marginBottom: hp(2),
+    alignSelf: 'center',
+    backgroundColor: '#11418A',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(6),
+    borderRadius: 10,
+  },
+  loadMoreText: {
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
+    fontSize: 13,
+    letterSpacing: 0.2,
+  },
   cardRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -636,6 +821,8 @@ const styles = StyleSheet.create({
     padding: wp(3.5),
     borderLeftWidth: 3,
     borderLeftColor: '#CBD5E1',
+    borderWidth: 1,
+    borderColor: 'transparent',
     ...Platform.select({
       android: { elevation: 1 },
       ios: {
@@ -646,9 +833,65 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  cardMyDoctor: {
+    backgroundColor: '#ECFDF5',
+    borderLeftColor: '#16A34A',
+    borderColor: '#BBF7D0',
+  },
   cardSelected: {
     borderLeftColor: '#11418A',
     backgroundColor: '#F8FAFF',
+  },
+  cardMyDoctorSelected: {
+    borderLeftColor: '#15803D',
+    backgroundColor: '#D1FAE5',
+    borderColor: '#86EFAC',
+  },
+  cardStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: hp(1),
+    minHeight: hp(2.6),
+  },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingVertical: hp(0.35),
+    paddingHorizontal: wp(2.2),
+    borderRadius: 8,
+  },
+  statusBadgeActive: {
+    backgroundColor: '#DCFCE7',
+  },
+  statusBadgePending: {
+    backgroundColor: '#FEF3C7',
+  },
+  statusBadgeText: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 11,
+    letterSpacing: 0.2,
+  },
+  statusBadgeTextActive: {
+    color: '#166534',
+  },
+  statusBadgeTextPending: {
+    color: '#92400E',
+  },
+  statusBadgeSpacer: {
+    flex: 1,
+  },
+  myDoctorTag: {
+    backgroundColor: '#16A34A',
+    paddingVertical: hp(0.35),
+    paddingHorizontal: wp(2.5),
+    borderRadius: 8,
+    marginLeft: wp(2),
+  },
+  myDoctorTagText: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 11,
+    color: '#FFFFFF',
+    letterSpacing: 0.15,
   },
   cardTop: {
     flexDirection: 'row',
