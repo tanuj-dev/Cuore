@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -20,15 +21,17 @@ import ApiErrorFallback from '../../components/ApiError';
 import Toast from '../../components/Toast';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const NutritionSkeleton = () => (
-  <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+const NutritionSkeleton = () => {
+  const { colors: c } = useAppTheme();
+  return (
+  <View style={{ flex: 1, backgroundColor: c.background }}>
     {/* Fixed header */}
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: hp(2), paddingVertical: hp(1) }}>
       <SkeletonBox width={wp(4)} height={hp(3)} borderRadius={4} />
       <SkeletonBox width={wp(4)} height={hp(2)} borderRadius={4} />
     </View>
     {/* Image background area */}
-    <View style={{ backgroundColor: '#CBD5E1', padding: hp(2), gap: hp(2) }}>
+    <View style={{ backgroundColor: c.icon, padding: hp(2), gap: hp(2) }}>
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: hp(2) }}>
         <SkeletonBox width={wp(36)} height={hp(5.5)} borderRadius={12} />
         <SkeletonBox width={wp(36)} height={hp(5.5)} borderRadius={12} />
@@ -39,7 +42,7 @@ const NutritionSkeleton = () => (
     {/* Meal cards */}
     <ScrollView scrollEnabled={false} contentContainerStyle={{ padding: wp(5), gap: hp(2) }}>
       {[1, 2, 3, 4, 5].map(i => (
-        <View key={i} style={{ backgroundColor: '#FFF', borderRadius: 12, padding: wp(4), borderLeftWidth: 3, borderLeftColor: '#E2E8F0' }}>
+        <View key={i} style={{ backgroundColor: c.card, borderRadius: 12, padding: wp(4), borderLeftWidth: 3, borderLeftColor: c.border }}>
           <SkeletonBox width="65%" height={16} style={{ marginBottom: hp(1) }} />
           <SkeletonBox width="90%" height={12} borderRadius={4} style={{ marginBottom: hp(0.6) }} />
           <SkeletonBox width="75%" height={12} borderRadius={4} style={{ marginBottom: hp(0.6) }} />
@@ -52,9 +55,13 @@ const NutritionSkeleton = () => (
       ))}
     </ScrollView>
   </View>
-);
+  );
+};
 
 const Nutrition = ({ navigation, route }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const mealTime = route?.params?.mealTime || 'Breakfast';
   const [activeTab, setActiveTab] = useState(mealTime);
   const [loading, setLoading] = useState(false);
@@ -75,7 +82,7 @@ const Nutrition = ({ navigation, route }) => {
     } else if (activeTab === 'LunchDinner') {
       dispatch(getNourish('Lunch/Dinner'));
     }
-  }, [activeTab]);
+  }, [activeTab, dispatch]);
 
   useEffect(() => {
     if (nourishData?.meal_plan) {
@@ -414,8 +421,8 @@ const Nutrition = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+const createStyles = c => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.surface },
   fixedHeader: {
     // position: 'absolute',
     // top: Platform.OS === 'ios' ? hp(0) : hp(1.5),
@@ -443,7 +450,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     paddingHorizontal: hp(5),
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     textAlign: 'center',
     marginTop: hp(1.5),
     lineHeight: 22,
@@ -454,7 +461,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderLeftWidth: 3,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     padding: wp(4),
     marginBottom: hp(1.8),
@@ -468,14 +475,14 @@ const styles = StyleSheet.create({
   mealTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(0.5),
     letterSpacing: -0.2,
   },
   detail: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     lineHeight: 18,
     letterSpacing: 0.1,
   },
@@ -488,7 +495,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginLeft: hp(0),
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   tabButton: {
@@ -507,12 +514,12 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     height: hp(3),
     width: wp(4),
-    tintColor: '#FFFFFF',
+    tintColor: c.card,
   },
   tabText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: c.card,
     marginLeft: hp(1),
     letterSpacing: 0.3,
   },
@@ -528,40 +535,40 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     marginHorizontal: hp(1),
     marginTop: hp(2),
     paddingHorizontal: hp(2),
     paddingVertical: hp(1.2),
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   searchPlaceholder: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#94A3B8',
+    color: c.tabInactive,
     letterSpacing: 0.2,
   },
   searchIcon: {
     height: hp(2.5),
     width: wp(4),
     resizeMode: 'contain',
-    tintColor: '#94A3B8',
+    tintColor: c.tabInactive,
     marginRight: hp(1),
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#1E293B',
+    color: c.text,
     paddingVertical: Platform.OS === 'ios' ? hp(1.5) : 0,
     letterSpacing: 0.2,
   },
   noResultText: {
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
-    color: '#64748B',
+    color: c.subText,
     fontSize: 14,
     marginTop: hp(2),
     letterSpacing: 0.2,

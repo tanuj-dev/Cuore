@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 
 const MealItem = ({item, onAdd}) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const getColor = () => {
     switch (item.tag) {
       case 'include':
@@ -33,7 +37,7 @@ const MealItem = ({item, onAdd}) => {
 
 export default MealItem;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',

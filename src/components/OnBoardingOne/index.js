@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -19,6 +20,9 @@ const genderOptions = [
 ];
 
 const OnBoarding2 = ({ onFormChange, initialData }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [gender, setGender] = useState('');
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [errors, setErrors] = useState({});
@@ -197,34 +201,34 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
 export default OnBoarding2;
 
 // --- Styles
-const styles = StyleSheet.create({
-  container: { padding: 2, backgroundColor: '#FFFFFF', flexGrow: 1 },
+const createStyles = c => StyleSheet.create({
+  container: { padding: 2, backgroundColor: c.card, flexGrow: 1 },
   card: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     padding: 18,
     borderRadius: 12,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   label: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
     marginBottom: 6,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   input: {
-    color: '#1E293B',
+    color: c.text,
     fontSize: 15,
     fontFamily: 'Poppins-Regular',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     letterSpacing: 0.2,
   },
   modalOverlay: {
@@ -234,7 +238,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     width: '80%',
     borderRadius: 16,
     padding: 24,
@@ -242,19 +246,19 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 16,
     letterSpacing: -0.3,
   },
   modalItem: {
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: c.divider,
   },
   modalItemText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   modalCancel: {
@@ -264,7 +268,7 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: c.primary,
     fontSize: 15,
     letterSpacing: 0.3,
   },

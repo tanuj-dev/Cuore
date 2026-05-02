@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -14,6 +15,9 @@ import { setUserData } from '../../redux/Auth/slice';
 import { hp, wp, Images } from '../../utilities';
 
 const Splash = () => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
@@ -221,12 +225,12 @@ const Splash = () => {
 
 export default Splash;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
 
   /* Decorative background circles */
@@ -268,7 +272,7 @@ const styles = StyleSheet.create({
     width: wp(32),
     height: wp(32),
     borderRadius: wp(16),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#11418A',
@@ -285,7 +289,7 @@ const styles = StyleSheet.create({
   appName: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: hp(4),
-    color: '#11418A',
+    color: c.primary,
     letterSpacing: 2,
   },
 
@@ -298,7 +302,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Poppins-Medium',
     fontSize: hp(1.9),
-    color: '#1E293B',
+    color: c.text,
     textAlign: 'center',
     letterSpacing: 0.4,
     marginBottom: hp(1.2),
@@ -313,7 +317,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: hp(1.6),
-    color: '#64748B',
+    color: c.subText,
     textAlign: 'center',
     letterSpacing: 0.3,
   },

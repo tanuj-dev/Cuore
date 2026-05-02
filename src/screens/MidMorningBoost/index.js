@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -14,6 +15,9 @@ import { Images, hp, wp } from '../../utilities';
 import MealOptionCard from '../../components/MealOptionCard';
 
 const MidMorningBoost = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const mealOptions = [
     {
       title: '1 small or 1/2 of a large apple',
@@ -110,14 +114,14 @@ const MidMorningBoost = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   scrollContent: {
     paddingBottom: hp(6),
@@ -169,13 +173,13 @@ const styles = StyleSheet.create({
   badgeTitle: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 16,
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.2,
   },
   subtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     textAlign: 'center',
     marginTop: hp(2),
     paddingHorizontal: wp(4),
@@ -189,7 +193,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(2),
     letterSpacing: -0.3,
   },

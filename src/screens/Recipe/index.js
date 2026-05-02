@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -17,6 +18,9 @@ const DIET_COLORS = {
 };
 
 const Recipe = ({ navigation, route }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const recipeData = route?.params?.recipeData;
   const { ingredients, instructions } = recipeData || {};
 
@@ -146,14 +150,14 @@ const Recipe = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   screen: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
 
   /* ── Empty State ── */
@@ -162,7 +166,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: wp(6),
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   emptyImage: {
     width: 120,
@@ -172,14 +176,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: c.primary,
     marginBottom: 8,
     letterSpacing: 0.2,
   },
   emptyMessage: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+    color: c.subText,
     textAlign: 'center',
     lineHeight: 22,
     letterSpacing: 0.2,
@@ -207,7 +211,7 @@ const styles = StyleSheet.create({
     height: hp(3),
     width: wp(4),
     resizeMode: 'contain',
-    tintColor: '#FFFFFF',
+    tintColor: c.card,
   },
   dietBadge: {
     paddingHorizontal: wp(3.5),
@@ -222,7 +226,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 26,
     fontFamily: 'Poppins-SemiBold',
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.3,
     marginBottom: hp(1.2),
     lineHeight: 34,
@@ -237,7 +241,7 @@ const styles = StyleSheet.create({
   /* ── Floating Stats Card ── */
   statsCard: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 18,
     marginHorizontal: wp(5),
     marginTop: -hp(4),
@@ -261,14 +265,14 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     fontFamily: 'Poppins-Regular',
-    color: '#94A3B8',
+    color: c.tabInactive,
     marginBottom: 3,
     textAlign: 'center',
   },
   statValue: {
     fontSize: 13,
     fontFamily: 'Poppins-SemiBold',
-    color: '#11418A',
+    color: c.primary,
     textAlign: 'center',
   },
 
@@ -280,14 +284,14 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: wp(4),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     borderLeftWidth: 4,
     borderLeftColor: '#11418A',
     borderTopWidth: 1,
     borderRightWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -298,7 +302,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Poppins-SemiBold',
     marginBottom: hp(2),
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   sectionTitleSpaced: {
@@ -306,7 +310,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-SemiBold',
     marginBottom: hp(2),
     marginTop: hp(3),
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   stepSection: {
@@ -315,7 +319,7 @@ const styles = StyleSheet.create({
   stepHeading: {
     fontSize: 14,
     fontFamily: 'Poppins-SemiBold',
-    color: '#11418A',
+    color: c.primary,
     marginBottom: hp(1),
     letterSpacing: 0.2,
   },
@@ -334,7 +338,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepBadgeText: {
-    color: '#FFFFFF',
+    color: c.card,
     fontFamily: 'Poppins-SemiBold',
     fontSize: 10,
     letterSpacing: 0.2,
@@ -343,7 +347,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
+    color: c.subText,
     lineHeight: 22,
     letterSpacing: 0.2,
     minWidth: 0,
@@ -356,7 +360,7 @@ const styles = StyleSheet.create({
   ingredientText: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
+    color: c.subText,
     lineHeight: 22,
     flex: 1,
     minWidth: 0,

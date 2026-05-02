@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -25,6 +26,9 @@ import ReminderEditor from '../ReminderEditor';
 import Toast from '../../components/Toast';
 
 const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
 
   const [reminderText, setReminderText] = useState('');
@@ -417,10 +421,10 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   modal: { justifyContent: 'flex-end', margin: 0 },
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     padding: 20,
     height: '90%',
@@ -436,42 +440,42 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
     marginBottom: 15,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   closeIcon: {
     width: 20,
     height: 20,
-    tintColor: '#64748B',
+    tintColor: c.icon,
   },
   subtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 16,
     marginVertical: 10,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   entryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     borderRadius: 10,
     padding: 12,
     marginVertical: 5,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   entryContent: { flex: 1 },
   entryText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   entrySubtext: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     marginTop: 4,
     letterSpacing: 0.2,
   },
@@ -480,25 +484,25 @@ const styles = StyleSheet.create({
   deleteIcon: { width: 18, height: 18, tintColor: '#EF4444' },
   divider: {
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
     marginVertical: 15,
   },
   inputGroup: { marginBottom: 12 },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 10,
     paddingHorizontal: 12,
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   infoText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     marginTop: 4,
     letterSpacing: 0.2,
   },
@@ -510,7 +514,7 @@ const styles = StyleSheet.create({
   dateTimeInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 10,
     padding: 12,
     marginRight: 10,
@@ -521,17 +525,17 @@ const styles = StyleSheet.create({
   dateTimeLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
-  dateTimePlaceholder: { color: '#94A3B8' },
+  dateTimePlaceholder: { color: c.tabInactive },
   dateTimeIcon: { width: 18, height: 18 },
   switchRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
   switchLabel: {
     fontFamily: 'Poppins-Regular',
     marginLeft: 8,
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   addButton: {
@@ -549,7 +553,7 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 15,
     letterSpacing: 0.3,
   },
@@ -560,47 +564,47 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     padding: 12,
     borderRadius: 10,
   },
   pickerLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   pickerValueRow: { flexDirection: 'row', alignItems: 'center' },
   pickerValue: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   pickerChevron: { marginLeft: 6 },
-  pickerItemStyle: { color: '#11418A' },
+  pickerItemStyle: { color: c.primary },
   repeatpicker: {
     marginBottom: 100,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   emptyText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#94A3B8',
+    color: c.tabInactive,
     textAlign: 'center',
     marginVertical: 10,
     letterSpacing: 0.2,
   },
   datePickerWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 10,
     marginVertical: 8,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
 });
 

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -59,7 +60,7 @@ const shareText = async (title, text) => {
   } catch (_) {}
 };
 
-const LogItem = ({ item }) => {
+const LogItem = ({ item, styles }) => {
   const [expanded, setExpanded] = useState(false);
   const statusColor = STATUS_COLORS[item.status] || '#6B7280';
   const methodColor = METHOD_COLORS[item.method] || '#6B7280';
@@ -153,6 +154,9 @@ const LogItem = ({ item }) => {
 };
 
 const ApiDebugger = () => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [visible, setVisible] = useState(false);
   const [logs, setLogs] = useState([]);
   const [count, setCount] = useState(0);
@@ -223,7 +227,7 @@ const ApiDebugger = () => {
           <FlatList
             data={logs}
             keyExtractor={item => String(item.id)}
-            renderItem={({ item }) => <LogItem item={item} />}
+            renderItem={({ item }) => <LogItem item={item} styles={styles} />}
             contentContainerStyle={styles.list}
             ListEmptyComponent={
               <Text style={styles.emptyText}>No API calls yet</Text>
@@ -235,7 +239,7 @@ const ApiDebugger = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   fab: {
     position: 'absolute',
     width: 56,
@@ -273,7 +277,7 @@ const styles = StyleSheet.create({
     borderColor: '#1E293B',
   },
   badgeText: {
-    color: '#FFF',
+    color: c.card,
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
@@ -320,7 +324,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   closeBtnText: {
-    color: '#FFF',
+    color: c.card,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -345,7 +349,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   methodText: {
-    color: '#FFF',
+    color: c.card,
     fontSize: 11,
     fontWeight: '800',
   },
@@ -355,16 +359,16 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusText: {
-    color: '#FFF',
+    color: c.card,
     fontSize: 11,
     fontWeight: '700',
   },
   durationText: {
-    color: '#94A3B8',
+    color: c.tabInactive,
     fontSize: 11,
   },
   timeText: {
-    color: '#64748B',
+    color: c.subText,
     fontSize: 11,
     marginLeft: 'auto',
   },
@@ -392,7 +396,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   actionBtnText: {
-    color: '#94A3B8',
+    color: c.tabInactive,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -400,13 +404,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#1D4ED8',
   },
   shareAllText: {
-    color: '#FFF',
+    color: c.card,
   },
   detailSection: {
     marginBottom: 10,
   },
   detailLabel: {
-    color: '#94A3B8',
+    color: c.tabInactive,
     fontSize: 11,
     fontWeight: '600',
     marginBottom: 4,
@@ -423,7 +427,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   emptyText: {
-    color: '#64748B',
+    color: c.subText,
     fontSize: 16,
     textAlign: 'center',
     marginTop: 40,

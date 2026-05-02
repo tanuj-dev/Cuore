@@ -1,10 +1,12 @@
-import {View, Text} from 'react-native';
+import { View, Text } from 'react-native';
 import React from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 const RenewSubscription = () => {
+  const { colors: c } = useAppTheme();
   return (
-    <View>
-      <Text>RenewSubscription</Text>
+    <View style={{ flex: 1, backgroundColor: c.background, padding: 16 }}>
+      <Text style={{ color: c.text }}>RenewSubscription</Text>
     </View>
   );
 };

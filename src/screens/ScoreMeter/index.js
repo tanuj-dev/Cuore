@@ -1,10 +1,14 @@
-import React, {useEffect, useRef} from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {View, Text, StyleSheet, Animated} from 'react-native';
 import Svg, {Path, G, Line as SvgLine} from 'react-native-svg';
 
 const AnimatedLine = Animated.createAnimatedComponent(SvgLine);
 
 const ScoreMeter = ({score = 50}) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const needleRef = useRef(new Animated.Value(0)).current;
 
   const angle = (score / 100) * 180 - 90;
@@ -15,7 +19,7 @@ const ScoreMeter = ({score = 50}) => {
       duration: 800,
       useNativeDriver: true,
     }).start();
-  }, [score]);
+  }, [angle, needleRef]);
 
   const rotation = needleRef.interpolate({
     inputRange: [-90, 90],
@@ -75,7 +79,7 @@ const ScoreMeter = ({score = 50}) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     alignItems: 'center',
     marginTop: 20,
@@ -84,7 +88,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginTop: 10,
-    color: '#000',
+    color: c.text,
   },
 });
 

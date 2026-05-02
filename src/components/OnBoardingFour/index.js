@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -9,6 +10,9 @@ import {
 import { hp, wp } from '../../utilities';
 
 const OnBoardingFour = ({ onFormChange, initialData = {} }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [tobacco, setTobacco] = useState(initialData?.smoking || '');
   const [alcohol, setAlcohol] = useState(initialData?.alcohol || '');
 
@@ -16,7 +20,7 @@ const OnBoardingFour = ({ onFormChange, initialData = {} }) => {
   useEffect(() => {
     const formData = { smoking: tobacco, alcohol: alcohol };
     onFormChange && onFormChange(formData);
-  }, [tobacco, alcohol]);
+  }, [tobacco, alcohol, onFormChange]);
 
   const renderOptions = (options, selected, onSelect) =>
     options.map((option, index) => (
@@ -70,7 +74,7 @@ const OnBoardingFour = ({ onFormChange, initialData = {} }) => {
 
 export default OnBoardingFour;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     padding: wp(0.5),
     backgroundColor: '#fff',
@@ -78,7 +82,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: wp(4),
     borderRadius: wp(3),
     marginBottom: hp(2),
@@ -89,14 +93,14 @@ const styles = StyleSheet.create({
     fontSize: 14, letterSpacing: 0.2,
     
     marginBottom: hp(2),
-    color: '#111827',
+    color: c.text,
   },
   note: {
     fontFamily: 'Poppins-Regular',
     // marginTop: 40,
     fontSize: 13, letterSpacing: 0.1,
     
-    color: '#64748B',
+    color: c.subText,
   },
   optionRow: {
     flexDirection: 'row',
@@ -108,7 +112,7 @@ const styles = StyleSheet.create({
     height: wp(4.5),
     borderRadius: wp(2.25),
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: c.icon,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3),
@@ -122,7 +126,7 @@ const styles = StyleSheet.create({
   optionText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14, letterSpacing: 0.2,
-    color: '#475569',
+    color: c.subText,
     flex: 1,
   },
   button: {

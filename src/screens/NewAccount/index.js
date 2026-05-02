@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   Image,
   View,
@@ -26,6 +27,9 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 import { create } from 'react-test-renderer';
 
 const CreateAccountScreen = () => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -327,9 +331,9 @@ const CreateAccountScreen = () => {
 };
 
 // 🧾 Styles
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: wp(5),
     flexGrow: 1,
   },
@@ -339,7 +343,7 @@ const styles = StyleSheet.create({
     padding: hp(0.5),
   },
   title: {
-    color: '#1E293B',
+    color: c.text,
     fontSize: 24,
     fontFamily: 'Poppins-Medium',
     textAlign: 'center',
@@ -347,7 +351,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   label: {
-    color: '#475569',
+    color: c.subText,
     fontSize: 14,
     marginBottom: hp(0.8),
     marginTop: hp(1.8),
@@ -357,23 +361,23 @@ const styles = StyleSheet.create({
   optional: {
     fontStyle: 'italic',
     fontFamily: 'Poppins-Regular',
-    color: '#94A3B8',
+    color: c.tabInactive,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingVertical: hp(1.6),
     paddingHorizontal: wp(4),
     fontSize: 15,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     fontFamily: 'Poppins-Regular',
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   infoText: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     marginTop: hp(2),
     marginBottom: hp(2),
     fontFamily: 'Poppins-Regular',
@@ -394,8 +398,8 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderWidth: 2,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
+    borderColor: c.icon,
+    backgroundColor: c.card,
     borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
@@ -405,20 +409,20 @@ const styles = StyleSheet.create({
     borderColor: '#11418A',
   },
   checkmark: {
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
   },
   checkboxLabel: {
     flex: 1,
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     fontFamily: 'Poppins-Regular',
     lineHeight: 20,
     letterSpacing: 0.1,
   },
   link: {
-    color: '#11418A',
+    color: c.primary,
     textDecorationLine: 'underline',
     fontFamily: 'Poppins-Medium',
   },
@@ -436,7 +440,7 @@ const styles = StyleSheet.create({
     }),
   },
   verifyText: {
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
     letterSpacing: 0.5,

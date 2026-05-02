@@ -7,7 +7,8 @@ import {
   Modal,
   Platform,
 } from 'react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { hp, wp, Images } from '../../utilities';
 
 const PaymentConfirmation = ({
@@ -16,6 +17,9 @@ const PaymentConfirmation = ({
   setPaymentSuccessModalVisible,
   paymentData,
 }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   // Extract last 4 digits from payment ID for display
   const getLastFourDigits = str => {
     if (!str) return '****';
@@ -57,10 +61,9 @@ const PaymentConfirmation = ({
           <Image
             source={Images.RIGHT}
             style={{
-              resizeMode: 'cover',
+              resizeMode: 'contain',
               height: hp(10),
               width: wp(18),
-              resizeMode: 'contain',
             }}
           />
           <Text
@@ -237,12 +240,12 @@ const PaymentConfirmation = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     // justifyContent: 'center',
     // alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: c.surface,
   },
   title: {
     fontFamily: 'Roboto-Regular',

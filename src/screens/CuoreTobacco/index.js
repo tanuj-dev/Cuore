@@ -10,7 +10,8 @@ import {
   RefreshControl,
   Platform,
 } from 'react-native';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { hp, wp, Images } from '../../utilities';
 import Header from '../../components/Header';
 import ToastMessage from '../../components/Toast';
@@ -22,15 +23,17 @@ import {
 } from '../../redux/slices';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const TobaccoSkeleton = () => (
-  <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+const TobaccoSkeleton = () => {
+  const { colors: c } = useAppTheme();
+  return (
+  <View style={{ flex: 1, backgroundColor: c.background }}>
     {/* Header placeholder */}
-    <View style={{ height: hp(7), backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', justifyContent: 'center', paddingHorizontal: hp(2) }}>
+    <View style={{ height: hp(7), backgroundColor: c.card, borderBottomWidth: 1, borderBottomColor: c.border, justifyContent: 'center', paddingHorizontal: hp(2) }}>
       <SkeletonBox width={140} height={20} />
     </View>
-    <ScrollView scrollEnabled={false} contentContainerStyle={{ padding: wp(4), backgroundColor: '#F8FAFC', gap: hp(2) }}>
+    <ScrollView scrollEnabled={false} contentContainerStyle={{ padding: wp(4), backgroundColor: c.surface, gap: hp(2) }}>
       {/* Main box */}
-      <View style={{ backgroundColor: '#F1F5F9', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(2) }}>
+      <View style={{ backgroundColor: c.mutedSurface, padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: c.border, gap: hp(2) }}>
         <SkeletonBox width={160} height={16} />
         <SkeletonBox width="100%" height={50} borderRadius={10} />
         <SkeletonBox width={80} height={36} borderRadius={10} style={{ alignSelf: 'flex-end' }} />
@@ -39,13 +42,13 @@ const TobaccoSkeleton = () => (
       {/* Quote box */}
       <SkeletonBox width="100%" height={56} borderRadius={12} />
       {/* Challenge box */}
-      <View style={{ backgroundColor: '#F1F5F9', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(1.5) }}>
+      <View style={{ backgroundColor: c.mutedSurface, padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: c.border, gap: hp(1.5) }}>
         <SkeletonBox width={160} height={20} />
         <SkeletonBox width="90%" height={18} borderRadius={6} />
         <SkeletonBox width="70%" height={16} borderRadius={6} />
       </View>
       {/* Profile box */}
-      <View style={{ backgroundColor: '#E2E8F0', padding: wp(4), borderRadius: 12, gap: hp(1.5) }}>
+      <View style={{ backgroundColor: c.mutedSurface, padding: wp(4), borderRadius: 12, gap: hp(1.5) }}>
         <SkeletonBox width={160} height={18} />
         <SkeletonBox width="100%" height={44} borderRadius={10} />
         <SkeletonBox width="100%" height={44} borderRadius={10} />
@@ -58,9 +61,13 @@ const TobaccoSkeleton = () => (
       </View>
     </ScrollView>
   </View>
-);
+  );
+};
 
 const Tobacco = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [yesterdayCount, setYesterdayCount] = useState('');
   const [cigarettesPerDay, setCigarettesPerDay] = useState(0);
   const [yearsOfSmoking, setYearsOfSmoking] = useState(0);
@@ -300,23 +307,23 @@ const Tobacco = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   container: {
     padding: wp(4),
     paddingBottom: hp(6),
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   box: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     padding: wp(4),
     borderRadius: 12,
     marginBottom: hp(2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   rowCenter: {
     flexDirection: 'row',
@@ -336,7 +343,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
     marginLeft: hp(1),
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   inputRow: {
@@ -351,7 +358,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     flex: 1,
     fontSize: 15,
-    color: '#475569',
+    color: c.subText,
     marginRight: wp(3),
     letterSpacing: 0.2,
   },
@@ -363,9 +370,9 @@ const styles = StyleSheet.create({
     width: wp(17),
     textAlign: 'center',
     fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
+    color: c.text,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   logSubmitButton: {
     alignSelf: 'flex-end',
@@ -380,7 +387,7 @@ const styles = StyleSheet.create({
   levelText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   quoteBox: {
@@ -393,49 +400,49 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderRightWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   quote: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#11418A',
+    color: c.primary,
     letterSpacing: 0.2,
     fontWeight: 'bold',
   },
   challengeBox: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     padding: wp(4),
     borderRadius: 12,
     marginBottom: hp(2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     ...(Platform.OS === 'android' && { elevation: 1 }),
   },
   sectionTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#11418A',
+    color: c.primary,
     marginBottom: hp(1.5),
     letterSpacing: 0.2,
   },
   sectionTitleAccent: {
     fontFamily: 'Poppins-Regular',
     fontSize: 20,
-    color: '#11418A',
+    color: c.primary,
     marginBottom: hp(1),
     letterSpacing: 0.2,
   },
   sectionTitleDark: {
     fontFamily: 'Poppins-Regular',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(1),
     letterSpacing: 0.2,
   },
   challengeSubText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     paddingVertical: hp(1),
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
@@ -443,7 +450,7 @@ const styles = StyleSheet.create({
   detailText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   profileBox: {
@@ -452,12 +459,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: hp(2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   inputLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginTop: hp(1.2),
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
@@ -467,14 +474,14 @@ const styles = StyleSheet.create({
   },
   input: {
     fontFamily: 'Poppins-Regular',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 10,
     paddingHorizontal: wp(3),
     paddingVertical: hp(1.2),
-    color: '#1E293B',
+    color: c.text,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   gridContainer: {
     flexDirection: 'row',
@@ -483,12 +490,12 @@ const styles = StyleSheet.create({
   },
   gridBox: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: wp(4),
     borderRadius: 12,
     marginRight: wp(2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   gridIcon: {
     resizeMode: 'contain',
@@ -499,14 +506,14 @@ const styles = StyleSheet.create({
   gridLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     paddingVertical: hp(1),
     letterSpacing: 0.2,
   },
   gridValue: {
     fontFamily: 'Poppins-Regular',
     fontSize: 20,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   gridValueRed: {
@@ -527,7 +534,7 @@ const styles = StyleSheet.create({
   },
   reassessText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     letterSpacing: 0.2,
   },

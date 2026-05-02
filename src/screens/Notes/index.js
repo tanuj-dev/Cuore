@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -23,21 +24,23 @@ import {
 } from '../../redux/Notes/notesThunk';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const NotesSkeleton = () => (
-  <SafeAreaView style={{ flex: 1, backgroundColor: '#F1F5F9' }}>
-    <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 22, color: '#1E293B', textAlign: 'center', paddingVertical: hp(2), backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
+const NotesSkeleton = () => {
+  const { colors: c } = useAppTheme();
+  return (
+  <SafeAreaView style={{ flex: 1, backgroundColor: c.mutedSurface }}>
+    <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 22, color: c.text, textAlign: 'center', paddingVertical: hp(2), backgroundColor: c.card, borderBottomWidth: 1, borderBottomColor: c.border }}>
       Notes
     </Text>
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, margin: wp(4), padding: hp(2), shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, ...Platform.select({ android: { elevation: 1 } }) }}>
+    <View style={{ backgroundColor: c.card, borderRadius: 16, margin: wp(4), padding: hp(2), shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, ...Platform.select({ android: { elevation: 1 } }) }}>
       <SkeletonBox width="100%" height={hp(10)} borderRadius={8} style={{ marginBottom: hp(1.5) }} />
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
         <SkeletonBox width={wp(20)} height={hp(4)} borderRadius={8} />
       </View>
     </View>
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, marginHorizontal: wp(4), padding: hp(2), shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, ...Platform.select({ android: { elevation: 1 } }) }}>
+    <View style={{ backgroundColor: c.card, borderRadius: 16, marginHorizontal: wp(4), padding: hp(2), shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, ...Platform.select({ android: { elevation: 1 } }) }}>
       {[1, 2, 3].map(i => (
         <View key={i} style={{ marginBottom: i < 3 ? hp(1.5) : 0 }}>
-          <View style={{ borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: hp(1.5) }}>
+          <View style={{ borderRadius: 12, borderWidth: 1, borderColor: c.border, padding: hp(1.5) }}>
             <SkeletonBox width={80} height={14} borderRadius={6} style={{ marginBottom: hp(0.8) }} />
             <SkeletonBox width="100%" height={14} borderRadius={6} style={{ marginBottom: hp(0.5) }} />
             <SkeletonBox width="75%" height={14} borderRadius={6} />
@@ -50,7 +53,8 @@ const NotesSkeleton = () => (
       ))}
     </View>
   </SafeAreaView>
-);
+  );
+};
 
 const formatDate = date => {
   const d = new Date(date);
@@ -65,6 +69,9 @@ const MAX_WORDS = 180;
 const countWords = text => text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
 
 const Notes = () => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   const { data: notes, loading, saving } = useSelector(state => state.notes);
@@ -226,10 +233,10 @@ const Notes = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
   },
   flex: {
     flex: 1,
@@ -237,18 +244,18 @@ const styles = StyleSheet.create({
   screenTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 22,
-    color: '#1E293B',
+    color: c.text,
     textAlign: 'center',
     paddingVertical: hp(2),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
   },
   loader: {
     marginTop: hp(4),
   },
   inputCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     margin: wp(4),
     padding: hp(2),
@@ -261,14 +268,14 @@ const styles = StyleSheet.create({
   input: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#334155',
+    color: c.textSecondary,
     minHeight: hp(10),
     textAlignVertical: 'top',
   },
   charCount: {
     fontFamily: 'Poppins-Regular',
     fontSize: 11,
-    color: '#64748B',
+    color: c.subText,
     textAlign: 'right',
     marginTop: hp(0.5),
   },
@@ -287,11 +294,11 @@ const styles = StyleSheet.create({
   },
   addBtnText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 13,
   },
   listCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     marginHorizontal: wp(4),
     marginBottom: hp(2),
@@ -307,22 +314,22 @@ const styles = StyleSheet.create({
     marginBottom: hp(0.5),
   },
   noteCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     padding: hp(1.5),
   },
   noteDate: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(0.5),
   },
   noteText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#475569',
+    color: c.subText,
     lineHeight: 20,
   },
   noteActions: {
@@ -338,7 +345,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     resizeMode: 'contain',
-    tintColor: '#11418A',
+    tintColor: c.primary,
   },
   deleteIcon: {
     width: 20,
@@ -366,13 +373,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(1),
   },
   emptySubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#94A3B8',
+    color: c.tabInactive,
     textAlign: 'center',
     lineHeight: 20,
   },

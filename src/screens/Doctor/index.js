@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -57,6 +58,9 @@ const formatDoctorStatus = status => {
 };
 
 const Doctor = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   const { loading } = useSelector(state => state.doctors);
@@ -538,17 +542,17 @@ const Doctor = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     ...Platform.select({
       android: { elevation: 2 },
       ios: {
@@ -570,7 +574,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     marginLeft: wp(3),
     flex: 1,
   },
@@ -615,7 +619,7 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13,
-    color: '#475569',
+    color: c.subText,
     marginHorizontal: wp(4),
     marginTop: hp(2),
     marginBottom: hp(0.6),
@@ -623,13 +627,13 @@ const styles = StyleSheet.create({
   dropdownField: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     marginHorizontal: wp(4),
     paddingVertical: hp(1.4),
     paddingHorizontal: wp(3),
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     ...Platform.select({
       android: { elevation: 1 },
       ios: {
@@ -644,20 +648,20 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
   },
   dropdownPlaceholder: {
-    color: '#94A3B8',
+    color: c.tabInactive,
   },
   dropdownChevron: {
     fontSize: 10,
-    color: '#64748B',
+    color: c.subText,
     marginLeft: wp(2),
   },
   nameSearchHint: {
     fontFamily: 'Poppins-Regular',
     fontSize: 11,
-    color: '#94A3B8',
+    color: c.tabInactive,
     marginHorizontal: wp(4),
     marginTop: -hp(0.3),
     marginBottom: hp(0.8),
@@ -666,13 +670,13 @@ const styles = StyleSheet.create({
   nameSearchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     marginHorizontal: wp(4),
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(3),
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     ...Platform.select({
       android: { elevation: 1 },
       ios: {
@@ -688,18 +692,18 @@ const styles = StyleSheet.create({
     width: wp(4.5),
     marginRight: wp(2),
     resizeMode: 'contain',
-    tintColor: '#94A3B8',
+    tintColor: c.tabInactive,
   },
   nameSearchInput: {
     flex: 1,
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     paddingVertical: 0,
   },
   nameSearchClear: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: c.tabInactive,
     paddingLeft: wp(2),
   },
   specModalOverlay: {
@@ -738,7 +742,7 @@ const styles = StyleSheet.create({
   specRowCheck: {
     width: wp(6),
     fontSize: 16,
-    color: '#FFFFFF',
+    color: c.card,
     fontFamily: 'Poppins-Medium',
   },
   specRowCheckSpacer: {
@@ -748,7 +752,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#FFFFFF',
+    color: c.card,
     lineHeight: 22,
   },
   listHeader: {
@@ -762,12 +766,12 @@ const styles = StyleSheet.create({
   listHeaderTitle: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
   },
   listHeaderSub: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#94A3B8',
+    color: c.tabInactive,
   },
   listWrap: {
     paddingHorizontal: wp(4),
@@ -783,7 +787,7 @@ const styles = StyleSheet.create({
   },
   loadMoreText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 13,
     letterSpacing: 0.2,
   },
@@ -799,8 +803,8 @@ const styles = StyleSheet.create({
     width: wp(5),
     borderRadius: wp(2.5),
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
+    borderColor: c.icon,
+    backgroundColor: c.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -812,11 +816,11 @@ const styles = StyleSheet.create({
     width: wp(3),
     height: wp(3),
     resizeMode: 'contain',
-    tintColor: '#FFFFFF',
+    tintColor: c.card,
   },
   card: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 14,
     padding: wp(3.5),
     borderLeftWidth: 3,
@@ -890,7 +894,7 @@ const styles = StyleSheet.create({
   myDoctorTagText: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 11,
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.15,
   },
   cardTop: {
@@ -904,14 +908,14 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(0.3),
     textTransform: 'capitalize',
   },
   specialization: {
     fontFamily: 'Poppins-Medium',
     fontSize: 12,
-    color: '#11418A',
+    color: c.primary,
     marginBottom: hp(0.45),
     textTransform: 'capitalize',
   },
@@ -922,7 +926,7 @@ const styles = StyleSheet.create({
   addressText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     lineHeight: 18,
     flex: 1,
   },
@@ -938,24 +942,24 @@ const styles = StyleSheet.create({
   patientCount: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 15,
-    color: '#11418A',
+    color: c.primary,
   },
   patientLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 10,
-    color: '#64748B',
+    color: c.subText,
   },
   feesBox: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     borderRadius: 10,
     padding: hp(1.2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   feesLabel: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 12,
-    color: '#475569',
+    color: c.subText,
     marginBottom: hp(0.6),
   },
   feesList: {
@@ -964,12 +968,12 @@ const styles = StyleSheet.create({
     gap: wp(1.5),
   },
   feeChip: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 6,
     paddingVertical: hp(0.4),
     paddingHorizontal: wp(2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     marginRight: wp(1.5),
     marginBottom: hp(0.4),
   },
@@ -985,7 +989,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     marginTop: hp(1),
   },
   emptyWrap: {
@@ -995,16 +999,16 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
   },
   emptySubText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#94A3B8',
+    color: c.tabInactive,
     marginTop: hp(0.5),
   },
   footer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     paddingHorizontal: wp(6),
     paddingVertical: hp(2),
     borderTopWidth: 1,
@@ -1028,7 +1032,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 15,
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.3,
   },
 });

@@ -1,9 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { Animated, Text, StyleSheet, View, Dimensions } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 const ToastMessage = ({ message, type = 'info', onHide, top }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const HEIGHT = top;
   const slideAnim = useRef(new Animated.Value(-100)).current;
 
@@ -46,7 +50,7 @@ const ToastMessage = ({ message, type = 'info', onHide, top }) => {
 
 export default ToastMessage;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   toast: {
     position: 'absolute',
     top: 40,
@@ -63,7 +67,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   text: {
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     textAlign: 'center',
     fontFamily: 'Poppins-Regular',

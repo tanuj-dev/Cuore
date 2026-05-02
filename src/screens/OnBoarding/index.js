@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -32,6 +33,9 @@ import Toast from '../../components/Toast';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const OnBoarding = ({ navigation, route }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   const { STEP, screen, navigateTo } = route?.params ?? {};
@@ -290,7 +294,7 @@ const OnBoarding = ({ navigation, route }) => {
 
   useEffect(() => {
     dispatch(getOnboardingThunk());
-  }, []);
+  }, [dispatch]);
 
   const handleFormChange = incomingData => {
     setOnboarding3Data(prev => ({
@@ -609,11 +613,11 @@ const OnBoarding = ({ navigation, route }) => {
 };
 
 export default OnBoarding;
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: wp(5),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   logo: {
     marginTop: Platform.OS === 'ios' ? hp(4) : hp(2),
@@ -631,14 +635,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
+    color: c.text,
     fontSize: 22,
     marginTop: hp(1.5),
     letterSpacing: -0.3,
   },
   subtitle: {
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
+    color: c.subText,
     fontSize: 16,
     marginBottom: hp(1.5),
     letterSpacing: 0.2,
@@ -647,7 +651,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginTop: hp(2),
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(1.5),
     lineHeight: 22,
     letterSpacing: 0.2,
@@ -660,7 +664,7 @@ const styles = StyleSheet.create({
   stepText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   progress: {
@@ -671,13 +675,13 @@ const styles = StyleSheet.create({
   },
   cardInfo: {
     flexDirection: 'row',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     padding: wp(4),
     borderRadius: 12,
     marginTop: hp(2),
     alignItems: 'flex-start',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   cardIcon: {
     height: hp(2.5),
@@ -728,7 +732,7 @@ const styles = StyleSheet.create({
   disclaimer: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     marginTop: hp(2.5),
     fontStyle: 'italic',
     lineHeight: 18,
@@ -744,7 +748,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     marginRight: wp(3),
     alignItems: 'center',
     justifyContent: 'center',
@@ -754,14 +758,14 @@ const styles = StyleSheet.create({
     borderColor: '#11418A',
   },
   disclaimerCheckmark: {
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
   },
   disclaimerCheckLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   button: {
@@ -782,7 +786,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 16,
     letterSpacing: 0.5,
   },
@@ -805,14 +809,14 @@ const styles = StyleSheet.create({
   },
   warningText: {
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
+    color: c.subText,
     fontSize: 14,
     lineHeight: 20,
     letterSpacing: 0.2,
   },
   bottomText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: c.tabInactive,
     fontFamily: 'Poppins-Regular',
     letterSpacing: 0.1,
   },
@@ -823,7 +827,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: hp(3),
     borderRadius: 16,
     width: '80%',
@@ -836,14 +840,14 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(1.5),
     letterSpacing: -0.3,
   },
   modalMessage: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     textAlign: 'center',
     marginBottom: hp(2.5),
     lineHeight: 20,
@@ -857,7 +861,7 @@ const styles = StyleSheet.create({
   },
   modalButtonText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 15,
     letterSpacing: 0.3,
   },

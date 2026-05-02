@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -11,6 +12,9 @@ import {
 const { width } = Dimensions.get('window');
 
 const CustomAlert = ({ visible, title, message, buttons, onDismiss }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const buttonList = buttons && buttons.length > 0 ? buttons : null;
   const useVerticalActions = buttonList && buttonList.length > 2;
 
@@ -83,7 +87,7 @@ const CustomAlert = ({ visible, title, message, buttons, onDismiss }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -93,7 +97,7 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   alertContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     padding: 20,
     width: width * 0.8,
@@ -108,7 +112,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontFamily: 'Poppins-SemiBold',
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 12,
     textAlign: 'center',
     letterSpacing: -0.2,
@@ -116,7 +120,7 @@ const styles = StyleSheet.create({
   message: {
     fontSize: 15,
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
+    color: c.subText,
     marginBottom: 20,
     textAlign: 'center',
     lineHeight: 22,
@@ -151,7 +155,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cancelButton: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
   },
   destructiveButton: {
     backgroundColor: '#EF4444',
@@ -159,16 +163,16 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.2,
     textAlign: 'center',
   },
   cancelButtonText: {
-    color: '#475569',
+    color: c.subText,
     fontFamily: 'Poppins-Medium',
   },
   destructiveButtonText: {
-    color: '#FFFFFF',
+    color: c.card,
     fontFamily: 'Poppins-Medium',
   },
 });

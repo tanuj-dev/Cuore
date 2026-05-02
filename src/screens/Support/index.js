@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -13,6 +14,9 @@ import ProfileHeader from '../../components/ProfileHeader';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const Support = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const { alert, AlertComponent } = useCustomAlert();
   return (
     <>
@@ -56,15 +60,15 @@ const Support = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   container: {
     padding: wp(5),
     margin: wp(4),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOpacity: 0.08,
@@ -79,7 +83,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
     marginBottom: hp(2),
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.5,
   },
   centerSection: {
@@ -99,13 +103,13 @@ const styles = StyleSheet.create({
     height: hp(4.5),
     width: wp(9),
     resizeMode: 'contain',
-    tintColor: '#11418A',
+    tintColor: c.primary,
   },
   supportLineText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 18,
     marginTop: hp(1),
-    color: '#475569',
+    color: c.subText,
     letterSpacing: -0.3,
   },
   continueBtn: {
@@ -126,22 +130,22 @@ const styles = StyleSheet.create({
   },
   continueText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 15.5,
     letterSpacing: -0.2,
   },
   hoursContainer: {
     marginTop: hp(6),
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     padding: hp(2.5),
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   hoursTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.3,
   },
   hoursContent: {
@@ -150,14 +154,14 @@ const styles = StyleSheet.create({
   hoursDay: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(0.5),
     letterSpacing: 0.1,
   },
   hoursTime: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.1,
   },
 });

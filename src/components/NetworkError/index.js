@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -11,6 +12,9 @@ import {
 import { hp, wp, Common } from '../../utilities';
 
 const NetworkError = ({ onRetry }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [isChecking, setIsChecking] = useState(false);
   const slideAnim = React.useRef(new Animated.Value(hp(100))).current;
 
@@ -88,7 +92,7 @@ const NetworkError = ({ onRetry }) => {
               {isChecking ? (
                 <ActivityIndicator
                   size="large"
-                  color="#11418A"
+                  color={c.primary}
                   style={styles.loader}
                 />
               ) : (
@@ -108,7 +112,7 @@ const NetworkError = ({ onRetry }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -129,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   bottomSheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderTopLeftRadius: hp(2.5),
     borderTopRightRadius: hp(2.5),
     paddingTop: hp(2),
@@ -148,7 +152,7 @@ const styles = StyleSheet.create({
   handle: {
     width: wp(12),
     height: hp(0.5),
-    backgroundColor: '#D1D5DB',
+    backgroundColor: c.handleBar,
     borderRadius: hp(0.25),
     alignSelf: 'center',
     marginBottom: hp(2),
@@ -164,21 +168,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     fontSize: hp(2.2),
     fontWeight: '700',
-    color: '#111827',
+    color: c.text,
     marginBottom: hp(1),
     textAlign: 'center',
   },
   message: {
     fontFamily: 'Roboto-Regular',
     fontSize: hp(1.8),
-    color: '#6B7280',
+    color: c.subText,
     textAlign: 'center',
     marginBottom: hp(3),
     lineHeight: hp(2.5),
     paddingHorizontal: wp(2),
   },
   button: {
-    backgroundColor: '#11418A',
+    backgroundColor: c.primary,
     paddingVertical: hp(1.5),
     paddingHorizontal: wp(8),
     borderRadius: hp(1),
@@ -188,7 +192,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontFamily: 'Roboto-Regular',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: hp(1.8),
     fontWeight: '600',
   },

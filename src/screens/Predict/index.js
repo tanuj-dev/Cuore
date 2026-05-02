@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -17,15 +18,17 @@ import Loader from '../../components/Loader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const PredictSkeleton = () => (
-  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+const PredictSkeleton = () => {
+  const { colors: c } = useAppTheme();
+  return (
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: c.background }}>
     <View
       style={{
-        backgroundColor: '#FFF',
+        backgroundColor: c.card,
         paddingHorizontal: hp(2),
         paddingVertical: hp(2),
         borderBottomWidth: 1,
-        borderBottomColor: '#E2E8F0',
+        borderBottomColor: c.border,
         alignItems: 'center',
       }}
     >
@@ -33,7 +36,7 @@ const PredictSkeleton = () => (
     </View>
     <ScrollView
       scrollEnabled={false}
-      style={{ backgroundColor: '#F8FAFC' }}
+      style={{ backgroundColor: c.surface }}
       contentContainerStyle={{ alignItems: 'center', padding: hp(2) }}
     >
       <SkeletonBox
@@ -46,7 +49,7 @@ const PredictSkeleton = () => (
         <View
           key={i}
           style={{
-            backgroundColor: '#FFF',
+            backgroundColor: c.card,
             borderRadius: 16,
             paddingHorizontal: wp(4),
             paddingVertical: hp(2),
@@ -78,7 +81,8 @@ const PredictSkeleton = () => (
       ))}
     </ScrollView>
   </SafeAreaView>
-);
+  );
+};
 
 // Constants
 const TITLES_WITH_TABS = ['Blood Pressure & Heart Rate', 'Blood Sugar'];
@@ -94,28 +98,7 @@ const TITLE_TO_STEP_MAP = {
   'Lifestyle Metrics': 5,
 };
 
-const chartConfig = {
-  // transparent: false,
-  backgroundGradientFrom: '#fff',
-  backgroundGradientTo: '#fff',
-  decimalPlaces: 0,
-
-  color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-  labelColor: () => '#999',
-  propsForDots: {
-    r: '3',
-    strokeWidth: '4',
-
-    // stroke: 'white',
-  },
-  propsForBackgroundLines: {
-    strokeDasharray: '',
-    stroke: '#E5E7EB',
-    strokeWidth: 1,
-  },
-};
-
-const convertToChartData = ({ graph, history }) => {
+const convertToChartData = ({ graph, history, noDataColor = '#999999' }) => {
   const { labels = [], datasets = [] } = graph.data || {};
 
   if (!labels.length || !datasets.length) {
@@ -160,7 +143,7 @@ const convertToChartData = ({ graph, history }) => {
       : [
           {
             data: Array(labels.length).fill(0),
-            color: () => '#ccc',
+            color: () => noDataColor,
             label: 'No Data',
           },
         ],
@@ -168,14 +151,36 @@ const convertToChartData = ({ graph, history }) => {
 };
 
 const hexToRgb = hex => {
-  const bigint = parseInt(hex.replace('#', ''), 16);
+  const h = (hex || '#999999').replace('#', '');
+  const bigint = parseInt(h.length === 3 ? h.split('').map(ch => ch + ch).join('') : h, 16);
   const r = (bigint >> 16) & 255;
   const g = (bigint >> 8) & 255;
   const b = bigint & 255;
   return `${r}, ${g}, ${b}`;
 };
 
+const buildLineChartConfig = c => ({
+  backgroundGradientFrom: c.card,
+  backgroundGradientTo: c.card,
+  decimalPlaces: 0,
+  color: (opacity = 1) => `rgba(${hexToRgb(c.primary)}, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(${hexToRgb(c.subText)}, ${opacity})`,
+  propsForDots: {
+    r: '3',
+    strokeWidth: '4',
+  },
+  propsForBackgroundLines: {
+    strokeDasharray: '',
+    stroke: c.border,
+    strokeWidth: 1,
+  },
+});
+
 const Predict = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+  const lineChartConfig = useMemo(() => buildLineChartConfig(c), [c]);
+
   const [showRowData, setShowRowData] = useState([]);
   const [activeTab, setActiveTab] = useState('Predict');
   const [refreshing, setRefreshing] = useState(false);
@@ -267,7 +272,7 @@ const Predict = ({ navigation }) => {
             title="Pull to refresh..."
             refreshing={loading || refreshing}
             onRefresh={onRefresh}
-            tintColor="#11418A"
+            tintColor={c.primary}
           />
         }
         style={styles.scrollView}
@@ -284,6 +289,7 @@ const Predict = ({ navigation }) => {
             const chartData = convertToChartData({
               graph: item,
               history,
+              noDataColor: c.tabInactive,
             });
             const isShowDataVisible = showRowData.includes(item?.title);
             const hasTabs = TITLES_WITH_TABS.includes(item?.title);
@@ -365,7 +371,7 @@ const Predict = ({ navigation }) => {
                   data={chartData}
                   width={wp(82)}
                   height={hp(25)}
-                  chartConfig={chartConfig}
+                  chartConfig={lineChartConfig}
                   withDots
                   renderDotContent={
                     isShowDataVisible
@@ -475,20 +481,20 @@ const Predict = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   scrollView: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   headerContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     paddingHorizontal: hp(2),
     paddingVertical: hp(2),
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
   },
   headerContent: {
     flexDirection: 'row',
@@ -498,12 +504,12 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     padding: hp(2),
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   header: {
     fontFamily: 'Poppins-Medium',
     fontSize: 22,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.5,
   },
   tipBox: {
@@ -532,7 +538,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
@@ -558,13 +564,13 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16.5,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.3,
   },
   titleBelow: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.3,
     marginTop: hp(1),
     marginBottom: hp(0.5),
@@ -576,11 +582,11 @@ const styles = StyleSheet.create({
     gap: wp(2),
   },
   button: {
-    backgroundColor: '#11418A',
+    backgroundColor: c.primary,
     paddingHorizontal: hp(1.5),
     paddingVertical: hp(0.8),
     borderRadius: 10,
-    shadowColor: '#11418A',
+    shadowColor: c.primary,
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 6,
@@ -591,7 +597,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 13,
     letterSpacing: 0.3,
   },
@@ -622,16 +628,16 @@ const styles = StyleSheet.create({
   hintText: {
     fontSize: 13,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.1,
   },
   showDataButton: {
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: c.icon,
     height: hp(2.5),
     width: wp(5),
     borderRadius: 8,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -644,7 +650,7 @@ const styles = StyleSheet.create({
   showDataText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.1,
   },
   buttonRow: {
@@ -656,21 +662,21 @@ const styles = StyleSheet.create({
     width: wp(4),
     height: hp(2.2),
     marginRight: hp(0.8),
-    tintColor: 'white',
+    tintColor: c.onPrimary,
   },
   dotText: {
     position: 'absolute',
-    color: '#1E293B',
+    color: c.text,
     fontSize: 10.5,
     fontFamily: 'Poppins-Medium',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: c.surface,
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 5,
     textAlign: 'center',
     minWidth: 32,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   legendContainer: {
     width: '100%',
@@ -702,7 +708,7 @@ const styles = StyleSheet.create({
   },
   warningText: {
     textAlign: 'center',
-    color: '#11418A',
+    color: c.primary,
     fontFamily: 'Poppins-Medium',
     fontSize: 13,
     letterSpacing: 0.1,
@@ -712,7 +718,7 @@ const styles = StyleSheet.create({
     width: wp(5),
     height: hp(2.5),
     marginRight: hp(1.2),
-    tintColor: '#11418A',
+    tintColor: c.primary,
   },
   footerDoctorIcon: {
     tintColor: undefined,
@@ -730,7 +736,7 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     borderRadius: 12,
     padding: hp(0.5),
   },
@@ -756,13 +762,13 @@ const styles = StyleSheet.create({
   activeText: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.2,
   },
   inactiveText: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.1,
   },
   content: {

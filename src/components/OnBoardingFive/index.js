@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -12,6 +13,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { wp, hp, Images, color } from '../../utilities';
 
 const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [exerciseMinutes, setExerciseMinutes] = useState('');
   const [eatingPreference, setEatingPreference] = useState('');
   const [fruitsVeg, setFruitsVeg] = useState('');
@@ -46,7 +50,7 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
         setTime(dateObj);
       }
     }
-  }, []); // ✅ Run only once
+  }, [initialData]);
 
   const dayMap = {
     Mon: 'Monday',
@@ -93,6 +97,7 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
     fiberFood,
     restDay,
     time,
+    onFormChange,
   ]);
 
   const renderRadioOptions = (options, selected, onSelect) =>
@@ -238,10 +243,10 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
 
 export default OnBoardingFive;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     padding: wp(0.5),
-    backgroundColor: 'white',
+    backgroundColor: c.background,
     flexGrow: 1,
   },
   timeButton: {
@@ -252,12 +257,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     width: '100%',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: wp(4),
     borderRadius: wp(3),
     marginBottom: hp(2),
@@ -288,7 +293,7 @@ const styles = StyleSheet.create({
     height: wp(4.5),
     borderRadius: wp(2.25),
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3),
@@ -303,7 +308,7 @@ const styles = StyleSheet.create({
     width: wp(4.5),
     height: wp(4.5),
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: hp(3),
     marginRight: wp(3),
     justifyContent: 'center',
@@ -380,11 +385,11 @@ const styles = StyleSheet.create({
     
   },
   datePickerWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 8,
     marginTop: hp(1),
     padding: wp(2),
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: c.border,
   },
 });

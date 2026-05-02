@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import PaymentConfirmation from '../../components/PaymentCoinfirmation';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 const PaymentScreen = ({ route, navigation }) => {
+  const { colors: c } = useAppTheme();
   const { paymentSuccess, paymentId, orderId, amount, plan } =
     route.params || {};
   const [paymentSuccessModalVisible, setPaymentSuccessModalVisible] =
@@ -23,7 +25,7 @@ const PaymentScreen = ({ route, navigation }) => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+    <View style={{ flex: 1, backgroundColor: c.surface }}>
       {/* Payment Success Modal */}
       <PaymentConfirmation
         navigation={navigation}

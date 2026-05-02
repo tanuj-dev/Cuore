@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   Modal,
   View,
@@ -11,6 +12,9 @@ import {
 import { hp, wp } from '../../utilities';
 
 const AppUpdateModal = ({ visible, storeUrl }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const slideAnim = React.useRef(new Animated.Value(hp(100))).current;
 
   React.useEffect(() => {
@@ -89,7 +93,7 @@ const AppUpdateModal = ({ visible, storeUrl }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -101,7 +105,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderTopLeftRadius: hp(2.5),
     borderTopRightRadius: hp(2.5),
     paddingTop: hp(2),
@@ -117,7 +121,7 @@ const styles = StyleSheet.create({
   handle: {
     width: wp(12),
     height: hp(0.5),
-    backgroundColor: '#D1D5DB',
+    backgroundColor: c.handleBar,
     borderRadius: hp(0.25),
     alignSelf: 'center',
     marginBottom: hp(2),
@@ -133,14 +137,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     fontSize: hp(2.2),
     fontWeight: '700',
-    color: '#11418A',
+    color: c.primary,
     marginBottom: hp(1),
     textAlign: 'center',
   },
   message: {
     fontFamily: 'Roboto-Regular',
     fontSize: hp(1.8),
-    color: '#6B7280',
+    color: c.subText,
     textAlign: 'center',
     marginBottom: hp(3),
     lineHeight: hp(2.5),
@@ -157,7 +161,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontFamily: 'Roboto-Regular',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: hp(1.8),
     fontWeight: '600',
   },

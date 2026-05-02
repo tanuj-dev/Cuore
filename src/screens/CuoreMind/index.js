@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -18,14 +19,16 @@ import ApiErrorFallback from '../../components/ApiError';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const MindSkeleton = () => (
-  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+const MindSkeleton = () => {
+  const { colors: c } = useAppTheme();
+  return (
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: c.background }}>
     {/* Header */}
-    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: hp(2), paddingVertical: hp(1), backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: hp(2), paddingVertical: hp(1), backgroundColor: c.card, borderBottomWidth: 1, borderBottomColor: c.border }}>
       <SkeletonBox width={wp(4)} height={hp(3.5)} borderRadius={4} />
       <SkeletonBox width={140} height={20} borderRadius={6} style={{ marginLeft: hp(10) }} />
     </View>
-    <ScrollView scrollEnabled={false} style={{ backgroundColor: '#F9FAFB' }} contentContainerStyle={{ padding: wp(4) }}>
+    <ScrollView scrollEnabled={false} style={{ backgroundColor: c.surface }} contentContainerStyle={{ padding: wp(4) }}>
       {/* Score gauges */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: hp(2) }}>
         <View style={{ alignItems: 'center', gap: hp(1) }}>
@@ -56,7 +59,8 @@ const MindSkeleton = () => (
       </View>
     </ScrollView>
   </SafeAreaView>
-);
+  );
+};
 
 const COLOR_SCHEMES = [
   { borderColor: '#11418A', backgroundColor: '#E8EEF7' },
@@ -66,6 +70,9 @@ const COLOR_SCHEMES = [
 ];
 
 const Mind = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -138,7 +145,7 @@ const Mind = ({ navigation }) => {
         </TouchableOpacity>
       );
     },
-    [handleCardPress],
+    [handleCardPress, styles],
   );
 
   if (!data) {
@@ -267,26 +274,26 @@ const Mind = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: c.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: c.surface,
   },
   loadingText: {
     fontFamily: 'Poppins-Regular',
     marginTop: hp(2),
     fontSize: 16,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   headerContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   header: {
     flexDirection: 'row',
@@ -309,12 +316,12 @@ const styles = StyleSheet.create({
     marginLeft: hp(11),
     fontSize: 20,
     alignSelf: 'center',
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: c.surface,
   },
   scrollContent: {
     padding: wp(4),
@@ -332,7 +339,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginTop: hp(0.5),
     fontSize: wp(4),
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   reassessButton: {
@@ -359,11 +366,11 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     width: wp(4),
     height: hp(4),
-    tintColor: '#FFFFFF',
+    tintColor: c.card,
   },
   reassessText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     marginLeft: wp(1),
     letterSpacing: 0.3,
@@ -388,7 +395,7 @@ const styles = StyleSheet.create({
   },
   reflectionTitle: {
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: c.primary,
     fontSize: 16,
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
@@ -396,7 +403,7 @@ const styles = StyleSheet.create({
   reflectionQuote: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#475569',
+    color: c.subText,
     lineHeight: hp(2.5),
     letterSpacing: 0.2,
   },
@@ -410,12 +417,12 @@ const styles = StyleSheet.create({
     width: wp(4),
     height: hp(2),
     marginLeft: hp(-1.8),
-    tintColor: '#FFFFFF',
+    tintColor: c.card,
   },
   sectionTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#11418A',
+    color: c.primary,
     marginBottom: hp(1),
     marginLeft: hp(0.5),
     marginTop: hp(2),
@@ -440,7 +447,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
   },
@@ -448,14 +455,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
     marginTop: hp(1),
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   footerNote: {
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     fontSize: 16,
-    color: '#11418A',
+    color: c.primary,
     marginTop: hp(2),
     marginBottom: hp(5),
     letterSpacing: 0.2,

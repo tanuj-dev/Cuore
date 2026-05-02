@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -16,6 +17,9 @@ import { updateProfile } from '../../redux/slices';
 import ToastMessage from '../../components/Toast';
 
 const EditDoctor = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [doctorName, setDoctorName] = useState('');
   const [doctorMobile, setDoctorMobile] = useState('+91');
   const [doctorCode, setDoctorCode] = useState('');
@@ -237,23 +241,23 @@ const EditDoctor = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   screen: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   container: {
     padding: wp(5),
     // minHeight: hp(80),
     margin: wp(4),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     ...(Platform.OS === 'android' && { elevation: 1 }),
   },
   editButtonWrap: {
@@ -271,25 +275,25 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 10,
     paddingHorizontal: wp(3),
     paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(0.5),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   input: {
     flex: 1,
     fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -305,29 +309,29 @@ const styles = StyleSheet.create({
   },
   saveText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     letterSpacing: 0.2,
   },
   cancelBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     width: wp(40),
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     paddingVertical: hp(1.5),
     borderRadius: 10,
   },
   cancelText: {
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
+    color: c.subText,
     fontSize: 14,
     letterSpacing: 0.2,
   },
   noteText: {
     alignSelf: 'center',
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+    color: c.subText,
     fontSize: 15,
     fontStyle: 'italic',
     // marginTop: hp(24),
@@ -344,7 +348,7 @@ const styles = StyleSheet.create({
   },
   findText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     alignSelf: 'center',
     textAlign: 'center',

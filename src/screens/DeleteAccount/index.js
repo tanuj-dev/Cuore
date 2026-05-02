@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -18,6 +19,9 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const DeleteAccount = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [deleteText, setDeleteText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const dispatch = useDispatch();
@@ -150,19 +154,19 @@ const DeleteAccount = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   container: {
     padding: wp(5),
     margin: wp(4),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     minHeight: hp(28),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   warningRow: {
     flexDirection: 'row',
@@ -185,7 +189,7 @@ const styles = StyleSheet.create({
   bodyText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   bulletList: {
@@ -194,14 +198,14 @@ const styles = StyleSheet.create({
   bulletItem: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginVertical: hp(0.5),
     letterSpacing: 0.2,
   },
   confirmLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   input: {
@@ -212,8 +216,8 @@ const styles = StyleSheet.create({
     marginTop: hp(1.5),
     fontSize: 15,
     borderRadius: 10,
-    borderColor: '#E2E8F0',
-    color: '#1E293B',
+    borderColor: c.border,
+    color: c.text,
   },
   continueBtn: {
     backgroundColor: '#EF4444',
@@ -228,7 +232,7 @@ const styles = StyleSheet.create({
   },
   continueText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 15,
     letterSpacing: 0.2,
   },
@@ -236,7 +240,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginTop: hp(2),
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     alignSelf: 'center',
     letterSpacing: 0.2,
   },

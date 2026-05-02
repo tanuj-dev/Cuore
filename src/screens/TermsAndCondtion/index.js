@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -13,6 +14,9 @@ import ProfileHeader from '../../components/ProfileHeader';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const TermsAndConditions = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const { alert, AlertComponent } = useCustomAlert();
   const [accepted, setAccepted] = useState(false);
 
@@ -160,7 +164,7 @@ const TermsAndConditions = ({ navigation }) => {
 
 export default TermsAndConditions;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F3F4F6',
@@ -189,12 +193,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     // marginTop: hp(2),
-    color: '#6B7280',
+    color: c.subText,
   },
   paragraph: {
     fontFamily: 'Roboto-Regular',
     fontSize: 11,
-    color: '#6B7280',
+    color: c.subText,
     // marginTop: hp(1),
     lineHeight: hp(2.8),
   },
@@ -203,7 +207,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginLeft: wp(2),
     marginTop: 4,
-    color: '#6B7280',
+    color: c.subText,
   },
   checkboxWrapper: {
     flexDirection: 'row',
@@ -215,7 +219,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto-Regular',
     marginLeft: wp(2),
     fontSize: 11,
-    color: '#6B7280',
+    color: c.subText,
   },
   continueButton: {
     padding: hp(1.5),
@@ -226,7 +230,7 @@ const styles = StyleSheet.create({
   },
   continueText: {
     fontFamily: 'Roboto-Regular',
-    color: '#6B7280',
+    color: c.subText,
     fontWeight: '600',
     fontSize: hp(2),
   },

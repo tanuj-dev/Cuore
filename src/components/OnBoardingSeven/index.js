@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -25,6 +26,9 @@ const validationLimits = {
 };
 
 const OnBoardingSeven = ({ initialData, onFormChange }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [formData, setFormData] = useState({
     o2_sat: '',
     pulse: '',
@@ -213,10 +217,10 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
 };
 
 // --- Styles ---
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     padding: hp(1),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     flex: 1,
     elevation: 1,
     borderRadius: hp(1),
@@ -269,13 +273,13 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginBottom: hp(1),
   },
   input: {
     fontFamily: 'Poppins-Regular',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(3),
     borderRadius: wp(2),
@@ -301,7 +305,7 @@ const styles = StyleSheet.create({
   },
   unitText: {
     fontSize: hp(1.5),
-    color: '#1E293B',
+    color: c.text,
   },
   errorText: {
     fontSize: 12,

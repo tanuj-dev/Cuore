@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -30,6 +31,9 @@ import { deleteRecord } from '../../redux/uploadPhoto/deleteRecordThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const HealthRecords = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   const userId = useSelector(state => state.auth?.userId);
@@ -1022,13 +1026,13 @@ const HealthRecords = ({ navigation }) => {
 
 export default HealthRecords;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   screen: {
     flex: 1,
   },
   container: {
     padding: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     flex: 1,
   },
   fetchLoader: {
@@ -1037,7 +1041,7 @@ const styles = StyleSheet.create({
   header: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 12,
     letterSpacing: -0.3,
   },
@@ -1045,27 +1049,27 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     borderWidth: 1.5,
     fontSize: 15,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 10,
     padding: 12,
     marginBottom: 10,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   uploadCard: {
     padding: hp(1),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
   uploadBox: {
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderStyle: 'dashed',
     borderRadius: 12,
     padding: 18,
     alignItems: 'center',
     marginBottom: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   uploadIcon: {
     // tintColor: '#047857',
@@ -1105,13 +1109,13 @@ const styles = StyleSheet.create({
   },
   uploadBoxDisabled: {
     opacity: 0.6,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
   },
   uploadIconDisabled: {
     opacity: 0.5,
   },
   textDisabled: {
-    color: '#94A3B8',
+    color: c.tabInactive,
   },
   checkboxBox: {
     borderWidth: 1,
@@ -1122,7 +1126,7 @@ const styles = StyleSheet.create({
     borderRadius: hp(0.9),
   },
   checkboxBoxUnchecked: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   checkboxLabel: {
     fontFamily: 'Poppins-Regular',
@@ -1148,7 +1152,7 @@ const styles = StyleSheet.create({
   },
   submitBtnText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.3,
   },
   viewRecordsTitle: {
@@ -1175,13 +1179,13 @@ const styles = StyleSheet.create({
   activeTab: { fontFamily: 'Poppins-Regular', backgroundColor: '#11418A' },
   tabText: {
     fontFamily: 'Poppins-Regular',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     letterSpacing: 0.2,
   },
   activeText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     letterSpacing: 0.3,
   },
@@ -1189,11 +1193,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: hp(2),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   recordItemContent: {
     flex: 1,
@@ -1219,14 +1223,14 @@ const styles = StyleSheet.create({
   recordTitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     fontWeight: 'bold',
     letterSpacing: 0.2,
   },
   recordDate: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   editFileNameInput: {
@@ -1238,7 +1242,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
   },
   saveEditBtn: {
     padding: 4,
@@ -1246,7 +1250,7 @@ const styles = StyleSheet.create({
   },
   saveEditText: {
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: c.primary,
     letterSpacing: 0.2,
   },
   cancelEditBtn: {
@@ -1255,7 +1259,7 @@ const styles = StyleSheet.create({
   },
   cancelEditText: {
     fontFamily: 'Poppins-Regular',
-    color: '#6B7280',
+    color: c.subText,
     fontSize: 14,
     letterSpacing: 0.2,
   },
@@ -1265,7 +1269,7 @@ const styles = StyleSheet.create({
   },
   emptyRecordsText: {
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+    color: c.subText,
     fontSize: 14,
     letterSpacing: 0.2,
   },
@@ -1273,7 +1277,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginBottom: hp(1),
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   modalOverlay: {
@@ -1283,7 +1287,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     padding: 24,
     width: wp(85),
@@ -1292,7 +1296,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 20,
     textAlign: 'center',
     letterSpacing: -0.3,
@@ -1300,12 +1304,12 @@ const styles = StyleSheet.create({
   modalButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   modalIcon: {
     width: wp(6),
@@ -1316,7 +1320,7 @@ const styles = StyleSheet.create({
   modalButtonText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   cancelButton: {
@@ -1327,7 +1331,7 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#FFFFFF',
+    color: c.card,
     textAlign: 'center',
     letterSpacing: 0.3,
   },
@@ -1339,17 +1343,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     padding: 12,
     borderRadius: 10,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   fileName: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     flex: 1,
     marginRight: 10,
     letterSpacing: 0.2,
@@ -1363,7 +1367,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   removeButtonText: {
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
     letterSpacing: 0.2,
@@ -1393,7 +1397,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeViewImageText: {
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 20,
     fontFamily: 'Poppins-Medium',
   },
@@ -1412,7 +1416,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   consentContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 20,
     width: wp(92),
     maxHeight: hp(88),
@@ -1425,7 +1429,7 @@ const styles = StyleSheet.create({
   consentTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#1E293B',
+    color: c.text,
     textAlign: 'center',
     letterSpacing: -0.3,
   },
@@ -1437,7 +1441,7 @@ const styles = StyleSheet.create({
   consentSubtitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
     textAlign: 'center',
     marginBottom: 8,
     letterSpacing: -0.2,
@@ -1445,7 +1449,7 @@ const styles = StyleSheet.create({
   consentBody: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13.5,
-    color: '#475569',
+    color: c.subText,
     lineHeight: 21,
     marginBottom: 12,
     letterSpacing: 0.1,
@@ -1458,7 +1462,7 @@ const styles = StyleSheet.create({
   consentSectionTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 8,
     marginTop: 4,
     letterSpacing: -0.1,
@@ -1486,7 +1490,7 @@ const styles = StyleSheet.create({
   consentListText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13.5,
-    color: '#475569',
+    color: c.subText,
     flex: 1,
     lineHeight: 21,
     letterSpacing: 0.1,
@@ -1499,7 +1503,7 @@ const styles = StyleSheet.create({
   },
   consentBullet: {
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginRight: 10,
     marginTop: 1,
   },
@@ -1523,7 +1527,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
@@ -1536,14 +1540,14 @@ const styles = StyleSheet.create({
   consentToggleLabel: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     marginLeft: 12,
     letterSpacing: -0.1,
   },
   consentAgreementText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12.5,
-    color: '#64748B',
+    color: c.subText,
     lineHeight: 19,
     marginBottom: 16,
     letterSpacing: 0.1,
@@ -1556,7 +1560,7 @@ const styles = StyleSheet.create({
   consentLink: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#11418A',
+    color: c.primary,
     textDecorationLine: 'underline',
     letterSpacing: 0.1,
   },
@@ -1578,11 +1582,11 @@ const styles = StyleSheet.create({
   consentAgreeBtnText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.3,
   },
   consentAgreeBtnTextDisabled: {
-    color: '#94A3B8',
+    color: c.tabInactive,
   },
   consentCancelBtn: {
     alignItems: 'center',

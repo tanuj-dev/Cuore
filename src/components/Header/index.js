@@ -6,11 +6,15 @@ import {
   Image,
   StyleSheet,
 } from 'react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { hp, wp, Images } from '../../utilities';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Header = ({ title, navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   return (
     <SafeAreaView edges={['top']} style={{ backgroundColor: '#FFFFFF' }}>
       <View
@@ -47,7 +51,7 @@ const Header = ({ title, navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   title: {
     fontFamily: 'Roboto-Regular',
     marginTop: Platform.OS == 'ios' ? hp(1) : hp(1),

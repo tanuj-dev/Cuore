@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useMemo, useCallback } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { hp, wp, Images } from '../../utilities';
 import { useSelector } from 'react-redux';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
@@ -65,6 +66,9 @@ const ROUTE_MAP = {
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const Explore = ({ navigation }) => {
+  const { colors: c, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(c, isDark), [c, isDark]);
+
   const { alert, AlertComponent } = useCustomAlert();
   const currentDayKey = useMemo(() => {
     return DAY_KEYS[new Date().getDay()];
@@ -105,12 +109,19 @@ const Explore = ({ navigation }) => {
         style={styles.card}
         activeOpacity={0.7}
       >
-        <Image source={item.image} style={styles.image} />
+        <View style={styles.imageWrap}>
+          <Image
+            source={item.image}
+            style={styles.imageInner}
+            resizeMode="contain"
+          />
+          <View style={styles.imageToneOverlay} pointerEvents="none" />
+        </View>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.subtitle}>{item.subtitle}</Text>
       </TouchableOpacity>
     ),
-    [handleModulePress],
+    [handleModulePress, styles],
   );
 
   const keyExtractor = useCallback(item => item.id.toString(), []);
@@ -169,7 +180,7 @@ const Explore = ({ navigation }) => {
         </View>
       </View>
     ),
-    [handleHealthPress, profileImageSource],
+    [handleHealthPress, profileImageSource, styles, doctorProfile],
   );
 
   return (
@@ -192,21 +203,21 @@ const Explore = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c, isDark) =>
+  StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.background,
   },
   list: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   headerContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     paddingBottom: hp(2.5),
-    // borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     marginBottom: hp(2.5),
+    marginHorizontal: wp(2),
     borderRadius: hp(2),
   },
   logoContainer: {
@@ -226,8 +237,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#11418A',
   },
   healthSection: {
     alignItems: 'center',
@@ -237,14 +246,12 @@ const styles = StyleSheet.create({
   healthButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: c.headerChipRoseBg,
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(2.5),
     borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#FECACA',
-    shadowColor: '#DC2626',
-    shadowOpacity: 0.15,
+    shadowColor: c.danger,
+    shadowOpacity: isDark ? 0.08 : 0.15,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     ...Platform.select({
@@ -262,14 +269,14 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 15,
     fontFamily: 'Poppins-Medium',
-    color: '#DC2626',
+    color: c.headerChipRoseText,
     marginLeft: wp(2),
     letterSpacing: -0.2,
   },
   subheading: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
-    color: '#64748B',
+    color: c.subText,
     marginTop: hp(1.2),
     textAlign: 'center',
     letterSpacing: 0.1,
@@ -285,7 +292,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: wp(42),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     padding: wp(3.5),
     alignItems: 'center',
@@ -294,28 +301,39 @@ const styles = StyleSheet.create({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.08,
+        shadowOpacity: isDark ? 0.2 : 0.08,
         shadowRadius: 8,
       },
     }),
   },
-  image: {
+  imageWrap: {
     width: wp(36),
     height: hp(11),
     marginBottom: hp(1.5),
     borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: c.mutedSurface,
+  },
+  imageInner: {
+    width: '100%',
+    height: '100%',
+  },
+  imageToneOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 12,
+    backgroundColor: c.exploreGridImageOverlay,
   },
   title: {
     fontSize: 15.5,
     fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
+    color: c.text,
     textAlign: 'center',
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 12,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+    color: c.subText,
     textAlign: 'center',
     marginTop: hp(0.3),
     letterSpacing: 0.1,

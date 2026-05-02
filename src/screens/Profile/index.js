@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -10,6 +11,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Platform,
+  Switch,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { hp, wp, Images } from '../../utilities';
@@ -20,6 +22,7 @@ import {
   SafeAreaProvider,
 } from 'react-native-safe-area-context';
 import { getProfile } from '../../redux/slices';
+import { setThemeMode } from '../../redux/Theme/slice';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const profileOptions = [
@@ -68,7 +71,11 @@ const profileOptions = [
 ];
 
 const Profile = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
+  const themeMode = useSelector(state => state.theme?.mode || 'light');
   const { alert, AlertComponent } = useCustomAlert();
   // Group the options by section
   const role = useSelector(state => state.auth.role);
@@ -140,7 +147,7 @@ const Profile = ({ navigation }) => {
             style={[
               styles.itemIcon,
               {
-                tintColor: item.title === 'Logout' ? '#EF4444' : '#64748B',
+                tintColor: item.title === 'Logout' ? c.danger : c.icon,
               },
             ]}
             resizeMode="contain"
@@ -149,7 +156,7 @@ const Profile = ({ navigation }) => {
             style={[
               styles.itemText,
               {
-                color: item.title === 'Logout' ? '#EF4444' : '#1E293B',
+                color: item.title === 'Logout' ? c.danger : c.text,
               },
             ]}
           >
@@ -160,7 +167,7 @@ const Profile = ({ navigation }) => {
             style={[
               styles.arrowIcon,
               {
-                tintColor: item.title === 'Logout' ? '#EF4444' : '#94A3B8',
+                tintColor: item.title === 'Logout' ? c.danger : c.tabInactive,
               },
             ]}
           />
@@ -204,7 +211,7 @@ const Profile = ({ navigation }) => {
     value
       ? String(value)
           .replace(/_/g, ' ')
-          .replace(/\b\w/g, c => c.toUpperCase())
+          .replace(/\b\w/g, ch => ch.toUpperCase())
       : 'N/A';
   const toDate = value =>
     value ? new Date(value).toLocaleDateString() : 'N/A';
@@ -240,7 +247,7 @@ const Profile = ({ navigation }) => {
             title="Pull to refresh"
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#11418A"
+            tintColor={c.primary}
           />
         }
         style={styles.container}
@@ -294,6 +301,25 @@ const Profile = ({ navigation }) => {
               </View>
               <Image source={Images.RIGHT_ARROW} style={styles.profileArrow} />
             </TouchableOpacity>
+
+            <View style={styles.themeRow}>
+              <View style={styles.themeRowTextWrap}>
+                <Text style={styles.themeLabel}>Appearance</Text>
+                <Text style={styles.themeHint}>
+                  {themeMode === 'dark' ? 'Dark mode on' : 'Light mode on'}
+                </Text>
+              </View>
+              <Switch
+                accessibilityLabel="Toggle dark mode"
+                value={themeMode === 'dark'}
+                onValueChange={dark =>
+                  dispatch(setThemeMode(dark ? 'dark' : 'light'))
+                }
+                trackColor={{ false: c.border, true: c.primary }}
+                thumbColor={Platform.OS === 'android' ? c.onPrimary : undefined}
+                ios_backgroundColor={c.border}
+              />
+            </View>
 
             {/* Render sections */}
             {Object.entries(groupedSections).map(([sectionTitle, items]) =>
@@ -374,7 +400,7 @@ const Profile = ({ navigation }) => {
             {isWebViewLoading && (
               <ActivityIndicator
                 size="large"
-                color="#11418A"
+                color={c.primary}
                 style={styles.webViewLoader}
               />
             )}
@@ -391,25 +417,25 @@ const Profile = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.background,
   },
   headerSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     paddingHorizontal: hp(2),
     paddingVertical: hp(2),
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
     alignItems: 'flex-start',
   },
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   contentContainer: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   paddingContainer: {
     padding: wp(4),
@@ -419,8 +445,40 @@ const styles = StyleSheet.create({
     width: wp(20),
     height: hp(3),
   },
+  themeRow: {
+    backgroundColor: c.card,
+    borderRadius: 16,
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(4),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: hp(2.5),
+    borderWidth: 1,
+    borderColor: c.border,
+    ...Platform.select({
+      android: { elevation: 0.5 },
+      ios: { elevation: 2 },
+    }),
+  },
+  themeRowTextWrap: {
+    flex: 1,
+    marginRight: wp(3),
+  },
+  themeLabel: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: c.text,
+    letterSpacing: -0.2,
+  },
+  themeHint: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: c.subText,
+    marginTop: hp(0.35),
+  },
   profileCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     padding: wp(4.5),
     flexDirection: 'row',
@@ -431,7 +489,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     ...Platform.select({
       android: { elevation: 0.5 },
       ios: { elevation: 4 },
@@ -442,7 +500,7 @@ const styles = StyleSheet.create({
     height: wp(14),
     borderRadius: wp(7),
     borderWidth: 2,
-    borderColor: '#CBD5E1',
+    borderColor: c.icon,
     flexShrink: 0,
   },
   nameWrapper: {
@@ -454,19 +512,19 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.3,
   },
   profileArrow: {
     resizeMode: 'contain',
     width: wp(5),
     height: wp(5),
-    tintColor: '#64748B',
+    tintColor: c.icon,
     flexShrink: 0,
   },
   sectionContainer: {
     marginBottom: hp(2.5),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -478,7 +536,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     marginTop: hp(1),
     marginBottom: hp(1),
     marginLeft: wp(4),
@@ -486,13 +544,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   item: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     paddingVertical: hp(1.8),
     paddingHorizontal: wp(4),
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: c.divider,
   },
   itemIcon: {
     width: wp(5.5),
@@ -503,18 +561,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Poppins-Medium',
     flex: 1,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.2,
   },
   arrowIcon: {
     width: wp(4),
     height: wp(4),
     resizeMode: 'contain',
-    tintColor: '#94A3B8',
+    tintColor: c.tabInactive,
   },
   webViewContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   webViewHeader: {
     flexDirection: 'row',
@@ -523,8 +581,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: c.border,
+    backgroundColor: c.card,
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
@@ -537,7 +595,7 @@ const styles = StyleSheet.create({
   webViewTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     flex: 1,
     letterSpacing: -0.3,
   },
@@ -545,14 +603,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
     fontSize: 22,
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
+    color: c.subText,
   },
   webView: {
     flex: 1,
@@ -569,22 +627,22 @@ const styles = StyleSheet.create({
     padding: wp(4),
   },
   subscriptionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     padding: wp(4),
   },
   subscriptionTitle: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(1.2),
   },
   subscriptionRow: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginBottom: hp(0.8),
   },
 });

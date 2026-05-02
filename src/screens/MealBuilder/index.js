@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -22,10 +23,12 @@ import { getBuilderItems } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const MealBuilderSkeleton = () => (
-  <View style={{ flex: 1 }}>
+const MealBuilderSkeleton = () => {
+  const { colors: c } = useAppTheme();
+  return (
+  <View style={{ flex: 1, backgroundColor: c.background }}>
     {/* Background header */}
-    <View style={{ height: hp(20), backgroundColor: '#CBD5E1', padding: hp(2), justifyContent: 'space-between' }}>
+    <View style={{ height: hp(20), backgroundColor: c.icon, padding: hp(2), justifyContent: 'space-between' }}>
       <SkeletonBox width={wp(4)} height={hp(3.5)} borderRadius={4} />
       <View style={{ alignItems: 'center', gap: hp(1) }}>
         <SkeletonBox width={120} height={20} />
@@ -36,7 +39,7 @@ const MealBuilderSkeleton = () => (
         </View>
       </View>
     </View>
-    <ScrollView scrollEnabled={false} style={{ backgroundColor: '#F8FAFC' }}>
+    <ScrollView scrollEnabled={false} style={{ backgroundColor: c.surface }}>
       {/* Meal type tabs */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: hp(2), gap: wp(2) }}>
         <SkeletonBox width={wp(42)} height={hp(5)} borderRadius={10} />
@@ -51,7 +54,7 @@ const MealBuilderSkeleton = () => (
       </View>
       {/* Category cards */}
       {[1, 2, 3, 4].map(i => (
-        <View key={i} style={{ backgroundColor: '#FFF', borderWidth: 1, borderRadius: 12, borderColor: '#E2E8F0', marginHorizontal: hp(2), marginBottom: hp(1.5), padding: hp(2) }}>
+        <View key={i} style={{ backgroundColor: c.card, borderWidth: 1, borderRadius: 12, borderColor: c.border, marginHorizontal: hp(2), marginBottom: hp(1.5), padding: hp(2) }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <SkeletonBox width={120} height={16} />
             <SkeletonBox width={16} height={16} borderRadius={4} />
@@ -60,7 +63,8 @@ const MealBuilderSkeleton = () => (
       ))}
     </ScrollView>
   </View>
-);
+  );
+};
 
 const tagColors = {
   Include: '#22C55E',
@@ -69,6 +73,9 @@ const tagColors = {
 };
 
 const MealBuilder = ({ navigation, route }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [activeTab, setActiveTab] = useState('Breakfast');
   const [activeCuisine, setActiveCuisine] = useState('Indian');
   const [expandedCategory, setExpandedCategory] = useState(null);
@@ -572,7 +579,7 @@ const MealBuilder = ({ navigation, route }) => {
 
 // --- styles unchanged ---
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   backgroundImage: {
     height: hp(20),
     padding: hp(2),
@@ -598,7 +605,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   progressRow: {
@@ -616,13 +623,13 @@ const styles = StyleSheet.create({
   target: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   kcal: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   remainingKcal: {
@@ -653,12 +660,12 @@ const styles = StyleSheet.create({
     width: wp(5),
     marginRight: wp(1.5),
     resizeMode: 'contain',
-    tintColor: '#FFFFFF',
+    tintColor: c.card,
   },
   breakfastText: {
     fontFamily: 'Poppins-Regular',
     fontSize: hp(1.6),
-    color: '#FFFFFF',
+    color: c.card,
     flexShrink: 1,
     letterSpacing: 0.2,
   },
@@ -676,25 +683,25 @@ const styles = StyleSheet.create({
     width: wp(5),
     marginRight: wp(1.5),
     resizeMode: 'contain',
-    tintColor: '#FFFFFF',
+    tintColor: c.card,
   },
   lunchDinnerText: {
     fontFamily: 'Poppins-Regular',
     fontSize: hp(1.6),
-    color: '#FFFFFF',
+    color: c.card,
     flexShrink: 1,
     letterSpacing: 0.2,
   },
   searchBox: {
     marginHorizontal: hp(2),
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: hp(1),
     paddingHorizontal: hp(2),
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     marginTop: hp(2),
   },
   searchIcon: {
@@ -708,7 +715,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: hp(1),
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   cuisineRow: {
@@ -740,7 +747,7 @@ const styles = StyleSheet.create({
   cuisineSelectedText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.2,
   },
   cuisineUnselected: {
@@ -754,7 +761,7 @@ const styles = StyleSheet.create({
   cuisineUnselectedText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   tagRow: {
@@ -773,7 +780,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginLeft: hp(0.5),
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   cartImage: {
@@ -804,19 +811,19 @@ const styles = StyleSheet.create({
   },
   floatingCartText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     marginLeft: hp(1),
     fontSize: 14,
     letterSpacing: 0.3,
   },
-  scrollView: { backgroundColor: '#F8FAFC' },
+  scrollView: { backgroundColor: c.surface },
   mealTabActive: { backgroundColor: '#11418A' },
   mealTabInactive: { backgroundColor: '#94A3B8' },
   categoryCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderWidth: 1,
     borderRadius: 12,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     marginHorizontal: hp(2),
     marginBottom: hp(1.5),
     padding: hp(2),
@@ -831,7 +838,7 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   categoryChevron: {
@@ -844,13 +851,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     minHeight: hp(8),
     marginVertical: hp(0.2),
     borderRadius: 10,
     paddingHorizontal: hp(1.5),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   healthDot: {
     height: hp(2),
@@ -865,13 +872,13 @@ const styles = StyleSheet.create({
   itemName: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   itemCal: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     marginTop: 2,
     letterSpacing: 0.2,
   },
@@ -882,7 +889,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderColor: '#11418A',
   },
   addItemBtnAdded: {
@@ -892,7 +899,7 @@ const styles = StyleSheet.create({
   addItemBtnText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13,
-    color: '#11418A',
+    color: c.primary,
     letterSpacing: 0.2,
   },
   addItemBtnTextAdded: {
@@ -902,7 +909,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: 24,
-    color: '#64748B',
+    color: c.subText,
     fontSize: 14,
     letterSpacing: 0.2,
   },

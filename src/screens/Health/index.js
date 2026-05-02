@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useCallback,
 } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -117,6 +118,9 @@ const formatDate = date => {
 };
 
 const Health = ({ navigation }) => {
+  const { colors: c, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(c, isDark), [c, isDark]);
+
   const [refreshing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [lastConsulted, setLastConsulted] = useState(new Date());
@@ -463,13 +467,13 @@ const Health = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#11418A" />
+        <ActivityIndicator size="large" color={c.primary} />
       </View>
     );
   }
 
   return (
-    <View edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       {AlertComponent}
       <ViewShot
         ref={viewShotRef}
@@ -490,6 +494,7 @@ const Health = ({ navigation }) => {
                   resizeMode: 'contain',
                   height: hp(2.5),
                   width: hp(4),
+                  tintColor: c.text,
                 }}
                 resizeMode="contain"
               />
@@ -509,7 +514,7 @@ const Health = ({ navigation }) => {
                   resizeMode: 'contain',
                   height: hp(2),
                   width: hp(3),
-                  tintColor: 'black',
+                  tintColor: c.text,
                 }}
                 resizeMode="contain"
               />
@@ -521,7 +526,7 @@ const Health = ({ navigation }) => {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: c.surface,
               flex: 1,
               marginTop: Platform.OS === 'ios' ? hp(0) : hp(2),
             }}
@@ -642,8 +647,8 @@ const Health = ({ navigation }) => {
                         mode="date"
                         display="default"
                         onChange={onDateChange}
-                        textColor="#000000"
-                        themeVariant="light"
+                        textColor={isDark ? '#F8FAFC' : '#000000'}
+                        themeVariant={isDark ? 'dark' : 'light'}
                       />
                     </View>
                   )}
@@ -688,32 +693,9 @@ const Health = ({ navigation }) => {
                       marginBottom: hp(2),
                     }}
                   >
-                    <Text
-                      style={{
-                        fontSize: 15,
-                        color: '#374151',
-                        fontFamily: 'Poppins-Medium',
-                      }}
-                    >
-                      Parameter
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        color: '#374151',
-                        fontFamily: 'Poppins-Medium',
-                      }}
-                    >
-                      Value
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        color: '#000000',
-                        fontFamily: 'Poppins-Medium',
-                        marginRight: hp(2),
-                      }}
-                    >
+                    <Text style={styles.obsTableHeader}>Parameter</Text>
+                    <Text style={styles.obsTableHeaderSm}>Value</Text>
+                    <Text style={[styles.obsTableHeaderSm, styles.obsTableHeaderStatus]}>
                       Status
                     </Text>
                   </View>
@@ -725,49 +707,24 @@ const Health = ({ navigation }) => {
                     updateCellsBatchingPeriod={50}
                     initialNumToRender={7}
                     windowSize={10}
+                    extraData={isDark}
                     renderItem={({ item }) => (
-                      <View
-                        style={{
-                          paddingVertical: hp(2),
-                          borderBottomWidth: 1,
-                          borderColor: '#E5E7EB',
-                        }}
-                      >
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <Text
-                            style={{
-                              width: hp(17),
-                              fontSize: 14,
-                              color: '#000000',
-                              fontFamily: 'Poppins-Regular',
-                            }}
-                          >
-                            {item?.parameter}
-                          </Text>
-                          <Text
-                            style={{
-                              marginLeft: hp(2),
-                              width: hp(17),
-                              fontSize: 14,
-                              color: '#374151',
-                              fontFamily: 'Poppins-Regular',
-                            }}
-                          >
-                            {item?.value ?? '-'}
-                          </Text>
-                          <View style={{ width: hp(17) }}>
+                      <View style={styles.obsTableRow}>
+                        <View style={styles.obsTableRowInner}>
+                          <Text style={styles.obsTableParam}>{item?.parameter}</Text>
+                          <Text style={styles.obsTableValue}>{item?.value ?? '-'}</Text>
+                          <View style={styles.obsStatusCell}>
                             <View
-                              style={{
-                                height: hp(2),
-                                width: hp(2),
-                                borderRadius: hp(4),
-                                backgroundColor: item.status,
-                              }}
+                              style={[
+                                styles.obsStatusDot,
+                                isDark
+                                  ? {
+                                      backgroundColor: c.mutedSurface,
+                                      borderWidth: 1,
+                                      borderColor: c.border,
+                                    }
+                                  : { backgroundColor: item.status },
+                              ]}
                             />
                           </View>
                         </View>
@@ -785,7 +742,7 @@ const Health = ({ navigation }) => {
                   <View style={styles.referencesCardInner}>
                     <Info
                       size={Math.max(16, hp(1.85))}
-                      color="#94A3B8"
+                      color={c.tabInactive}
                       strokeWidth={2}
                       style={styles.referencesInfoIcon}
                     />
@@ -802,14 +759,7 @@ const Health = ({ navigation }) => {
                   style={styles.card}
                 >
                   <Text style={styles.sectionTitle}>Health Records</Text>
-                  <View
-                    style={{
-                      borderStyle: 'dotted',
-                      borderWidth: 1,
-                      padding: hp(1),
-                      backgroundColor: '#F9FAFB',
-                    }}
-                  >
+                  <View style={styles.recordsPreview}>
                     <Image
                       source={Images.PRECRIPTION}
                       style={styles.recordImage}
@@ -907,7 +857,7 @@ const Health = ({ navigation }) => {
                             styles.flatFeedbackTapText,
                             statusofSummary &&
                               statusofSummary !== 'solved' && {
-                                color: '#9CA3AF',
+                                color: c.tabInactive,
                               },
                           ]}
                         >
@@ -919,15 +869,7 @@ const Health = ({ navigation }) => {
                           </Text>
                         )}
                       </TouchableOpacity>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: '#4B5563',
-                          fontFamily: 'Poppins-Regular',
-                          fontStyle: 'italic',
-                          marginBottom: hp(1),
-                        }}
-                      >
+                      <Text style={styles.summaryFinePrint}>
                         AI-assisted extraction. Accuracy may vary. Please verify
                         with your original report.
                       </Text>
@@ -946,7 +888,7 @@ const Health = ({ navigation }) => {
                                 handleUpdateField('past_history', text)
                               }
                               placeholder="Enter history items separated by commas"
-                              placeholderTextColor="#9CA3AF"
+                              placeholderTextColor={c.tabInactive}
                               multiline
                             />
                           </View>
@@ -962,7 +904,7 @@ const Health = ({ navigation }) => {
                                 handleUpdateField('medications', text)
                               }
                               placeholder="Enter medications separated by commas"
-                              placeholderTextColor="#9CA3AF"
+                              placeholderTextColor={c.tabInactive}
                               multiline
                             />
                           </View>
@@ -978,7 +920,7 @@ const Health = ({ navigation }) => {
                                 handleUpdateField('labs', text)
                               }
                               placeholder="Enter lab results separated by commas"
-                              placeholderTextColor="#9CA3AF"
+                              placeholderTextColor={c.tabInactive}
                               multiline
                             />
                           </View>
@@ -994,61 +936,43 @@ const Health = ({ navigation }) => {
                                 handleUpdateField('imaging', text)
                               }
                               placeholder="Enter imaging results separated by commas"
-                              placeholderTextColor="#9CA3AF"
+                              placeholderTextColor={c.tabInactive}
                               multiline
                             />
                           </View>
 
                           <View style={{ flexDirection: 'row', gap: hp(1) }}>
                             <TouchableOpacity
-                              style={{
-                                flex: 1,
-                                backgroundColor: '#10B981',
-                                borderRadius: 8,
-                                paddingVertical: hp(1.5),
-                                alignItems: 'center',
-                              }}
+                              style={[
+                                styles.summaryEditBtnPrimary,
+                                isDark && styles.summaryEditBtnPrimaryDark,
+                              ]}
                               onPress={handleSaveSummary}
                               disabled={isSaving}
                               activeOpacity={0.8}
                             >
                               {isSaving ? (
                                 <ActivityIndicator
-                                  color="#FFFFFF"
+                                  color={c.onPrimary}
                                   size="small"
                                 />
                               ) : (
-                                <Text
-                                  style={{
-                                    color: '#FFFFFF',
-                                    fontSize: 14,
-                                    fontFamily: 'Poppins-Medium',
-                                  }}
-                                >
+                                <Text style={styles.summaryEditBtnPrimaryText}>
                                   Save Changes
                                 </Text>
                               )}
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                              style={{
-                                flex: 1,
-                                backgroundColor: '#6B7280',
-                                borderRadius: 8,
-                                paddingVertical: hp(1.5),
-                                alignItems: 'center',
-                              }}
+                              style={[
+                                styles.summaryEditBtnSecondary,
+                                isDark && styles.summaryEditBtnSecondaryDark,
+                              ]}
                               onPress={handleCancelEdit}
                               disabled={isSaving}
                               activeOpacity={0.8}
                             >
-                              <Text
-                                style={{
-                                  color: '#FFFFFF',
-                                  fontSize: 14,
-                                  fontFamily: 'Poppins-Medium',
-                                }}
-                              >
+                              <Text style={styles.summaryEditBtnSecondaryText}>
                                 Cancel
                               </Text>
                             </TouchableOpacity>
@@ -1065,14 +989,7 @@ const Health = ({ navigation }) => {
                                     History (from uploaded records):
                                   </Text>
                                 </View>
-                                <Text
-                                  style={{
-                                    fontSize: 14,
-                                    color: '#4B5563',
-                                    fontFamily: 'Poppins-Regular',
-                                    marginTop: hp(0.5),
-                                  }}
-                                >
+                                <Text style={styles.summaryRecordBody}>
                                   {healtRecords.summary.past_history.join(
                                     '   ',
                                   )}
@@ -1087,14 +1004,7 @@ const Health = ({ navigation }) => {
                                 <Text style={styles.bold}>
                                   Medications (as listed in records):
                                 </Text>
-                                <Text
-                                  style={{
-                                    fontSize: 14,
-                                    color: '#4B5563',
-                                    fontFamily: 'Poppins-Regular',
-                                    marginTop: hp(0.5),
-                                  }}
-                                >
+                                <Text style={styles.summaryRecordBody}>
                                   {healtRecords.summary.medications.join('   ')}
                                 </Text>
                               </View>
@@ -1107,14 +1017,7 @@ const Health = ({ navigation }) => {
                                 <Text style={styles.bold}>
                                   Lab values (as recorded in reports):
                                 </Text>
-                                <Text
-                                  style={{
-                                    fontSize: 14,
-                                    color: '#4B5563',
-                                    fontFamily: 'Poppins-Regular',
-                                    marginTop: hp(0.5),
-                                  }}
-                                >
+                                <Text style={styles.summaryRecordBody}>
                                   {healtRecords.summary.labs.join('   ')}
                                 </Text>
                               </View>
@@ -1128,14 +1031,7 @@ const Health = ({ navigation }) => {
                                   {' '}
                                   Imaging findings (as recorded in reports):
                                 </Text>
-                                <Text
-                                  style={{
-                                    fontSize: 14,
-                                    color: '#4B5563',
-                                    fontFamily: 'Poppins-Regular',
-                                    marginTop: hp(0.5),
-                                  }}
-                                >
+                                <Text style={styles.summaryRecordBody}>
                                   {healtRecords.summary.imaging.join('   ')}
                                 </Text>
                               </View>
@@ -1152,38 +1048,17 @@ const Health = ({ navigation }) => {
                               (!healtRecords.summary.imaging ||
                                 healtRecords.summary.imaging.length ===
                                   0))) && (
-                            <Text
-                              style={{
-                                fontSize: 14,
-                                color: '#6B7280',
-                                fontFamily: 'Poppins-Regular',
-                                fontStyle: 'italic',
-                                marginTop: hp(1),
-                              }}
-                            >
+                            <Text style={styles.emptySummaryHint}>
                               No summary data available
                             </Text>
                           )}
 
                           <TouchableOpacity
-                            style={{
-                              backgroundColor: '#11418A',
-                              borderRadius: 8,
-                              paddingVertical: hp(1.5),
-                              paddingHorizontal: wp(4),
-                              marginTop: hp(2),
-                              alignItems: 'center',
-                            }}
+                            style={styles.editSummaryButton}
                             onPress={handleEnterEditMode}
                             activeOpacity={0.8}
                           >
-                            <Text
-                              style={{
-                                color: '#FFFFFF',
-                                fontSize: 14,
-                                fontFamily: 'Poppins-Medium',
-                              }}
-                            >
+                            <Text style={styles.editSummaryButtonText}>
                               Edit Summary
                             </Text>
                           </TouchableOpacity>
@@ -1370,7 +1245,7 @@ const Health = ({ navigation }) => {
       >
         <View style={styles.sharingLoaderOverlay}>
           <View style={styles.sharingLoaderContainer}>
-            <ActivityIndicator size="large" color="#11418A" />
+            <ActivityIndicator size="large" color={c.primary} />
             <Text style={styles.sharingLoaderText}>Generating PDF...</Text>
           </View>
         </View>
@@ -1379,9 +1254,10 @@ const Health = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c, isDark) =>
+  StyleSheet.create({
   container: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: c.surface,
     padding: 10,
   },
   fixedHeader: {
@@ -1398,9 +1274,9 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     elevation: 1000,
     pointerEvents: 'box-none',
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    backgroundColor: c.card,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: c.border,
   },
   fixedButton: {
     padding: hp(0.5),
@@ -1413,7 +1289,7 @@ const styles = StyleSheet.create({
   fixedHeaderTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#1F2937',
+    color: c.text,
   },
   header: {
     flexDirection: 'row',
@@ -1426,15 +1302,132 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
   },
   card: {
-    backgroundColor: 'white',
+    backgroundColor: c.card,
     borderRadius: 10,
     padding: hp(2),
     marginVertical: 6,
+    borderWidth: 1,
+    borderColor: c.cardBorder,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
     justifyContent: 'center',
+  },
+  recordsPreview: {
+    borderStyle: 'dotted',
+    borderWidth: 1,
+    borderColor: c.border,
+    padding: hp(1),
+    backgroundColor: isDark ? c.mutedSurface : '#F9FAFB',
+  },
+  obsTableHeader: {
+    fontSize: 15,
+    color: c.text,
+    fontFamily: 'Poppins-Medium',
+  },
+  obsTableHeaderSm: {
+    fontSize: 14,
+    color: c.text,
+    fontFamily: 'Poppins-Medium',
+  },
+  obsTableHeaderStatus: {
+    marginRight: hp(2),
+  },
+  obsTableRow: {
+    paddingVertical: hp(2),
+    borderBottomWidth: 1,
+    borderBottomColor: c.border,
+  },
+  obsTableRowInner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  obsTableParam: {
+    width: hp(17),
+    fontSize: 14,
+    color: c.text,
+    fontFamily: 'Poppins-Regular',
+  },
+  obsTableValue: {
+    marginLeft: hp(2),
+    width: hp(17),
+    fontSize: 14,
+    color: c.textSecondary,
+    fontFamily: 'Poppins-Regular',
+  },
+  obsStatusCell: {
+    width: hp(17),
+  },
+  obsStatusDot: {
+    height: hp(2),
+    width: hp(2),
+    borderRadius: hp(4),
+  },
+  summaryEditBtnPrimary: {
+    flex: 1,
+    backgroundColor: '#11418A',
+    borderRadius: 8,
+    paddingVertical: hp(1.5),
+    alignItems: 'center',
+  },
+  summaryEditBtnPrimaryDark: {
+    backgroundColor: c.primary,
+  },
+  summaryEditBtnPrimaryText: {
+    color: c.onPrimary,
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+  },
+  summaryEditBtnSecondary: {
+    flex: 1,
+    backgroundColor: '#6B7280',
+    borderRadius: 8,
+    paddingVertical: hp(1.5),
+    alignItems: 'center',
+  },
+  summaryEditBtnSecondaryDark: {
+    backgroundColor: c.mutedSurface,
+    borderWidth: 1,
+    borderColor: c.border,
+  },
+  summaryEditBtnSecondaryText: {
+    color: isDark ? c.text : '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+  },
+  summaryFinePrint: {
+    fontSize: 12,
+    color: c.subText,
+    fontFamily: 'Poppins-Regular',
+    fontStyle: 'italic',
+    marginBottom: hp(1),
+  },
+  editSummaryButton: {
+    backgroundColor: isDark ? c.primary : '#11418A',
+    borderRadius: 8,
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(4),
+    marginTop: hp(2),
+    alignItems: 'center',
+  },
+  editSummaryButtonText: {
+    color: c.onPrimary,
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+  },
+  summaryRecordBody: {
+    fontSize: 14,
+    color: c.subText,
+    fontFamily: 'Poppins-Regular',
+    marginTop: hp(0.5),
+  },
+  emptySummaryHint: {
+    fontSize: 14,
+    color: c.tabInactive,
+    fontFamily: 'Poppins-Regular',
+    fontStyle: 'italic',
+    marginTop: hp(1),
   },
   row: {
     flexDirection: 'row',
@@ -1449,23 +1442,23 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 14,
-    color: '#1F2937',
+    color: c.text,
     fontFamily: 'Poppins-Regular',
   },
   detail: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#6B7280',
+    color: c.subText,
   },
   label: {
     fontSize: 14,
     marginVertical: 2,
-    color: '#6B7280',
+    color: c.subText,
     width: hp(25),
   },
   bold: {
     fontSize: 14,
-    color: '#11418A',
+    color: c.primary,
     fontFamily: 'Poppins-Medium',
     fontWeight: 'bold',
   },
@@ -1490,14 +1483,14 @@ const styles = StyleSheet.create({
   flatFeedbackTapText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#11418A',
+    color: c.primary,
   },
   flatFeedbackPendingBadge: {
     marginLeft: wp(2),
     fontSize: 11,
     fontFamily: 'Poppins-Regular',
-    color: '#F59E0B',
-    backgroundColor: '#FEF3C7',
+    color: isDark ? '#FDE68A' : '#F59E0B',
+    backgroundColor: isDark ? 'rgba(251,191,36,0.15)' : '#FEF3C7',
     paddingHorizontal: wp(2),
     paddingVertical: 2,
     borderRadius: 10,
@@ -1511,7 +1504,7 @@ const styles = StyleSheet.create({
     padding: wp(5),
   },
   flatFeedbackBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     padding: hp(2.5),
     width: '100%',
@@ -1520,13 +1513,13 @@ const styles = StyleSheet.create({
   flatFeedbackTitle: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(0.5),
   },
   flatFeedbackSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(2),
   },
   flatFeedbackOption: {
@@ -1538,29 +1531,34 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: hp(1),
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: c.border,
+    backgroundColor: c.surface,
   },
-  flatFeedbackOptionSelected: {
-    borderColor: '#11418A',
-    backgroundColor: '#EFF6FF',
-  },
+  flatFeedbackOptionSelected: isDark
+    ? {
+        borderColor: c.primary,
+        backgroundColor: 'rgba(96,165,250,0.12)',
+      }
+    : {
+        borderColor: '#11418A',
+        backgroundColor: '#EFF6FF',
+      },
   flatFeedbackOptionText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
   },
   flatFeedbackOptionTextSelected: {
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: c.primary,
   },
   flatFeedbackCheck: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#11418A',
+    color: c.primary,
   },
   flatFeedbackSubmitBtn: {
-    backgroundColor: '#11418A',
+    backgroundColor: isDark ? c.primary : '#11418A',
     paddingVertical: hp(1.5),
     borderRadius: 10,
     alignItems: 'center',
@@ -1572,7 +1570,7 @@ const styles = StyleSheet.create({
   flatFeedbackSubmitText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#FFFFFF',
+    color: c.onPrimary,
   },
   flatFeedbackCancelBtn: {
     alignItems: 'center',
@@ -1582,11 +1580,11 @@ const styles = StyleSheet.create({
   flatFeedbackCancelText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
   },
   sectionTitle: {
     fontSize: 16,
-    color: '#1F2937',
+    color: c.text,
     fontFamily: 'Poppins-Medium',
   },
   observationsDisclaimerRow: {
@@ -1606,7 +1604,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+    color: c.subText,
     fontStyle: 'italic',
     letterSpacing: 0.2,
   },
@@ -1617,7 +1615,7 @@ const styles = StyleSheet.create({
   updateButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#11418A',
+    backgroundColor: isDark ? c.primary : '#11418A',
     paddingVertical: hp(1),
     paddingHorizontal: hp(1),
     width: hp(12),
@@ -1625,19 +1623,19 @@ const styles = StyleSheet.create({
   },
   updateButtonText: {
     textAlign: 'center',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 12.5,
     fontFamily: 'Poppins-Medium',
   },
   columnHeader: {
     fontSize: 14,
-    color: '#374151',
+    color: c.text,
     fontFamily: 'Poppins-Medium',
     width: hp(17),
   },
   cellText: {
     fontSize: 14,
-    color: '#374151',
+    color: c.textSecondary,
     fontFamily: 'Poppins-Regular',
     width: hp(17),
   },
@@ -1669,7 +1667,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: hp(1),
-    backgroundColor: '#11418A',
+    backgroundColor: isDark ? c.primary : '#11418A',
     borderRadius: hp(1),
     padding: 10,
     flexDirection: 'row',
@@ -1679,14 +1677,14 @@ const styles = StyleSheet.create({
     paddingVertical: hp(2),
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 15,
     fontFamily: 'Poppins-Medium',
   },
   note: {
     marginHorizontal: hp(1),
     fontSize: 14,
-    color: '#6B7280',
+    color: c.subText,
     marginTop: hp(0.5),
     fontFamily: 'Poppins-Regular',
   },
@@ -1694,6 +1692,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: c.background,
   },
   sharingLoaderOverlay: {
     flex: 1,
@@ -1702,7 +1701,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sharingLoaderContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: hp(1),
     padding: hp(3),
     alignItems: 'center',
@@ -1712,36 +1711,42 @@ const styles = StyleSheet.create({
   sharingLoaderText: {
     marginTop: hp(1.5),
     fontSize: hp(1.8),
-    color: '#111827',
+    color: c.text,
     fontFamily: 'Poppins-Regular',
   },
   datePickerWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 8,
     marginTop: 8,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: c.border,
   },
   editInput: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: c.surface,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: c.border,
     borderRadius: 8,
     padding: hp(1.5),
     fontSize: 14,
-    color: '#1F2937',
+    color: c.text,
     fontFamily: 'Poppins-Regular',
     minHeight: hp(8),
     textAlignVertical: 'top',
     marginTop: hp(0.5),
   },
   // References card
-  referencesCard: {
-    borderWidth: 1,
-    borderColor: '#DBEAFE',
-    backgroundColor: '#EFF6FF',
-  },
+  referencesCard: isDark
+    ? {
+        borderWidth: 1,
+        borderColor: c.cardBorder,
+        backgroundColor: c.card,
+      }
+    : {
+        borderWidth: 1,
+        borderColor: '#DBEAFE',
+        backgroundColor: '#EFF6FF',
+      },
   referencesCardInner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1753,13 +1758,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#94A3B8',
+    color: c.tabInactive,
     letterSpacing: 0.15,
     lineHeight: 18,
   },
   referencesCardChevron: {
     fontSize: 22,
-    color: '#94A3B8',
+    color: c.tabInactive,
     marginLeft: hp(1),
   },
   // References modal
@@ -1769,7 +1774,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   referencesBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: hp(2.5),
@@ -1778,14 +1783,14 @@ const styles = StyleSheet.create({
   referencesModalTitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.15,
     marginBottom: hp(0.5),
   },
   referencesModalSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(2),
     lineHeight: 18,
   },
@@ -1796,28 +1801,28 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
     paddingBottom: hp(1.5),
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: c.divider,
   },
   referenceParameter: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13.5,
-    color: '#11418A',
+    color: c.primary,
     marginBottom: 2,
   },
   referenceSource: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12.5,
-    color: '#475569',
+    color: c.subText,
     lineHeight: 18,
   },
   referenceLink: {
-    color: '#11418A',
+    color: c.primary,
     textDecorationLine: 'underline',
   },
   referenceContext: {
     fontFamily: 'Poppins-Regular',
     fontSize: 11.5,
-    color: '#64748B',
+    color: c.subText,
     lineHeight: 17,
     marginTop: 4,
     fontStyle: 'italic',
@@ -1825,14 +1830,14 @@ const styles = StyleSheet.create({
   referencesFootnote: {
     fontFamily: 'Poppins-Regular',
     fontSize: 11,
-    color: '#94A3B8',
+    color: c.tabInactive,
     fontStyle: 'italic',
     marginTop: hp(1),
     marginBottom: hp(2),
     lineHeight: 16,
   },
   referencesCloseBtn: {
-    backgroundColor: '#11418A',
+    backgroundColor: isDark ? c.primary : '#11418A',
     borderRadius: 10,
     paddingVertical: hp(1.5),
     alignItems: 'center',
@@ -1841,7 +1846,7 @@ const styles = StyleSheet.create({
   referencesCloseBtnText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#FFFFFF',
+    color: c.onPrimary,
   },
   // AI disclaimer card
   aiDisclaimerHeader: {
@@ -1858,12 +1863,12 @@ const styles = StyleSheet.create({
   aiDisclaimerTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
   },
   aiDisclaimerText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13.5,
-    color: '#475569',
+    color: c.subText,
     lineHeight: 21,
     marginBottom: hp(1),
     letterSpacing: 0.1,

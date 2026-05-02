@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -10,6 +11,9 @@ import {
 import { hp, wp, Images } from '../../utilities'; // adjust path as needed
 
 const ApiErrorFallback = ({ message = 'Unable to load data', onRetry }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [loading, setLoading] = useState(false);
 
   const handleRetry = async () => {
@@ -52,7 +56,7 @@ const ApiErrorFallback = ({ message = 'Unable to load data', onRetry }) => {
 
 export default ApiErrorFallback;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#EFF6FF',
@@ -85,7 +89,7 @@ const styles = StyleSheet.create({
     borderRadius: hp(0.5),
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: c.card,
     fontWeight: '500',
     fontSize: 14,
   },

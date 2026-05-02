@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -14,6 +15,9 @@ import { hp, wp, Images } from '../../utilities';
 import RenderHTML from 'react-native-render-html';
 
 const FitnessDetails = ({ navigation, route }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const { instruction, data } = route?.params || {};
   const { width } = useWindowDimensions();
   const instructionsHtml =
@@ -123,15 +127,15 @@ const FitnessDetails = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   headerWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
     ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
   header: {
@@ -157,7 +161,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     textAlign: 'center',
     letterSpacing: 0.2,
     paddingHorizontal: 8,
@@ -174,19 +178,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: hp(2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   video: {
     width: '100%',
     height: '100%',
   },
   detailsBox: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     padding: wp(4),
     borderRadius: 12,
     marginBottom: hp(2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   detailsRow: {
     flexDirection: 'row',
@@ -196,20 +200,20 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
     marginBottom: hp(0.5),
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   instructionBox: {
     marginBottom: hp(3),
     borderLeftWidth: 4,
     borderLeftColor: '#11418A',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: wp(4),
     borderRadius: 12,
     borderTopWidth: 1,
     borderRightWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,

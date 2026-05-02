@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -20,6 +21,9 @@ const options = [
 ];
 
 const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   console.log('Initial data in OnBoardingThree:', initialData);
   const [selectedOptions, setSelectedOptions] = useState([]);
   const [text, setText] = useState('');
@@ -42,7 +46,7 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
 
         setSelectedOptions(savedOptions);
         setText(initialData.other_conditions || '');
-        console.log(selectedOptions, 'selectedOptions restored');
+        console.log(savedOptions, 'selectedOptions restored');
       }
     }, [initialData]),
   );
@@ -129,14 +133,14 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
 
 export default OnBoardingThree;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     padding: wp(1),
     backgroundColor: '#fff',
     flexGrow: 1,
   },
   card: {
-    backgroundColor: 'white',
+    backgroundColor: c.background,
     padding: wp(4),
     borderRadius: wp(1),
     marginBottom: hp(2),
@@ -151,7 +155,7 @@ const styles = StyleSheet.create({
     width: wp(4),
     height: wp(4.5),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: wp(1),
     marginTop: hp(0.5),
     marginRight: wp(2.5),
@@ -164,21 +168,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14, letterSpacing: 0.2,
     flex: 1,
-    color: '#475569',
+    color: c.subText,
   },
   tagTitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14, letterSpacing: 0.2,
     marginBottom: hp(1),
-    color: '#475569',
+    color: c.subText,
   },
   tagsWrapper: {
     marginTop: hp(2),
     borderWidth: 0.3,
     borderRadius: hp(0.5),
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     elevation: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: hp(1),
   },
   input: {

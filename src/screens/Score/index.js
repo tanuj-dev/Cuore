@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -116,6 +117,9 @@ import Loader from '../../components/Loader';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const Score = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
 
@@ -496,6 +500,7 @@ const Score = ({ navigation }) => {
                     value={health_metrics?.metabolic_age?.value}
                     // subText={health_metrics?.metabolic_age?.gap}
                     png={Images.TREND}
+                    styles={styles}
                   />
                   <InfoCard
                     label="Weight"
@@ -504,6 +509,7 @@ const Score = ({ navigation }) => {
                     //   health_metrics?.weight?.target,
                     // )} kg`}
                     png={Images.WEIGHT}
+                    styles={styles}
                   />
                 </View>
                 <View style={styles.row}>
@@ -512,6 +518,7 @@ const Score = ({ navigation }) => {
                     value={health_metrics?.bmi.value}
                     // subText={`Target: ${health_metrics?.bmi?.target}`}
                     png={Images.WEIGHT}
+                    styles={styles}
                   />
                   <InfoCard
                     label="Lifestyle"
@@ -520,6 +527,7 @@ const Score = ({ navigation }) => {
                     )}%`}
                     // subText={`Target: >${health_metrics?.lifestyle_score.target}`}
                     png={Images.TREND}
+                    styles={styles}
                   />
                 </View>
 
@@ -527,10 +535,12 @@ const Score = ({ navigation }) => {
                   <InfoCard
                     label="Recommended Calories"
                     value={`${health_metrics?.recommended?.calories?.value} kcal`}
+                    styles={styles}
                   />
                   <InfoCard
                     label="Recommended Exercise"
                     value={`${health_metrics?.recommended?.exercise?.value} min`}
+                    styles={styles}
                   />
                 </View>
                 <View style={styles.vitalsContainer}>
@@ -545,6 +555,7 @@ const Score = ({ navigation }) => {
                         // target={item.target}
                         color={item.status}
                         hasDiabetes={hasDiabetes}
+                        styles={styles}
                       />
                     </View>
                   ))}
@@ -718,7 +729,7 @@ const Score = ({ navigation }) => {
   );
 };
 
-const InfoCard = React.memo(({ label, value, subText, png }) => (
+const InfoCard = React.memo(({ label, value, subText, png, styles }) => (
   <View style={styles.infoCard}>
     <Text style={styles.infoLabel}>{label}</Text>
     <Text style={styles.infoValue}>{value}</Text>
@@ -737,7 +748,8 @@ const InfoCard = React.memo(({ label, value, subText, png }) => (
     )}
   </View>
 ));
-const VitalCard = React.memo(({ label, value, target, hasDiabetes, color }) => {
+const VitalCard = React.memo(
+  ({ label, value, target, hasDiabetes, color, styles }) => {
   return (
     <View style={styles.vitalCard}>
       {label && (
@@ -758,10 +770,10 @@ const VitalCard = React.memo(({ label, value, target, hasDiabetes, color }) => {
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   viewShot: {
     flex: 1,
@@ -770,9 +782,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
-  container: { flex: 1, backgroundColor: '#FFFFFF', marginTop: hp(9) },
+  container: { flex: 1, backgroundColor: c.card, marginTop: hp(9) },
   fixedHeader: {
     position: 'absolute',
     top: 0,
@@ -780,10 +792,10 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1000,
     elevation: 1000,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   headerContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     elevation: 1,
   },
   headerTopRow: {
@@ -804,14 +816,14 @@ const styles = StyleSheet.create({
   date: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   title: {
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
     marginTop: hp(-3),
-    color: '#1E293B',
+    color: c.text,
     textAlign: 'center',
     marginLeft: hp(5),
     letterSpacing: -0.3,
@@ -836,18 +848,18 @@ const styles = StyleSheet.create({
   timeToTargetValue: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#11418A',
+    color: c.primary,
     letterSpacing: 0.3,
   },
   reassessIcon: {
     resizeMode: 'contain',
     height: hp(2),
     width: wp(6),
-    tintColor: '#FFFFFF',
+    tintColor: c.card,
   },
 
   scoreCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     paddingVertical: hp(2.5),
     marginHorizontal: hp(1.5),
     elevation: 2,
@@ -860,7 +872,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   meter: { width: wp(70), height: wp(34), resizeMode: 'cover' },
-  score: { fontSize: wp(10), color: '#11418A', fontFamily: 'Poppins-Medium' },
+  score: { fontSize: wp(10), color: c.primary, fontFamily: 'Poppins-Medium' },
   timeToTargetTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -874,7 +886,7 @@ const styles = StyleSheet.create({
   timeToTarget: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   projectionDisclaimerRow: {
@@ -893,7 +905,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     fontStyle: 'italic',
     lineHeight: 18,
     letterSpacing: 0.2,
@@ -903,7 +915,7 @@ const styles = StyleSheet.create({
   months: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   reassessButton: {
@@ -923,7 +935,7 @@ const styles = StyleSheet.create({
   },
   reassessText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     marginLeft: wp(3),
     fontSize: 15,
     letterSpacing: 0.3,
@@ -934,14 +946,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: hp(1),
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     lineHeight: 18,
     letterSpacing: 0.1,
   },
   reassessLink: {
     fontFamily: 'Poppins-Medium',
     textDecorationLine: 'underline',
-    color: '#11418A',
+    color: c.primary,
   },
 
   row: {
@@ -952,7 +964,7 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -965,13 +977,13 @@ const styles = StyleSheet.create({
   infoValue: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   infoLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
   },
@@ -997,7 +1009,7 @@ const styles = StyleSheet.create({
     marginTop: hp(2),
     paddingVertical: hp(2),
     margin: hp(1.5),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1025,7 +1037,7 @@ const styles = StyleSheet.create({
     marginLeft: wp(2),
   },
   continueContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     margin: hp(2),
     marginBottom: hp(6),
     marginTop: hp(2),
@@ -1047,7 +1059,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     alignSelf: 'flex-start',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   vitalRow: {
@@ -1059,7 +1071,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     marginLeft: hp(2),
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     alignSelf: 'flex-start',
     letterSpacing: 0.2,
   },
@@ -1067,7 +1079,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginLeft: hp(1),
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   vitalBar: {
@@ -1091,7 +1103,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
     marginBottom: hp(1),
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   focusTags: { flexDirection: 'row', gap: wp(3) },
@@ -1119,13 +1131,13 @@ const styles = StyleSheet.create({
   },
   continueText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 16,
     letterSpacing: 0.5,
   },
   bottomText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: c.tabInactive,
     fontFamily: 'Poppins-Regular',
     letterSpacing: 0.1,
   },
@@ -1136,7 +1148,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sharingLoaderContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     padding: hp(3),
     alignItems: 'center',
@@ -1146,13 +1158,13 @@ const styles = StyleSheet.create({
   sharingLoaderText: {
     marginTop: hp(1.5),
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     fontFamily: 'Poppins-Regular',
     letterSpacing: 0.2,
   },
 
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     padding: hp(2),
     marginVertical: hp(1),
@@ -1173,14 +1185,14 @@ const styles = StyleSheet.create({
   referencesCardText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#94A3B8',
+    color: c.tabInactive,
     letterSpacing: 0.15,
     lineHeight: 18,
     flex: 1,
   },
   refModalSafe: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   refModalHeader: {
     flexDirection: 'row',
@@ -1189,13 +1201,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: c.border,
+    backgroundColor: c.card,
   },
   refModalTitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     flex: 1,
     marginRight: wp(2),
     letterSpacing: 0.15,
@@ -1204,13 +1216,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   refModalCloseText: {
     fontSize: 20,
-    color: '#475569',
+    color: c.subText,
     fontFamily: 'Poppins-Regular',
   },
   refModalScroll: {
@@ -1226,7 +1238,7 @@ const styles = StyleSheet.create({
   refIntro: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     lineHeight: 22,
     letterSpacing: 0.2,
     marginBottom: hp(1),
@@ -1234,7 +1246,7 @@ const styles = StyleSheet.create({
   refSectionTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#11418A',
+    color: c.primary,
     marginBottom: hp(1),
     letterSpacing: 0.2,
   },
@@ -1248,13 +1260,13 @@ const styles = StyleSheet.create({
   refLinkBullet: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#11418A',
+    color: c.primary,
     marginRight: wp(1.5),
   },
   refLinkText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#11418A',
+    color: c.primary,
     textDecorationLine: 'underline',
     letterSpacing: 0.2,
     flex: 1,
@@ -1262,14 +1274,14 @@ const styles = StyleSheet.create({
   refLinkUrl: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#94A3B8',
+    color: c.tabInactive,
     marginLeft: wp(2),
     flex: 1,
   },
   refNote: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     fontStyle: 'italic',
     lineHeight: 20,
     marginTop: hp(0.5),
@@ -1278,7 +1290,7 @@ const styles = StyleSheet.create({
   webViewModalSafe: {
     marginTop: hp(2),
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   webViewModalHeader: {
     flexDirection: 'row',
@@ -1286,20 +1298,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingVertical: hp(1.5),
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: c.border,
+    backgroundColor: c.card,
   },
   webViewModalCloseBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   webViewModalCloseText: {
     fontSize: 20,
-    color: '#475569',
+    color: c.subText,
     fontFamily: 'Poppins-Regular',
   },
   webViewLoaderWrap: {
@@ -1319,7 +1331,7 @@ const styles = StyleSheet.create({
   scoreDisclaimer: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
     textAlign: 'center',
     marginVertical: hp(1),

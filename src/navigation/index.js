@@ -1,12 +1,10 @@
-import React from 'react';
-import { View, Image, Platform } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Image, Platform, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
+import { useAppTheme } from '../hooks/useAppTheme';
 
 import images from '../utilities/Images';
 
@@ -61,7 +59,23 @@ const Tab = createBottomTabNavigator();
 
 /* -------------------- BOTTOM TABS -------------------- */
 function BottomTabNavigator() {
-  const insets = useSafeAreaInsets();
+  const { colors: c } = useAppTheme();
+
+  const tabOptions = useMemo(
+    () => ({
+      headerShown: false,
+      tabBarStyle: {
+        height: 50,
+        marginBottom: Platform.OS === 'ios' ? 0 : 0,
+        backgroundColor: c.card,
+        borderTopColor: c.border,
+        borderTopWidth: StyleSheet.hairlineWidth,
+      },
+      tabBarActiveTintColor: c.primary,
+      tabBarInactiveTintColor: c.tabInactive,
+    }),
+    [c],
+  );
 
   // ✅ PROFILE IMAGE FROM REDUX
   const profileImage = useSelector(
@@ -75,20 +89,8 @@ function BottomTabNavigator() {
     : images.PROFILE;
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: 'white' }}
-      edges={['bottom']}
-    >
-      <Tab.Navigator
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: {
-            height: 50,
-            marginBottom: Platform.OS === 'ios' ? 0 : 0,
-          },
-          tabBarActiveTintColor: '#11418A',
-        }}
-      >
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }} edges={['bottom']}>
+      <Tab.Navigator screenOptions={tabOptions}>
         <Tab.Screen
           name="Today"
           component={TodayStack}
@@ -170,7 +172,7 @@ function BottomTabNavigator() {
               <View
                 style={{
                   borderWidth: focused ? 2 : 0,
-                  borderColor: '#11418A',
+                  borderColor: c.primary,
                   borderRadius: 18,
                   padding: 2,
                 }}
@@ -251,8 +253,9 @@ function TodayStack() {
 /* -------------------- ROOT NAVIGATOR -------------------- */
 
 export default function Navigator() {
+  const { colors: c } = useAppTheme();
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }}>
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{ headerShown: false }}

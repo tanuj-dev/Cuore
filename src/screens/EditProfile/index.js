@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -23,6 +24,9 @@ import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 
 const EditProfile = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const { alert, AlertComponent } = useCustomAlert();
   const [userName, setUserName] = useState('M. Johnson');
   const [userMobile, setUserMobile] = useState('981121234');
@@ -457,22 +461,22 @@ const EditProfile = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   header: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
     ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
   headerRow: {
@@ -488,17 +492,17 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#1E293B',
+    color: c.text,
     marginLeft: hp(2),
     letterSpacing: 0.2,
   },
   container: {
     padding: wp(5),
     margin: wp(4),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     ...(Platform.OS === 'android' && { elevation: 1 }),
   },
   profileRow: {
@@ -524,12 +528,12 @@ const styles = StyleSheet.create({
     marginLeft: hp(2),
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   prefixText: {
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+    color: c.subText,
     fontSize: 16,
     marginRight: wp(1),
     letterSpacing: 0.2,
@@ -540,52 +544,52 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
   },
   input: {
     fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 10,
     paddingHorizontal: wp(3),
     paddingVertical: hp(1),
   },
   inputEditable: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   inputDisabled: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 10,
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.5),
   },
   inputRowEditable: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   inputRowDisabled: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
   },
   inputInner: {
     flex: 1,
     fontFamily: 'Poppins-Regular',
-    color: '#1E293B',
+    color: c.text,
     fontSize: 16,
     paddingVertical: hp(1),
   },
   helperText: {
     fontSize: 12,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+    color: c.subText,
     marginTop: 3,
   },
   buttonRow: {
@@ -606,23 +610,23 @@ const styles = StyleSheet.create({
   },
   saveText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     letterSpacing: 0.2,
   },
   cancelBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     width: wp(40),
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     paddingVertical: hp(1.5),
     paddingHorizontal: wp(6),
     borderRadius: 10,
   },
   cancelText: {
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
+    color: c.subText,
     fontSize: 14,
     letterSpacing: 0.2,
   },

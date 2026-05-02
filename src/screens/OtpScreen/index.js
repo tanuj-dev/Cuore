@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -22,6 +23,9 @@ const OTP_LENGTH = 6;
 const createEmptyOtp = () => Array(OTP_LENGTH).fill('');
 
 const OtpScreen = () => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const route = useRoute();
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -372,10 +376,10 @@ const OtpScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     paddingHorizontal: wp(6),
     paddingTop: hp(3),
   },
@@ -390,7 +394,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     textAlign: 'center',
     marginBottom: hp(3),
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.3,
   },
   otpContainer: {
@@ -407,13 +411,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: wp(14),
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     textAlign: 'center',
     fontSize: 22,
     fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
-    backgroundColor: '#F8FAFC',
+    color: c.text,
+    backgroundColor: c.surface,
     letterSpacing: 2,
   },
   removeLastRow: {
@@ -424,21 +428,21 @@ const styles = StyleSheet.create({
   removeLastText: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
-    color: '#11418A',
+    color: c.primary,
     letterSpacing: 0.2,
   },
   subtitle: {
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(3),
     lineHeight: 20,
     letterSpacing: 0.2,
   },
   subtitleHint: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: c.tabInactive,
     lineHeight: 18,
   },
   submitButton: {
@@ -453,7 +457,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   submitText: {
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
     letterSpacing: 0.5,
@@ -462,7 +466,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(1),
     letterSpacing: 0.2,
   },
@@ -474,7 +478,7 @@ const styles = StyleSheet.create({
   },
   resendText: {
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: c.primary,
     fontSize: 15,
     letterSpacing: 0.3,
   },

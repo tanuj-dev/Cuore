@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -28,6 +29,9 @@ import {
 } from '../../utilities/Constants';
 
 const Checkout = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
   const [selectedPlan, setSelectedPlan] = useState('Thrive');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -675,15 +679,15 @@ const Checkout = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { padding: wp(4), backgroundColor: '#F8FAFC' },
+const createStyles = c => StyleSheet.create({
+  container: { padding: wp(4), backgroundColor: c.surface },
   title: {
     fontFamily: 'Poppins-Medium',
     marginTop: hp(2),
     marginLeft: hp(13),
     fontSize: 20,
     marginBottom: hp(2),
-    color: '#1E293B',
+    color: c.text,
     alignSelf: 'center',
     textAlign: 'center',
     letterSpacing: -0.3,
@@ -692,20 +696,20 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: 22,
     marginVertical: hp(1),
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.3,
   },
   subheader: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(2),
     letterSpacing: 0.2,
   },
   sectionTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(1.5),
     letterSpacing: -0.3,
   },
@@ -716,11 +720,11 @@ const styles = StyleSheet.create({
   planBox: {
     width: '90%',
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     padding: hp(2),
     marginBottom: hp(2),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   selectedBox: {
     borderColor: '#11418A',
@@ -739,7 +743,7 @@ const styles = StyleSheet.create({
   },
   topPick: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 13,
     position: 'absolute',
     backgroundColor: '#10B981',
@@ -751,7 +755,7 @@ const styles = StyleSheet.create({
   planTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#11418A',
+    color: c.primary,
     marginLeft: hp(12),
     marginVertical: hp(1),
     letterSpacing: -0.2,
@@ -759,7 +763,7 @@ const styles = StyleSheet.create({
   planSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     numberOfLines: 2,
     width: '60%',
     letterSpacing: 0.2,
@@ -768,7 +772,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     top: hp(11),
     marginTop: hp(1),
     left: hp(2),
@@ -777,7 +781,7 @@ const styles = StyleSheet.create({
   priceOld: {
     fontFamily: 'Poppins-Regular',
     textDecorationLine: 'line-through',
-    color: '#94A3B8',
+    color: c.tabInactive,
     fontSize: 20,
     alignSelf: 'flex-end',
     letterSpacing: 0.2,
@@ -785,7 +789,7 @@ const styles = StyleSheet.create({
   priceNew: {
     fontFamily: 'Poppins-Medium',
     fontSize: 26,
-    color: '#1E293B',
+    color: c.text,
     alignSelf: 'flex-end',
     marginLeft: hp(10),
     letterSpacing: -0.5,
@@ -793,16 +797,16 @@ const styles = StyleSheet.create({
   dailyPrice: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#11418A',
+    color: c.primary,
     letterSpacing: 0.2,
   },
   summaryBox: {
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     padding: hp(2),
     marginBottom: hp(2),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   promoBox: {
     flexDirection: 'row',
@@ -810,10 +814,10 @@ const styles = StyleSheet.create({
   },
   promoInput: {
     flex: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     fontFamily: 'Poppins-Regular',
   },
   applyButton: {
@@ -825,7 +829,7 @@ const styles = StyleSheet.create({
   },
   applyText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     letterSpacing: 0.3,
   },
@@ -839,7 +843,7 @@ const styles = StyleSheet.create({
     marginLeft: hp(1),
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   checkoutButton: {
@@ -859,13 +863,13 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   checkoutText: {
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
     letterSpacing: 0.5,
   },
   offerBanner: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     padding: hp(1.5),
     borderRadius: 12,
     marginBottom: hp(2),
@@ -874,11 +878,11 @@ const styles = StyleSheet.create({
   offerText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.3,
   },
   selectedPlanCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: hp(2.5),
     borderRadius: 12,
     marginBottom: hp(3),
@@ -891,21 +895,21 @@ const styles = StyleSheet.create({
   selectedPlanTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#11418A',
+    color: c.primary,
     marginBottom: hp(0.5),
     letterSpacing: -0.3,
   },
   selectedPlanSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(1.5),
     letterSpacing: 0.2,
   },
   selectedPlanDuration: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginBottom: hp(1),
     letterSpacing: 0.2,
   },
@@ -916,7 +920,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   paymentMethodCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: hp(2),
     borderRadius: 12,
     marginBottom: hp(3),
@@ -965,7 +969,7 @@ const styles = StyleSheet.create({
   paymentMethodText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   orderSummaryHeader: {
@@ -986,19 +990,19 @@ const styles = StyleSheet.create({
   summaryText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   totalRow: {
     borderTopWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     paddingTop: hp(1.5),
     marginTop: hp(0.5),
   },
   totalText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   lockIcon: {
@@ -1021,14 +1025,14 @@ const styles = StyleSheet.create({
   sslText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   ssl: {
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: hp(1),
-    color: '#94A3B8',
+    color: c.tabInactive,
     letterSpacing: 0.1,
   },
   faqSection: {
@@ -1038,7 +1042,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderRadius: 12,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   planHeaderRow: {
     flexDirection: 'row',
@@ -1056,10 +1060,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FECACA',
   },
   selectedPlanTitleText: {
-    color: '#11418A',
+    color: c.primary,
   },
   selectedText: {
-    color: '#11418A',
+    color: c.primary,
   },
   topPickPlan: {
     borderColor: '#10B981',
@@ -1081,23 +1085,23 @@ const styles = StyleSheet.create({
   statusText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     marginLeft: hp(1),
     letterSpacing: 0.2,
   },
   iapFooter: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     padding: hp(2),
     borderRadius: 12,
     marginTop: hp(2),
     marginBottom: hp(4),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   iapFooterText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(1),
     lineHeight: 18,
     letterSpacing: 0.1,
@@ -1111,7 +1115,7 @@ const styles = StyleSheet.create({
   restoreButtonText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#11418A',
+    color: c.primary,
     textAlign: 'center',
     textDecorationLine: 'underline',
   },
@@ -1125,13 +1129,13 @@ const styles = StyleSheet.create({
   termsLink: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#11418A',
+    color: c.primary,
     textDecorationLine: 'underline',
   },
   linkSeparator: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
   },
   featuresDivider: {
     height: 1,
@@ -1141,7 +1145,7 @@ const styles = StyleSheet.create({
   featuresHeading: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(1),
     letterSpacing: 0.2,
   },
@@ -1160,7 +1164,7 @@ const styles = StyleSheet.create({
   featureText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#475569',
+    color: c.subText,
     flex: 1,
     lineHeight: 20,
     letterSpacing: 0.1,
@@ -1168,14 +1172,14 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 2,
   },
 
   featureDescription: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     lineHeight: 18,
   },
 });

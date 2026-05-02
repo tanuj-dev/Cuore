@@ -21,9 +21,11 @@ import {
 } from './Explore/slice';
 import { predictSlice } from './Predict/slice';
 import notesSlice from './Notes/slice';
+import themeReducer from './Theme/slice';
 
 const store = configureStore({
   reducer: {
+    theme: themeReducer,
     auth: authSlices.auth,
     createAccount: authSlices.createAccount,
     onboarding: onboardingSlice.reducer,

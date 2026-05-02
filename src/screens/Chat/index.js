@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -13,6 +14,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // import {Ionicons} from '@expo/vector-icons'; // Optional icon pack
 
 const Chat = () => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [messages, setMessages] = useState([
     {
       type: 'info',
@@ -175,10 +179,10 @@ const Chat = () => {
 };
 
 export default Chat;
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     marginHorizontal: wp(5),
     marginVertical: hp(2),
     borderRadius: hp(1),
@@ -196,7 +200,7 @@ const styles = StyleSheet.create({
 
   botMsgContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: c.surface,
     borderRadius: 12,
     padding: 10,
     marginBottom: 10,
@@ -205,8 +209,7 @@ const styles = StyleSheet.create({
   botMsg: {
     fontFamily: 'Roboto-Regular',
     fontSize: 14,
-    color: '#222',
-    color: '#000000',
+    color: c.text,
     fontWeight: '400',
   },
   userMsgContainer: {
@@ -231,7 +234,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   inputBar: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     marginBottom: hp(1),
     flexDirection: 'row',
     alignItems: 'center',
@@ -248,7 +251,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   inputContainer: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: c.surface,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -263,7 +266,7 @@ const styles = StyleSheet.create({
     height: 20,
     marginRight: 8,
     resizeMode: 'contain',
-    tintColor: '#1E64AC',
+    tintColor: c.primary,
   },
   sendButton: {
     alignItems: 'center',

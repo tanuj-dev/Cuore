@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -12,6 +13,9 @@ import ProfileHeader from '../../components/ProfileHeader';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const SelectPersona = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const { alert, AlertComponent } = useCustomAlert();
   const [selectedRole, setSelectedRole] = useState(null);
 
@@ -82,38 +86,38 @@ const SelectPersona = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   container: {
     padding: wp(5),
     margin: wp(4),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     minHeight: hp(80),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   heading: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
     marginBottom: hp(2),
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   roleCard: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     padding: wp(4),
     marginBottom: hp(2),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   selectedCard: {
     borderColor: '#11418A',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
   },
   radioWrapper: {
     flexDirection: 'row',
@@ -123,7 +127,7 @@ const styles = StyleSheet.create({
     height: hp(2.5),
     width: wp(5),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: hp(2),
     alignItems: 'center',
     justifyContent: 'center',
@@ -145,14 +149,14 @@ const styles = StyleSheet.create({
   roleTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 4,
     letterSpacing: 0.2,
   },
   roleDesc: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   continueBtn: {
@@ -164,7 +168,7 @@ const styles = StyleSheet.create({
   },
   continueText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     letterSpacing: 0.2,
   },

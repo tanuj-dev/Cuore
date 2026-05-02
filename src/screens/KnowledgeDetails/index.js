@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   TouchableOpacity,
@@ -15,6 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import RenderHTML from 'react-native-render-html';
 
 const KnowledgeDetails = ({ navigation, route }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const { details, referenceLinks } = route?.params || {};
   const { width } = useWindowDimensions();
   const detailsHtml =
@@ -128,10 +132,10 @@ const KnowledgeDetails = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   scroll: {
     flex: 1,
@@ -141,16 +145,16 @@ const styles = StyleSheet.create({
   },
   contentWrap: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     paddingVertical: hp(1.5),
     paddingHorizontal: wp(2),
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
     ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
   backButton: {
@@ -168,29 +172,29 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
     marginTop: hp(3),
-    color: '#11418A',
+    color: c.primary,
     marginBottom: hp(3),
     letterSpacing: 0.2,
   },
   paragraph: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginBottom: hp(1.5),
     letterSpacing: 0.2,
   },
   quizContainer: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     padding: wp(4),
     borderRadius: 12,
     marginTop: hp(2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   quizTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(2),
     letterSpacing: 0.2,
   },
@@ -202,11 +206,11 @@ const styles = StyleSheet.create({
   },
   option: {
     padding: wp(3),
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     borderRadius: 10,
     marginBottom: hp(1),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   selectedOption: {
     padding: wp(3),
@@ -246,7 +250,7 @@ const styles = StyleSheet.create({
   referencesLabel: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
     marginBottom: hp(1),
   },
   referenceLink: {

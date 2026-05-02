@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -11,7 +12,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Images, wp, hp, color } from '../../utilities';
 
-const RadioOption = ({ label, selected, onPress }) => (
+const RadioOption = ({ label, selected, onPress, styles }) => (
   <TouchableOpacity style={styles.radioOption} onPress={onPress}>
     <View style={styles.radioCircle}>
       {selected && <View style={styles.radioCircleSelected} />}
@@ -21,6 +22,9 @@ const RadioOption = ({ label, selected, onPress }) => (
 );
 
 const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [sleepHours, setSleepHours] = useState('');
   const [problems, setProblems] = useState('');
   const [enjoyment, setEnjoyment] = useState('');
@@ -49,7 +53,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
         setTime(dateObj);
       }
     }
-  }, []); // ✅ Run once only
+  }, [initialData]);
 
   const formatTime = date => {
     const hours = date.getHours();
@@ -77,7 +81,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
       };
       onFormChange(payload);
     }
-  }, [sleepHours, time, problems, enjoyment, anxiety]);
+  }, [sleepHours, time, problems, enjoyment, anxiety, onFormChange]);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -97,6 +101,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
             label={option}
             selected={sleepHours === option}
             onPress={() => setSleepHours(option)}
+            styles={styles}
           />
         ))}
 
@@ -146,6 +151,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
             label={option}
             selected={problems === option}
             onPress={() => setProblems(option)}
+            styles={styles}
           />
         ))}
 
@@ -158,6 +164,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
             label={option}
             selected={enjoyment === option}
             onPress={() => setEnjoyment(option)}
+            styles={styles}
           />
         ))}
 
@@ -170,6 +177,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
             label={option}
             selected={anxiety === option}
             onPress={() => setAnxiety(option)}
+            styles={styles}
           />
         ))}
       </View>
@@ -179,7 +187,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
 
 export default OnBoardingSix;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFF',
@@ -195,13 +203,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     width: '100%',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
 
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: wp(2),
     padding: wp(4),
     elevation: 1,
@@ -225,7 +233,7 @@ const styles = StyleSheet.create({
     height: wp(4.5),
     borderRadius: wp(2.25),
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3),
@@ -246,7 +254,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderWidth: 1,
     borderRadius: wp(2),
     paddingHorizontal: wp(4),
@@ -260,11 +268,11 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   datePickerWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 8,
     marginTop: hp(1),
     padding: wp(2),
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: c.border,
   },
 });

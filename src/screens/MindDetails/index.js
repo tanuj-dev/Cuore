@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -24,6 +25,9 @@ function isRemoteAudioUri(uri) {
 }
 
 const MindDetails = ({ navigation, route }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const { instructions, audio, title } = route.params;
   const { width } = useWindowDimensions();
 
@@ -268,21 +272,21 @@ const MindDetails = ({ navigation, route }) => {
 
 export default MindDetails;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   scroll: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   headerWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   header: {
     flexDirection: 'row',
@@ -350,12 +354,12 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     height: hp(3),
     width: wp(5),
-    tintColor: '#11418A',
+    tintColor: c.primary,
   },
   loadingHint: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     marginTop: hp(0.5),
   },
   sliderRow: {
@@ -374,11 +378,11 @@ const styles = StyleSheet.create({
   timeText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   descriptionBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: hp(2),
     borderRadius: 12,
     borderLeftWidth: 4,
@@ -386,12 +390,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderRightWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   descriptionText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginBottom: hp(1.5),
     letterSpacing: 0.2,
   },

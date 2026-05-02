@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { useDispatch } from 'react-redux';
 import {
   View,
@@ -18,6 +19,9 @@ import Toast from '../../components/Toast';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const Login = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [phoneNumber, setPhoneNumber] = useState('');
   const [tab, setTab] = useState('User');
   const [loading, setLoading] = useState(false);
@@ -190,17 +194,17 @@ const Login = ({ navigation }) => {
 
 export default Login;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   container: {
     flexGrow: 1,
     justifyContent: 'center',
     paddingBottom: hp(20),
     paddingHorizontal: wp(6),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   logo: {
     width: wp(30),
@@ -213,12 +217,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     fontSize: 15,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(3.5),
     letterSpacing: 0.2,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: hp(2.5),
     borderRadius: 16,
     shadowColor: '#11418A',
@@ -232,7 +236,7 @@ const styles = StyleSheet.create({
   },
   switchTabs: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     borderRadius: 12,
     marginBottom: hp(2.5),
     padding: hp(0.4),
@@ -257,14 +261,14 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     textAlign: 'center',
     fontSize: 15,
     letterSpacing: 0.2,
   },
   inactiveTabText: {
     fontFamily: 'Poppins-Regular',
-    color: '#94A3B8',
+    color: c.tabInactive,
     textAlign: 'center',
     fontSize: 15,
     letterSpacing: 0.2,
@@ -272,13 +276,13 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: wp(3.5),
     paddingVertical: Platform.OS === 'ios' ? hp(1.5) : hp(1),
     marginBottom: hp(2),
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   countryCodeContainer: {
     marginRight: wp(2.5),
@@ -286,7 +290,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingRight: wp(2.5),
     borderRightWidth: 1,
-    borderRightColor: '#E2E8F0',
+    borderRightColor: c.border,
   },
   flagEmoji: {
     fontSize: hp(2.5),
@@ -295,14 +299,14 @@ const styles = StyleSheet.create({
   countryCode: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   phoneInput: {
     fontFamily: 'Poppins-Regular',
     flex: 1,
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.3,
   },
   errorText: {
@@ -316,7 +320,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(2),
     letterSpacing: 0.2,
   },
@@ -324,7 +328,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     fontSize: 12,
-    color: '#94A3B8',
+    color: c.tabInactive,
     marginBottom: hp(1),
     marginTop: hp(1.5),
     lineHeight: 18,
@@ -332,12 +336,12 @@ const styles = StyleSheet.create({
   },
   termsLink: {
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: c.primary,
     textDecorationLine: 'underline',
   },
   signupLink: {
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: c.primary,
     letterSpacing: 0.2,
   },
   verifyButton: {
@@ -356,7 +360,7 @@ const styles = StyleSheet.create({
   },
   verifyText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 16,
     letterSpacing: 0.5,
   },

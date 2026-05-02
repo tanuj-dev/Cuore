@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -15,6 +16,9 @@ import { useSelector } from 'react-redux';
  * Usage: Add <ReduxDebugger /> anywhere in your app
  */
 const ReduxDebugger = () => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [visible, setVisible] = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
 
@@ -133,7 +137,7 @@ const ReduxDebugger = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   floatingButton: {
     position: 'absolute',
     bottom: 20,
@@ -170,14 +174,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: c.card,
   },
   closeButton: {
     padding: 8,
   },
   closeButtonText: {
     fontSize: 24,
-    color: '#FFF',
+    color: c.card,
   },
   scrollView: {
     flex: 1,
@@ -218,7 +222,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logButtonText: {
-    color: '#FFF',
+    color: c.card,
     fontSize: 16,
     fontWeight: 'bold',
   },

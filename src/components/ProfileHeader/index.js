@@ -6,10 +6,14 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { hp, wp, Images } from '../../utilities';
 
 const ProfileHeader = ({ navigation, title }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.row}>
@@ -28,11 +32,11 @@ const ProfileHeader = ({ navigation, title }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   wrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
     ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
   row: {
@@ -53,7 +57,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#1E293B',
+    color: c.text,
     marginLeft: hp(2),
     flex: 1,
     letterSpacing: 0.2,

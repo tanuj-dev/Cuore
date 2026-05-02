@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -15,6 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { hp, wp, Images } from '../../utilities';
 
 const Search = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -144,15 +148,15 @@ const Search = ({ navigation }) => {
 };
 
 export default Search;
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   container: {
     flex: 1,
     padding: hp(2),
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   header: {
     paddingBottom: hp(1),
@@ -164,16 +168,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-SemiBold',
     fontSize: 22,
     marginBottom: hp(2.5),
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.3,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     paddingLeft: wp(3),
   },
   input: {
@@ -182,12 +186,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(2),
     fontSize: 15,
     fontFamily: 'Poppins-Regular',
-    color: '#1E293B',
+    color: c.text,
   },
   searchIcon: {
     width: wp(4),
     height: wp(4),
-    tintColor: '#64748B',
+    tintColor: c.icon,
     resizeMode: 'contain',
   },
   loader: {
@@ -204,7 +208,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
@@ -225,7 +229,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     width: wp(65),
     letterSpacing: 0.1,
   },
@@ -267,7 +271,7 @@ const styles = StyleSheet.create({
   subText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 9,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: 8,
   },
   metaRow: {
@@ -290,12 +294,12 @@ const styles = StyleSheet.create({
   metaLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 11,
-    color: '#94A3B8',
+    color: c.tabInactive,
     marginBottom: 3,
   },
   metaValue: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
-    color: '#11418A',
+    color: c.primary,
   },
 });

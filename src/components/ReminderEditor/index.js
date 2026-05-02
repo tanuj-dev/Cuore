@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -23,6 +24,9 @@ const ReminderEditor = ({
   setVisible,
   setExistingReminder,
 }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [reminderText, setReminderText] = useState('');
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -183,14 +187,14 @@ const ReminderEditor = ({
 
 export default ReminderEditor;
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   bottomSheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: 24,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -203,7 +207,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: c.text,
     marginBottom: 16,
   },
   input: {
@@ -222,14 +226,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  buttonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 16 },
+  buttonText: { color: c.card, fontWeight: '600', fontSize: 16 },
   errorText: { fontSize: 12, color: '#EF4444', marginBottom: 10 },
   datePickerWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 8,
     marginBottom: 16,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: c.border,
   },
 });

@@ -1,8 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { View, StyleSheet, Animated } from 'react-native';
 import Svg, { Path, Line, Circle, Text as SvgText } from 'react-native-svg';
 
 const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const radius = size / 2;
   const strokeWidth = thickness;
   const center = radius;
@@ -65,7 +69,7 @@ const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
     return () => {
       animatedAngle.removeListener(listenerId);
     };
-  }, [value]);
+  }, [value, animatedAngle, center, needleLength]);
 
   return (
     <View style={styles.container}>
@@ -107,7 +111,7 @@ const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   container: {
     alignItems: 'center',
   },

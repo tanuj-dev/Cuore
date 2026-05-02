@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { wp, hp } from '../../utilities';
 
 const MealOptionCard = ({ title, details, calories, style }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   return (
     <View style={[styles.card, style]}>
       <View style={styles.cardHeader}>
@@ -16,9 +20,9 @@ const MealOptionCard = ({ title, details, calories, style }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     padding: wp(4),
     paddingVertical: hp(1.5),
@@ -58,7 +62,7 @@ const styles = StyleSheet.create({
   mealTitle: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     flex: 1,
     letterSpacing: -0.2,
     lineHeight: 22,
@@ -66,7 +70,7 @@ const styles = StyleSheet.create({
   detail: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     lineHeight: 20,
     letterSpacing: 0.1,
   },

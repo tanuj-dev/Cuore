@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -18,31 +19,35 @@ import ApiError from '../../components/ApiError';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const FitnessSkeleton = () => (
-  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+const FitnessSkeleton = () => {
+  const { colors: c } = useAppTheme();
+  return (
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: c.surface }}>
     {/* Header */}
-    <View style={{ backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', paddingHorizontal: wp(2), paddingVertical: hp(1.5) }}>
+    <View style={{ backgroundColor: c.card, borderBottomWidth: 1, borderBottomColor: c.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: wp(2), paddingVertical: hp(1.5) }}>
       <SkeletonBox width={44} height={28} borderRadius={6} />
       <SkeletonBox width={130} height={22} style={{ flex: 1, alignSelf: 'center', marginHorizontal: 8 }} />
       <SkeletonBox width={44} height={28} borderRadius={6} />
     </View>
     <View style={{ flex: 1, padding: wp(4), gap: hp(2) }}>
       {/* Time card */}
-      <View style={{ backgroundColor: '#FFF', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(1.5) }}>
+      <View style={{ backgroundColor: c.card, padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: c.border, gap: hp(1.5) }}>
         <SkeletonBox width={200} height={18} />
         <SkeletonBox width={140} height={14} borderRadius={6} />
         <SkeletonBox width="100%" height={44} borderRadius={10} />
         <SkeletonBox width="100%" height={40} borderRadius={10} />
       </View>
       {/* Day tabs */}
-      <View style={{ backgroundColor: '#FFF', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: hp(0.6), flexDirection: 'row', gap: 8 }}>
+      <View style={{ backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.border, padding: hp(0.6), flexDirection: 'row', gap: 8 }}>
         {days.map(d => (
           <SkeletonBox key={d} width={36} height={32} borderRadius={20} />
         ))}
       </View>
       {/* Workout cards */}
       {[1, 2, 3, 4].map(i => (
-        <View key={i} style={{ backgroundColor: '#FFF', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(1) }}>
+        <View key={i} style={{ backgroundColor: c.card, padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: c.border, gap: hp(1) }}>
           <SkeletonBox width={160} height={16} />
           <View style={{ flexDirection: 'row', gap: wp(4) }}>
             <SkeletonBox width={80} height={14} borderRadius={6} />
@@ -52,9 +57,8 @@ const FitnessSkeleton = () => (
       ))}
     </View>
   </SafeAreaView>
-);
-
-const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  );
+};
 
 // Pure function - moved outside component
 const formatTime = date => {
@@ -66,7 +70,7 @@ const formatTime = date => {
   return `${formattedHour}:${formattedMin} ${ampm}`;
 };
 
-const WorkoutCard = React.memo(({ item, navigation }) => {
+const WorkoutCard = React.memo(({ item, navigation, styles }) => {
   const handlePress = useCallback(() => {
     navigation.navigate('FitnessDetails', {
       instruction: item?.instructions,
@@ -93,6 +97,9 @@ const WorkoutCard = React.memo(({ item, navigation }) => {
 });
 
 const Fitness = ({ navigation, route }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const todayWorkoutDay = route?.params?.initialTab;
   const [selectedDay, setSelectedDay] = useState(todayWorkoutDay || days[0]);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -165,8 +172,10 @@ const Fitness = ({ navigation, route }) => {
   );
 
   const renderWorkoutCard = useCallback(
-    ({ item }) => <WorkoutCard item={item} navigation={navigation} />,
-    [navigation],
+    ({ item }) => (
+      <WorkoutCard item={item} navigation={navigation} styles={styles} />
+    ),
+    [navigation, styles],
   );
 
   useEffect(() => {
@@ -317,15 +326,15 @@ const Fitness = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   headerContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
   },
   header: {
     flexDirection: 'row',
@@ -350,7 +359,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#1E293B',
+    color: c.text,
     textAlign: 'center',
     letterSpacing: 0.2,
     paddingHorizontal: 8,
@@ -358,16 +367,16 @@ const styles = StyleSheet.create({
   headerSpacer: { width: 44 },
   content: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     padding: wp(4),
   },
   timeCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: wp(4),
     borderRadius: 12,
     marginBottom: hp(2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -382,19 +391,19 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     height: hp(2.5),
     width: wp(5),
-    tintColor: '#11418A',
+    tintColor: c.primary,
   },
   timeCardTitle: {
     fontFamily: 'Poppins-Medium',
     marginLeft: hp(1),
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   timeCardSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     marginTop: 4,
     letterSpacing: 0.2,
   },
@@ -407,20 +416,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     width: '100%',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 10,
   },
   timeText: {
     fontFamily: 'Poppins-Regular',
     fontSize: wp(4),
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   timeWatchIcon: {
     resizeMode: 'contain',
     height: hp(2),
     width: wp(5),
-    tintColor: '#64748B',
+    tintColor: c.icon,
   },
   updateBtn: {
     marginTop: hp(1.5),
@@ -439,24 +448,24 @@ const styles = StyleSheet.create({
   },
   updateBtnText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     letterSpacing: 0.3,
   },
   datePickerContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 10,
     marginTop: hp(1),
     padding: wp(2),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   innerShadowContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     marginBottom: hp(1),
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     overflow: 'hidden',
     ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
@@ -484,12 +493,12 @@ const styles = StyleSheet.create({
   dayText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    color: '#11418A',
+    color: c.primary,
     letterSpacing: 0.2,
   },
   selectedDayText: {
     fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
+    color: c.text,
     fontSize: 16,
     letterSpacing: 0.2,
   },
@@ -498,12 +507,12 @@ const styles = StyleSheet.create({
     marginVertical: hp(0.8),
     borderLeftWidth: 4,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderWidth: 1,
     borderRightWidth: 1,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -518,13 +527,13 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     height: hp(2),
     width: wp(4),
-    tintColor: '#11418A',
+    tintColor: c.primary,
   },
   cardTitle: {
     fontFamily: 'Poppins-Medium',
     marginLeft: hp(1),
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   cardDetails: {
@@ -535,7 +544,7 @@ const styles = StyleSheet.create({
   detailText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   listContent: {
@@ -545,7 +554,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: hp(2),
-    color: '#64748B',
+    color: c.subText,
     fontSize: 14,
     letterSpacing: 0.2,
   },

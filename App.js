@@ -1,5 +1,11 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, StyleSheet, Platform, AppState } from 'react-native';
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
+import { View, Platform, AppState, StatusBar } from 'react-native';
 import axios from 'axios';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
@@ -10,14 +16,20 @@ import FCMService from './src/notifications/FCMService';
 import NetworkError from './src/components/NetworkError';
 import SessionExpiredModal from './src/components/SessionExpired';
 import AppUpdateModal from './src/components/AppUpdateModal';
-import ReduxDebugger from './src/components/ReduxDebugger';
 import ApiDebugger from './src/components/ApiDebugger';
 import { Common } from './src/utilities';
 import Constants, { APP_VERSION, STORE_URL } from './src/utilities/Constants';
 import Endpoints from './src/utilities/Endpoints';
 import { setSessionExpired, setFCMToken } from './src/redux/Auth/slice';
+import { setThemeMode } from './src/redux/Theme/slice';
 import { logoutUser, sendHeartbeatThunk } from './src/redux/Auth/authThunk';
 import notifee, { EventType } from '@notifee/react-native';
+import { useAppTheme } from './src/hooks/useAppTheme';
+import { buildNavigationTheme } from './src/theme/navigationTheme';
+import {
+  loadStoredThemeMode,
+  persistThemeMode,
+} from './src/theme/themeStorage';
 
 const isOutdated = (current, minimum) => {
   const c = current.split('.').map(Number);
@@ -29,18 +41,38 @@ const isOutdated = (current, minimum) => {
   return false;
 };
 
-// Navigation ref to access navigation from outside components
 export const navigationRef = React.createRef();
 
-// Inner component that has access to Redux
 const AppContent = () => {
   const dispatch = useDispatch();
+  const { colors, isDark, mode } = useAppTheme();
+  const navigationTheme = useMemo(
+    () => buildNavigationTheme(colors, isDark),
+    [colors, isDark],
+  );
+
   const [isConnected, setIsConnected] = useState(true);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateStoreUrl, setUpdateStoreUrl] = useState('');
   const sessionExpired = useSelector(state => state.auth?.sessionExpired);
   const userId = useSelector(state => state.auth?.userId);
   const appStateRef = useRef(AppState.currentState);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadStoredThemeMode().then(stored => {
+      if (!cancelled && stored) {
+        dispatch(setThemeMode(stored));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    persistThemeMode(mode);
+  }, [mode]);
 
   const navigateFromNotification = useCallback((screen = 'Today') => {
     const tryNavigate = attempt => {
@@ -80,14 +112,12 @@ const AppContent = () => {
     checkAppVersion();
   }, []);
 
-  // Log entire Redux store state
   useEffect(() => {
     console.log('=== REDUX STORE STATE ===');
     console.log(JSON.stringify(store.getState(), null, 2));
     console.log('========================');
   }, []);
 
-  // Log store changes on every update (useful for debugging)
   useEffect(() => {
     const unsubscribe = store.subscribe(() => {
       console.log('Store Updated:', store.getState());
@@ -102,7 +132,6 @@ const AppContent = () => {
         setIsConnected(false);
         return;
       }
-      // Verify actual internet (not just interface up) so modal only dismisses when we can reach the web
       const hasInternet = await Common.checkInternetConnectivity(4000);
       setIsConnected(hasInternet);
     } catch (error) {
@@ -116,7 +145,6 @@ const AppContent = () => {
     await dispatch(logoutUser({ skipRemote: true }));
     dispatch(setSessionExpired(false));
 
-    // Navigate to Login using navigation ref
     if (navigationRef.current) {
       navigationRef.current.reset({
         index: 0,
@@ -126,15 +154,12 @@ const AppContent = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    // Set up session expired callback for axios interceptor
     Common.setSessionExpiredCallback(() => {
       dispatch(setSessionExpired(true));
     });
 
-    // Initialize Notifee for local notifications
     initializeNotifee();
 
-    // ── Firebase Cloud Messaging (Push Notifications) ──────────
     let cleanupFCM = () => {};
     let cancelled = false;
     FCMService.init({
@@ -146,8 +171,6 @@ const AppContent = () => {
       onForeground: async remoteMessage => {
         if (cancelled) return;
         console.log('📩 FCM Foreground:', remoteMessage);
-        // iOS: willPresent in AppDelegate shows the banner automatically.
-        // Android: FCM does not show foreground notifications — use Notifee.
         if (Platform.OS === 'android') {
           const id =
             remoteMessage.messageId ||
@@ -187,15 +210,12 @@ const AppContent = () => {
       }
     });
 
-    // Check initial connectivity
     checkConnectivity();
 
-    // Subscribe to network state changes for real-time updates
     const unsubscribeNetInfo = Common.subscribeToNetworkChanges(state => {
       setIsConnected(state.isConnected ?? false);
     });
 
-    // Handle notification press events (foreground)
     const unsubscribeNotification = notifee.onForegroundEvent(
       ({ type, detail }) => {
         if (type === EventType.PRESS) {
@@ -203,24 +223,20 @@ const AppContent = () => {
             '📱 Notification pressed (foreground):',
             detail.notification,
           );
-          // Navigate to home page (Today screen)
           navigateFromNotification('Today');
         }
       },
     );
 
-    // Handle notification press events (background/killed state)
     notifee.onBackgroundEvent(async ({ type, detail }) => {
       if (type === EventType.PRESS) {
         console.log(
           '📱 Notification pressed (background):',
           detail.notification,
         );
-        // Navigation will happen when app opens
       }
     });
 
-    // Check if app was opened from a notification (background/killed state)
     notifee.getInitialNotification().then(initialNotification => {
       if (initialNotification) {
         console.log('📱 App opened from notification:', initialNotification);
@@ -243,7 +259,6 @@ const AppContent = () => {
       dispatch(sendHeartbeatThunk());
     };
 
-    // Send heartbeat when app is already active (cold start or login flow complete).
     if (AppState.currentState === 'active') {
       sendHeartbeat();
     }
@@ -271,8 +286,12 @@ const AppContent = () => {
   }, [checkConnectivity]);
 
   return (
-    <View style={styles.appContainer}>
-      <NavigationContainer ref={navigationRef}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
+      <NavigationContainer ref={navigationRef} theme={navigationTheme}>
         <Navigator />
       </NavigationContainer>
       {!isConnected && <NetworkError onRetry={handleRetry} />}
@@ -281,28 +300,15 @@ const AppContent = () => {
         onLogin={handleSessionExpired}
       />
       <AppUpdateModal visible={showUpdateModal} storeUrl={updateStoreUrl} />
-      {/* Redux Store Debugger - Remove in production */}
-      {/* {__DEV__ && <ReduxDebugger />} */}
       {__DEV__ && <ApiDebugger />}
     </View>
   );
 };
 
-const App = () => {
-  return (
-    <View style={styles.appContainer}>
-      <Provider store={store}>
-        <AppContent />
-      </Provider>
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  appContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-});
+const App = () => (
+  <Provider store={store}>
+    <AppContent />
+  </Provider>
+);
 
 export default App;

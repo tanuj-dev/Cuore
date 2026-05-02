@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -21,6 +22,9 @@ const tagColors = {
 };
 
 const MealBuilder2 = ({ navigation, route }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   console.log('Route params in MealBuilder2:', route.params);
 
   const [loading, setLoading] = useState(false);
@@ -127,15 +131,15 @@ const MealBuilder2 = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#F8FAFC' },
+const createStyles = c => StyleSheet.create({
+  scroll: { flex: 1, backgroundColor: c.surface },
   backgroundImage: {
     height: hp(24),
     paddingHorizontal: wp(4),
     paddingTop: Platform.OS === 'ios' ? hp(2) : hp(1),
     paddingBottom: hp(2),
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   headerOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -157,7 +161,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   badge: {
@@ -171,23 +175,23 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.2,
   },
   contentWrap: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     padding: wp(4),
     paddingBottom: hp(10),
   },
   itemCard: {
     marginHorizontal: hp(1),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: hp(2),
     borderRadius: 12,
     marginVertical: hp(0.75),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -211,13 +215,13 @@ const styles = StyleSheet.create({
   servingText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   calText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     marginTop: 4,
     letterSpacing: 0.2,
   },
@@ -242,14 +246,14 @@ const styles = StyleSheet.create({
   clearButtonText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.3,
   },
   noteText: {
     fontFamily: 'Poppins-Regular',
     marginTop: hp(2),
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     width: wp(90),
     alignSelf: 'center',
     textAlign: 'center',

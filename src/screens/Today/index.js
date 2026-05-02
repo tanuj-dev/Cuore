@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -141,8 +142,10 @@ import SkeletonBox from '../../components/SkeletonBox';
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-const TodaySkeleton = () => (
-  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+const TodaySkeleton = () => {
+  const { colors: c } = useAppTheme();
+  return (
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: c.surface }}>
     {/* Header */}
     <View
       style={{
@@ -151,7 +154,7 @@ const TodaySkeleton = () => (
         alignItems: 'center',
         paddingHorizontal: hp(2),
         paddingVertical: hp(1.5),
-        backgroundColor: '#FFF',
+        backgroundColor: c.card,
       }}
     >
       <SkeletonBox width={120} height={22} />
@@ -167,7 +170,7 @@ const TodaySkeleton = () => (
         paddingHorizontal: hp(2),
         paddingVertical: hp(1.2),
         borderBottomWidth: 2,
-        borderBottomColor: '#E2E8F0',
+        borderBottomColor: c.border,
       }}
     >
       <SkeletonBox width={90} height={18} />
@@ -183,7 +186,7 @@ const TodaySkeleton = () => (
         style={{
           marginHorizontal: hp(2),
           marginVertical: hp(1.5),
-          backgroundColor: '#FFF',
+          backgroundColor: c.card,
           borderRadius: 16,
           padding: hp(2),
         }}
@@ -255,7 +258,7 @@ const TodaySkeleton = () => (
           <View
             style={{
               flex: 1,
-              backgroundColor: '#FFF',
+              backgroundColor: c.card,
               borderRadius: 12,
               padding: hp(1.5),
               minHeight: hp(8.5),
@@ -278,11 +281,15 @@ const TodaySkeleton = () => (
       ))}
     </ScrollView>
   </SafeAreaView>
-);
+  );
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 const Today = ({ navigation, route }) => {
+  const { colors: c, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [isVisible, setIsVisible] = useState(false);
   const [showAlertRefsModal, setShowAlertRefsModal] = useState(false);
   const [activeTab, setActiveTab] = useState('Feb 26');
@@ -546,10 +553,13 @@ const Today = ({ navigation, route }) => {
   return (
     <SafeAreaView
       edges={['top']}
-      style={{ flex: 1, backgroundColor: '#F8FAFC' }}
+      style={{ flex: 1, backgroundColor: c.surface }}
     >
       {AlertComponent}
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={c.surface}
+      />
 
       <ScrollView
         nestedScrollEnabled
@@ -558,7 +568,7 @@ const Today = ({ navigation, route }) => {
             title="Pull to refresh..."
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#11418A"
+            tintColor={c.primary}
           />
         }
         scrollEventThrottle={16}
@@ -596,7 +606,7 @@ const Today = ({ navigation, route }) => {
                             doctorProfile?.profileImage ||
                             doctorProfile?.photoUrl,
                         }
-                      : Images.DEFAULT_DOCTOR
+                      : Images.DOCTOR_PROFILE
                   }
                   style={
                     doctorProfile?.profileImage || doctorProfile?.photoUrl
@@ -684,50 +694,44 @@ const Today = ({ navigation, route }) => {
 
         {/* Alerts Horizontal Scroll */}
         <View style={styles.warnings}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {localAlerts.map((item, index) => (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.warningsScrollContent}
+          >
+            {localAlerts.map((item, index) => {
+              const tone =
+                item?.type === 'red'
+                  ? {
+                      bg: c.alertRedBg,
+                      text: c.alertRedText,
+                      icon: c.alertRedIcon,
+                    }
+                  : item?.type === 'yellow'
+                  ? {
+                      bg: c.alertYellowBg,
+                      text: c.alertYellowText,
+                      icon: c.alertYellowIcon,
+                    }
+                  : {
+                      bg: c.alertOrangeBg,
+                      text: c.alertOrangeText,
+                      icon: c.alertOrangeIcon,
+                    };
+              return (
               <View
                 key={item.id}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  borderRadius: hp(1),
-                  padding: hp(2),
-                  marginRight: hp(1),
-                  backgroundColor:
-                    item?.type === 'red'
-                      ? '#FEE4E4'
-                      : item?.type === 'yellow'
-                      ? '#FFFFC5'
-                      : '#f4ba62ff',
-                  position: 'relative',
-                }}
+                style={[styles.alertChip, { backgroundColor: tone.bg }]}
               >
                 <Image
-                  style={{
-                    resizeMode: 'contain',
-                    height: hp(2),
-                    width: wp(4),
-                    tintColor:
-                      item?.type === 'red'
-                        ? '#EF4444'
-                        : item?.type === 'yellow'
-                        ? '#FFCE1B'
-                        : '#A16207',
-                    marginRight: hp(0.5),
-                  }}
+                  style={[
+                    styles.alertChipIcon,
+                    { tintColor: tone.icon },
+                  ]}
                   source={Images.WARNING}
                 />
                 <Text
-                  style={{
-                    color:
-                      item?.type === 'red'
-                        ? '#B91C1C'
-                        : item?.type === 'yellow'
-                        ? '#A16207'
-                        : '#A16207',
-                    marginRight: hp(2),
-                  }}
+                  style={[styles.alertChipText, { color: tone.text }]}
                 >
                   {item?.text}
                 </Text>
@@ -744,17 +748,18 @@ const Today = ({ navigation, route }) => {
                 >
                   <Image
                     style={{
-                      // backgroundColor: '#F6F0F1',
                       height: hp(1.2),
                       width: hp(2),
                       resizeMode: 'contain',
                       borderRadius: hp(1),
+                      tintColor: tone.text,
                     }}
                     source={Images.CROSS}
                   />
                 </TouchableOpacity>
               </View>
-            ))}
+              );
+            })}
           </ScrollView>
         </View>
 
@@ -766,7 +771,7 @@ const Today = ({ navigation, route }) => {
         >
           <Info
             size={Math.max(16, hp(1.85))}
-            color="#94A3B8"
+            color={c.icon}
             strokeWidth={2}
             style={styles.alertRefsInfoIcon}
           />
@@ -777,7 +782,7 @@ const Today = ({ navigation, route }) => {
         </TouchableOpacity>
 
         {/* Daily Schedule */}
-        <View style={{ backgroundColor: '#F9FAFB' }}>
+        <View style={styles.scheduleSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
               Optimize Your Health with Smart Guidance
@@ -901,8 +906,8 @@ const Today = ({ navigation, route }) => {
                             styles.notificationIcon,
                             {
                               tintColor: item.alarm_notified
-                                ? '#FFCE1B'
-                                : '#6B7280',
+                                ? '#EAB308'
+                                : c.icon,
                             },
                           ]}
                           source={Images.NOTIFICATION}
@@ -914,7 +919,10 @@ const Today = ({ navigation, route }) => {
                           disabled={isCaregiver}
                           onPress={handleEditPress}
                         >
-                          <Image style={styles.editIcon} source={Images.EDIT} />
+                          <Image
+                            style={[styles.editIcon, { tintColor: c.icon }]}
+                            source={Images.EDIT}
+                          />
                         </TouchableOpacity>
                       )}
                     </View>
@@ -932,7 +940,7 @@ const Today = ({ navigation, route }) => {
                   >
                     <View style={styles.blackDot}>
                       {loadingTaskId === item.id || loadingTaskId === 'all' ? (
-                        <ActivityIndicator size="small" color="#11418A" />
+                        <ActivityIndicator size="small" color={c.primary} />
                       ) : (
                         item.completed && <View style={styles.blackDotInner} />
                       )}
@@ -958,7 +966,10 @@ const Today = ({ navigation, route }) => {
                         </Text>
                       </View>
                       {item?.completed && (
-                        <Image source={Images.RIGHT} style={styles.checkIcon} />
+                        <Image
+                          source={Images.RIGHT}
+                          style={styles.checkIcon}
+                        />
                       )}
                     </View>
                   </TouchableOpacity>
@@ -983,7 +994,7 @@ const Today = ({ navigation, route }) => {
                 styles.checkAll,
                 {
                   backgroundColor: reminderList.every(item => item.completed)
-                    ? '#11418A'
+                    ? c.primary
                     : 'transparent',
                 },
               ]}
@@ -1043,10 +1054,12 @@ const Today = ({ navigation, route }) => {
               }}
             >
               {loadingTaskId === 'all' ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={c.onPrimary} />
               ) : (
                 reminderList.every(item => item.completed) && (
-                  <Text style={{ color: '#FFFFFF', fontSize: 12 }}>✔</Text>
+                  <Text style={[styles.checkAllMark, { color: c.onPrimary }]}>
+                    ✔
+                  </Text>
                 )
               )}
             </TouchableOpacity>
@@ -1150,8 +1163,43 @@ const Today = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+const createStyles = c => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.surface },
+  scheduleSection: {
+    backgroundColor: c.surface,
+  },
+  warningsScrollContent: {
+    paddingRight: hp(2),
+    paddingLeft: hp(0.5),
+    paddingVertical: hp(0.25),
+  },
+  alertChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: hp(1),
+    paddingVertical: hp(1.5),
+    paddingHorizontal: hp(1.5),
+    paddingRight: hp(4.5),
+    marginRight: hp(1),
+    position: 'relative',
+    maxWidth: wp(84),
+  },
+  alertChipIcon: {
+    resizeMode: 'contain',
+    height: hp(2),
+    width: wp(4),
+    marginRight: hp(0.5),
+  },
+  alertChipText: {
+    flexShrink: 1,
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  checkAllMark: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Medium',
+  },
   header: {
     marginTop: Platform.OS === 'ios' ? hp(0) : hp(1),
     paddingHorizontal: hp(2),
@@ -1159,19 +1207,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   username: {
     fontFamily: 'Poppins-Regular',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.4,
   },
   userIcon: {
     // elevation: 1,
 
     borderRadius: hp(5),
-    tintColor: '#1E64AC',
+    tintColor: c.primary,
     width: hp(3),
     height: hp(2),
     resizeMode: 'contain',
@@ -1179,14 +1227,14 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     borderBottomWidth: 2,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
     paddingVertical: hp(1.2),
     paddingHorizontal: hp(2),
   },
-  activeTab: { fontFamily: 'Poppins-Medium', fontSize: 16, color: '#11418A' },
-  inactiveTab: { fontFamily: 'Poppins-Medium', fontSize: 16, color: '#94A3B8' },
+  activeTab: { fontFamily: 'Poppins-Medium', fontSize: 16, color: c.primary },
+  inactiveTab: { fontFamily: 'Poppins-Medium', fontSize: 16, color: c.tabInactive },
   alert: {
     fontFamily: 'Poppins-Medium',
     color: '#DC2626',
@@ -1202,7 +1250,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: hp(1.5),
     marginHorizontal: hp(2),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1216,7 +1264,7 @@ const styles = StyleSheet.create({
   progressTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 17,
-    color: '#1E293B',
+    color: c.text,
     alignSelf: 'center',
     textAlign: 'center',
     letterSpacing: -0.4,
@@ -1224,17 +1272,17 @@ const styles = StyleSheet.create({
   biomarkerButton: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: c.bioButtonBg,
     paddingVertical: hp(1.2),
     paddingHorizontal: hp(1.8),
     borderRadius: hp(1.2),
     borderWidth: 1.5,
-    borderColor: '#A7F3D0',
+    borderColor: c.bioButtonBorder,
   },
   biomarkerButtonText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 11.5,
-    color: '#047857',
+    color: c.bioButtonText,
     textAlign: 'center',
     lineHeight: 14,
   },
@@ -1243,21 +1291,21 @@ const styles = StyleSheet.create({
     marginVertical: hp(1.5),
   },
   quote: {
-    backgroundColor: '#F5F3FF',
+    backgroundColor: c.quoteBg,
     fontFamily: 'Poppins-Medium',
-    color: '#7C3AED',
+    color: c.quoteText,
     fontSize: 15,
     padding: hp(2),
     borderLeftWidth: 4,
     borderRadius: 12,
-    borderColor: '#9333EA',
+    borderColor: c.quoteBorder,
     lineHeight: 22,
     fontStyle: 'italic',
   },
   warnings: {
     marginVertical: 10,
     marginHorizontal: hp(2),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: hp(0.5),
   },
   consult: {
@@ -1284,7 +1332,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: Platform.OS === 'ios' ? 16 : 18,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.5,
   },
   taskRow: {
@@ -1299,7 +1347,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     minHeight: hp(7),
     marginTop: hp(0.5),
-    borderColor: '#E5E7EB',
+    borderColor: c.border,
   },
   notificationRow: {
     flexDirection: 'row',
@@ -1317,7 +1365,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
     width: 62,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: -0.2,
   },
   taskCard: {
@@ -1325,7 +1373,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     minHeight: hp(8.5),
     borderLeftWidth: 3,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     padding: hp(1.5),
     flexDirection: 'row',
@@ -1355,13 +1403,13 @@ const styles = StyleSheet.create({
   taskTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#334155',
+    color: c.textSecondary,
     letterSpacing: -0.2,
   },
   taskDescription: {
     marginTop: 5,
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     fontFamily: 'Poppins-Regular',
     lineHeight: 18,
   },
@@ -1387,13 +1435,14 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
-    color: '#94A3B8',
+    color: c.tabInactive,
   },
   checkIcon: {
     resizeMode: 'contain',
-    width: hp(2),
-    height: hp(3),
+    width: hp(2.2),
+    height: hp(2.2),
     marginTop: 10,
+    alignSelf: 'center',
     // justifyContent: 'center',
     // alignItems: 'flex-end',
     // alignSelf: 'flex-end',
@@ -1419,7 +1468,7 @@ const styles = StyleSheet.create({
   floatingTextLabel: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: c.primary,
     textAlign: 'center',
   },
   checkAll: {
@@ -1428,7 +1477,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: hp(0.5),
     marginRight: hp(1),
-    borderColor: '#9CA3AF',
+    borderColor: c.tabInactive,
 
     alignItems: 'center',
     justifyContent: 'center',
@@ -1436,20 +1485,20 @@ const styles = StyleSheet.create({
   blackDot: {
     marginTop: hp(1),
     marginHorizontal: hp(1.5),
-    borderWidth: 0.5,
-    height: hp(2),
-    width: hp(2),
+    borderWidth: 2,
+    height: hp(2.2),
+    width: hp(2.2),
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: hp(2),
-    borderColor: '#101010',
+    borderColor: c.taskRingBorder,
+    backgroundColor: 'transparent',
   },
   blackDotInner: {
-    borderWidth: 1,
-    height: hp(1.2),
-    width: hp(1.2),
+    height: hp(1.15),
+    width: hp(1.15),
     borderRadius: hp(2),
-    backgroundColor: '#000000',
+    backgroundColor: c.taskRingFill,
   },
   headerButtonsContainer: {
     flexDirection: 'row',
@@ -1459,13 +1508,13 @@ const styles = StyleSheet.create({
   addReminderButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: c.headerChipBlueBg,
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(2.5),
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#BFDBFE',
-    shadowColor: '#11418A',
+    borderColor: c.headerChipBlueBorder,
+    shadowColor: c.primary,
     shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
@@ -1477,13 +1526,13 @@ const styles = StyleSheet.create({
   healthButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: c.headerChipRoseBg,
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(2.5),
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#FECACA',
-    shadowColor: '#DC2626',
+    borderColor: c.headerChipRoseBorder,
+    shadowColor: c.danger,
     shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
@@ -1496,39 +1545,35 @@ const styles = StyleSheet.create({
     width: hp(3.5),
     height: hp(3.5),
     borderRadius: hp(1.75),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.headerChipIconBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(1.5),
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 2 },
-    }),
   },
   addIcon: {
     height: hp(2),
     width: hp(2),
-    tintColor: '#11418A',
+    resizeMode: 'contain',
+    // add.png is a single-color asset; tint makes it visible on dark chips
+    tintColor: c.headerChipBlueText,
   },
   healthIcon: {
     height: hp(2),
     width: hp(2),
-    tintColor: '#DC2626',
+    resizeMode: 'contain',
+    tintColor: c.headerChipRoseText,
   },
   healthIconFull: {
     width: hp(3.5),
     height: hp(3.5),
     borderRadius: hp(1.75),
+    resizeMode: 'cover',
   },
   addReminderText: {
     fontSize: 11.5,
     fontFamily: 'Poppins-Medium',
-    color: '#1E40AF',
+    color: c.headerChipBlueText,
     textAlign: 'center',
     lineHeight: 14,
     letterSpacing: -0.2,
@@ -1536,7 +1581,7 @@ const styles = StyleSheet.create({
   healthButtonText: {
     fontSize: 11.5,
     fontFamily: 'Poppins-Medium',
-    color: '#DC2626',
+    color: c.headerChipRoseText,
     textAlign: 'center',
     lineHeight: 14,
     letterSpacing: -0.2,
@@ -1544,7 +1589,7 @@ const styles = StyleSheet.create({
   updateButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     paddingVertical: hp(1),
     paddingHorizontal: hp(1),
     borderRadius: hp(1),
@@ -1570,35 +1615,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: c.surface,
   },
   loadingText: {
     marginTop: hp(2),
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: c.primary,
     fontSize: 16,
   },
   checkAllText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#334155',
+    color: c.textSecondary,
     letterSpacing: -0.2,
   },
   streakContainer: {
     alignItems: 'center',
     marginVertical: hp(2.5),
     marginHorizontal: hp(2),
-    backgroundColor: '#FEF9C3',
+    backgroundColor: c.streakBg,
+    borderWidth: 1,
+    borderColor: c.streakBorder,
     paddingVertical: hp(3),
+    paddingHorizontal: hp(2),
     borderRadius: 16,
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 4 },
-    }),
+    overflow: 'hidden',
   },
   fireIcon: {
     marginBottom: hp(1),
@@ -1606,14 +1647,14 @@ const styles = StyleSheet.create({
   streakTitle: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 24,
-    color: '#78350F',
+    color: c.streakTitle,
     letterSpacing: -0.6,
     marginBottom: 6,
   },
   streakSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#92400E',
+    color: c.streakSubtitle,
     textAlign: 'center',
     paddingHorizontal: hp(2.5),
     lineHeight: 20,
@@ -1621,13 +1662,13 @@ const styles = StyleSheet.create({
   alertRefsCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     marginHorizontal: wp(4),
     marginVertical: hp(1.5),
     borderRadius: 14,
     padding: hp(1.8),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   alertRefsInfoIcon: {
     marginRight: hp(1),
@@ -1636,14 +1677,14 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#94A3B8',
+    color: c.tabInactive,
     letterSpacing: 0.15,
     lineHeight: 18,
   },
   alertRefsCardChevron: {
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#94A3B8',
+    color: c.tabInactive,
     marginLeft: 8,
   },
   alertRefAlert: {
@@ -1659,7 +1700,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   referencesBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: hp(2.5),
@@ -1668,14 +1709,14 @@ const styles = StyleSheet.create({
   referencesModalTitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.15,
     marginBottom: hp(0.5),
   },
   referencesModalSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#64748B',
+    color: c.subText,
     marginBottom: hp(2),
     lineHeight: 18,
   },
@@ -1686,28 +1727,28 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
     paddingBottom: hp(1.5),
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: c.divider,
   },
   referenceParameter: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13.5,
-    color: '#11418A',
+    color: c.primary,
     marginBottom: 2,
   },
   referenceSource: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12.5,
-    color: '#475569',
+    color: c.subText,
     lineHeight: 18,
   },
   referenceLink: {
-    color: '#11418A',
+    color: c.primary,
     textDecorationLine: 'underline',
   },
   referencesFootnote: {
     fontFamily: 'Poppins-Regular',
     fontSize: 11,
-    color: '#94A3B8',
+    color: c.tabInactive,
     fontStyle: 'italic',
     marginTop: hp(1),
     marginBottom: hp(2),
@@ -1723,7 +1764,7 @@ const styles = StyleSheet.create({
   referencesCloseBtnText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#FFFFFF',
+    color: c.card,
   },
 });
 

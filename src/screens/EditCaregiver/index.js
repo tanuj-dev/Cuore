@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -15,6 +16,9 @@ import { updateProfile, getProfile } from '../../redux/slices';
 import ToastMessage from '../../components/Toast';
 
 const EditCaregiver = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
   const userID = useSelector(state => state.auth.userId);
   const caregiverData = useSelector(
@@ -173,18 +177,18 @@ const EditCaregiver = ({ navigation }) => {
 
 export default memo(EditCaregiver);
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   container: {
     padding: wp(5),
     margin: wp(4),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     ...(Platform.OS === 'android' && { elevation: 1 }),
   },
   headerRow: {
@@ -204,7 +208,7 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
   },
@@ -212,15 +216,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 10,
     paddingHorizontal: wp(3),
     height: hp(6),
-    color: '#1E293B',
+    color: c.text,
   },
   disabledInput: {
-    backgroundColor: '#F1F5F9',
-    color: '#94A3B8',
+    backgroundColor: c.mutedSurface,
+    color: c.tabInactive,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -236,22 +240,22 @@ const styles = StyleSheet.create({
   },
   saveText: {
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: c.card,
     fontSize: 14,
     letterSpacing: 0.2,
   },
   cancelBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     width: wp(40),
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     paddingVertical: hp(1.5),
     borderRadius: 10,
   },
   cancelText: {
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
+    color: c.subText,
     fontSize: 14,
     letterSpacing: 0.2,
   },

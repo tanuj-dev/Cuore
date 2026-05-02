@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -23,6 +24,9 @@ const tagColors = {
 };
 
 const MealBuilder1 = ({ navigation, route }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   console.log('Route params:', route.params);
@@ -238,15 +242,15 @@ const MealBuilder1 = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#F8FAFC' },
+const createStyles = c => StyleSheet.create({
+  scroll: { flex: 1, backgroundColor: c.surface },
   backgroundImage: {
     height: hp(24),
     paddingHorizontal: wp(4),
     paddingTop: Platform.OS === 'ios' ? hp(2) : hp(1),
     paddingBottom: hp(2),
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   headerOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -268,7 +272,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   headerRow: {
@@ -286,7 +290,7 @@ const styles = StyleSheet.create({
   itemsSelectedText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   warningRow: {
@@ -321,23 +325,23 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   contentWrap: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
     padding: wp(4),
     paddingBottom: hp(6),
   },
   dishCard: {
     marginHorizontal: hp(1),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     padding: hp(2),
     borderRadius: 12,
     marginVertical: hp(0.75),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -359,13 +363,13 @@ const styles = StyleSheet.create({
   dishName: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: 0.2,
   },
   dishCal: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#64748B',
+    color: c.subText,
     marginTop: 4,
     letterSpacing: 0.2,
   },
@@ -386,30 +390,30 @@ const styles = StyleSheet.create({
   portionBtnText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#11418A',
+    color: c.primary,
   },
   countText: {
     fontFamily: 'Poppins-Medium',
     marginHorizontal: wp(3),
     fontSize: 16,
-    color: '#1E293B',
+    color: c.text,
   },
   summaryBox: {
     padding: hp(2),
     borderTopWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     marginTop: hp(1),
     alignItems: 'flex-end',
   },
   summaryText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   summaryBold: {
     fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
+    color: c.text,
   },
   extraText: {
     fontFamily: 'Poppins-Regular',
@@ -441,7 +445,7 @@ const styles = StyleSheet.create({
   adjustButtonText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: c.card,
     letterSpacing: 0.3,
   },
 });

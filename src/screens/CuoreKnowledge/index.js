@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -18,18 +19,20 @@ import ApiError from '../../components/ApiError';
 import Loader from '../../components/Loader';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const KnowledgeSkeleton = () => (
-  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#FFF' }}>
-    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', paddingVertical: hp(1) }}>
+const KnowledgeSkeleton = () => {
+  const { colors: c } = useAppTheme();
+  return (
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: c.background }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderBottomWidth: 1, borderBottomColor: c.border, paddingVertical: hp(1) }}>
       <SkeletonBox width={wp(4)} height={hp(3.5)} borderRadius={4} style={{ marginLeft: hp(2) }} />
       <View style={{ flex: 1, alignItems: 'center', marginRight: hp(4) }}>
         <SkeletonBox width={hp(6)} height={hp(6)} borderRadius={hp(3)} style={{ marginBottom: hp(1) }} />
         <SkeletonBox width={180} height={20} borderRadius={6} />
       </View>
     </View>
-    <ScrollView scrollEnabled={false} style={{ backgroundColor: '#F8FAFC' }} contentContainerStyle={{ padding: wp(4) }}>
+    <ScrollView scrollEnabled={false} style={{ backgroundColor: c.surface }} contentContainerStyle={{ padding: wp(4) }}>
       {[1, 2, 3, 4, 5].map(i => (
-        <View key={i} style={{ backgroundColor: '#FFF', borderRadius: 12, flexDirection: 'row', marginBottom: hp(2), padding: wp(3), borderWidth: 1, borderColor: '#E2E8F0' }}>
+        <View key={i} style={{ backgroundColor: c.card, borderRadius: 12, flexDirection: 'row', marginBottom: hp(2), padding: wp(3), borderWidth: 1, borderColor: c.border }}>
           <SkeletonBox width={wp(18)} height={wp(18)} borderRadius={10} />
           <View style={{ flex: 1, marginLeft: wp(3), justifyContent: 'center', gap: hp(1) }}>
             <SkeletonBox width="80%" height={15} borderRadius={6} />
@@ -39,9 +42,13 @@ const KnowledgeSkeleton = () => (
       ))}
     </ScrollView>
   </SafeAreaView>
-);
+  );
+};
 
 const CuoreKnowledge = ({ navigation }) => {
+  const { colors: c } = useAppTheme();
+  const styles = useMemo(() => createStyles(c), [c]);
+
   const [refreshing, setRefreshing] = useState(false);
   const dispatch = useDispatch();
   const userId = useSelector(state => state.auth.userId);
@@ -153,25 +160,25 @@ const CuoreKnowledge = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = c => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   scroll: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   contentWrap: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.surface,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: c.border,
     ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
   backButton: {
@@ -205,7 +212,7 @@ const styles = StyleSheet.create({
   heading: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
-    color: '#11418A',
+    color: c.primary,
     textAlign: 'center',
     marginTop: hp(1.2),
     letterSpacing: 0.3,
@@ -218,13 +225,13 @@ const styles = StyleSheet.create({
     paddingBottom: hp(10),
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 12,
     flexDirection: 'row',
     marginBottom: hp(2),
     padding: wp(3),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,

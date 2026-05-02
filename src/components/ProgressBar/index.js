@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import {
   View,
   Text,
@@ -17,6 +18,13 @@ const IMAGE_SIZE = hp(3);
 const PROGRESS_BAR_WIDTH = 300;
 
 const ProgressBarWithImage = ({ navigation, data }) => {
+  const { colors: c, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(c, isDark), [c, isDark]);
+
+  const journeyBarColors = isDark
+    ? [c.mutedSurface, c.taskRingBorder, c.icon]
+    : ['#EF4444', '#F59E0B', '#10B981'];
+
   const progress = data?.periods?.[0]?.value || 0;
   const animatedLeft = useRef(new Animated.Value(0)).current;
 
@@ -63,7 +71,7 @@ const ProgressBarWithImage = ({ navigation, data }) => {
       <View style={styles.progressWrapper}>
         <View style={styles.progressContainer}>
           <LinearGradient
-            colors={['#EF4444', '#F59E0B', '#10B981']}
+            colors={journeyBarColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.progressBar, { width: PROGRESS_BAR_WIDTH }]}
@@ -100,13 +108,14 @@ const ProgressBarWithImage = ({ navigation, data }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c, isDark) =>
+  StyleSheet.create({
   container: {
     marginVertical: hp(2),
     marginHorizontal: hp(2.5),
     paddingHorizontal: hp(2),
     paddingVertical: hp(2),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -127,13 +136,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   centerLabel: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
+    color: c.text,
     letterSpacing: -0.3,
   },
   progressWrapper: {
@@ -144,7 +153,7 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.mutedSurface,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -179,18 +188,20 @@ const styles = StyleSheet.create({
     height: IMAGE_SIZE,
     borderRadius: IMAGE_SIZE / 2,
     borderWidth: 3,
-    borderColor: '#FFFFFF',
-    backgroundColor: '#F8FAFC',
+    borderColor: c.card,
+    backgroundColor: c.surface,
   },
   percentBadge: {
     marginTop: 4,
-    backgroundColor: '#6366F1',
+    backgroundColor: isDark ? c.mutedSurface : '#6366F1',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
-    shadowColor: '#6366F1',
+    borderWidth: isDark ? 1 : 0,
+    borderColor: isDark ? c.border : 'transparent',
+    shadowColor: isDark ? '#000' : '#6366F1',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: isDark ? 0.12 : 0.3,
     shadowRadius: 4,
     ...Platform.select({
       android: { elevation: 0.5 },
@@ -200,7 +211,7 @@ const styles = StyleSheet.create({
   percentBadgeText: {
     fontSize: 12,
     fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    color: isDark ? c.text : c.journeyBadgeText,
     letterSpacing: 0.5,
   },
   percentRow: {
@@ -213,13 +224,13 @@ const styles = StyleSheet.create({
   percentText: {
     fontSize: 13,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+    color: c.subText,
     letterSpacing: 0.2,
   },
   goalText: {
     fontSize: 13,
     fontFamily: 'Poppins-Medium',
-    color: '#10B981',
+    color: isDark ? c.subText : '#10B981',
     letterSpacing: 0.2,
   },
 });
