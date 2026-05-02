@@ -27,6 +27,7 @@ import images from '../../utilities/Images';
 import { submitOnboarding } from '../../redux/OnBoardng/onBoardingThunk';
 import { createReassessment } from '../../redux/OnBoardng/onBoardingThunk';
 import { getOnboardingThunk } from '../../redux/slices';
+import { setUserData } from '../../redux/Auth/slice';
 import Toast from '../../components/Toast';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
@@ -170,6 +171,7 @@ const OnBoarding = ({ navigation, route }) => {
       o5Data: onboarding5Data,
       o6Data: onboarding6Data,
       o7Data: onboarding7Data,
+      isonboarding_complete: true,
     };
 
     console.log('Final Onboarding Payload:', finalPayload);
@@ -203,7 +205,49 @@ const OnBoarding = ({ navigation, route }) => {
           'onboardingData',
           JSON.stringify(finalPayload),
         );
-        await EncryptedStorage.setItem('onboardingCompleted', 'true');
+        if (screen !== 'Reassess') {
+          try {
+            const tokenData = await EncryptedStorage.getItem('auth_tokens');
+            if (tokenData) {
+              const parsed = JSON.parse(tokenData);
+              const explicitFalse =
+                res?.isonboarding_complete === false ||
+                res?.isonboarding_complete === 'false';
+              const explicitTrue =
+                res?.isonboarding_complete === true ||
+                res?.isonboarding_complete === 'true';
+              const isOnboardingDone =
+                explicitTrue ||
+                (!explicitFalse && res?.isonboarding_complete == null);
+
+              const updated = {
+                ...parsed,
+                isonboarding_complete: isOnboardingDone,
+                onboardingStatus: isOnboardingDone
+                  ? 'complete'
+                  : parsed.onboardingStatus,
+              };
+              await EncryptedStorage.setItem(
+                'auth_tokens',
+                JSON.stringify(updated),
+              );
+              dispatch(
+                setUserData({
+                  accessToken: updated.accessToken,
+                  refreshToken: updated.refreshToken,
+                  userId: updated.userId,
+                  expiresIn: updated.expiresIn,
+                  newUser: updated.newUser,
+                  role: updated.role,
+                  paymentStatus: updated.paymentStatus,
+                  onboardingStatus: updated.onboardingStatus,
+                }),
+              );
+            }
+          } catch (e) {
+            console.warn('[OnBoarding] persist onboarding status:', e?.message);
+          }
+        }
         console.log('Onboarding data saved successfully');
 
         navigation.navigate('Score', {

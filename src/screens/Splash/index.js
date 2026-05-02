@@ -107,8 +107,12 @@ const Splash = () => {
           return;
         }
 
+        const onboardingDone =
+          parsed.onboardingStatus === 'complete' ||
+          parsed.isonboarding_complete === true;
+
         // Step 2: Has token but onboarding not complete → OnBoarding
-        if (parsed.onboardingStatus !== 'complete') {
+        if (!onboardingDone) {
           if (parsed.role === 'caregiver') {
             await EncryptedStorage.removeItem('auth_tokens');
             navigateTo('Login');

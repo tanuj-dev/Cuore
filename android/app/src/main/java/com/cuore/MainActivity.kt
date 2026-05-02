@@ -1,5 +1,6 @@
 package com.cuore
 
+import android.content.Intent
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -19,4 +20,10 @@ class MainActivity : ReactActivity() {
    */
   override fun createReactActivityDelegate(): ReactActivityDelegate =
       DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    // Keep latest launch intent so notification-open callbacks can read it with singleTask mode.
+    setIntent(intent)
+  }
 }

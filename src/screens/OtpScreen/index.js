@@ -152,6 +152,7 @@ const OtpScreen = () => {
         expires_in,
         new_user,
         onboardingStatus,
+        isonboarding_complete,
         role: userRole,
         paymentStatus,
       } = result?.data || {};
@@ -163,12 +164,16 @@ const OtpScreen = () => {
         expiresIn: expires_in,
         newUser: new_user,
         onboardingStatus: onboardingStatus,
+        isonboarding_complete,
         role: userRole,
         paymentStatus: paymentStatus,
       };
 
+      const onboardingDone =
+        onboardingStatus === 'complete' || isonboarding_complete === true;
+
       // Step 1: Check onboardingStatus first
-      if (onboardingStatus !== 'complete') {
+      if (!onboardingDone) {
         if (userRole === 'caregiver') {
           alert(
             'Onboarding Pending',

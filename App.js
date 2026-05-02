@@ -42,6 +42,21 @@ const AppContent = () => {
   const userId = useSelector(state => state.auth?.userId);
   const appStateRef = useRef(AppState.currentState);
 
+  const navigateFromNotification = useCallback((screen = 'Today') => {
+    const tryNavigate = attempt => {
+      if (navigationRef.current?.isReady?.()) {
+        navigationRef.current.navigate(screen);
+        return;
+      }
+
+      if (attempt < 10) {
+        setTimeout(() => tryNavigate(attempt + 1), 200);
+      }
+    };
+
+    tryNavigate(0);
+  }, []);
+
   useEffect(() => {
     const checkAppVersion = async () => {
       try {
@@ -152,18 +167,12 @@ const AppContent = () => {
       onOpenedFromBg: remoteMessage => {
         if (cancelled) return;
         console.log('🔔 FCM opened from background:', remoteMessage);
-        if (navigationRef.current) {
-          navigationRef.current.navigate('Today');
-        }
+        navigateFromNotification('Today');
       },
       onOpenedFromQuit: remoteMessage => {
         if (cancelled) return;
         console.log('🚀 FCM opened from quit:', remoteMessage);
-        setTimeout(() => {
-          if (navigationRef.current) {
-            navigationRef.current.navigate('Today');
-          }
-        }, 500);
+        navigateFromNotification('Today');
       },
       onRefreshToken: newToken => {
         if (cancelled) return;
@@ -195,9 +204,7 @@ const AppContent = () => {
             detail.notification,
           );
           // Navigate to home page (Today screen)
-          if (navigationRef.current) {
-            navigationRef.current.navigate('Today');
-          }
+          navigateFromNotification('Today');
         }
       },
     );
@@ -217,12 +224,7 @@ const AppContent = () => {
     notifee.getInitialNotification().then(initialNotification => {
       if (initialNotification) {
         console.log('📱 App opened from notification:', initialNotification);
-        // Navigate to home page after navigation is ready
-        setTimeout(() => {
-          if (navigationRef.current) {
-            navigationRef.current.navigate('Today');
-          }
-        }, 500);
+        navigateFromNotification('Today');
       }
     });
 
@@ -232,7 +234,7 @@ const AppContent = () => {
       unsubscribeNotification();
       cleanupFCM();
     };
-  }, [checkConnectivity, dispatch]);
+  }, [checkConnectivity, dispatch, navigateFromNotification]);
 
   useEffect(() => {
     if (!userId) return;
