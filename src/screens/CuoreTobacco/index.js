@@ -77,6 +77,12 @@ const Tobacco = ({ navigation }) => {
   const hasSyncedFromProfile = useRef(false);
 
   const data = useSelector(state => state.tobacco.data?.data);
+  const dailyChalanges = useSelector(
+    state => state.tobacco.data?.data?.allChallenges,
+  );
+  const userId = useSelector(state => state.auth.userId);
+  const profileData = data?.profile;
+  const stats = data?.stats;
 
   // Show previousDayCount from profile only once when data loads; user can then clear and type freely
   useEffect(() => {
@@ -89,14 +95,6 @@ const Tobacco = ({ navigation }) => {
       hasSyncedFromProfile.current = true;
     }
   }, [profileData?.previousDayCount]);
-  const dailyChalanges = useSelector(
-    state => state.tobacco.data?.data?.allChallenges,
-  );
-  const userId = useSelector(state => state.auth.userId);
-  const profileData = data?.profile;
-  console.log('profileData', profileData);
-  const stats = data?.stats;
-  console.log('Tobacco Profile Data from Redux:', profileData);
 
   const dispatch = useDispatch();
 
@@ -133,14 +131,12 @@ const Tobacco = ({ navigation }) => {
   };
 
   const handleLogUsage = async () => {
-    console.log('handleLogUsage triggered');
     setLoading(true);
     const count =
       yesterdayCount !== '' && yesterdayCount !== undefined
         ? Number(yesterdayCount)
         : 0;
     const res = await dispatch(logTobaccoUsage({ userId, count })).unwrap();
-    console.log('logTobaccoUsage response:', res);
     if (res.status === 'success') {
       setToast('Tobacco usage logged successfully');
       dispatch(getTobacco(userId));
@@ -167,7 +163,11 @@ const Tobacco = ({ navigation }) => {
         <ScrollView
           contentContainerStyle={styles.container}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={c.primary}
+            />
           }
         >
           <View style={styles.box}>
@@ -188,6 +188,7 @@ const Tobacco = ({ navigation }) => {
                 value={String(yesterdayCount)}
                 onChangeText={setYesterdayCount}
                 placeholder="0"
+                placeholderTextColor={c.inputPlaceholder}
               />
             </View>
             <TouchableOpacity
@@ -195,12 +196,12 @@ const Tobacco = ({ navigation }) => {
               onPress={() => handleLogUsage()}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={c.onPrimary} />
               ) : (
                 <Text style={styles.reassessText}>Submit</Text>
               )}
             </TouchableOpacity>
-            <View style={styles.rowCenter}>
+            <View style={[styles.rowCenter, styles.levelRow]}>
               <Text style={styles.levelText}>
                 Level {profileData?.currentLevel}
               </Text>
@@ -209,20 +210,22 @@ const Tobacco = ({ navigation }) => {
           </View>
 
           <View style={styles.quoteBox}>
-            <Text style={styles.quote}>{data?.encouragement}</Text>
+            <Text style={styles.quote}>
+              {data?.encouragement &&
+              String(data.encouragement).trim() !== '' &&
+              String(data.encouragement).trim() !== '--'
+                ? data.encouragement
+                : 'Keep going — every tobacco-free day counts.'}
+            </Text>
           </View>
 
           <View style={styles.challengeBox}>
             <Text style={styles.sectionTitleAccent}>Next Level Challenge</Text>
             <Text style={styles.challengeSubText}>
-              {dailyChalanges
-                ? dailyChalanges[data?.currentLevel]?.challengeText
-                : null}
+              {dailyChalanges?.[data?.currentLevel]?.challengeText ?? ''}
             </Text>
             <Text style={styles.detailText}>
-              {dailyChalanges
-                ? dailyChalanges[data?.currentLevel]?.challengeText2
-                : null}
+              {dailyChalanges?.[data?.currentLevel]?.challengeText2 ?? ''}
             </Text>
           </View>
 
@@ -231,7 +234,7 @@ const Tobacco = ({ navigation }) => {
 
             <Text style={styles.inputLabel}>Cigarettes per day</Text>
             <TextInput
-              placeholderTextColor="#64748B"
+              placeholderTextColor={c.inputPlaceholder}
               placeholder="Enter the count"
               style={styles.input}
               keyboardType="numeric"
@@ -244,7 +247,7 @@ const Tobacco = ({ navigation }) => {
             </Text>
             <TextInput
               placeholder="Num of years"
-              placeholderTextColor="#64748B"
+              placeholderTextColor={c.inputPlaceholder}
               style={styles.input}
               keyboardType="numeric"
               value={yearsOfSmoking}
@@ -256,7 +259,7 @@ const Tobacco = ({ navigation }) => {
               style={styles.reassessButton}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={c.onPrimary} />
               ) : (
                 <Text style={styles.reassessText}>Submit</Text>
               )}
@@ -314,7 +317,7 @@ const createStyles = c => StyleSheet.create({
   },
   container: {
     padding: wp(4),
-    paddingBottom: hp(6),
+    paddingBottom: hp(16),
     backgroundColor: c.surface,
   },
   box: {
@@ -333,6 +336,7 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     width: wp(5),
     height: hp(3),
+    tintColor: c.primary,
   },
   iconTrophy: {
     resizeMode: 'contain',
@@ -358,12 +362,12 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     flex: 1,
     fontSize: 15,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     marginRight: wp(3),
     letterSpacing: 0.2,
   },
   inputSmall: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: c.card,
     borderRadius: 10,
     paddingHorizontal: wp(3),
     paddingVertical: hp(1),
@@ -376,13 +380,14 @@ const createStyles = c => StyleSheet.create({
   },
   logSubmitButton: {
     alignSelf: 'flex-end',
+    marginTop: hp(1),
     paddingHorizontal: wp(4),
     paddingVertical: hp(1),
-    backgroundColor: '#11418A',
+    backgroundColor: c.primary,
     borderRadius: 10,
-    position: 'absolute',
-    top: hp(17.5),
-    right: wp(4),
+  },
+  levelRow: {
+    marginTop: hp(1.5),
   },
   levelText: {
     fontFamily: 'Poppins-Regular',
@@ -392,8 +397,8 @@ const createStyles = c => StyleSheet.create({
   },
   quoteBox: {
     borderLeftWidth: 4,
-    borderLeftColor: '#11418A',
-    backgroundColor: '#FEE2E2',
+    borderLeftColor: c.quoteBorder,
+    backgroundColor: c.quoteBg,
     padding: wp(4),
     borderRadius: 12,
     marginBottom: hp(2),
@@ -405,9 +410,10 @@ const createStyles = c => StyleSheet.create({
   quote: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: c.primary,
+    color: c.quoteText,
     letterSpacing: 0.2,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    lineHeight: 22,
   },
   challengeBox: {
     backgroundColor: c.mutedSurface,
@@ -450,11 +456,11 @@ const createStyles = c => StyleSheet.create({
   detailText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   profileBox: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: c.mutedSurface,
     padding: wp(4),
     borderRadius: 12,
     marginBottom: hp(2),
@@ -464,7 +470,7 @@ const createStyles = c => StyleSheet.create({
   inputLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     marginTop: hp(1.2),
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
@@ -506,7 +512,7 @@ const createStyles = c => StyleSheet.create({
   gridLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     paddingVertical: hp(1),
     letterSpacing: 0.2,
   },
@@ -527,14 +533,14 @@ const createStyles = c => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#11418A',
+    backgroundColor: c.primary,
     borderRadius: 10,
     marginVertical: hp(2),
     paddingVertical: hp(1.2),
   },
   reassessText: {
     fontFamily: 'Poppins-Medium',
-    color: c.card,
+    color: c.onPrimary,
     fontSize: 14,
     letterSpacing: 0.2,
   },

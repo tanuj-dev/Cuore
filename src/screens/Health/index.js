@@ -120,6 +120,15 @@ const formatDate = date => {
 const Health = ({ navigation }) => {
   const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c, isDark), [c, isDark]);
+  const editIconStyle = useMemo(
+    () => ({
+      height: hp(3),
+      width: wp(4),
+      resizeMode: 'contain',
+      tintColor: c.navIconTint,
+    }),
+    [c.navIconTint],
+  );
 
   const [refreshing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -494,7 +503,7 @@ const Health = ({ navigation }) => {
                   resizeMode: 'contain',
                   height: hp(2.5),
                   width: hp(4),
-                  tintColor: c.text,
+                  tintColor: c.navIconTint,
                 }}
                 resizeMode="contain"
               />
@@ -574,13 +583,7 @@ const Health = ({ navigation }) => {
                     >
                       <Image
                         source={Images.EDIT}
-                        style={{
-                          height: hp(3),
-                          width: wp(4),
-                          resizeMode: 'contain',
-                        }}
-                        size={20}
-                        color="gray"
+                        style={editIconStyle}
                       />
                     </TouchableOpacity>
                   </View>
@@ -600,13 +603,7 @@ const Health = ({ navigation }) => {
                     <TouchableOpacity onPress={handleNavigateBack}>
                       <Image
                         source={Images.EDIT}
-                        style={{
-                          height: hp(3),
-                          width: wp(4),
-                          resizeMode: 'contain',
-                        }}
-                        size={20}
-                        color="gray"
+                        style={editIconStyle}
                       />
                     </TouchableOpacity>
                   </View>
@@ -628,13 +625,7 @@ const Health = ({ navigation }) => {
                     <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                       <Image
                         source={Images.EDIT}
-                        style={{
-                          height: hp(3),
-                          width: wp(4),
-                          resizeMode: 'contain',
-                        }}
-                        size={20}
-                        color="gray"
+                        style={editIconStyle}
                       />
                     </TouchableOpacity>
                   </View>
@@ -888,7 +879,7 @@ const Health = ({ navigation }) => {
                                 handleUpdateField('past_history', text)
                               }
                               placeholder="Enter history items separated by commas"
-                              placeholderTextColor={c.tabInactive}
+                              placeholderTextColor={c.inputPlaceholder}
                               multiline
                             />
                           </View>
@@ -904,7 +895,7 @@ const Health = ({ navigation }) => {
                                 handleUpdateField('medications', text)
                               }
                               placeholder="Enter medications separated by commas"
-                              placeholderTextColor={c.tabInactive}
+                              placeholderTextColor={c.inputPlaceholder}
                               multiline
                             />
                           </View>
@@ -920,7 +911,7 @@ const Health = ({ navigation }) => {
                                 handleUpdateField('labs', text)
                               }
                               placeholder="Enter lab results separated by commas"
-                              placeholderTextColor={c.tabInactive}
+                              placeholderTextColor={c.inputPlaceholder}
                               multiline
                             />
                           </View>
@@ -936,7 +927,7 @@ const Health = ({ navigation }) => {
                                 handleUpdateField('imaging', text)
                               }
                               placeholder="Enter imaging results separated by commas"
-                              placeholderTextColor={c.tabInactive}
+                              placeholderTextColor={c.inputPlaceholder}
                               multiline
                             />
                           </View>

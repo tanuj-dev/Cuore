@@ -24,8 +24,15 @@ const ReminderEditor = ({
   setVisible,
   setExistingReminder,
 }) => {
-  const { colors: c } = useAppTheme();
+  const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
+  const spinnerPickerProps = useMemo(() => {
+    if (Platform.OS !== 'ios') return {};
+    return {
+      themeVariant: isDark ? 'dark' : 'light',
+      textColor: isDark ? c.text : '#0F172A',
+    };
+  }, [isDark, c.text]);
 
   const [reminderText, setReminderText] = useState('');
   const [time, setTime] = useState(new Date());
@@ -127,10 +134,10 @@ const ReminderEditor = ({
             <Text style={styles.title}>Edit Reminder</Text>
 
             <TouchableOpacity
-              style={styles.input}
+              style={styles.inputShell}
               onPress={() => setShowTimePicker(true)}
             >
-              <Text style={styles.timeText}>
+              <Text style={styles.inputText}>
                 {time.toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -146,14 +153,14 @@ const ReminderEditor = ({
                   is24Hour={true}
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={onTimeSelected}
-                  textColor="#000000"
-                  themeVariant="light"
+                  {...spinnerPickerProps}
                 />
               </View>
             )}
 
             <TextInput
               placeholder="Reminder text"
+              placeholderTextColor={c.inputPlaceholder}
               value={reminderText}
               onChangeText={text => {
                 if (text.length <= 20) {
@@ -163,7 +170,7 @@ const ReminderEditor = ({
                   setError('Reminder must be 20 characters or less');
                 }
               }}
-              style={styles.input}
+              style={styles.textField}
             />
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -210,15 +217,28 @@ const createStyles = c => StyleSheet.create({
     color: c.text,
     marginBottom: 16,
   },
-  input: {
+  inputShell: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: c.border,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+    justifyContent: 'center',
+  },
+  inputText: {
+    fontSize: 16,
+    color: c.text,
+  },
+  textField: {
+    borderWidth: 1,
+    borderColor: c.border,
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 14,
     marginBottom: 16,
     fontSize: 16,
-    color: '#374151',
+    color: c.text,
   },
   button: {
     backgroundColor: '#2563EB',
@@ -226,7 +246,7 @@ const createStyles = c => StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  buttonText: { color: c.card, fontWeight: '600', fontSize: 16 },
+  buttonText: { color: c.onPrimary, fontWeight: '600', fontSize: 16 },
   errorText: { fontSize: 12, color: '#EF4444', marginBottom: 10 },
   datePickerWrapper: {
     backgroundColor: c.card,

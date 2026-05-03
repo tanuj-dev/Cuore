@@ -113,8 +113,176 @@ import { useSelector, useDispatch } from 'react-redux';
 import { getCuoreScoreThunk, getOnboardingThunk } from '../../redux/slices';
 import { shareData } from '../../redux/slices';
 import GaugeMeter from '../../components/SpeedpMeter';
-import Loader from '../../components/Loader';
+import SkeletonBox from '../../components/SkeletonBox';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
+
+const scoreSkeletonStyles = c =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.card },
+    root: { flex: 1 },
+    headerTopRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingTop: hp(2),
+      paddingHorizontal: hp(2),
+      backgroundColor: c.card,
+    },
+    headerIcons: { flexDirection: 'row', alignItems: 'center' },
+    titleBlock: {
+      alignItems: 'center',
+      paddingTop: hp(1),
+      paddingBottom: hp(2),
+      backgroundColor: c.card,
+    },
+    scroll: { flex: 1, backgroundColor: c.card, marginTop: hp(9) },
+    scrollInner: {
+      paddingBottom: hp(4),
+      backgroundColor: c.surface,
+      paddingTop: hp(2),
+    },
+    scoreCard: {
+      backgroundColor: c.card,
+      marginHorizontal: hp(1.5),
+      borderRadius: 16,
+      paddingVertical: hp(2.5),
+      alignItems: 'center',
+      marginBottom: hp(1),
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: wp(4),
+      marginVertical: hp(1),
+    },
+    vitalsShell: {
+      marginHorizontal: hp(1.5),
+      marginTop: hp(2),
+      paddingVertical: hp(2),
+      backgroundColor: c.card,
+      borderRadius: 12,
+    },
+    focusSkeleton: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: wp(3),
+      marginTop: hp(2),
+    },
+  });
+
+const ScoreSkeleton = () => {
+  const { colors: c } = useAppTheme();
+  const s = useMemo(() => scoreSkeletonStyles(c), [c]);
+  return (
+    <SafeAreaView edges={['top']} style={s.safe}>
+      <View style={s.root}>
+        <View style={s.headerTopRow}>
+          <SkeletonBox width={88} height={14} borderRadius={4} />
+          <View style={s.headerIcons}>
+            <SkeletonBox
+              width={22}
+              height={22}
+              borderRadius={4}
+              style={{ marginRight: wp(3) }}
+            />
+            <SkeletonBox width={36} height={36} borderRadius={18} />
+          </View>
+        </View>
+        <View style={s.titleBlock}>
+          <SkeletonBox width={130} height={22} borderRadius={6} />
+        </View>
+        <ScrollView
+          style={s.scroll}
+          contentContainerStyle={s.scrollInner}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={s.scoreCard}>
+            <SkeletonBox
+              width={wp(52)}
+              height={wp(52)}
+              borderRadius={wp(26)}
+            />
+            <SkeletonBox
+              width={160}
+              height={14}
+              borderRadius={6}
+              style={{ marginTop: hp(2) }}
+            />
+            <SkeletonBox
+              width={110}
+              height={18}
+              borderRadius={6}
+              style={{ marginTop: hp(1) }}
+            />
+            <SkeletonBox
+              width="92%"
+              height={32}
+              borderRadius={10}
+              style={{ marginTop: hp(2) }}
+            />
+            <SkeletonBox
+              width="88%"
+              height={28}
+              borderRadius={8}
+              style={{ marginTop: hp(1.5) }}
+            />
+          </View>
+          <View style={s.row}>
+            <SkeletonBox width="48%" height={88} borderRadius={12} />
+            <SkeletonBox width="48%" height={88} borderRadius={12} />
+          </View>
+          <View style={s.row}>
+            <SkeletonBox width="48%" height={88} borderRadius={12} />
+            <SkeletonBox width="48%" height={88} borderRadius={12} />
+          </View>
+          <View style={s.row}>
+            <SkeletonBox width="48%" height={88} borderRadius={12} />
+            <SkeletonBox width="48%" height={88} borderRadius={12} />
+          </View>
+          <View style={s.vitalsShell}>
+            {[0, 1, 2, 3].map(i => (
+              <SkeletonBox
+                key={i}
+                width="92%"
+                height={36}
+                borderRadius={8}
+                style={{
+                  alignSelf: 'center',
+                  marginVertical: hp(0.6),
+                }}
+              />
+            ))}
+            <View style={s.focusSkeleton}>
+              <SkeletonBox width={90} height={16} borderRadius={4} />
+              <View style={{ flexDirection: 'row' }}>
+                <SkeletonBox
+                  width={72}
+                  height={32}
+                  borderRadius={8}
+                  style={{ marginRight: wp(3) }}
+                />
+                <SkeletonBox width={72} height={32} borderRadius={8} />
+              </View>
+            </View>
+          </View>
+          <SkeletonBox
+            width="88%"
+            height={52}
+            borderRadius={12}
+            style={{ alignSelf: 'center', marginTop: hp(2) }}
+          />
+          <SkeletonBox
+            width="92%"
+            height={52}
+            borderRadius={12}
+            style={{ alignSelf: 'center', marginTop: hp(1.5), marginBottom: hp(4) }}
+          />
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
+};
 
 const Score = ({ navigation }) => {
   const { colors: c } = useAppTheme();
@@ -360,8 +528,8 @@ const Score = ({ navigation }) => {
     ? { uri: profileImage }
     : Images.UNCLE;
 
-  if (loading) {
-    return <Loader />;
+  if (loading && !health_metrics) {
+    return <ScoreSkeleton />;
   }
 
   return (
@@ -816,7 +984,7 @@ const createStyles = c => StyleSheet.create({
   date: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   title: {
@@ -832,7 +1000,7 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     height: hp(2),
     // width: wp(4),
-    tintColor: '#1E293B',
+    tintColor: c.navIconTint,
   },
   profileIcon: {
     resizeMode: 'contain',
@@ -855,7 +1023,7 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     height: hp(2),
     width: wp(6),
-    tintColor: c.card,
+    tintColor: c.onPrimary,
   },
 
   scoreCard: {
@@ -882,11 +1050,12 @@ const createStyles = c => StyleSheet.create({
     marginRight: hp(1),
     height: hp(1.5),
     width: hp(2),
+    tintColor: c.navIconTint,
   },
   timeToTarget: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   projectionDisclaimerRow: {
@@ -905,7 +1074,7 @@ const createStyles = c => StyleSheet.create({
     flex: 1,
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     fontStyle: 'italic',
     lineHeight: 18,
     letterSpacing: 0.2,
@@ -915,7 +1084,7 @@ const createStyles = c => StyleSheet.create({
   months: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   reassessButton: {
@@ -935,7 +1104,7 @@ const createStyles = c => StyleSheet.create({
   },
   reassessText: {
     fontFamily: 'Poppins-Medium',
-    color: c.card,
+    color: c.onPrimary,
     marginLeft: wp(3),
     fontSize: 15,
     letterSpacing: 0.3,
@@ -946,7 +1115,7 @@ const createStyles = c => StyleSheet.create({
     textAlign: 'center',
     marginTop: hp(1),
     fontSize: 12,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     lineHeight: 18,
     letterSpacing: 0.1,
   },
@@ -983,7 +1152,7 @@ const createStyles = c => StyleSheet.create({
   infoLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
   },
@@ -1079,7 +1248,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginLeft: hp(1),
     fontSize: 13,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   vitalBar: {
@@ -1131,13 +1300,13 @@ const createStyles = c => StyleSheet.create({
   },
   continueText: {
     fontFamily: 'Poppins-Medium',
-    color: c.card,
+    color: c.onPrimary,
     fontSize: 16,
     letterSpacing: 0.5,
   },
   bottomText: {
     fontSize: 12,
-    color: c.tabInactive,
+    color: c.onboardingSubtitle,
     fontFamily: 'Poppins-Regular',
     letterSpacing: 0.1,
   },
@@ -1185,7 +1354,7 @@ const createStyles = c => StyleSheet.create({
   referencesCardText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: c.tabInactive,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.15,
     lineHeight: 18,
     flex: 1,
@@ -1207,7 +1376,7 @@ const createStyles = c => StyleSheet.create({
   refModalTitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     flex: 1,
     marginRight: wp(2),
     letterSpacing: 0.15,
@@ -1222,7 +1391,7 @@ const createStyles = c => StyleSheet.create({
   },
   refModalCloseText: {
     fontSize: 20,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     fontFamily: 'Poppins-Regular',
   },
   refModalScroll: {
@@ -1238,7 +1407,7 @@ const createStyles = c => StyleSheet.create({
   refIntro: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     lineHeight: 22,
     letterSpacing: 0.2,
     marginBottom: hp(1),
@@ -1274,14 +1443,14 @@ const createStyles = c => StyleSheet.create({
   refLinkUrl: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: c.tabInactive,
+    color: c.onboardingSubtitle,
     marginLeft: wp(2),
     flex: 1,
   },
   refNote: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     fontStyle: 'italic',
     lineHeight: 20,
     marginTop: hp(0.5),
@@ -1311,7 +1480,7 @@ const createStyles = c => StyleSheet.create({
   },
   webViewModalCloseText: {
     fontSize: 20,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     fontFamily: 'Poppins-Regular',
   },
   webViewLoaderWrap: {
@@ -1331,7 +1500,7 @@ const createStyles = c => StyleSheet.create({
   scoreDisclaimer: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
     textAlign: 'center',
     marginVertical: hp(1),

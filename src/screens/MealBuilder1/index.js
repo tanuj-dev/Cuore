@@ -11,7 +11,12 @@ import {
   Image,
   ActivityIndicator,
   Platform,
+  StatusBar,
 } from 'react-native';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { hp, wp, Images } from '../../utilities';
 import LimitExceededModal from '../../components/LimitExceedModa';
 import { useDispatch } from 'react-redux';
@@ -24,8 +29,9 @@ const tagColors = {
 };
 
 const MealBuilder1 = ({ navigation, route }) => {
-  const { colors: c } = useAppTheme();
-  const styles = useMemo(() => createStyles(c), [c]);
+  const { colors: c, isDark } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(() => createStyles(c, isDark), [c, isDark]);
 
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -123,12 +129,26 @@ const MealBuilder1 = ({ navigation, route }) => {
   };
 
   return (
-    <>
+    <SafeAreaView style={styles.screenRoot} edges={['bottom', 'left', 'right']}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        translucent
+        backgroundColor="transparent"
+      />
       {AlertComponent}
       <ScrollView style={styles.scroll}>
         <ImageBackground
-          style={styles.backgroundImage}
+          style={[
+            styles.backgroundImage,
+            {
+              paddingTop:
+                insets.top +
+                (Platform.OS === 'ios' ? hp(2) : hp(1)),
+              minHeight: hp(24) + insets.top,
+            },
+          ]}
           source={Images.BACKGROUND_IMAGE_NUTRITION}
+          resizeMode="cover"
         >
           <View style={styles.headerOverlay} />
           <TouchableOpacity
@@ -238,23 +258,25 @@ const MealBuilder1 = ({ navigation, route }) => {
           onClose={() => setShowLimitModal(false)}
         />
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 };
 
-const createStyles = c => StyleSheet.create({
+const createStyles = (c, isDark) => StyleSheet.create({
+  screenRoot: { flex: 1, backgroundColor: c.surface },
   scroll: { flex: 1, backgroundColor: c.surface },
   backgroundImage: {
-    height: hp(24),
+    minHeight: hp(24),
     paddingHorizontal: wp(4),
-    paddingTop: Platform.OS === 'ios' ? hp(2) : hp(1),
     paddingBottom: hp(2),
     borderBottomWidth: 1,
     borderColor: c.border,
   },
   headerOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: isDark
+      ? 'rgba(255, 255, 255, 0.42)'
+      : 'rgba(255, 255, 255, 0.45)',
   },
   headerContainer: {
     flexDirection: 'row',
@@ -264,6 +286,7 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),
+    tintColor: c.navIconTint,
   },
   titleContainer: {
     alignItems: 'center',
@@ -325,7 +348,7 @@ const createStyles = c => StyleSheet.create({
   emptyText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
-    color: c.subText,
+    color: isDark ? '#FFFFFF' : c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   contentWrap: {
@@ -369,7 +392,7 @@ const createStyles = c => StyleSheet.create({
   dishCal: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: c.subText,
+    color: isDark ? '#FFFFFF' : c.onboardingSubtitle,
     marginTop: 4,
     letterSpacing: 0.2,
   },
@@ -383,7 +406,7 @@ const createStyles = c => StyleSheet.create({
     height: hp(3.5),
     width: hp(3.5),
     borderRadius: hp(1.75),
-    backgroundColor: '#E2E8F0',
+    backgroundColor: c.mutedSurface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -408,7 +431,7 @@ const createStyles = c => StyleSheet.create({
   summaryText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: isDark ? '#FFFFFF' : c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   summaryBold: {
@@ -430,13 +453,13 @@ const createStyles = c => StyleSheet.create({
     letterSpacing: 0.2,
   },
   adjustButton: {
-    backgroundColor: '#11418A',
+    backgroundColor: c.primary,
     marginHorizontal: wp(10),
     marginTop: hp(2),
     paddingVertical: hp(1.5),
     alignItems: 'center',
     borderRadius: 12,
-    shadowColor: '#11418A',
+    shadowColor: c.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -445,7 +468,7 @@ const createStyles = c => StyleSheet.create({
   adjustButtonText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: c.card,
+    color: c.onPrimary,
     letterSpacing: 0.3,
   },
 });

@@ -129,7 +129,7 @@ const DeleteAccount = ({ navigation }) => {
         <Text style={styles.confirmLabel}>Type "DELETE" to confirm</Text>
         <TextInput
           placeholder="Type DELETE"
-          placeholderTextColor="#64748B"
+          placeholderTextColor={c.inputPlaceholder}
           style={styles.input}
           value={deleteText}
           onChangeText={setDeleteText}

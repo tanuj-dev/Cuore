@@ -62,16 +62,37 @@ const MindSkeleton = () => {
   );
 };
 
-const COLOR_SCHEMES = [
+const LIGHT_ACTIVITY_SCHEMES = [
   { borderColor: '#11418A', backgroundColor: '#E8EEF7' },
   { borderColor: '#0F766E', backgroundColor: '#CCFBF1' },
   { borderColor: '#7C3AED', backgroundColor: '#EDE9FE' },
   { borderColor: '#0891B2', backgroundColor: '#CFFAFE' },
 ];
 
+const DARK_ACTIVITY_SCHEMES = [
+  { borderColor: 'rgba(96,165,250,0.9)', backgroundColor: 'rgba(59,130,246,0.14)' },
+  { borderColor: 'rgba(45,212,191,0.9)', backgroundColor: 'rgba(20,184,166,0.16)' },
+  { borderColor: 'rgba(167,139,250,0.9)', backgroundColor: 'rgba(139,92,246,0.14)' },
+  { borderColor: 'rgba(34,211,238,0.9)', backgroundColor: 'rgba(6,182,212,0.14)' },
+];
+
+const isSubtitleRedundant = (title, subtitle) => {
+  const t = (title || '').trim().toLowerCase();
+  const s = (subtitle || '').trim().toLowerCase();
+  if (!s) return true;
+  if (s === t) return true;
+  if (t.endsWith(` ${s}`) || t.endsWith(s)) return true;
+  return false;
+};
+
 const Mind = ({ navigation }) => {
-  const { colors: c } = useAppTheme();
+  const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
+
+  const activitySchemes = useMemo(
+    () => (isDark ? DARK_ACTIVITY_SCHEMES : LIGHT_ACTIVITY_SCHEMES),
+    [isDark],
+  );
 
   const dispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
@@ -114,7 +135,6 @@ const Mind = ({ navigation }) => {
 
   const handleCardPress = useCallback(
     item => {
-      console.log('item', item);
       navigation.navigate('MindDetails', {
         instructions: item?.instructions,
         audio: item?.audioUrl,
@@ -126,7 +146,8 @@ const Mind = ({ navigation }) => {
 
   const renderActivityCard = useCallback(
     (item, index) => {
-      const scheme = COLOR_SCHEMES[index % COLOR_SCHEMES.length];
+      const scheme = activitySchemes[index % activitySchemes.length];
+      const showSubtitle = !isSubtitleRedundant(item?.title, item?.subtitle);
       return (
         <TouchableOpacity
           key={index}
@@ -140,12 +161,20 @@ const Mind = ({ navigation }) => {
           ]}
           activeOpacity={0.7}
         >
-          <Text style={styles.cardTitle}>{item?.title}</Text>
-          <Text style={styles.cardDesc}>{item?.subtitle}</Text>
+          <View style={styles.activityCardInner}>
+            <Text style={styles.cardTitle} numberOfLines={2}>
+              {item?.title}
+            </Text>
+            {showSubtitle ? (
+              <Text style={styles.cardDesc} numberOfLines={2}>
+                {item?.subtitle}
+              </Text>
+            ) : null}
+          </View>
         </TouchableOpacity>
       );
     },
-    [handleCardPress, styles],
+    [handleCardPress, styles, activitySchemes],
   );
 
   if (!data) {
@@ -196,7 +225,7 @@ const Mind = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#11418A"
+            tintColor={c.primary}
           />
         }
       >
@@ -244,9 +273,9 @@ const Mind = ({ navigation }) => {
         </View>
 
         <View style={styles.sectionHeader}>
-          <Image source={Images.SUN} style={styles.sectionIcon} />
+          <Image source={Images.SUN} style={styles.sectionSunIcon} />
           <Text style={styles.sectionTitle}>
-            ☀️ Morning Calm, Mental Clarity
+            Morning Calm, Mental Clarity
           </Text>
         </View>
         <ScrollView
@@ -257,7 +286,10 @@ const Mind = ({ navigation }) => {
           {morning?.map((item, index) => renderActivityCard(item, index))}
         </ScrollView>
 
-        <Text style={styles.sectionTitle}>🌙 Quiet Mind, Restful Night</Text>
+        <View style={styles.sectionHeader}>
+          <Image source={Images.MOON} style={styles.sectionMoonIcon} />
+          <Text style={styles.sectionTitle}>Quiet Mind, Restful Night</Text>
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -309,6 +341,7 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),
+    tintColor: c.navIconTint,
   },
   title: {
     fontFamily: 'Poppins-Medium',
@@ -325,7 +358,7 @@ const createStyles = c => StyleSheet.create({
   },
   scrollContent: {
     padding: wp(4),
-    paddingBottom: hp(8),
+    paddingBottom: hp(16),
   },
   scoreContainer: {
     flexDirection: 'row',
@@ -339,7 +372,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginTop: hp(0.5),
     fontSize: wp(4),
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   reassessButton: {
@@ -347,13 +380,13 @@ const createStyles = c => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#11418A',
+    backgroundColor: c.primary,
     paddingVertical: hp(1),
     paddingHorizontal: wp(4),
     borderRadius: wp(2),
     marginVertical: hp(2),
     minWidth: wp(50),
-    shadowColor: '#11418A',
+    shadowColor: c.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -366,28 +399,35 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     width: wp(4),
     height: hp(4),
-    tintColor: c.card,
+    tintColor: c.onPrimary,
   },
   reassessText: {
     fontFamily: 'Poppins-Medium',
-    color: c.card,
+    color: c.onPrimary,
     fontSize: 14,
     marginLeft: wp(1),
     letterSpacing: 0.3,
   },
   reflectionCard: {
     borderLeftWidth: 4,
-    borderColor: '#DEA1D7',
+    borderLeftColor: c.quoteBorder,
     flexDirection: 'row',
-    backgroundColor: '#F2E3F2',
-    padding: hp(1),
+    backgroundColor: c.quoteBg,
+    padding: hp(1.5),
     borderRadius: wp(2),
     marginBottom: hp(2),
+    borderTopWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderTopColor: c.border,
+    borderRightColor: c.border,
+    borderBottomColor: c.border,
   },
   brainIcon: {
     resizeMode: 'contain',
     width: wp(4),
     height: hp(2),
+    tintColor: c.quoteText,
   },
   reflectionContent: {
     marginLeft: hp(2),
@@ -395,7 +435,7 @@ const createStyles = c => StyleSheet.create({
   },
   reflectionTitle: {
     fontFamily: 'Poppins-Medium',
-    color: c.primary,
+    color: c.quoteText,
     fontSize: 16,
     marginBottom: hp(0.5),
     letterSpacing: 0.2,
@@ -403,21 +443,30 @@ const createStyles = c => StyleSheet.create({
   reflectionQuote: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: c.subText,
+    color: c.quoteText,
     lineHeight: hp(2.5),
     letterSpacing: 0.2,
+    opacity: 0.92,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: hp(1),
   },
-  sectionIcon: {
+  /** Full-color PNGs — do not tint (tint caused a dark center “dot” on the sun). */
+  sectionSunIcon: {
     resizeMode: 'contain',
-    width: wp(4),
-    height: hp(2),
-    marginLeft: hp(-1.8),
-    tintColor: c.card,
+    width: wp(6),
+    height: hp(3),
+    marginLeft: hp(-0.5),
+    marginRight: hp(0.5),
+  },
+  sectionMoonIcon: {
+    resizeMode: 'contain',
+    width: wp(5.5),
+    height: hp(2.8),
+    marginLeft: hp(-0.5),
+    marginRight: hp(0.5),
   },
   sectionTitle: {
     fontFamily: 'Poppins-Medium',
@@ -433,8 +482,9 @@ const createStyles = c => StyleSheet.create({
   },
   activityCard: {
     borderWidth: 1.5,
-    padding: hp(1.5),
-    height: hp(12),
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(3),
+    minHeight: hp(12),
     width: wp(50),
     borderRadius: wp(2),
     marginRight: wp(2),
@@ -444,18 +494,23 @@ const createStyles = c => StyleSheet.create({
     shadowRadius: 4,
     ...(Platform.OS === 'android' && { elevation: 0.5 }),
   },
+  activityCardInner: {
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 0,
+  },
   cardTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
     color: c.text,
-    marginBottom: hp(0.5),
+    marginBottom: hp(0.4),
     letterSpacing: 0.2,
   },
   cardDesc: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    marginTop: hp(1),
-    color: c.subText,
+    fontSize: 13,
+    marginTop: hp(0.4),
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   footerNote: {

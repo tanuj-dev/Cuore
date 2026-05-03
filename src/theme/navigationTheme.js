@@ -7,7 +7,7 @@ export function buildNavigationTheme(colors, isDark) {
     colors: {
       ...base.colors,
       primary: colors.primary,
-      background: colors.background,
+      background: colors.card,
       card: colors.card,
       text: colors.text,
       border: colors.border,

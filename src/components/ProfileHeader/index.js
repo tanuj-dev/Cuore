@@ -52,7 +52,7 @@ const createStyles = c => StyleSheet.create({
     height: hp(3.5),
     width: wp(4),
     resizeMode: 'contain',
-    tintColor: '#1E293B',
+    tintColor: c.navIconTint,
   },
   title: {
     fontFamily: 'Poppins-Medium',

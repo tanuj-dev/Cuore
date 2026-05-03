@@ -27,9 +27,8 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 import { create } from 'react-test-renderer';
 
 const CreateAccountScreen = () => {
-  const { colors: c } = useAppTheme();
-  const styles = useMemo(() => createStyles(c), [c]);
-
+  const { colors: c, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(c, isDark), [c, isDark]);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -165,6 +164,7 @@ const CreateAccountScreen = () => {
                   height: hp(3.5),
                   width: wp(4),
                   resizeMode: 'contain',
+                  tintColor: c.navIconTint,
                 }}
               />
             </Pressable>
@@ -191,7 +191,7 @@ const CreateAccountScreen = () => {
             <TextInput
               style={styles.input}
               placeholder="Enter user’s full name"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={c.inputPlaceholder}
               value={fullName}
               onChangeText={setFullName}
             />
@@ -203,7 +203,7 @@ const CreateAccountScreen = () => {
             <TextInput
               style={styles.input}
               placeholder="Enter your registered mobile number"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={c.inputPlaceholder}
               keyboardType="phone-pad"
               value={mobileNumber}
               onChangeText={text => {
@@ -231,7 +231,7 @@ const CreateAccountScreen = () => {
             <TextInput
               style={styles.input}
               placeholder="So they can see your progress"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={c.inputPlaceholder}
               keyboardType="phone-pad"
               value={familyNumber}
               onChangeText={text => {
@@ -252,7 +252,7 @@ const CreateAccountScreen = () => {
             <TextInput
               style={styles.input}
               placeholder="Link to your doctor for supervision"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={c.inputPlaceholder}
               value={doctorCode}
               onChangeText={setDoctorCode}
             />
@@ -262,7 +262,7 @@ const CreateAccountScreen = () => {
             <TextInput
               style={styles.input}
               placeholder="Only for corporate plan users"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={c.inputPlaceholder}
               value={corporateCode}
               onChangeText={setCorporateCode}
             />
@@ -331,7 +331,7 @@ const CreateAccountScreen = () => {
 };
 
 // 🧾 Styles
-const createStyles = c => StyleSheet.create({
+const createStyles = (c, isDark) => StyleSheet.create({
   container: {
     backgroundColor: c.card,
     padding: wp(5),
@@ -351,7 +351,7 @@ const createStyles = c => StyleSheet.create({
     letterSpacing: -0.3,
   },
   label: {
-    color: c.subText,
+    color: isDark ? '#FFFFFF' : c.subText,
     fontSize: 14,
     marginBottom: hp(0.8),
     marginTop: hp(1.8),
@@ -361,7 +361,7 @@ const createStyles = c => StyleSheet.create({
   optional: {
     fontStyle: 'italic',
     fontFamily: 'Poppins-Regular',
-    color: c.tabInactive,
+    color: isDark ? '#FFFFFF' : c.tabInactive,
   },
   input: {
     borderWidth: 1.5,
@@ -377,7 +377,7 @@ const createStyles = c => StyleSheet.create({
   },
   infoText: {
     fontSize: 13,
-    color: c.subText,
+    color: isDark ? '#FFFFFF' : c.subText,
     marginTop: hp(2),
     marginBottom: hp(2),
     fontFamily: 'Poppins-Regular',
@@ -409,14 +409,14 @@ const createStyles = c => StyleSheet.create({
     borderColor: '#11418A',
   },
   checkmark: {
-    color: c.card,
+    color: c.onPrimary,
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
   },
   checkboxLabel: {
     flex: 1,
     fontSize: 13,
-    color: c.subText,
+    color: isDark ? '#FFFFFF' : c.subText,
     fontFamily: 'Poppins-Regular',
     lineHeight: 20,
     letterSpacing: 0.1,
@@ -440,7 +440,7 @@ const createStyles = c => StyleSheet.create({
     }),
   },
   verifyText: {
-    color: c.card,
+    color: c.onPrimary,
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
     letterSpacing: 0.5,

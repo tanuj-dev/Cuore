@@ -10,11 +10,18 @@ import {
   Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { wp, hp, Images, color } from '../../utilities';
+import { wp, hp, Images } from '../../utilities';
 
 const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
-  const { colors: c } = useAppTheme();
+  const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
+  const timeSpinnerProps = useMemo(() => {
+    if (Platform.OS !== 'ios') return {};
+    return {
+      themeVariant: isDark ? 'dark' : 'light',
+      textColor: isDark ? c.text : '#0F172A',
+    };
+  }, [isDark, c.text]);
 
   const [exerciseMinutes, setExerciseMinutes] = useState('');
   const [eatingPreference, setEatingPreference] = useState('');
@@ -137,7 +144,13 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
           style={styles.timeButton}
           onPress={() => setShowTimePicker(true)}
         >
-          <Text style={{ fontFamily: 'Poppins-Regular', fontSize: wp(4) }}>
+          <Text
+            style={{
+              fontFamily: 'Poppins-Regular',
+              fontSize: wp(4),
+              color: c.text,
+            }}
+          >
             {formatTime(time)}
           </Text>
           <Image
@@ -145,7 +158,7 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
               resizeMode: 'contain',
               height: hp(2),
               width: wp(5),
-              tintColor: '#000000',
+              tintColor: c.navIconTint,
             }}
             source={Images.WATCH}
           />
@@ -158,8 +171,7 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
               is24Hour={false}
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={onChangeTime}
-              textColor="#000000"
-              themeVariant="light"
+              {...timeSpinnerProps}
             />
           </View>
         )}
@@ -246,7 +258,7 @@ export default OnBoardingFive;
 const createStyles = c => StyleSheet.create({
   container: {
     padding: wp(0.5),
-    backgroundColor: c.background,
+    backgroundColor: c.card,
     flexGrow: 1,
   },
   timeButton: {
@@ -256,30 +268,32 @@ const createStyles = c => StyleSheet.create({
     paddingVertical: hp(1),
     paddingHorizontal: wp(4),
     width: '100%',
-    borderWidth: 1,
-    borderColor: c.border,
+    borderWidth: 0,
     borderRadius: 8,
     alignSelf: 'flex-start',
+    backgroundColor: c.surface,
   },
   card: {
     backgroundColor: c.card,
     padding: wp(4),
     borderRadius: wp(3),
     marginBottom: hp(2),
-    elevation: 1,
+    borderWidth: 0,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   question: {
     fontFamily: 'Poppins-Regular',
     fontSize: wp(3.6),
-    
+
     marginTop: hp(2),
     marginBottom: hp(2),
-    color: color.QUESTION_COLOR,
+    color: c.onboardingQuestion,
   },
   note: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13, letterSpacing: 0.1,
-    color: color.NOTE_COLOR,
+    color: c.onboardingNote,
     marginBottom: hp(1),
   },
   optionRow: {
@@ -323,21 +337,21 @@ const createStyles = c => StyleSheet.create({
   optionText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14, letterSpacing: 0.2,
-    color: color.ANSWER_COLOR,
+    color: c.onboardingOption,
     flex: 1,
   },
   dropdown: {
-    borderWidth: 1,
-    borderColor: '#ccc',
+    borderWidth: 0,
     borderRadius: wp(2),
     paddingVertical: hp(1),
     paddingHorizontal: wp(3),
     marginBottom: hp(1),
+    backgroundColor: c.surface,
   },
   dropdownText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14, letterSpacing: 0.2,
-    color: '#555',
+    color: c.onboardingOption,
   },
   dayRow: {
     flexDirection: 'row',
@@ -349,7 +363,7 @@ const createStyles = c => StyleSheet.create({
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.8),
     borderRadius: wp(2),
-    backgroundColor: '#eaeaea',
+    backgroundColor: c.mutedSurface,
     marginRight: wp(1),
     marginBottom: hp(1),
   },
@@ -359,7 +373,7 @@ const createStyles = c => StyleSheet.create({
   dayText: {
     fontFamily: 'Poppins-Regular',
     fontSize: wp(3.2),
-    color: '#333',
+    color: c.onboardingOption,
   },
   selectedDayText: {
     fontFamily: 'Poppins-Regular',
@@ -385,11 +399,10 @@ const createStyles = c => StyleSheet.create({
     
   },
   datePickerWrapper: {
-    backgroundColor: c.card,
+    backgroundColor: c.surface,
     borderRadius: 8,
     marginTop: hp(1),
     padding: wp(2),
-    borderWidth: 1,
-    borderColor: c.border,
+    borderWidth: 0,
   },
 });

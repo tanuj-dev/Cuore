@@ -16,13 +16,91 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import RenderHTML from 'react-native-render-html';
 
 const KnowledgeDetails = ({ navigation, route }) => {
-  const { colors: c } = useAppTheme();
+  const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
 
   const { details, referenceLinks } = route?.params || {};
   const { width } = useWindowDimensions();
   const detailsHtml =
     typeof details === 'string' ? details : '<p>No content available.</p>';
+
+  const headingColor = isDark ? '#FB923C' : '#EA580C';
+
+  const htmlTagsStyles = useMemo(
+    () => ({
+      body: {
+        color: c.onboardingSubtitle,
+        fontFamily: 'Poppins-Regular',
+        fontSize: 15,
+      },
+      div: { color: c.onboardingSubtitle },
+      span: { color: c.onboardingSubtitle },
+      p: {
+        fontSize: 15,
+        color: c.onboardingSubtitle,
+        lineHeight: 24,
+        fontFamily: 'Poppins-Regular',
+        marginTop: 0,
+        marginBottom: 12,
+      },
+      ul: {
+        paddingLeft: 24,
+        marginBottom: 16,
+        marginTop: 8,
+      },
+      ol: {
+        paddingLeft: 24,
+        marginBottom: 16,
+        marginTop: 8,
+      },
+      li: {
+        marginBottom: 10,
+        fontSize: 15,
+        color: c.onboardingSubtitle,
+        lineHeight: 24,
+        fontFamily: 'Poppins-Regular',
+        paddingLeft: 4,
+      },
+      strong: {
+        fontFamily: 'Poppins-Medium',
+        color: c.text,
+      },
+      em: {
+        fontStyle: 'italic',
+        color: c.textSecondary,
+        fontFamily: 'Poppins-Regular',
+      },
+      h1: {
+        fontSize: 24,
+        fontFamily: 'Poppins-SemiBold',
+        marginBottom: 14,
+        marginTop: 4,
+        color: headingColor,
+      },
+      h2: {
+        fontSize: 20,
+        fontFamily: 'Poppins-SemiBold',
+        marginBottom: 12,
+        marginTop: 4,
+        color: headingColor,
+      },
+      h3: {
+        fontSize: 18,
+        fontFamily: 'Poppins-Medium',
+        marginBottom: 10,
+        marginTop: 4,
+        color: isDark ? c.text : '#EA580C',
+      },
+      h4: {
+        fontSize: 16,
+        fontFamily: 'Poppins-Medium',
+        marginBottom: 8,
+        marginTop: 4,
+        color: isDark ? c.text : '#EA580C',
+      },
+    }),
+    [c, isDark, headingColor],
+  );
 
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
@@ -45,70 +123,11 @@ const KnowledgeDetails = ({ navigation, route }) => {
             <RenderHTML
               contentWidth={width}
               source={{ html: detailsHtml }}
-              tagsStyles={{
-                p: {
-                  fontSize: 15,
-                  color: '#475569',
-                  lineHeight: 24,
-                  fontFamily: 'Poppins-Regular',
-                  marginTop: 0,
-                  marginBottom: 12,
-                },
-                ul: {
-                  paddingLeft: 24,
-                  marginBottom: 16,
-                  marginTop: 8,
-                },
-                ol: {
-                  paddingLeft: 24,
-                  marginBottom: 16,
-                  marginTop: 8,
-                },
-                li: {
-                  marginBottom: 10,
-                  fontSize: 15,
-                  color: '#475569',
-                  lineHeight: 24,
-                  fontFamily: 'Poppins-Regular',
-                  paddingLeft: 4,
-                },
-                strong: {
-                  fontFamily: 'Poppins-Medium',
-                  color: '#1E293B',
-                },
-                em: {
-                  fontStyle: 'italic',
-                  color: '#64748B',
-                  fontFamily: 'Poppins-Regular',
-                },
-                h1: {
-                  fontSize: 24,
-                  fontFamily: 'Poppins-SemiBold',
-                  marginBottom: 14,
-                  marginTop: 4,
-                  color: '#EA580C',
-                },
-                h2: {
-                  fontSize: 20,
-                  fontFamily: 'Poppins-SemiBold',
-                  marginBottom: 12,
-                  marginTop: 4,
-                  color: '#EA580C',
-                },
-                h3: {
-                  fontSize: 18,
-                  fontFamily: 'Poppins-Medium',
-                  marginBottom: 10,
-                  marginTop: 4,
-                  color: '#EA580C',
-                },
-                h4: {
-                  fontSize: 16,
-                  fontFamily: 'Poppins-Medium',
-                  marginBottom: 8,
-                  marginTop: 4,
-                  color: '#EA580C',
-                },
+              tagsStyles={htmlTagsStyles}
+              baseStyle={{
+                color: c.onboardingSubtitle,
+                fontFamily: 'Poppins-Regular',
+                fontSize: 15,
               }}
             />
 
@@ -141,7 +160,7 @@ const createStyles = c => StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingBottom: hp(6),
+    paddingBottom: hp(16),
   },
   contentWrap: {
     flex: 1,
@@ -164,6 +183,7 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),
+    tintColor: c.navIconTint,
   },
   container: {
     padding: wp(5),
@@ -245,7 +265,7 @@ const createStyles = c => StyleSheet.create({
     marginTop: hp(3),
     paddingTop: hp(2),
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: c.border,
   },
   referencesLabel: {
     fontFamily: 'Poppins-SemiBold',
@@ -256,7 +276,7 @@ const createStyles = c => StyleSheet.create({
   referenceLink: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#2563EB',
+    color: c.primary,
     textDecorationLine: 'underline',
     marginBottom: hp(1),
     lineHeight: 22,

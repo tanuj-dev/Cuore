@@ -19,8 +19,8 @@ import Toast from '../../components/Toast';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const Login = ({ navigation }) => {
-  const { colors: c } = useAppTheme();
-  const styles = useMemo(() => createStyles(c), [c]);
+  const { colors: c, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(c, isDark), [c, isDark]);
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [tab, setTab] = useState('User');
@@ -127,7 +127,7 @@ const Login = ({ navigation }) => {
             style={styles.phoneInput}
             placeholder="9876543210"
             keyboardType="numeric"
-            placeholderTextColor="#999"
+            placeholderTextColor={c.inputPlaceholder}
             value={phoneNumber}
             onChangeText={text => {
               const cleaned = text.replace(/[^0-9]/g, '');
@@ -194,7 +194,7 @@ const Login = ({ navigation }) => {
 
 export default Login;
 
-const createStyles = c => StyleSheet.create({
+const createStyles = (c, isDark) => StyleSheet.create({
   scroll: {
     flex: 1,
     backgroundColor: c.card,
@@ -217,7 +217,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     fontSize: 15,
-    color: c.subText,
+    color: isDark ? '#FFFFFF' : c.subText,
     marginBottom: hp(3.5),
     letterSpacing: 0.2,
   },
@@ -261,14 +261,14 @@ const createStyles = c => StyleSheet.create({
   },
   activeTabText: {
     fontFamily: 'Poppins-Medium',
-    color: c.card,
+    color: c.onPrimary,
     textAlign: 'center',
     fontSize: 15,
     letterSpacing: 0.2,
   },
   inactiveTabText: {
     fontFamily: 'Poppins-Regular',
-    color: c.tabInactive,
+    color: isDark ? '#FFFFFF' : c.tabInactive,
     textAlign: 'center',
     fontSize: 15,
     letterSpacing: 0.2,
@@ -299,7 +299,7 @@ const createStyles = c => StyleSheet.create({
   countryCode: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: c.subText,
+    color: isDark ? '#FFFFFF' : c.subText,
     letterSpacing: 0.2,
   },
   phoneInput: {
@@ -320,7 +320,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     fontSize: 14,
-    color: c.subText,
+    color: isDark ? '#FFFFFF' : c.subText,
     marginBottom: hp(2),
     letterSpacing: 0.2,
   },
@@ -328,7 +328,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     fontSize: 12,
-    color: c.tabInactive,
+    color: isDark ? '#FFFFFF' : c.tabInactive,
     marginBottom: hp(1),
     marginTop: hp(1.5),
     lineHeight: 18,
@@ -360,7 +360,7 @@ const createStyles = c => StyleSheet.create({
   },
   verifyText: {
     fontFamily: 'Poppins-Medium',
-    color: c.card,
+    color: c.onPrimary,
     fontSize: 16,
     letterSpacing: 0.5,
   },

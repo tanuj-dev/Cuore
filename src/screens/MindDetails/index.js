@@ -25,11 +25,66 @@ function isRemoteAudioUri(uri) {
 }
 
 const MindDetails = ({ navigation, route }) => {
-  const { colors: c } = useAppTheme();
-  const styles = useMemo(() => createStyles(c), [c]);
+  const { colors: c, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(c, isDark), [c, isDark]);
 
   const { instructions, audio, title } = route.params;
   const { width } = useWindowDimensions();
+
+  const htmlTagsStyles = useMemo(
+    () => ({
+      body: {
+        color: c.onboardingSubtitle,
+        fontFamily: 'Poppins-Regular',
+        fontSize: 14,
+      },
+      div: { color: c.onboardingSubtitle },
+      span: { color: c.onboardingSubtitle },
+      p: {
+        marginBottom: 10,
+        fontSize: 14,
+        color: c.onboardingSubtitle,
+        lineHeight: 22,
+        fontFamily: 'Poppins-Regular',
+      },
+      ul: { paddingLeft: 20, marginBottom: 10 },
+      ol: { paddingLeft: 20, marginBottom: 10 },
+      li: {
+        marginBottom: 6,
+        fontSize: 14,
+        color: c.onboardingSubtitle,
+        fontFamily: 'Poppins-Regular',
+      },
+      strong: {
+        fontFamily: 'Poppins-Medium',
+        color: c.text,
+      },
+      em: {
+        fontStyle: 'italic',
+        color: c.textSecondary,
+        fontFamily: 'Poppins-Regular',
+      },
+      h1: {
+        fontSize: 22,
+        fontFamily: 'Poppins-Medium',
+        marginBottom: 12,
+        color: isDark ? c.text : c.primary,
+      },
+      h2: {
+        fontSize: 18,
+        fontFamily: 'Poppins-Medium',
+        marginBottom: 10,
+        color: c.text,
+      },
+      h3: {
+        fontSize: 16,
+        fontFamily: 'Poppins-Medium',
+        marginBottom: 8,
+        color: c.text,
+      },
+    }),
+    [c, isDark],
+  );
 
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -148,7 +203,11 @@ const MindDetails = ({ navigation, route }) => {
           onHide={() => setToast(null)}
         />
       ) : null}
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.headerWrapper}>
@@ -178,7 +237,7 @@ const MindDetails = ({ navigation, route }) => {
                   activeOpacity={0.7}
                 >
                   {showAudioBusy ? (
-                    <ActivityIndicator size="large" color="#11418A" />
+                    <ActivityIndicator size="large" color={c.primary} />
                   ) : (
                     <Image
                       source={isPlaying ? Images.PAUSE : Images.PLAY}
@@ -204,9 +263,11 @@ const MindDetails = ({ navigation, route }) => {
                     }
                     setIsSeeking(false);
                   }}
-                  minimumTrackTintColor="#11418A"
-                  maximumTrackTintColor="#E2E8F0"
-                  thumbTintColor="#11418A"
+                  minimumTrackTintColor={c.primary}
+                  maximumTrackTintColor={
+                    isDark ? 'rgba(148,163,184,0.35)' : '#E2E8F0'
+                  }
+                  thumbTintColor={c.primary}
                 />
                 <View style={styles.timeRow}>
                   <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
@@ -222,44 +283,11 @@ const MindDetails = ({ navigation, route }) => {
               <RenderHTML
                 contentWidth={width}
                 source={{ html: instructions }}
-                baseStyle={styles.descriptionText}
-                tagsStyles={{
-                  p: {
-                    marginBottom: 10,
-                    fontSize: 14,
-                    color: '#475569',
-                    lineHeight: 22,
-                    fontFamily: 'Poppins-Regular',
-                  },
-                  ul: { paddingLeft: 20, marginBottom: 10 },
-                  ol: { paddingLeft: 20, marginBottom: 10 },
-                  li: {
-                    marginBottom: 6,
-                    fontSize: 14,
-                    color: '#475569',
-                    fontFamily: 'Poppins-Regular',
-                  },
-                  strong: {
-                    fontFamily: 'Poppins-Medium',
-                    color: '#1E293B',
-                  },
-                  em: {
-                    fontStyle: 'italic',
-                    color: '#64748B',
-                    fontFamily: 'Poppins-Regular',
-                  },
-                  h1: {
-                    fontSize: 22,
-                    fontFamily: 'Poppins-Medium',
-                    marginBottom: 12,
-                    color: '#11418A',
-                  },
-                  h3: {
-                    fontSize: 16,
-                    fontFamily: 'Poppins-Medium',
-                    marginBottom: 8,
-                    color: '#1E293B',
-                  },
+                tagsStyles={htmlTagsStyles}
+                baseStyle={{
+                  color: c.onboardingSubtitle,
+                  fontFamily: 'Poppins-Regular',
+                  fontSize: 14,
                 }}
               />
             </View>
@@ -272,7 +300,7 @@ const MindDetails = ({ navigation, route }) => {
 
 export default MindDetails;
 
-const createStyles = c => StyleSheet.create({
+const createStyles = (c, isDark) => StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: c.card,
@@ -280,6 +308,9 @@ const createStyles = c => StyleSheet.create({
   scroll: {
     flex: 1,
     backgroundColor: c.card,
+  },
+  scrollContent: {
+    paddingBottom: hp(14),
   },
   container: {
     flex: 1,
@@ -306,13 +337,13 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),
-    tintColor: '#000000',
+    tintColor: c.navIconTint,
   },
   title: {
     flex: 1,
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#000000',
+    color: c.text,
     textAlign: 'center',
     letterSpacing: 0.2,
     paddingHorizontal: 8,
@@ -325,9 +356,11 @@ const createStyles = c => StyleSheet.create({
   },
   videoBox: {
     alignItems: 'center',
-    backgroundColor: '#F1E8EF',
+    backgroundColor: isDark ? c.mutedSurface : '#F1E8EF',
     borderRadius: 12,
     padding: hp(2),
+    borderWidth: 1,
+    borderColor: c.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
@@ -378,7 +411,7 @@ const createStyles = c => StyleSheet.create({
   timeText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   descriptionBox: {
@@ -386,17 +419,10 @@ const createStyles = c => StyleSheet.create({
     padding: hp(2),
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#11418A',
+    borderLeftColor: c.primary,
     borderTopWidth: 1,
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: c.border,
-  },
-  descriptionText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: c.subText,
-    marginBottom: hp(1.5),
-    letterSpacing: 0.2,
   },
 });

@@ -33,7 +33,7 @@ import Toast from '../../components/Toast';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const OnBoarding = ({ navigation, route }) => {
-  const { colors: c } = useAppTheme();
+  const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
 
   const dispatch = useDispatch();
@@ -338,14 +338,24 @@ const OnBoarding = ({ navigation, route }) => {
             >
               <Image
                 source={Images.BACK_BUTTON}
-                style={{ resizeMode: 'contain', height: hp(3.5), width: wp(4) }}
+                style={{
+                  resizeMode: 'contain',
+                  height: hp(3.5),
+                  width: wp(4),
+                  tintColor: c.navIconTint,
+                }}
               />
             </TouchableOpacity>
           )}
 
-          {/* Banner */}
-          <View style={{ backgroundColor: 'white' }}>
-            <Image source={Images[`ON_BOARD${step}`]} style={styles.banner} />
+          {/* Banner — extra right inset + dark scrim so illustration isn’t a bright slab */}
+          <View style={styles.bannerOuter}>
+            <View style={styles.bannerInner}>
+              <Image source={Images[`ON_BOARD${step}`]} style={styles.banner} />
+              {isDark ? (
+                <View style={styles.bannerScrim} pointerEvents="none" />
+              ) : null}
+            </View>
           </View>
 
           {/* Titles */}
@@ -399,24 +409,10 @@ const OnBoarding = ({ navigation, route }) => {
             <View style={styles.warningBox}>
               <Image
                 source={images.NOTICE}
-                style={{
-                  height: hp(2),
-                  width: hp(2),
-                  resizeMode: 'contain',
-                  marginTop: hp(3),
-                  marginRight: hp(1),
-                }}
+                style={styles.warningNoticeIcon}
               />
               <View style={{ paddingHorizontal: hp(2) }}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: '#475569',
-                    fontFamily: 'Poppins-Medium',
-                    letterSpacing: 0.2,
-                    marginBottom: hp(0.5),
-                  }}
-                >
+                <Text style={styles.warningTitle}>
                   For awareness and tracking only
                 </Text>
                 <Text style={styles.warningText}>
@@ -626,12 +622,26 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     marginBottom: hp(1.5),
   },
+  bannerOuter: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginVertical: hp(1.5),
+    marginRight: wp(4),
+    backgroundColor: c.surface,
+  },
+  bannerInner: {
+    position: 'relative',
+  },
   banner: {
     width: '100%',
     height: hp(20),
     resizeMode: 'contain',
-    marginVertical: hp(1.5),
     backgroundColor: 'transparent',
+  },
+  bannerScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.42)',
+    borderRadius: 12,
   },
   title: {
     fontFamily: 'Poppins-Medium',
@@ -642,7 +652,7 @@ const createStyles = c => StyleSheet.create({
   },
   subtitle: {
     fontFamily: 'Poppins-Regular',
-    color: c.subText,
+    color: c.onboardingSubtitle,
     fontSize: 16,
     marginBottom: hp(1.5),
     letterSpacing: 0.2,
@@ -651,7 +661,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginTop: hp(2),
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     marginBottom: hp(1.5),
     lineHeight: 22,
     letterSpacing: 0.2,
@@ -664,7 +674,7 @@ const createStyles = c => StyleSheet.create({
   stepText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   progress: {
@@ -701,9 +711,9 @@ const createStyles = c => StyleSheet.create({
   disclaimerBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#FEFCE8',
+    backgroundColor: c.disclaimerPanelBg,
     borderWidth: 1.5,
-    borderColor: '#FDE047',
+    borderColor: c.disclaimerPanelBorder,
     borderRadius: 12,
     padding: hp(2),
     marginTop: hp(0.5),
@@ -724,7 +734,7 @@ const createStyles = c => StyleSheet.create({
     flex: 1,
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: '#92400E',
+    color: c.disclaimerPanelText,
     lineHeight: 20,
     letterSpacing: 0.1,
     textAlign: 'justify',
@@ -732,7 +742,7 @@ const createStyles = c => StyleSheet.create({
   disclaimer: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     marginTop: hp(2.5),
     fontStyle: 'italic',
     lineHeight: 18,
@@ -758,14 +768,14 @@ const createStyles = c => StyleSheet.create({
     borderColor: '#11418A',
   },
   disclaimerCheckmark: {
-    color: c.card,
+    color: c.onPrimary,
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
   },
   disclaimerCheckLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingLabel,
     letterSpacing: 0.2,
   },
   button: {
@@ -786,7 +796,7 @@ const createStyles = c => StyleSheet.create({
   },
   buttonText: {
     fontFamily: 'Poppins-Medium',
-    color: c.card,
+    color: c.onPrimary,
     fontSize: 16,
     letterSpacing: 0.5,
   },
@@ -801,22 +811,22 @@ const createStyles = c => StyleSheet.create({
     flexDirection: 'row',
     borderWidth: 1.5,
     marginTop: hp(1.5),
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE047',
+    backgroundColor: c.onboardingWarningBg,
+    borderColor: c.onboardingWarningBorder,
     borderRadius: 12,
     padding: hp(2),
     marginBottom: hp(2),
   },
   warningText: {
     fontFamily: 'Poppins-Regular',
-    color: c.subText,
+    color: c.onboardingSubtitle,
     fontSize: 14,
     lineHeight: 20,
     letterSpacing: 0.2,
   },
   bottomText: {
     fontSize: 12,
-    color: c.tabInactive,
+    color: c.onboardingSubtitle,
     fontFamily: 'Poppins-Regular',
     letterSpacing: 0.1,
   },
@@ -847,7 +857,7 @@ const createStyles = c => StyleSheet.create({
   modalMessage: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     textAlign: 'center',
     marginBottom: hp(2.5),
     lineHeight: 20,
@@ -861,8 +871,23 @@ const createStyles = c => StyleSheet.create({
   },
   modalButtonText: {
     fontFamily: 'Poppins-Medium',
-    color: c.card,
+    color: c.onPrimary,
     fontSize: 15,
     letterSpacing: 0.3,
+  },
+  warningNoticeIcon: {
+    height: hp(2),
+    width: hp(2),
+    resizeMode: 'contain',
+    marginTop: hp(3),
+    marginRight: hp(1),
+    tintColor: c.primary,
+  },
+  warningTitle: {
+    fontSize: 16,
+    color: c.onboardingQuestion,
+    fontFamily: 'Poppins-Medium',
+    letterSpacing: 0.2,
+    marginBottom: hp(0.5),
   },
 });

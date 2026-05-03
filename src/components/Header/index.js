@@ -16,14 +16,14 @@ const Header = ({ title, navigation }) => {
   const styles = useMemo(() => createStyles(c), [c]);
 
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView edges={['top']} style={{ backgroundColor: c.card }}>
       <View
         style={{
           flexDirection: 'row',
-
           alignItems: 'center',
-
-          backgroundColor: '#FFFFFF',
+          backgroundColor: c.card,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: c.border,
         }}
       >
         <TouchableOpacity
@@ -41,6 +41,7 @@ const Header = ({ title, navigation }) => {
               height: hp(3.5),
               width: wp(4),
               marginLeft: Platform.OS == 'ios' ? hp(2) : hp(1),
+              tintColor: c.navIconTint,
             }}
             resizeMode="contain"
           />
@@ -60,7 +61,7 @@ const createStyles = c => StyleSheet.create({
     fontWeight: '400',
     marginBottom: hp(2),
     alignSelf: 'center',
-    color: '#000000',
+    color: c.text,
   },
 });
 

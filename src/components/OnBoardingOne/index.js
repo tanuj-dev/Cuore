@@ -106,7 +106,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
           <Text style={styles.label}>Age</Text>
           <TextInput
             placeholder="Your age"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={c.inputPlaceholder}
             value={form.age?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('age', text)}
@@ -118,7 +118,14 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
             style={styles.input}
             onPress={() => setShowGenderModal(true)}
           >
-            <Text style={{ color: gender ? '#1E293B' : '#94A3B8', fontFamily: 'Poppins-Regular', fontSize: 15, letterSpacing: 0.2 }}>
+            <Text
+              style={{
+                color: gender ? c.text : placeholderColor,
+                fontFamily: 'Poppins-Regular',
+                fontSize: 15,
+                letterSpacing: 0.2,
+              }}
+            >
               {gender
                 ? gender.charAt(0).toUpperCase() + gender.slice(1)
                 : 'Choose gender'}
@@ -127,7 +134,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
           <Text style={styles.label}>Height (cm)</Text>
           <TextInput
             placeholder="Your height in cm"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={c.inputPlaceholder}
             value={form.height_cm?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('height_cm', text)}
@@ -139,7 +146,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
           <Text style={styles.label}>Weight (kg)</Text>
           <TextInput
             placeholder="Morning, empty stomach weight in kgs"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={c.inputPlaceholder}
             value={form.weight_kg?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('weight_kg', text)}
@@ -151,7 +158,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
           <Text style={styles.label}>Waist (in)</Text>
           <TextInput
             placeholder="Measured just above your belly button"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={c.inputPlaceholder}
             value={form.waist_cm?.toString() || ''}
             keyboardType="numeric"
             onChangeText={text => handleChange('waist_cm', text)}
@@ -215,7 +222,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
     marginBottom: 6,
-    color: c.subText,
+    color: c.onboardingLabel,
     letterSpacing: 0.2,
   },
   input: {
@@ -258,7 +265,7 @@ const createStyles = c => StyleSheet.create({
   modalItemText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 15,
-    color: c.subText,
+    color: c.onboardingLabel,
     letterSpacing: 0.2,
   },
   modalCancel: {

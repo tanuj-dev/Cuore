@@ -283,7 +283,7 @@ const OtpScreen = () => {
             resizeMode: 'contain',
             height: hp(3.5),
             width: wp(4),
-            tintColor: '#1E293B',
+            tintColor: c.navIconTint,
           }}
         />
       </TouchableOpacity>

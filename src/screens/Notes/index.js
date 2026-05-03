@@ -169,7 +169,7 @@ const Notes = () => {
           <TextInput
             style={styles.input}
             placeholder="Add anything you'd like to discuss at your next visit."
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={c.inputPlaceholder}
             multiline
             value={inputText}
             onChangeText={handleTextChange}
@@ -345,7 +345,7 @@ const createStyles = c => StyleSheet.create({
     width: 20,
     height: 20,
     resizeMode: 'contain',
-    tintColor: c.primary,
+    tintColor: c.navIconTint,
   },
   deleteIcon: {
     width: 20,

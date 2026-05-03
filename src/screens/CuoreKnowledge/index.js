@@ -119,7 +119,11 @@ const CuoreKnowledge = ({ navigation }) => {
       <ScrollView
         style={styles.scroll}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={c.primary}
+          />
         }
       >
         <View style={styles.contentWrap}>
@@ -190,6 +194,7 @@ const createStyles = c => StyleSheet.create({
     height: hp(3.5),
     width: wp(4),
     marginLeft: Platform.OS === 'ios' ? hp(2) : hp(1),
+    tintColor: c.navIconTint,
   },
   headerIconContainer: {
     flex: 1,
@@ -201,18 +206,19 @@ const createStyles = c => StyleSheet.create({
   headerIconWrapper: {
     padding: hp(0.8),
     borderWidth: 3,
-    borderColor: '#11418A',
+    borderColor: c.navIconTint,
     borderRadius: hp(10),
   },
   headerIcon: {
     width: wp(10),
     height: wp(10),
     resizeMode: 'contain',
+    tintColor: c.navIconTint,
   },
   heading: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
-    color: c.primary,
+    color: c.text,
     textAlign: 'center',
     marginTop: hp(1.2),
     letterSpacing: 0.3,
@@ -222,7 +228,7 @@ const createStyles = c => StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingBottom: hp(10),
+    paddingBottom: hp(16),
   },
   card: {
     backgroundColor: c.card,
@@ -252,7 +258,7 @@ const createStyles = c => StyleSheet.create({
   title: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 15,
-    color: '#0F172A',
+    color: c.text,
     letterSpacing: 0.1,
     lineHeight: 22,
   },
@@ -260,7 +266,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
     marginTop: hp(0.6),
-    color: 'black',
+    color: c.onboardingSubtitle,
     letterSpacing: 0.1,
     lineHeight: 20,
   },

@@ -143,7 +143,7 @@ const EditCaregiver = ({ navigation }) => {
             editable={isEditing}
             onChangeText={handleNameChange}
             placeholder="Enter caregiver name"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={c.inputPlaceholder}
           />
         </View> */}
 
@@ -156,7 +156,7 @@ const EditCaregiver = ({ navigation }) => {
             keyboardType="number-pad"
             onChangeText={handleMobileChange}
             placeholder="+91XXXXXXXXXX"
-            placeholderTextColor="#64748B"
+            placeholderTextColor={c.inputPlaceholder}
           />
         </View>
 
@@ -201,6 +201,7 @@ const createStyles = c => StyleSheet.create({
     width: wp(5),
     height: wp(5),
     resizeMode: 'contain',
+    tintColor: c.navIconTint,
   },
   inputGroup: {
     marginBottom: hp(2),

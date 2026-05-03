@@ -26,8 +26,15 @@ import ReminderEditor from '../ReminderEditor';
 import Toast from '../../components/Toast';
 
 const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
-  const { colors: c } = useAppTheme();
+  const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
+  const spinnerPickerProps = useMemo(() => {
+    if (Platform.OS !== 'ios') return {};
+    return {
+      themeVariant: isDark ? 'dark' : 'light',
+      textColor: isDark ? c.text : '#0F172A',
+    };
+  }, [isDark, c.text]);
 
   const dispatch = useDispatch();
 
@@ -276,7 +283,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
           <TextInput
             placeholder="Enter reminder"
             style={styles.input}
-            placeholderTextColor="#6B7280"
+            placeholderTextColor={c.inputPlaceholder}
             value={reminderText}
             onChangeText={setReminderText}
           />
@@ -287,7 +294,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.dateTimeInput}
               onPress={() => setShowDatePicker(!showDatePicker)}
             >
-              <Text style={[styles.dateTimeLabel, !date && styles.dateTimePlaceholder]}>
+              <Text
+                style={[
+                  styles.dateTimeLabel,
+                  !date && styles.dateTimePlaceholder,
+                ]}
+              >
                 {date ? formatDisplayDate(date) : 'Start Date'}
               </Text>
               <Image source={Images.CALANDER} style={styles.dateTimeIcon} />
@@ -298,7 +310,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.dateTimeInput}
               onPress={() => setShowTimePicker(!showTimePicker)}
             >
-              <Text style={[styles.dateTimeLabel, !time && styles.dateTimePlaceholder]}>
+              <Text
+                style={[
+                  styles.dateTimeLabel,
+                  !time && styles.dateTimePlaceholder,
+                ]}
+              >
                 {time ? formatTime(time) : 'Current Time'}
               </Text>
               <Image source={Images.CLOCK} style={styles.dateTimeIcon} />
@@ -311,8 +328,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                 mode="date"
                 display="spinner"
                 onChange={handleDateChange}
-                textColor="#000000"
-                themeVariant="light"
+                {...spinnerPickerProps}
               />
             </View>
           )}
@@ -323,8 +339,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                 mode="time"
                 display="spinner"
                 onChange={handleTimeChange}
-                textColor="#000000"
-                themeVariant="light"
+                {...spinnerPickerProps}
               />
             </View>
           )}
@@ -421,191 +436,225 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
   );
 };
 
-const createStyles = c => StyleSheet.create({
-  modal: { justifyContent: 'flex-end', margin: 0 },
-  container: {
-    backgroundColor: c.card,
-    borderRadius: 12,
-    padding: 20,
-    height: '90%',
-    ...(Platform.OS === 'android' && { elevation: 0.5 }),
-  },
-  scrollContent: { flexGrow: 1, paddingBottom: 20 },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    marginBottom: 15,
-    color: c.text,
-    letterSpacing: 0.2,
-  },
-  closeIcon: {
-    width: 20,
-    height: 20,
-    tintColor: c.icon,
-  },
-  subtitle: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 16,
-    marginVertical: 10,
-    color: c.text,
-    letterSpacing: 0.2,
-  },
-  entryCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: c.surface,
-    borderRadius: 10,
-    padding: 12,
-    marginVertical: 5,
-    borderWidth: 1,
-    borderColor: c.border,
-  },
-  entryContent: { flex: 1 },
-  entryText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: c.text,
-    letterSpacing: 0.2,
-  },
-  entrySubtext: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 13,
-    color: c.subText,
-    marginTop: 4,
-    letterSpacing: 0.2,
-  },
-  iconButton: { paddingHorizontal: 8 },
-  entryIcon: { width: 18, height: 18 },
-  deleteIcon: { width: 18, height: 18, tintColor: '#EF4444' },
-  divider: {
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
-    marginVertical: 15,
-  },
-  inputGroup: { marginBottom: 12 },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: c.text,
-    letterSpacing: 0.2,
-  },
-  infoText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 12,
-    color: c.subText,
-    marginTop: 4,
-    letterSpacing: 0.2,
-  },
-  dateTimeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-  },
-  dateTimeInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 10,
-    padding: 12,
-    marginRight: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dateTimeLabel: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: c.text,
-    letterSpacing: 0.2,
-  },
-  dateTimePlaceholder: { color: c.tabInactive },
-  dateTimeIcon: { width: 18, height: 18 },
-  switchRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
-  switchLabel: {
-    fontFamily: 'Poppins-Regular',
-    marginLeft: 8,
-    fontSize: 14,
-    color: c.subText,
-    letterSpacing: 0.2,
-  },
-  addButton: {
-    marginTop: 20,
-    alignSelf: 'center',
-    backgroundColor: '#11418A',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    ...(Platform.OS === 'android' && { elevation: 2 }),
-  },
-  addButtonText: {
-    fontFamily: 'Poppins-Medium',
-    color: c.card,
-    fontSize: 15,
-    letterSpacing: 0.3,
-  },
-  pickercontainer: { marginVertical: 20 },
-  pickercontainerEnd: { marginVertical: 20, marginTop: 10 },
-  pickerinput: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: c.border,
-    padding: 12,
-    borderRadius: 10,
-  },
-  pickerLabel: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: c.text,
-    letterSpacing: 0.2,
-  },
-  pickerValueRow: { flexDirection: 'row', alignItems: 'center' },
-  pickerValue: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: c.subText,
-    letterSpacing: 0.2,
-  },
-  pickerChevron: { marginLeft: 6 },
-  pickerItemStyle: { color: c.primary },
-  repeatpicker: {
-    marginBottom: 100,
-    backgroundColor: c.surface,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: c.border,
-  },
-  emptyText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: c.tabInactive,
-    textAlign: 'center',
-    marginVertical: 10,
-    letterSpacing: 0.2,
-  },
-  datePickerWrapper: {
-    backgroundColor: c.card,
-    borderRadius: 10,
-    marginVertical: 8,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: c.border,
-  },
-});
+const createStyles = c =>
+  StyleSheet.create({
+    modal: { justifyContent: 'flex-end', margin: 0 },
+    container: {
+      backgroundColor: c.card,
+      borderRadius: 12,
+      padding: 20,
+      height: '90%',
+      ...(Platform.OS === 'android' && { elevation: 0.5 }),
+    },
+    scrollContent: { flexGrow: 1, paddingBottom: 20 },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    title: {
+      fontFamily: 'Poppins-Medium',
+      fontSize: 18,
+      marginBottom: 15,
+      color: c.text,
+      letterSpacing: 0.2,
+    },
+    closeIcon: {
+      width: 20,
+      height: 20,
+      tintColor: c.navIconTint,
+      resizeMode: 'contain',
+    },
+    subtitle: {
+      fontFamily: 'Poppins-Regular',
+      fontSize: 16,
+      marginVertical: 10,
+      color: c.text,
+      letterSpacing: 0.2,
+    },
+    entryCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.surface,
+      borderRadius: 10,
+      padding: 12,
+      marginVertical: 5,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    entryContent: { flex: 1 },
+    entryText: {
+      fontFamily: 'Poppins-Medium',
+      fontSize: 14,
+      color: c.text,
+      letterSpacing: 0.2,
+    },
+    entrySubtext: {
+      fontFamily: 'Poppins-Regular',
+      fontSize: 13,
+      color: c.textSecondary,
+      marginTop: 4,
+      letterSpacing: 0.2,
+    },
+    iconButton: { paddingHorizontal: 8 },
+    entryIcon: {
+      width: 18,
+      height: 18,
+      tintColor: c.navIconTint,
+      resizeMode: 'contain',
+    },
+    deleteIcon: { width: 18, height: 18, tintColor: '#EF4444' },
+    divider: {
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      marginVertical: 15,
+    },
+    inputGroup: { marginBottom: 12 },
+    input: {
+      height: 48,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      fontSize: 14,
+      fontFamily: 'Poppins-Regular',
+      color: c.text,
+      letterSpacing: 0.2,
+    },
+    infoText: {
+      fontFamily: 'Poppins-Regular',
+      fontSize: 12,
+      color: c.subText,
+      marginTop: 4,
+      letterSpacing: 0.2,
+    },
+    dateTimeRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 12,
+      columnGap: 10,
+    },
+    dateTimeInput: {
+      flex: 1,
+      minWidth: 0,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 10,
+      padding: 12,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    dateTimeLabel: {
+      flex: 1,
+      minWidth: 0,
+      marginRight: 8,
+      fontFamily: 'Poppins-Regular',
+      fontSize: 14,
+      color: c.text,
+      letterSpacing: 0.2,
+    },
+    dateTimePlaceholder: { color: c.textSecondary },
+    dateTimeIcon: {
+      width: 18,
+      height: 18,
+      tintColor: c.navIconTint,
+      resizeMode: 'contain',
+    },
+    switchRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
+    switchLabel: {
+      fontFamily: 'Poppins-Regular',
+      marginLeft: 8,
+      fontSize: 14,
+      color: c.subText,
+      letterSpacing: 0.2,
+    },
+    addButton: {
+      marginTop: 20,
+      alignSelf: 'center',
+      backgroundColor: '#11418A',
+      borderRadius: 10,
+      paddingVertical: 14,
+      paddingHorizontal: 40,
+      shadowColor: '#11418A',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      ...(Platform.OS === 'android' && { elevation: 2 }),
+    },
+    addButtonText: {
+      fontFamily: 'Poppins-Medium',
+      color: '#FFFFFF',
+      fontSize: 15,
+      letterSpacing: 0.3,
+    },
+    pickercontainer: { marginVertical: 20 },
+    pickercontainerEnd: { marginVertical: 20, marginTop: 10 },
+    pickerinput: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: c.border,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      borderRadius: 10,
+      minHeight: 48,
+    },
+    pickerLabel: {
+      flexShrink: 0,
+      marginRight: 12,
+      fontFamily: 'Poppins-Regular',
+      fontSize: 14,
+      color: c.text,
+      letterSpacing: 0.2,
+    },
+    pickerValueRow: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+    },
+    pickerValue: {
+      flexShrink: 1,
+      textAlign: 'right',
+      fontFamily: 'Poppins-Medium',
+      fontSize: 14,
+      color: c.textSecondary,
+      letterSpacing: 0.2,
+    },
+    pickerChevron: {
+      width: 16,
+      height: 16,
+      marginLeft: 8,
+      tintColor: c.navIconTint,
+      resizeMode: 'contain',
+    },
+    pickerItemStyle: { color: c.primary },
+    repeatpicker: {
+      marginBottom: 100,
+      backgroundColor: c.surface,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    emptyText: {
+      fontFamily: 'Poppins-Regular',
+      fontSize: 14,
+      color: c.tabInactive,
+      textAlign: 'center',
+      marginVertical: 10,
+      letterSpacing: 0.2,
+    },
+    datePickerWrapper: {
+      backgroundColor: c.card,
+      borderRadius: 10,
+      marginVertical: 8,
+      padding: 8,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+  });
 
 export default Reminder;

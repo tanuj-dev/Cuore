@@ -14,6 +14,7 @@ import {
   Easing,
   Platform,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { ProgressBar } from 'react-native-paper';
 import { hp, wp, Images } from '../../utilities';
@@ -73,7 +74,7 @@ const tagColors = {
 };
 
 const MealBuilder = ({ navigation, route }) => {
-  const { colors: c } = useAppTheme();
+  const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
 
   const [activeTab, setActiveTab] = useState('Breakfast');
@@ -333,7 +334,11 @@ const MealBuilder = ({ navigation, route }) => {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: c.surface }}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={c.surface}
+      />
       {/* Floating Cart */}
       {selectedItems.length > 0 && (
         <TouchableOpacity
@@ -361,6 +366,7 @@ const MealBuilder = ({ navigation, route }) => {
       <ImageBackground
         style={styles.backgroundImage}
         source={Images.BACKGROUND_IMAGE_NUTRITION}
+        resizeMode="cover"
       >
         <TouchableOpacity
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
@@ -392,7 +398,7 @@ const MealBuilder = ({ navigation, route }) => {
                 ? CaloriesBreakfastIndian
                 : CaloriesDinnerGlobal)
             }
-            color="#11418A"
+            color={c.primary}
             style={styles.progress}
           />
 
@@ -433,7 +439,7 @@ const MealBuilder = ({ navigation, route }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#11418A"
+            tintColor={c.primary}
           />
         }
         nestedScrollEnabled={true}
@@ -453,7 +459,6 @@ const MealBuilder = ({ navigation, route }) => {
               <Image
                 style={styles.breakfastIcon}
                 source={Images.BREAKFAST}
-                // tintColor="#FFFFFF"
               />
               <Text
                 style={styles.breakfastText}
@@ -476,7 +481,6 @@ const MealBuilder = ({ navigation, route }) => {
               <Image
                 style={styles.lunchDinnerIcon}
                 source={Images.KNIFE}
-                // tintColor="#FFFFFF"
               />
               <Text
                 style={styles.lunchDinnerText}
@@ -497,7 +501,7 @@ const MealBuilder = ({ navigation, route }) => {
             <TextInput
               value={searchText}
               onChangeText={setSearchText}
-              placeholderTextColor={'#6B7280'}
+              placeholderTextColor={c.inputPlaceholder}
               placeholder="Search meals..."
               style={styles.searchInput}
             />
@@ -597,6 +601,7 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),
+    tintColor: c.navIconTint,
   },
   titleContainer: {
     alignItems: 'center',
@@ -660,12 +665,12 @@ const createStyles = c => StyleSheet.create({
     width: wp(5),
     marginRight: wp(1.5),
     resizeMode: 'contain',
-    tintColor: c.card,
+    tintColor: c.onPrimary,
   },
   breakfastText: {
     fontFamily: 'Poppins-Regular',
     fontSize: hp(1.6),
-    color: c.card,
+    color: c.onPrimary,
     flexShrink: 1,
     letterSpacing: 0.2,
   },
@@ -683,12 +688,12 @@ const createStyles = c => StyleSheet.create({
     width: wp(5),
     marginRight: wp(1.5),
     resizeMode: 'contain',
-    tintColor: c.card,
+    tintColor: c.onPrimary,
   },
   lunchDinnerText: {
     fontFamily: 'Poppins-Regular',
     fontSize: hp(1.6),
-    color: c.card,
+    color: c.onPrimary,
     flexShrink: 1,
     letterSpacing: 0.2,
   },
@@ -709,6 +714,7 @@ const createStyles = c => StyleSheet.create({
     width: wp(4),
     marginRight: hp(1),
     resizeMode: 'contain',
+    tintColor: c.navIconTint,
   },
   searchInput: {
     fontFamily: 'Poppins-Regular',
@@ -747,13 +753,13 @@ const createStyles = c => StyleSheet.create({
   cuisineSelectedText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: c.card,
+    color: c.onPrimary,
     letterSpacing: 0.2,
   },
   cuisineUnselected: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: c.mutedSurface,
     width: hp(18),
     paddingVertical: hp(1.3),
     borderRadius: hp(0.6),
@@ -761,7 +767,7 @@ const createStyles = c => StyleSheet.create({
   cuisineUnselectedText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: c.text,
     letterSpacing: 0.2,
   },
   tagRow: {
@@ -780,7 +786,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginLeft: hp(0.5),
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   cartImage: {
@@ -811,7 +817,7 @@ const createStyles = c => StyleSheet.create({
   },
   floatingCartText: {
     fontFamily: 'Poppins-Medium',
-    color: c.card,
+    color: c.onPrimary,
     marginLeft: hp(1),
     fontSize: 14,
     letterSpacing: 0.3,
@@ -844,6 +850,8 @@ const createStyles = c => StyleSheet.create({
   categoryChevron: {
     height: hp(2),
     width: wp(3),
+    resizeMode: 'contain',
+    tintColor: c.navIconTint,
   },
   expandedWrap: { overflow: 'hidden' },
   itemRowWrap: { marginTop: hp(0.5) },
@@ -878,7 +886,7 @@ const createStyles = c => StyleSheet.create({
   itemCal: {
     fontFamily: 'Poppins-Regular',
     fontSize: 13,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     marginTop: 2,
     letterSpacing: 0.2,
   },
@@ -909,7 +917,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: 24,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     fontSize: 14,
     letterSpacing: 0.2,
   },

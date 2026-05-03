@@ -15,7 +15,7 @@ import { hp, wp, Images } from '../../utilities';
 import RenderHTML from 'react-native-render-html';
 
 const FitnessDetails = ({ navigation, route }) => {
-  const { colors: c } = useAppTheme();
+  const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
 
   const { instruction, data } = route?.params || {};
@@ -24,6 +24,60 @@ const FitnessDetails = ({ navigation, route }) => {
     typeof instruction?.instructionsText === 'string'
       ? instruction.instructionsText
       : '<p>No instructions available.</p>';
+
+  const htmlTagsStyles = useMemo(
+    () => ({
+      body: {
+        color: c.onboardingSubtitle,
+        fontFamily: 'Poppins-Regular',
+        fontSize: 14,
+      },
+      div: { color: c.onboardingSubtitle },
+      span: { color: c.onboardingSubtitle },
+      p: {
+        fontSize: 14,
+        color: c.onboardingSubtitle,
+        lineHeight: 22,
+        fontFamily: 'Poppins-Regular',
+      },
+      ul: { paddingLeft: 20, marginBottom: 10 },
+      ol: { paddingLeft: 20, marginBottom: 10 },
+      li: {
+        marginBottom: 6,
+        fontSize: 14,
+        color: c.onboardingSubtitle,
+        fontFamily: 'Poppins-Regular',
+      },
+      strong: {
+        fontFamily: 'Poppins-Medium',
+        color: c.text,
+      },
+      em: {
+        fontStyle: 'italic',
+        color: c.textSecondary,
+        fontFamily: 'Poppins-Regular',
+      },
+      h1: {
+        fontSize: 22,
+        fontFamily: 'Poppins-Medium',
+        marginBottom: 12,
+        color: isDark ? c.text : data?.color || c.primary,
+      },
+      h2: {
+        fontSize: 18,
+        fontFamily: 'Poppins-Medium',
+        marginBottom: 10,
+        color: c.text,
+      },
+      h3: {
+        fontSize: 16,
+        fontFamily: 'Poppins-Medium',
+        marginBottom: 8,
+        color: c.text,
+      },
+    }),
+    [c, isDark, data?.color],
+  );
 
   return (
     <ScrollView style={styles.container}>
@@ -83,42 +137,11 @@ const FitnessDetails = ({ navigation, route }) => {
           <RenderHTML
             contentWidth={width}
             source={{ html: instructionsHtml }}
-            tagsStyles={{
-              p: {
-                fontSize: 14,
-                color: '#475569',
-                lineHeight: 22,
-                fontFamily: 'Poppins-Regular',
-              },
-              ul: { paddingLeft: 20, marginBottom: 10 },
-              ol: { paddingLeft: 20, marginBottom: 10 },
-              li: {
-                marginBottom: 6,
-                fontSize: 14,
-                color: '#475569',
-                fontFamily: 'Poppins-Regular',
-              },
-              strong: {
-                fontFamily: 'Poppins-Medium',
-                color: '#1E293B',
-              },
-              em: {
-                fontStyle: 'italic',
-                color: '#64748B',
-                fontFamily: 'Poppins-Regular',
-              },
-              h1: {
-                fontSize: 22,
-                fontFamily: 'Poppins-Medium',
-                marginBottom: 12,
-                color: data?.color || '#11418A',
-              },
-              h3: {
-                fontSize: 16,
-                fontFamily: 'Poppins-Medium',
-                marginBottom: 8,
-                color: '#1E293B',
-              },
+            tagsStyles={htmlTagsStyles}
+            baseStyle={{
+              color: c.onboardingSubtitle,
+              fontFamily: 'Poppins-Regular',
+              fontSize: 14,
             }}
           />
         </View>
@@ -156,6 +179,7 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),
+    tintColor: c.navIconTint,
   },
   title: {
     flex: 1,
@@ -200,7 +224,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
     marginBottom: hp(0.5),
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   instructionBox: {

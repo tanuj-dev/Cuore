@@ -160,6 +160,7 @@ const EditDoctor = ({ navigation }) => {
           editable={isEditing}
           keyboardType={keyboardType}
           placeholder={label}
+          placeholderTextColor={c.inputPlaceholder}
         />
       </View>
     </View>
@@ -268,6 +269,7 @@ const createStyles = c => StyleSheet.create({
     width: wp(5),
     height: wp(5),
     resizeMode: 'contain',
+    tintColor: c.navIconTint,
   },
   inputGroup: {
     marginBottom: hp(2),

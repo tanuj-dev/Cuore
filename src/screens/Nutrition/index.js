@@ -12,6 +12,7 @@ import {
   Platform,
   TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
 import { Images, hp, wp } from '../../utilities';
@@ -24,37 +25,85 @@ import SkeletonBox from '../../components/SkeletonBox';
 const NutritionSkeleton = () => {
   const { colors: c } = useAppTheme();
   return (
-  <View style={{ flex: 1, backgroundColor: c.background }}>
-    {/* Fixed header */}
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: hp(2), paddingVertical: hp(1) }}>
-      <SkeletonBox width={wp(4)} height={hp(3)} borderRadius={4} />
-      <SkeletonBox width={wp(4)} height={hp(2)} borderRadius={4} />
-    </View>
-    {/* Image background area */}
-    <View style={{ backgroundColor: c.icon, padding: hp(2), gap: hp(2) }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: hp(2) }}>
-        <SkeletonBox width={wp(36)} height={hp(5.5)} borderRadius={12} />
-        <SkeletonBox width={wp(36)} height={hp(5.5)} borderRadius={12} />
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      {/* Fixed header */}
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: hp(2),
+          paddingVertical: hp(1),
+        }}
+      >
+        <SkeletonBox width={wp(4)} height={hp(3)} borderRadius={4} />
+        <SkeletonBox width={wp(4)} height={hp(2)} borderRadius={4} />
       </View>
-      <SkeletonBox width="100%" height={hp(5.5)} borderRadius={12} />
-      <SkeletonBox width="80%" height={14} borderRadius={6} style={{ alignSelf: 'center' }} />
-    </View>
-    {/* Meal cards */}
-    <ScrollView scrollEnabled={false} contentContainerStyle={{ padding: wp(5), gap: hp(2) }}>
-      {[1, 2, 3, 4, 5].map(i => (
-        <View key={i} style={{ backgroundColor: c.card, borderRadius: 12, padding: wp(4), borderLeftWidth: 3, borderLeftColor: c.border }}>
-          <SkeletonBox width="65%" height={16} style={{ marginBottom: hp(1) }} />
-          <SkeletonBox width="90%" height={12} borderRadius={4} style={{ marginBottom: hp(0.6) }} />
-          <SkeletonBox width="75%" height={12} borderRadius={4} style={{ marginBottom: hp(0.6) }} />
-          <SkeletonBox width="55%" height={12} borderRadius={4} style={{ marginBottom: hp(1.5) }} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: hp(1) }}>
-            <SkeletonBox width={wp(13)} height={hp(2.5)} borderRadius={4} />
-            <SkeletonBox width={60} height={14} borderRadius={4} />
-          </View>
+      {/* Image background area */}
+      <View style={{ backgroundColor: c.icon, padding: hp(2), gap: hp(2) }}>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'center', gap: hp(2) }}
+        >
+          <SkeletonBox width={wp(36)} height={hp(5.5)} borderRadius={12} />
+          <SkeletonBox width={wp(36)} height={hp(5.5)} borderRadius={12} />
         </View>
-      ))}
-    </ScrollView>
-  </View>
+        <SkeletonBox width="100%" height={hp(5.5)} borderRadius={12} />
+        <SkeletonBox
+          width="80%"
+          height={14}
+          borderRadius={6}
+          style={{ alignSelf: 'center' }}
+        />
+      </View>
+      {/* Meal cards */}
+      <ScrollView
+        scrollEnabled={false}
+        contentContainerStyle={{ padding: wp(5), gap: hp(2) }}
+      >
+        {[1, 2, 3, 4, 5].map(i => (
+          <View
+            key={i}
+            style={{
+              backgroundColor: c.card,
+              borderRadius: 12,
+              padding: wp(4),
+              borderLeftWidth: 3,
+              borderLeftColor: c.border,
+            }}
+          >
+            <SkeletonBox
+              width="65%"
+              height={16}
+              style={{ marginBottom: hp(1) }}
+            />
+            <SkeletonBox
+              width="90%"
+              height={12}
+              borderRadius={4}
+              style={{ marginBottom: hp(0.6) }}
+            />
+            <SkeletonBox
+              width="75%"
+              height={12}
+              borderRadius={4}
+              style={{ marginBottom: hp(0.6) }}
+            />
+            <SkeletonBox
+              width="55%"
+              height={12}
+              borderRadius={4}
+              style={{ marginBottom: hp(1.5) }}
+            />
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: hp(1) }}
+            >
+              <SkeletonBox width={wp(13)} height={hp(2.5)} borderRadius={4} />
+              <SkeletonBox width={60} height={14} borderRadius={4} />
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
   );
 };
 
@@ -196,17 +245,7 @@ const Nutrition = ({ navigation, route }) => {
                 {'\u2022'} {line}
               </Text>
             ))}
-            <Image
-              style={{
-                height: hp(2),
-                width: wp(4),
-                resizeMode: 'contain',
-                position: 'absolute',
-                right: hp(0),
-                top: hp(1),
-              }}
-              source={Images.RIGHT_ARROW}
-            />
+            <Image style={styles.cardChevron} source={Images.RIGHT_ARROW} />
           </View>
         </View>
         <View style={styles.cardFooter}>
@@ -262,7 +301,7 @@ const Nutrition = ({ navigation, route }) => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       {toast && (
         <View style={styles.toastContainer}>
           <Toast
@@ -276,309 +315,321 @@ const Nutrition = ({ navigation, route }) => {
       <ViewShot
         ref={viewShotRef}
         options={{ format: 'jpg', quality: 0.9 }}
-        style={{ flex: 1 }}
+        style={styles.viewShot}
       >
-        <View style={{ flex: 1 }}>
-          {/* Fixed Header Buttons - Always Visible */}
-          <View style={styles.fixedHeader}>
-            <TouchableOpacity
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              onPress={() => navigation.goBack()}
-              style={styles.fixedButton}
-            >
-              <Image
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(3),
-                  width: wp(4),
-                }}
-                source={Images.BACK_BUTTON}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              onPress={handleShareScreenshot}
-              style={styles.fixedButton}
-            >
-              <Image
-                style={{
-                  height: hp(2),
-                  width: wp(4),
-                  resizeMode: 'contain',
-                }}
-                source={Images.SHARE_4}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            style={styles.container}
-            scrollEventThrottle={16}
-            keyboardShouldPersistTaps="handled"
-            nestedScrollEnabled={true}
-            contentContainerStyle={
-              {
-                // paddingTop: Platform.OS === 'ios' ? hp(4) : hp(1.5),
-              }
-            }
-          >
-            {/* 🔵 Header */}
-            <ImageBackground
-              style={{ padding: hp(2) }}
-              source={Images.BACKGROUND_IMAGE_NUTRITION}
-            >
-              {/* Spacer for fixed buttons */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  height: Platform.OS === 'ios' ? hp(4) : hp(1.5),
-                }}
-              >
-                <View style={{ width: wp(4) }} />
-                <View style={{ width: wp(4) }} />
-              </View>
-
-              {/* Tabs */}
-              <View
-                style={{
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginTop: Platform.OS === 'ios' ? hp(0) : hp(2),
-                }}
-              >
-                {/* Breakfast Tab */}
-                <TouchableOpacity
-                  onPress={() => setActiveTab('Breakfast')}
-                  style={[
-                    styles.tabButton,
-                    {
-                      backgroundColor:
-                        activeTab === 'Breakfast' ? '#11418A' : '#94A3B8',
-                    },
-                  ]}
-                >
-                  <Image style={styles.tabIcon} source={Images.BREAKFAST} />
-                  <Text style={styles.tabText}>Breakfast</Text>
-                </TouchableOpacity>
-
-                {/* Lunch & Dinner Tab */}
-                <TouchableOpacity
-                  onPress={() => setActiveTab('LunchDinner')}
-                  style={[
-                    styles.tabButton,
-                    {
-                      backgroundColor:
-                        activeTab === 'LunchDinner' ? '#11418A' : '#94A3B8',
-                    },
-                  ]}
-                >
-                  <Image style={styles.tabIcon} source={Images.KNIFE} />
-                  <Text style={styles.tabText}>Lunch/Dinner</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* 🔍 Search Bar */}
+        <ImageBackground
+          source={Images.BACKGROUND_IMAGE_NUTRITION}
+          style={styles.heroBackground}
+          resizeMode="cover"
+        >
+          <SafeAreaView edges={['top']} style={styles.heroSafe}>
+            <View style={styles.fixedHeader}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('Search')}
-                style={styles.searchContainer}
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                onPress={() => navigation.goBack()}
+                style={styles.fixedButton}
               >
-                <View>
-                  <Image source={Images.SEARCH} style={styles.searchIcon} />
+                <Image
+                  style={{
+                    resizeMode: 'contain',
+                    height: hp(3),
+                    width: wp(4),
+                    tintColor: c.navIconTint,
+                  }}
+                  source={Images.BACK_BUTTON}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                onPress={handleShareScreenshot}
+                style={styles.fixedButton}
+              >
+                <Image
+                  style={{
+                    height: hp(2),
+                    width: wp(4),
+                    resizeMode: 'contain',
+                    tintColor: c.navIconTint,
+                  }}
+                  source={Images.SHARE_4}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.scrollOnHero}
+              contentContainerStyle={styles.scrollContent}
+              scrollEventThrottle={16}
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled={true}
+            >
+              <View style={styles.heroInner}>
+                <View
+                  style={{
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginTop: Platform.OS === 'ios' ? hp(0) : hp(2),
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={() => setActiveTab('Breakfast')}
+                    style={[
+                      styles.tabButton,
+                      {
+                        backgroundColor:
+                          activeTab === 'Breakfast' ? '#11418A' : '#94A3B8',
+                      },
+                    ]}
+                  >
+                    <Image style={styles.tabIcon} source={Images.BREAKFAST} />
+                    <Text style={styles.tabText}>Breakfast</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setActiveTab('LunchDinner')}
+                    style={[
+                      styles.tabButton,
+                      {
+                        backgroundColor:
+                          activeTab === 'LunchDinner' ? '#11418A' : '#94A3B8',
+                      },
+                    ]}
+                  >
+                    <Image style={styles.tabIcon} source={Images.KNIFE} />
+                    <Text style={styles.tabText}>Lunch/Dinner</Text>
+                  </TouchableOpacity>
                 </View>
 
-                <Text style={styles.searchPlaceholder}> Search Recipe...</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Search')}
+                  style={styles.searchContainer}
+                >
+                  <View>
+                    <Image source={Images.SEARCH} style={styles.searchIcon} />
+                  </View>
 
-              {loading ? (
-                <ActivityIndicator
-                  style={{ marginTop: hp(2) }}
-                  size="small"
-                  color="#11418A"
-                />
-              ) : (
-                <Text style={styles.headerTitle}>
-                  Daily variety leads to better results— try a new option each
-                  day.
-                </Text>
-              )}
-            </ImageBackground>
+                  <Text style={styles.searchPlaceholder}>
+                    {' '}
+                    Search Recipe...
+                  </Text>
+                </TouchableOpacity>
 
-            {/* 🥗 Meal Cards */}
-            <View style={styles.cardList}>
-              {filteredMeals?.length > 0 ? (
-                filteredMeals.map((item, index) => renderMealCard(item, index))
-              ) : (
-                <Text style={styles.noResultText}>No meals found.</Text>
-              )}
-            </View>
-          </ScrollView>
-        </View>
+                {loading ? (
+                  <ActivityIndicator
+                    style={{ marginTop: hp(2) }}
+                    size="small"
+                    color={c.primary}
+                  />
+                ) : (
+                  <Text style={styles.headerTitle}>
+                    Daily variety leads to better results— try a new option each
+                    day.
+                  </Text>
+                )}
+              </View>
+
+              <View style={styles.mealsSection}>
+                <View style={styles.cardList}>
+                  {filteredMeals?.length > 0 ? (
+                    filteredMeals.map((item, index) =>
+                      renderMealCard(item, index),
+                    )
+                  ) : (
+                    <Text style={styles.noResultText}>No meals found.</Text>
+                  )}
+                </View>
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        </ImageBackground>
       </ViewShot>
     </View>
   );
 };
 
-const createStyles = c => StyleSheet.create({
-  container: { flex: 1, backgroundColor: c.surface },
-  fixedHeader: {
-    // position: 'absolute',
-    // top: Platform.OS === 'ios' ? hp(0) : hp(1.5),
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: hp(2),
-    zIndex: 1000,
-    // elevation: 1000,
-    pointerEvents: 'box-none',
-  },
-  fixedButton: {
-    // backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    // borderRadius: 12,
-    // padding: hp(1.2),
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 6,
-    // elevation: 3,
-  },
-  headerTitle: {
-    fontFamily: 'Poppins-Regular',
-    paddingHorizontal: hp(5),
-    fontSize: 15,
-    color: c.text,
-    textAlign: 'center',
-    marginTop: hp(1.5),
-    lineHeight: 22,
-    letterSpacing: 0.2,
-  },
-  cardList: {
-    padding: wp(5),
-  },
-  card: {
-    borderLeftWidth: 3,
-    backgroundColor: c.card,
-    borderRadius: 12,
-    padding: wp(4),
-    marginBottom: hp(1.8),
-    elevation: 2,
-    borderLeftColor: '#10B981',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-  },
-  mealTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 15,
-    color: c.text,
-    marginBottom: hp(0.5),
-    letterSpacing: -0.2,
-  },
-  detail: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 12,
-    color: c.subText,
-    lineHeight: 18,
-    letterSpacing: 0.1,
-  },
-  cardFooter: {
-    marginTop: hp(1.5),
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  kcal: {
-    fontFamily: 'Poppins-Regular',
-    marginLeft: hp(0),
-    fontSize: 14,
-    color: c.subText,
-    letterSpacing: 0.2,
-  },
-  tabButton: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    padding: hp(1.2),
-    paddingHorizontal: hp(4),
-    borderRadius: 12,
-    marginHorizontal: hp(1),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-  },
-  tabIcon: {
-    resizeMode: 'contain',
-    height: hp(3),
-    width: wp(4),
-    tintColor: c.card,
-  },
-  tabText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: c.card,
-    marginLeft: hp(1),
-    letterSpacing: 0.3,
-  },
-  toastContainer: {
-    position: 'absolute',
-    top: hp(10),
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 9999,
-    elevation: 9999,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: c.card,
-    borderRadius: 12,
-    marginHorizontal: hp(1),
-    marginTop: hp(2),
-    paddingHorizontal: hp(2),
-    paddingVertical: hp(1.2),
-    borderWidth: 1.5,
-    borderColor: c.border,
-  },
-  searchPlaceholder: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: c.tabInactive,
-    letterSpacing: 0.2,
-  },
-  searchIcon: {
-    height: hp(2.5),
-    width: wp(4),
-    resizeMode: 'contain',
-    tintColor: c.tabInactive,
-    marginRight: hp(1),
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: c.text,
-    paddingVertical: Platform.OS === 'ios' ? hp(1.5) : 0,
-    letterSpacing: 0.2,
-  },
-  noResultText: {
-    fontFamily: 'Poppins-Regular',
-    textAlign: 'center',
-    color: c.subText,
-    fontSize: 14,
-    marginTop: hp(2),
-    letterSpacing: 0.2,
-  },
-  eggTagText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 11,
-    color: '#C68A40',
-    letterSpacing: 0.2,
-  },
-});
+const createStyles = c =>
+  StyleSheet.create({
+    viewShot: { flex: 1 },
+    heroBackground: { flex: 1 },
+    heroSafe: { flex: 1 },
+    scrollOnHero: { flex: 1, backgroundColor: 'transparent' },
+    scrollContent: { flexGrow: 1, paddingBottom: hp(2) },
+    heroInner: {
+      paddingHorizontal: hp(2),
+      paddingBottom: hp(2),
+      paddingTop: hp(0.5),
+    },
+    mealsSection: {
+      flexGrow: 1,
+      backgroundColor: c.surface,
+    },
+    fixedHeader: {
+      // position: 'absolute',
+      // top: Platform.OS === 'ios' ? hp(0) : hp(1.5),
+      left: 0,
+      right: 0,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: hp(2),
+      zIndex: 1000,
+      // elevation: 1000,
+      pointerEvents: 'box-none',
+      backgroundColor: c.card,
+    },
+    fixedButton: {
+      // backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      // borderRadius: 12,
+      // padding: hp(1.2),
+      // shadowColor: '#000',
+      // shadowOffset: { width: 0, height: 2 },
+      // shadowOpacity: 0.1,
+      // shadowRadius: 6,
+      // elevation: 3,
+    },
+    headerTitle: {
+      fontFamily: 'Poppins-Regular',
+      paddingHorizontal: hp(5),
+      fontSize: 15,
+      color: c.text,
+      textAlign: 'center',
+      marginTop: hp(1.5),
+      lineHeight: 22,
+      letterSpacing: 0.2,
+    },
+    cardList: {
+      padding: wp(5),
+    },
+    card: {
+      borderLeftWidth: 3,
+      backgroundColor: c.card,
+      borderRadius: 12,
+      padding: wp(4),
+      marginBottom: hp(1.8),
+      elevation: 2,
+      borderLeftColor: '#10B981',
+      shadowColor: '#000',
+      shadowOpacity: 0.08,
+      shadowOffset: { width: 0, height: 2 },
+      shadowRadius: 6,
+    },
+    mealTitle: {
+      fontFamily: 'Poppins-Medium',
+      fontSize: 15,
+      color: c.text,
+      marginBottom: hp(0.5),
+      letterSpacing: -0.2,
+    },
+    detail: {
+      fontFamily: 'Poppins-Regular',
+      fontSize: 12,
+      color: c.onboardingSubtitle,
+      lineHeight: 18,
+      letterSpacing: 0.1,
+    },
+    cardChevron: {
+      height: hp(2),
+      width: wp(4),
+      resizeMode: 'contain',
+      position: 'absolute',
+      right: hp(0),
+      top: hp(1),
+      tintColor: c.navIconTint,
+    },
+    cardFooter: {
+      marginTop: hp(1.5),
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    kcal: {
+      fontFamily: 'Poppins-Regular',
+      marginLeft: hp(0),
+      fontSize: 14,
+      color: c.onboardingSubtitle,
+      letterSpacing: 0.2,
+    },
+    tabButton: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      padding: hp(1.2),
+      paddingHorizontal: hp(4),
+      borderRadius: 12,
+      marginHorizontal: hp(1),
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
+    },
+    tabIcon: {
+      resizeMode: 'contain',
+      height: hp(3),
+      width: wp(4),
+      tintColor: c.onPrimary,
+    },
+    tabText: {
+      fontFamily: 'Poppins-Medium',
+      fontSize: 14,
+      color: c.onPrimary,
+      marginLeft: hp(1),
+      letterSpacing: 0.3,
+    },
+    toastContainer: {
+      position: 'absolute',
+      top: hp(10),
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 9999,
+      elevation: 9999,
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.card,
+      borderRadius: 12,
+      marginHorizontal: hp(1),
+      marginTop: hp(2),
+      paddingHorizontal: hp(2),
+      paddingVertical: hp(1.2),
+      borderWidth: 1.5,
+      borderColor: c.border,
+    },
+    searchPlaceholder: {
+      fontFamily: 'Poppins-Regular',
+      fontSize: 14,
+      color: c.onboardingSubtitle,
+      letterSpacing: 0.2,
+    },
+    searchIcon: {
+      height: hp(2.5),
+      width: wp(4),
+      resizeMode: 'contain',
+      tintColor: c.navIconTint,
+      marginRight: hp(1),
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: 14,
+      fontFamily: 'Poppins-Regular',
+      color: c.text,
+      paddingVertical: Platform.OS === 'ios' ? hp(1.5) : 0,
+      letterSpacing: 0.2,
+    },
+    noResultText: {
+      fontFamily: 'Poppins-Regular',
+      textAlign: 'center',
+      color: c.onboardingSubtitle,
+      fontSize: 14,
+      marginTop: hp(2),
+      letterSpacing: 0.2,
+    },
+    eggTagText: {
+      fontFamily: 'Poppins-Regular',
+      fontSize: 11,
+      color: '#C68A40',
+      letterSpacing: 0.2,
+    },
+  });
 
 export default Nutrition;

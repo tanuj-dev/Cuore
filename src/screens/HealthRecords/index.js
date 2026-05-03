@@ -715,7 +715,7 @@ const HealthRecords = ({ navigation }) => {
                           onChangeText={setEditFileNameValue}
                           editable={!isEditingFilename}
                           placeholder="File name"
-                          placeholderTextColor="#94A3B8"
+                          placeholderTextColor={c.inputPlaceholder}
                         />
                         <TouchableOpacity
                           onPress={handleSaveEditFileName}
@@ -750,7 +750,7 @@ const HealthRecords = ({ navigation }) => {
                         }
                       >
                         <Image
-                          style={styles.recordActionIcon}
+                          style={[styles.recordActionIcon, styles.recordEditIcon]}
                           source={Images.EDIT}
                         />
                       </TouchableOpacity>
@@ -1215,6 +1215,9 @@ const createStyles = c => StyleSheet.create({
     width: wp(4),
     height: hp(3),
     resizeMode: 'contain',
+  },
+  recordEditIcon: {
+    tintColor: c.navIconTint,
   },
   eyeIcon: {
     width: wp(13),

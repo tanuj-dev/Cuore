@@ -143,6 +143,7 @@ const createStyles = c => StyleSheet.create({
   backIcon: {
     height: hp(3.5),
     width: wp(5),
+    tintColor: c.navIconTint,
   },
   badgeWrapper: {
     alignItems: 'center',

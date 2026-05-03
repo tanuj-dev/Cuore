@@ -151,6 +151,7 @@ const Chat = () => {
             <TextInput
               style={styles.input}
               placeholder="Type your message..."
+              placeholderTextColor={c.inputPlaceholder}
               value={input}
               onChangeText={setInput}
             />

@@ -321,7 +321,7 @@ const EditProfile = ({ navigation }) => {
               editable={isEditing}
               onChangeText={handleMobileChange}
               placeholder="Enter mobile number"
-              placeholderTextColor="#64748B"
+              placeholderTextColor={c.inputPlaceholder}
               keyboardType="numeric"
             />
           </View>
@@ -335,7 +335,7 @@ const EditProfile = ({ navigation }) => {
             editable={isEditing}
             onChangeText={handleNameChange}
             placeholder={label}
-            placeholderTextColor="#64748B"
+            placeholderTextColor={c.inputPlaceholder}
           />
         )}
 
@@ -488,6 +488,7 @@ const createStyles = c => StyleSheet.create({
     height: hp(3.5),
     width: wp(4),
     resizeMode: 'contain',
+    tintColor: c.navIconTint,
   },
   headerTitle: {
     fontFamily: 'Poppins-Medium',
@@ -634,6 +635,7 @@ const createStyles = c => StyleSheet.create({
     width: wp(5),
     height: wp(5),
     resizeMode: 'contain',
+    tintColor: c.navIconTint,
   },
 });
 

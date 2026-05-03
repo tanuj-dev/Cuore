@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Images, wp, hp, color } from '../../utilities';
+import { Images, wp, hp } from '../../utilities';
 
 const RadioOption = ({ label, selected, onPress, styles }) => (
   <TouchableOpacity style={styles.radioOption} onPress={onPress}>
@@ -22,8 +22,15 @@ const RadioOption = ({ label, selected, onPress, styles }) => (
 );
 
 const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
-  const { colors: c } = useAppTheme();
+  const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
+  const timeSpinnerProps = useMemo(() => {
+    if (Platform.OS !== 'ios') return {};
+    return {
+      themeVariant: isDark ? 'dark' : 'light',
+      textColor: isDark ? c.text : '#0F172A',
+    };
+  }, [isDark, c.text]);
 
   const [sleepHours, setSleepHours] = useState('');
   const [problems, setProblems] = useState('');
@@ -114,7 +121,13 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
           style={styles.timeButton}
           onPress={() => setShowTimePicker(true)}
         >
-          <Text style={{ fontFamily: 'Poppins-Regular', fontSize: wp(4) }}>
+          <Text
+            style={{
+              fontFamily: 'Poppins-Regular',
+              fontSize: wp(4),
+              color: c.text,
+            }}
+          >
             {formatTime(time)}
           </Text>
           <Image
@@ -122,7 +135,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
               resizeMode: 'contain',
               height: hp(2),
               width: wp(5),
-              tintColor: '#000000',
+              tintColor: c.navIconTint,
             }}
             source={Images.WATCH}
           />
@@ -136,8 +149,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
               is24Hour={false}
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={onChangeTime}
-              textColor="#000000"
-              themeVariant="light"
+              {...timeSpinnerProps}
             />
           </View>
         )}
@@ -190,7 +202,7 @@ export default OnBoardingSix;
 const createStyles = c => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFF',
+    backgroundColor: c.card,
     padding: wp(0.5),
     // marginBottom: 10,
     // borderWidth: 1,
@@ -218,8 +230,8 @@ const createStyles = c => StyleSheet.create({
   cardTitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: wp(3.8),
-    
-    color: color.QUESTION_COLOR,
+
+    color: c.onboardingQuestion,
     marginTop: hp(2),
     marginBottom: hp(1),
   },
@@ -247,7 +259,7 @@ const createStyles = c => StyleSheet.create({
   radioLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14, letterSpacing: 0.2,
-    color: color.ANSWER_COLOR,
+    color: c.onboardingOption,
   },
   timeInput: {
     fontFamily: 'Poppins-Regular',
@@ -264,7 +276,7 @@ const createStyles = c => StyleSheet.create({
   subHint: {
     fontFamily: 'Poppins-Regular',
     fontSize: wp(3.2),
-    color: color.NOTE_COLOR,
+    color: c.onboardingNote,
     marginBottom: hp(1),
   },
   datePickerWrapper: {

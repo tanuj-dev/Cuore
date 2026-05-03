@@ -119,7 +119,7 @@ const Search = ({ navigation }) => {
             <TextInput
               style={styles.input}
               placeholder="Type a dish name..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={c.inputPlaceholder}
               value={query}
               onChangeText={setQuery}
             />

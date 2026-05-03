@@ -9,7 +9,7 @@ import {
   Image,
   Platform,
 } from 'react-native';
-import { Images, color, hp, wp } from '../../utilities';
+import { Images, hp, wp } from '../../utilities';
 
 const validationLimits = {
   o2_sat: { min: 70, max: 100 },
@@ -113,6 +113,7 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           style={styles.input}
           keyboardType="numeric"
           placeholder={first.placeholder}
+          placeholderTextColor={c.inputPlaceholder}
           value={formData[first.key]?.toString() || ''}
           onChangeText={text => handleChange(first.key, text)}
         />
@@ -127,6 +128,7 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
           style={styles.input}
           keyboardType="numeric"
           placeholder={second.placeholder}
+          placeholderTextColor={c.inputPlaceholder}
           value={formData[second.key]?.toString() || ''}
           onChangeText={text => handleChange(second.key, text)}
         />
@@ -230,12 +232,12 @@ const createStyles = c => StyleSheet.create({
     fontSize: wp(4.5),
     marginTop: hp(2),
     marginBottom: hp(1),
-    color: color.QUESTION_COLOR,
+    color: c.onboardingQuestion,
   },
   subsectionTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: color.QUESTION_COLOR,
+    color: c.onboardingQuestion,
     marginTop: hp(1),
     marginBottom: hp(1),
     letterSpacing: 0.2,
@@ -258,7 +260,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
     letterSpacing: 0.2,
-    color: color.NOTE_COLOR,
+    color: c.onboardingNote,
     marginBottom: hp(2),
   },
   row: {
@@ -273,7 +275,7 @@ const createStyles = c => StyleSheet.create({
   label: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingLabel,
     marginBottom: hp(1),
   },
   input: {
@@ -283,6 +285,9 @@ const createStyles = c => StyleSheet.create({
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(3),
     borderRadius: wp(2),
+    backgroundColor: c.surface,
+    color: c.text,
+    fontSize: 15,
   },
   unitContainer: {
     flexDirection: 'row',

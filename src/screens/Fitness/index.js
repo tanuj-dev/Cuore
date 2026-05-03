@@ -97,7 +97,7 @@ const WorkoutCard = React.memo(({ item, navigation, styles }) => {
 });
 
 const Fitness = ({ navigation, route }) => {
-  const { colors: c } = useAppTheme();
+  const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
 
   const todayWorkoutDay = route?.params?.initialTab;
@@ -267,8 +267,8 @@ const Fitness = ({ navigation, route }) => {
                 is24Hour={false}
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={onChangeTime}
-                textColor="#1E293B"
-                themeVariant="light"
+                textColor={isDark ? '#FFFFFF' : '#1E293B'}
+                themeVariant={isDark ? 'dark' : 'light'}
               />
             </View>
           )}
@@ -354,6 +354,7 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     height: hp(3.5),
     width: wp(4),
+    tintColor: c.navIconTint,
   },
   title: {
     flex: 1,
@@ -403,7 +404,7 @@ const createStyles = c => StyleSheet.create({
   timeCardSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     marginTop: 4,
     letterSpacing: 0.2,
   },
@@ -429,15 +430,15 @@ const createStyles = c => StyleSheet.create({
     resizeMode: 'contain',
     height: hp(2),
     width: wp(5),
-    tintColor: c.icon,
+    tintColor: c.navIconTint,
   },
   updateBtn: {
     marginTop: hp(1.5),
-    backgroundColor: '#11418A',
+    backgroundColor: c.primary,
     paddingVertical: hp(1.2),
     alignItems: 'center',
     borderRadius: 10,
-    shadowColor: '#11418A',
+    shadowColor: c.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -448,7 +449,7 @@ const createStyles = c => StyleSheet.create({
   },
   updateBtnText: {
     fontFamily: 'Poppins-Medium',
-    color: c.card,
+    color: c.onPrimary,
     fontSize: 14,
     letterSpacing: 0.3,
   },
@@ -488,7 +489,7 @@ const createStyles = c => StyleSheet.create({
     marginRight: 8,
   },
   selectedDayBtn: {
-    backgroundColor: '#E8EEF7',
+    backgroundColor: c.primary,
   },
   dayText: {
     fontFamily: 'Poppins-Regular',
@@ -498,7 +499,7 @@ const createStyles = c => StyleSheet.create({
   },
   selectedDayText: {
     fontFamily: 'Poppins-Medium',
-    color: c.text,
+    color: c.onPrimary,
     fontSize: 16,
     letterSpacing: 0.2,
   },
@@ -544,7 +545,7 @@ const createStyles = c => StyleSheet.create({
   detailText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: c.subText,
+    color: c.onboardingSubtitle,
     letterSpacing: 0.2,
   },
   listContent: {
@@ -554,7 +555,7 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: hp(2),
-    color: c.subText,
+    color: c.onboardingSubtitle,
     fontSize: 14,
     letterSpacing: 0.2,
   },

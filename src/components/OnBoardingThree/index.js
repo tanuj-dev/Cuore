@@ -121,9 +121,11 @@ const OnBoardingThree = ({ onFormChange, initialData = {} }) => {
         <TextInput
           style={styles.input}
           placeholder="Condition 1 / Condition 2 / …"
+          placeholderTextColor={c.inputPlaceholder}
           multiline
           value={text}
           onChangeText={handleChangeText}
+          underlineColorAndroid="transparent"
         />
         <Text style={styles.wordCount}>Characters: {text.length}/60</Text>
       </View>
@@ -136,11 +138,11 @@ export default OnBoardingThree;
 const createStyles = c => StyleSheet.create({
   container: {
     padding: wp(1),
-    backgroundColor: '#fff',
+    backgroundColor: c.card,
     flexGrow: 1,
   },
   card: {
-    backgroundColor: c.background,
+    backgroundColor: c.surface,
     padding: wp(4),
     borderRadius: wp(1),
     marginBottom: hp(2),
@@ -168,31 +170,34 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14, letterSpacing: 0.2,
     flex: 1,
-    color: c.subText,
+    color: c.onboardingLabel,
   },
   tagTitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14, letterSpacing: 0.2,
     marginBottom: hp(1),
-    color: c.subText,
+    color: c.onboardingLabel,
   },
   tagsWrapper: {
     marginTop: hp(2),
-    borderWidth: 0.3,
     borderRadius: hp(0.5),
-    borderColor: c.border,
-    elevation: 1,
     backgroundColor: c.card,
     padding: hp(1),
   },
   input: {
     height: hp(8),
-    borderColor: '#ccc',
+    borderWidth: 0,
     padding: 10,
     borderRadius: 5,
+    color: c.text,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    backgroundColor: 'transparent',
   },
   wordCount: {
     textAlign: 'right',
-    color: '#888',
+    color: c.onboardingNote,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
   },
 });

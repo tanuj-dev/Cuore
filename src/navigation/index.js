@@ -89,7 +89,7 @@ function BottomTabNavigator() {
     : images.PROFILE;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }} edges={['bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.card }} edges={['bottom']}>
       <Tab.Navigator screenOptions={tabOptions}>
         <Tab.Screen
           name="Today"
@@ -255,7 +255,7 @@ function TodayStack() {
 export default function Navigator() {
   const { colors: c } = useAppTheme();
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.card }}>
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{ headerShown: false }}

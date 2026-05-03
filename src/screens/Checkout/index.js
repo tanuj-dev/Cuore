@@ -464,7 +464,7 @@ const Checkout = ({ navigation }) => {
                     height: hp(3.5),
                     width: wp(4),
                     marginLeft: hp(2),
-                    tintColor: '#000',
+                    tintColor: c.navIconTint,
                   }}
                   resizeMode="contain"
                 />

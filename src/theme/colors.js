@@ -134,5 +134,32 @@ export const darkColors = {
   exploreGridImageOverlay: 'rgba(0, 0, 0, 0.45)',
 };
 
-export const getThemeColors = mode =>
-  mode === 'dark' ? darkColors : lightColors;
+/**
+ * Light mode: keep palette aligned with `lightColors` + legacy literals below.
+ * Dark mode: `darkColors` + overrides. Do not substitute dark values on the light branch.
+ */
+export const getThemeColors = mode => {
+  const base = mode === 'dark' ? darkColors : lightColors;
+  const isDark = mode === 'dark';
+  const L = lightColors;
+  return {
+    ...base,
+    /** Mono back / edit icons on headers & dark cards */
+    navIconTint: isDark ? '#FFFFFF' : '#1E293B',
+    /** Onboarding copy (labels, options, helper lines) */
+    onboardingSubtitle: isDark ? '#FFFFFF' : L.subText,
+    onboardingLabel: isDark ? '#FFFFFF' : L.subText,
+    onboardingOption: isDark ? '#FFFFFF' : '#374151',
+    onboardingQuestion: isDark ? '#FFFFFF' : L.text,
+    onboardingNote: isDark ? '#E2E8F0' : '#6B7280',
+    /** Step 1 disclaimer panel */
+    disclaimerPanelBg: isDark ? '#111827' : '#FEFCE8',
+    disclaimerPanelBorder: isDark ? 'rgba(250,204,21,0.45)' : '#FDE047',
+    disclaimerPanelText: isDark ? '#FFFFFF' : '#92400E',
+    /** Step 7 awareness callout */
+    onboardingWarningBg: isDark ? '#111827' : '#FFFBEB',
+    onboardingWarningBorder: isDark ? 'rgba(251,191,36,0.45)' : '#FDE047',
+    /** TextInput placeholder — light: `lightColors.subText` (unchanged); dark: tab inactive */
+    inputPlaceholder: isDark ? base.tabInactive : L.subText,
+  };
+};

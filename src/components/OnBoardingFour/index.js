@@ -77,7 +77,7 @@ export default OnBoardingFour;
 const createStyles = c => StyleSheet.create({
   container: {
     padding: wp(0.5),
-    backgroundColor: '#fff',
+    backgroundColor: c.card,
     flexGrow: 1,
   },
 
@@ -99,8 +99,8 @@ const createStyles = c => StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     // marginTop: 40,
     fontSize: 13, letterSpacing: 0.1,
-    
-    color: c.subText,
+
+    color: c.onboardingNote,
   },
   optionRow: {
     flexDirection: 'row',
@@ -126,7 +126,7 @@ const createStyles = c => StyleSheet.create({
   optionText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14, letterSpacing: 0.2,
-    color: c.subText,
+    color: c.onboardingLabel,
     flex: 1,
   },
   button: {

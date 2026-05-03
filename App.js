@@ -286,10 +286,10 @@ const AppContent = () => {
   }, [checkConnectivity]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.card }}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={colors.background}
+        backgroundColor={colors.card}
       />
       <NavigationContainer ref={navigationRef} theme={navigationTheme}>
         <Navigator />

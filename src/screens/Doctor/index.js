@@ -421,7 +421,7 @@ const Doctor = ({ navigation }) => {
             <TextInput
               value={nameSearch}
               onChangeText={setNameSearch}
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={c.inputPlaceholder}
               placeholder="Type a doctor's name..."
               style={styles.nameSearchInput}
               autoCorrect={false}
@@ -569,7 +569,7 @@ const createStyles = c => StyleSheet.create({
   backIcon: {
     height: hp(3),
     width: wp(5),
-    tintColor: '#1E293B',
+    tintColor: c.navIconTint,
   },
   headerTitle: {
     fontFamily: 'Poppins-SemiBold',

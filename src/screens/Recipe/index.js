@@ -211,7 +211,7 @@ const createStyles = c => StyleSheet.create({
     height: hp(3),
     width: wp(4),
     resizeMode: 'contain',
-    tintColor: c.card,
+    tintColor: c.navIconTint,
   },
   dietBadge: {
     paddingHorizontal: wp(3.5),
