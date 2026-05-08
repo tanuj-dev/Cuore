@@ -85,6 +85,19 @@ const isSubtitleRedundant = (title, subtitle) => {
   return false;
 };
 
+/** Prefer API `title`; if missing, use `subtitle` so the bold line still shows (API sometimes only fills subtitle). */
+const getActivityDisplayLines = item => {
+  const rawTitle = (item?.title || '').trim();
+  const rawSub = (item?.subtitle || '').trim();
+  const primary = rawTitle || rawSub;
+  const showSecond =
+    !!rawTitle &&
+    !!rawSub &&
+    !isSubtitleRedundant(rawTitle, rawSub);
+  const secondary = showSecond ? rawSub : '';
+  return { primary, secondary };
+};
+
 const Mind = ({ navigation }) => {
   const { colors: c, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -135,10 +148,11 @@ const Mind = ({ navigation }) => {
 
   const handleCardPress = useCallback(
     item => {
+      const { primary } = getActivityDisplayLines(item);
       navigation.navigate('MindDetails', {
         instructions: item?.instructions,
         audio: item?.audioUrl,
-        title: item?.title,
+        title: primary,
       });
     },
     [navigation],
@@ -147,7 +161,7 @@ const Mind = ({ navigation }) => {
   const renderActivityCard = useCallback(
     (item, index) => {
       const scheme = activitySchemes[index % activitySchemes.length];
-      const showSubtitle = !isSubtitleRedundant(item?.title, item?.subtitle);
+      const { primary, secondary } = getActivityDisplayLines(item);
       return (
         <TouchableOpacity
           key={index}
@@ -163,11 +177,11 @@ const Mind = ({ navigation }) => {
         >
           <View style={styles.activityCardInner}>
             <Text style={styles.cardTitle} numberOfLines={2}>
-              {item?.title}
+              {primary}
             </Text>
-            {showSubtitle ? (
+            {secondary ? (
               <Text style={styles.cardDesc} numberOfLines={2}>
-                {item?.subtitle}
+                {secondary}
               </Text>
             ) : null}
           </View>
@@ -496,8 +510,9 @@ const createStyles = c => StyleSheet.create({
   },
   activityCardInner: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     minHeight: 0,
+    paddingTop: hp(0.3),
   },
   cardTitle: {
     fontFamily: 'Poppins-Medium',
@@ -505,6 +520,7 @@ const createStyles = c => StyleSheet.create({
     color: c.text,
     marginBottom: hp(0.4),
     letterSpacing: 0.2,
+    textAlign: 'left',
   },
   cardDesc: {
     fontFamily: 'Poppins-Regular',
@@ -512,6 +528,7 @@ const createStyles = c => StyleSheet.create({
     marginTop: hp(0.4),
     color: c.onboardingSubtitle,
     letterSpacing: 0.2,
+    textAlign: 'left',
   },
   footerNote: {
     fontFamily: 'Poppins-Regular',

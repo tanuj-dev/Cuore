@@ -120,7 +120,7 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
           >
             <Text
               style={{
-                color: gender ? c.text : placeholderColor,
+                color: gender ? c.text : c.inputPlaceholder,
                 fontFamily: 'Poppins-Regular',
                 fontSize: 15,
                 letterSpacing: 0.2,

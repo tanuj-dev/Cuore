@@ -113,7 +113,7 @@ const Explore = ({ navigation }) => {
           <Image
             source={item.image}
             style={styles.imageInner}
-            resizeMode="contain"
+            resizeMode="cover"
           />
           <View style={styles.imageToneOverlay} pointerEvents="none" />
         </View>
