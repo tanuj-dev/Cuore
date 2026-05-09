@@ -18,6 +18,12 @@ import Endpoints from './src/utilities/Endpoints';
 import { setSessionExpired, setFCMToken } from './src/redux/Auth/slice';
 import { logoutUser, sendHeartbeatThunk } from './src/redux/Auth/authThunk';
 import notifee, { EventType } from '@notifee/react-native';
+import { navigationRef } from './src/utilities/NavigationService';
+import {
+  AIAssistantProvider,
+  AIAssistantButton,
+  AIAssistantChat,
+} from './src/components/AIAssistant';
 
 const isOutdated = (current, minimum) => {
   const c = current.split('.').map(Number);
@@ -29,8 +35,7 @@ const isOutdated = (current, minimum) => {
   return false;
 };
 
-// Navigation ref to access navigation from outside components
-export const navigationRef = React.createRef();
+// navigationRef lives in src/utilities/NavigationService — imported above
 
 // Inner component that has access to Redux
 const AppContent = () => {
@@ -271,20 +276,25 @@ const AppContent = () => {
   }, [checkConnectivity]);
 
   return (
-    <View style={styles.appContainer}>
-      <NavigationContainer ref={navigationRef}>
-        <Navigator />
-      </NavigationContainer>
-      {!isConnected && <NetworkError onRetry={handleRetry} />}
-      <SessionExpiredModal
-        visible={sessionExpired}
-        onLogin={handleSessionExpired}
-      />
-      <AppUpdateModal visible={showUpdateModal} storeUrl={updateStoreUrl} />
-      {/* Redux Store Debugger - Remove in production */}
-      {/* {__DEV__ && <ReduxDebugger />} */}
-      {__DEV__ && <ApiDebugger />}
-    </View>
+    <AIAssistantProvider>
+      <View style={styles.appContainer}>
+        <NavigationContainer ref={navigationRef}>
+          <Navigator />
+        </NavigationContainer>
+        {!isConnected && <NetworkError onRetry={handleRetry} />}
+        <SessionExpiredModal
+          visible={sessionExpired}
+          onLogin={handleSessionExpired}
+        />
+        <AppUpdateModal visible={showUpdateModal} storeUrl={updateStoreUrl} />
+        {/* Redux Store Debugger - Remove in production */}
+        {/* {__DEV__ && <ReduxDebugger />} */}
+        {__DEV__ && <ApiDebugger />}
+        {/* Floating AI assistant — always on top */}
+        <AIAssistantButton />
+        <AIAssistantChat />
+      </View>
+    </AIAssistantProvider>
   );
 };
 
