@@ -17,6 +17,7 @@ const images = {
   CHAT: require('../assets/images/chat.png'),
   PROFILE: require('../assets/images/profile.png'),
   DOCTOR_PROFILE: require('../assets/images/doctor.png'),
+  DEFAULT_DOCTOR: require('../assets/images/doctor.png'),
   DAILY_READING: require('../assets/images/dailyreading.png'),
   REAL_PROFILE: require('../assets/images/doctor.png'),
   PLUS: require('../assets/images/plussign.png'),

@@ -14,7 +14,10 @@ const initialState = {
   sessionExpired: false,
   paymentStatus: null,
   onboardingStatus: null,
-  fcmToken: null,        // Firebase Cloud Messaging device token
+  /** Free-tier signup (backend echoes from create-account / verify OTP). */
+  isFree: false,
+  month: null,
+  fcmToken: null, // Firebase Cloud Messaging device token
 };
 
 const authSlice = createSlice({
@@ -31,6 +34,8 @@ const authSlice = createSlice({
         role,
         paymentStatus,
         onboardingStatus,
+        isFree,
+        month,
       } = action.payload;
       state.accessToken = accessToken;
       state.refreshToken = refreshToken;
@@ -41,6 +46,8 @@ const authSlice = createSlice({
       state.role = role;
       if (paymentStatus != null) state.paymentStatus = paymentStatus;
       if (onboardingStatus != null) state.onboardingStatus = onboardingStatus;
+      if (isFree != null) state.isFree = Boolean(isFree);
+      if (month !== undefined) state.month = month;
     },
 
     setFCMToken: (state, action) => {
@@ -63,6 +70,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
+        const d = action.payload.data || {};
         const {
           access_token,
           refresh_token,
@@ -72,7 +80,9 @@ const authSlice = createSlice({
           role,
           paymentStatus,
           onboardingStatus,
-        } = action.payload.data || {};
+        } = d;
+        const isFreeRaw = d.isFree ?? d.is_free;
+        const monthRaw = d.month ?? d.subscription_month ?? null;
 
         state.accessToken = access_token;
         state.refreshToken = refresh_token;
@@ -84,6 +94,11 @@ const authSlice = createSlice({
         state.error = null;
         state.paymentStatus = paymentStatus;
         state.onboardingStatus = onboardingStatus;
+        state.isFree =
+          isFreeRaw === true ||
+          isFreeRaw === 'true' ||
+          isFreeRaw === 1;
+        if (monthRaw != null && monthRaw !== '') state.month = monthRaw;
       })
       .addCase(verifyOtp.rejected, (state, action) => {
         state.loading = false;

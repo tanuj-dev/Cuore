@@ -30,7 +30,7 @@ export const verifyOtp = createAsyncThunk(
 
       const res = await postApiCall(
         endpoint,
-        endpoint == 'api/v1/auth/verify-new-user-otp' ? payload2 : payload,
+        endpoint === EndPoints.NEWUSEROTP ? payload2 : payload,
       );
 
       console.log('[verifyOtp] Raw response:', res);

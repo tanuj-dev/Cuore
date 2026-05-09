@@ -27,7 +27,7 @@
       "name" : "Cuore Premium",
       "subscriptions" : [
         {
-          "displayPrice" : "9.99",
+          "displayPrice" : "999",
           "familySharable" : false,
           "groupNumber" : 1,
           "internalID" : "A3B4C5D6-E7F8-9012-CDEF-123456789012",

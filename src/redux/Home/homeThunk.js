@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { getApiCall, postApiCall, putApiCall } from '../../utilities/Services';
+import EndPoints from '../../utilities/Endpoints';
 
 export const getHomeData = createAsyncThunk(
   'onboarding/fetchHomeData',
@@ -114,4 +115,31 @@ export const dismissAlert = createAsyncThunk(
       );
     }
   }
+);
+
+export const respondCheckin = createAsyncThunk(
+  'home/respondCheckin',
+  async ({ status }, { rejectWithValue }) => {
+    if (status !== 'accepted' && status !== 'declined') {
+      return rejectWithValue('Status must be exactly accepted or declined');
+    }
+
+    try {
+      const response = await postApiCall(EndPoints.RESPOND_CHECKIN, { status });
+      if (response?.status === 200 || response?.status === 201) {
+        return { success: true, status, data: response?.data };
+      }
+
+      return rejectWithValue(
+        response?.data?.message || response?.data || 'Failed to respond check-in',
+      );
+    } catch (error) {
+      return rejectWithValue(
+        error?.response?.data?.message ||
+          error?.response?.data ||
+          error?.message ||
+          'Failed to respond check-in',
+      );
+    }
+  },
 );

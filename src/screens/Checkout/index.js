@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,10 +22,29 @@ import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { postApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
 import {
-  IAP_SUBSCRIPTION_ID,
+  IAP_SUBSCRIPTION_IDS,
   IAP_GST_RATE,
   IAP_PLANS,
 } from '../../utilities/Constants';
+
+/** Play Billing offer token: legacy rows use offerToken; OpenIAP standardized offers use offerTokenAndroid. */
+function getAndroidOfferToken(sub) {
+  const legacy = sub?.subscriptionOfferDetailsAndroid;
+  if (Array.isArray(legacy)) {
+    for (const d of legacy) {
+      const t = d?.offerToken ?? d?.offerTokenAndroid;
+      if (t) return String(t);
+    }
+  }
+  const std = sub?.subscriptionOffers;
+  if (Array.isArray(std)) {
+    for (const o of std) {
+      const t = o?.offerTokenAndroid ?? o?.offerToken;
+      if (t) return String(t);
+    }
+  }
+  return null;
+}
 
 const Checkout = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -35,8 +54,33 @@ const Checkout = ({ navigation }) => {
   const { alert, AlertComponent } = useCustomAlert();
   const userId = useSelector(state => state.auth?.userId);
 
-  const selected = IAP_PLANS.find(p => p.title === selectedPlan);
+  const selected = IAP_PLANS.find(p => p.title === selectedPlan) || IAP_PLANS[0];
   const gstAmount = selected ? selected.newPrice * IAP_GST_RATE : 0;
+  const loadedProductIds = useMemo(
+    () =>
+      subscriptions?.map(s => s.productId || s.id).filter(Boolean) || [],
+    [subscriptions],
+  );
+  const availablePlans = useMemo(
+    () =>
+      connected && loadedProductIds.length > 0
+        ? IAP_PLANS.filter(plan => loadedProductIds.includes(plan.productId))
+        : IAP_PLANS,
+    [connected, loadedProductIds],
+  );
+  const plansToRender = useMemo(
+    () => (availablePlans.length > 0 ? availablePlans : IAP_PLANS),
+    [availablePlans],
+  );
+  const selectedProductAvailable =
+    !!selected && loadedProductIds.includes(selected.productId);
+  const getDurationByProductId = useCallback(
+    productId =>
+      IAP_PLANS.find(plan => plan.productId === productId)?.duration ||
+      selected?.duration ||
+      '12 Months',
+    [selected],
+  );
 
   // Ref to always have the latest subscriptions value (avoids stale closure in handleCheckout)
   const subscriptionsRef = useRef([]);
@@ -63,7 +107,8 @@ const Checkout = ({ navigation }) => {
       }
     },
     onPurchaseError: async err => {
-      console.error('IAP: Purchase error:', err);
+      // useIAP maps native errors without productId; log full err for Android debugging.
+      console.error('IAP: Purchase error:', err?.code, err?.message, err);
       setIsProcessingPayment(false);
 
       if (err.code === 'already-owned' || err.code === 'E_ALREADY_OWNED') {
@@ -72,8 +117,8 @@ const Checkout = ({ navigation }) => {
           const purchases = await getAvailablePurchases({
             onlyIncludeActiveItemsIOS: true,
           });
-          const relevantPurchase = purchases?.find(
-            p => p.productId === IAP_SUBSCRIPTION_ID,
+          const relevantPurchase = purchases?.find(p =>
+            IAP_SUBSCRIPTION_IDS.includes(p.productId),
           );
 
           if (relevantPurchase) {
@@ -81,6 +126,7 @@ const Checkout = ({ navigation }) => {
               userId,
               platform: Platform.OS,
               productId: relevantPurchase.productId,
+              duration: getDurationByProductId(relevantPurchase.productId),
               purchaseToken:
                 relevantPurchase.transactionReceipt ||
                 relevantPurchase.purchaseToken,
@@ -159,16 +205,28 @@ const Checkout = ({ navigation }) => {
     }
   }, [subscriptions, connected]);
 
+  // If selected plan is unavailable from store, fallback to first available plan.
+  useEffect(() => {
+    if (!loadedProductIds.length) return;
+    if (selectedProductAvailable) return;
+    const fallback = plansToRender.find(plan =>
+      loadedProductIds.includes(plan.productId),
+    );
+    if (fallback) {
+      setSelectedPlan(fallback.title);
+    }
+  }, [loadedProductIds, selectedProductAvailable, plansToRender]);
+
   // Fetch subscription once IAP is connected
   useEffect(() => {
     if (connected) {
-      console.log('IAP: Connected, fetching:', IAP_SUBSCRIPTION_ID);
+      console.log('IAP: Connected, fetching:', IAP_SUBSCRIPTION_IDS);
       setIsLoadingProducts(true);
-      fetchProducts({ skus: [IAP_SUBSCRIPTION_ID], type: 'subs' })
-        .then(result => {
+      fetchProducts({ skus: IAP_SUBSCRIPTION_IDS, type: 'subs' })
+        .then(() => {
+          // useIAP's fetchProducts resolves to void; subscription details arrive via `subscriptions` state.
           console.log(
-            'IAP: fetchProducts (subs) done, result:',
-            JSON.stringify(result),
+            'IAP: fetchProducts (subs) finished; check `subscriptions` state for catalog (not the promise return value).',
           );
           setIsLoadingProducts(false);
         })
@@ -186,6 +244,7 @@ const Checkout = ({ navigation }) => {
           userId,
           platform: Platform.OS,
           productId: purchase.productId,
+          duration: getDurationByProductId(purchase.productId),
           purchaseToken: purchase.transactionReceipt || purchase.purchaseToken,
           orderId: purchase.transactionId,
           purchaseTime: purchase.transactionDate,
@@ -241,7 +300,7 @@ const Checkout = ({ navigation }) => {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
       }
     },
-    [navigation, userId, dispatch],
+    [navigation, userId, dispatch, getDurationByProductId],
   );
 
   const handlePlanSelect = planTitle => {
@@ -269,8 +328,8 @@ const Checkout = ({ navigation }) => {
         return;
       }
 
-      const relevantPurchase = purchases.find(
-        p => p.productId === IAP_SUBSCRIPTION_ID,
+      const relevantPurchase = purchases.find(p =>
+        IAP_SUBSCRIPTION_IDS.includes(p.productId),
       );
 
       if (!relevantPurchase) {
@@ -289,6 +348,7 @@ const Checkout = ({ navigation }) => {
         userId,
         platform: Platform.OS,
         productId: relevantPurchase.productId,
+        duration: getDurationByProductId(relevantPurchase.productId),
         purchaseToken:
           relevantPurchase.transactionReceipt || relevantPurchase.purchaseToken,
         orderId: relevantPurchase.transactionId,
@@ -354,7 +414,7 @@ const Checkout = ({ navigation }) => {
 
     console.log(
       'IAP: subscriptions state:',
-      subscriptions?.map(p => p.productId),
+      subscriptions?.map(p => p.productId || p.id),
     );
     console.log('IAP: Attempting purchase for:', selected.productId);
 
@@ -362,24 +422,33 @@ const Checkout = ({ navigation }) => {
       setIsProcessingPayment(true);
 
       if (Platform.OS === 'android') {
+        const sku = selected?.productId;
+        if (!sku) {
+          setIsProcessingPayment(false);
+          alert('Unavailable', 'Missing product id for this plan.');
+          return;
+        }
         const subscription = subscriptions?.find(
           p =>
-            p.productId === selected.productId || p.id === selected.productId,
+            (p.productId && p.productId === sku) || p.id === sku,
         );
-        const offerToken =
-          subscription?.subscriptionOfferDetailsAndroid?.[0]?.offerToken;
-        console.log('IAP: Android offerToken:', offerToken);
+        const offerToken = subscription ? getAndroidOfferToken(subscription) : null;
+        const purchaseSku = subscription?.id ?? subscription?.productId ?? sku;
+        console.log('IAP: Android purchase sku:', purchaseSku, 'offerToken:', !!offerToken);
         if (!offerToken) {
           setIsProcessingPayment(false);
-          alert('Unavailable', 'No valid offer found. Please try again later.');
+          alert(
+            'Unavailable',
+            'No valid subscription offer from Google Play for this plan. Check the product is active with a base plan and price, then try again.',
+          );
           return;
         }
         await iapRequestPurchase({
           type: 'subs',
           request: {
-            android: {
-              skus: [selected.productId],
-              subscriptionOffers: [{ sku: selected.productId, offerToken }],
+            google: {
+              skus: [purchaseSku],
+              subscriptionOffers: [{ sku: purchaseSku, offerToken }],
             },
           },
         });
@@ -482,7 +551,40 @@ const Checkout = ({ navigation }) => {
             </View> */}
 
             {/* Plan Selection */}
-            {/* <Text style={styles.sectionTitle}>Choose Your Plan</Text> */}
+            <Text style={styles.sectionTitle}>Choose Your Plan</Text>
+            <View style={styles.planSelectorRow}>
+              {plansToRender.map(plan => {
+                const active = selectedPlan === plan.title;
+                return (
+                  <TouchableOpacity
+                    key={plan.productId}
+                    onPress={() => handlePlanSelect(plan.title)}
+                    style={[
+                      styles.planSelectorChip,
+                      active && styles.planSelectorChipActive,
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[
+                        styles.planSelectorTitle,
+                        active && styles.planSelectorTitleActive,
+                      ]}
+                    >
+                      {plan.title}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.planSelectorPrice,
+                        active && styles.planSelectorPriceActive,
+                      ]}
+                    >
+                      ₹{plan.newPrice}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
             {/* Selected Plan Summary */}
             <View style={styles.selectedPlanCard}>
@@ -491,7 +593,8 @@ const Checkout = ({ navigation }) => {
                 {selected.subtitle}
               </Text>
               <Text style={styles.selectedPlanDuration}>
-                Duration: {selected.duration} · Auto-renews annually
+                Duration: {selected.duration} · Auto-renews{' '}
+                {selected.duration === '1 Month' ? 'monthly' : 'annually'}
               </Text>
 
               <View style={styles.priceRow}>
@@ -594,10 +697,18 @@ const Checkout = ({ navigation }) => {
               onPress={handleCheckout}
               style={[
                 styles.checkoutButton,
-                (isProcessingPayment || !connected || isLoadingProducts) &&
+                (isProcessingPayment ||
+                  !connected ||
+                  isLoadingProducts ||
+                  (loadedProductIds.length > 0 && !selectedProductAvailable)) &&
                   styles.checkoutButtonDisabled,
               ]}
-              disabled={isProcessingPayment || !connected || isLoadingProducts}
+              disabled={
+                isProcessingPayment ||
+                !connected ||
+                isLoadingProducts ||
+                (loadedProductIds.length > 0 && !selectedProductAvailable)
+              }
             >
               {isProcessingPayment ? (
                 <>
@@ -623,6 +734,16 @@ const Checkout = ({ navigation }) => {
                 </Text>
               </View>
             )}
+            {!isLoadingProducts &&
+              connected &&
+              !selectedProductAvailable &&
+              loadedProductIds.length > 0 && (
+                <View style={styles.statusContainer}>
+                  <Text style={styles.statusText}>
+                    Selected plan is not available in the store yet.
+                  </Text>
+                </View>
+              )}
 
             {/* Security Badge */}
             <View style={styles.sslBadge}>
@@ -708,6 +829,41 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     marginBottom: hp(1.5),
     letterSpacing: -0.3,
+  },
+  planSelectorRow: {
+    flexDirection: 'row',
+    gap: wp(2.5),
+    marginBottom: hp(1.5),
+  },
+  planSelectorChip: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(3),
+  },
+  planSelectorChipActive: {
+    borderColor: '#11418A',
+    backgroundColor: '#EFF6FF',
+  },
+  planSelectorTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    color: '#334155',
+  },
+  planSelectorTitleActive: {
+    color: '#11418A',
+  },
+  planSelectorPrice: {
+    marginTop: hp(0.2),
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#64748B',
+  },
+  planSelectorPriceActive: {
+    color: '#11418A',
   },
   planContainer: {
     alignItems: 'center',

@@ -35,6 +35,7 @@ const Endpoints = {
   NOTES: '/api/v1/notes',
   CHECK_APP_VERSION: '/api/v1/app/version',
   REQUEST_SUPERVISION: '/api/v1/users/request/supervision',
+  RESPOND_CHECKIN: '/api/v1/users/respond-checkin',
   HEARTBEAT: '/api/v1/users/heartbeat',
 };
 

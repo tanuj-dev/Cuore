@@ -145,6 +145,7 @@ const OtpScreen = () => {
       ).unwrap();
       console.log('OTP verified:', result);
 
+      const otpData = result?.data || {};
       const {
         access_token,
         refresh_token,
@@ -155,7 +156,19 @@ const OtpScreen = () => {
         isonboarding_complete,
         role: userRole,
         paymentStatus,
-      } = result?.data || {};
+      } = otpData;
+
+      const month = otpData.month ?? otpData.subscription_month ?? null;
+      const isFreeUser =
+        otpData.isFree === true ||
+        otpData.is_free === true ||
+        otpData.isFree === 'true' ||
+        otpData.is_free === 'true';
+
+      const hasPaymentAccess =
+        paymentStatus === 'completed' ||
+        paymentStatus === 'waived' ||
+        isFreeUser;
 
       const tokenPayload = {
         accessToken: access_token,
@@ -166,7 +179,9 @@ const OtpScreen = () => {
         onboardingStatus: onboardingStatus,
         isonboarding_complete,
         role: userRole,
-        paymentStatus: paymentStatus,
+        paymentStatus,
+        month,
+        isFree: Boolean(isFreeUser),
       };
 
       const onboardingDone =
@@ -194,11 +209,7 @@ const OtpScreen = () => {
       }
 
       // Step 2: Caregiver without completed payment — block login, don't save token
-      if (
-        userRole === 'caregiver' &&
-        paymentStatus !== 'completed' &&
-        paymentStatus !== 'waived'
-      ) {
+      if (userRole === 'caregiver' && !hasPaymentAccess) {
         alert(
           'Payment Pending',
           'The account subscription payment is pending. Caregiver cannot complete the payment. Please ask the account owner to complete the payment.',
@@ -214,8 +225,8 @@ const OtpScreen = () => {
       dispatch(setUserData(tokenPayload));
       console.log('Token saved, paymentStatus:', paymentStatus);
 
-      // Step 4: Only completed/waived goes to Home
-      if (paymentStatus === 'completed' || paymentStatus === 'waived') {
+      // Step 4: Paid, waived, or free-tier → Home
+      if (hasPaymentAccess) {
         navigation.reset({
           index: 0,
           routes: [{ name: 'Home' }],
@@ -223,7 +234,7 @@ const OtpScreen = () => {
         return;
       }
 
-      // Step 5: If payment is pending, go to Score (Continue → Checkout)
+      // Step 5: If payment is pending, go to Score (Continue → Checkout unless free-tier)
       if (paymentStatus === 'pending') {
         console.log('paymentStatus is pending, going to Score');
         navigation.reset({

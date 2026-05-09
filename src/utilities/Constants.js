@@ -48,6 +48,12 @@ export default Constants;
 
 // ─── In-App Purchase ────────────────────────────────────────────────────────
 
+export const IAP_SUBSCRIPTION_IDS =
+  Platform.OS === 'ios'
+    ? ['com.cuore.monthly99', 'com.cuore.annual1499']
+    : ['cuore_monthly_99', 'pro_membership_annual'];
+
+// Keep primary annual ID for backward compatibility where single ID is expected.
 export const IAP_SUBSCRIPTION_ID =
   Platform.OS === 'ios' ? 'com.cuore.annual1499' : 'pro_membership_annual';
 
@@ -55,13 +61,25 @@ export const IAP_GST_RATE = 0.18;
 
 export const IAP_PLANS = [
   {
+    title: 'Cuore Monthly',
+    subtitle: 'Flexible monthly access to all premium features',
+    duration: '1 Month',
+    oldPrice: 199,
+    newPrice: 99,
+    daily: '₹3.3/day',
+    discount: '50%',
+    productId:
+      Platform.OS === 'ios' ? 'com.cuore.monthly99' : 'cuore_monthly_99',
+    topPick: false,
+  },
+  {
     title: 'Thrive',
     subtitle: 'Commit to lasting health and sustained results',
     duration: '12 Months',
-    oldPrice: 5999,
-    newPrice: 2999,
-    daily: '₹8.2/day',
-    discount: '50%',
+    oldPrice: 2999,
+    newPrice: 999,
+    daily: '₹2.7/day',
+    discount: '67%',
     productId: IAP_SUBSCRIPTION_ID,
     topPick: true,
   },

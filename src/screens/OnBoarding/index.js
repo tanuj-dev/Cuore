@@ -241,6 +241,8 @@ const OnBoarding = ({ navigation, route }) => {
                   role: updated.role,
                   paymentStatus: updated.paymentStatus,
                   onboardingStatus: updated.onboardingStatus,
+                  isFree: updated.isFree,
+                  month: updated.month,
                 }),
               );
             }

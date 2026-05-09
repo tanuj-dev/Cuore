@@ -123,12 +123,18 @@ const Splash = () => {
           return;
         }
 
-        // Caregiver without valid payment → Login
-        if (
-          parsed.role === 'caregiver' &&
-          parsed.paymentStatus !== 'completed' &&
-          parsed.paymentStatus !== 'waived'
-        ) {
+        const isFreeUser =
+          parsed.isFree === true ||
+          parsed.isFree === 'true' ||
+          parsed.is_free === true;
+
+        const hasPaymentAccess =
+          parsed.paymentStatus === 'completed' ||
+          parsed.paymentStatus === 'waived' ||
+          isFreeUser;
+
+        // Caregiver without valid payment → Login (free-tier counts as access)
+        if (parsed.role === 'caregiver' && !hasPaymentAccess) {
           await EncryptedStorage.removeItem('auth_tokens');
           navigateTo('Login');
           return;
@@ -137,10 +143,7 @@ const Splash = () => {
         dispatch(setUserData(parsed));
 
         // Step 3: Has token + onboarding complete + payment not done → Score/Checkout
-        if (
-          parsed.paymentStatus !== 'completed' &&
-          parsed.paymentStatus !== 'waived'
-        ) {
+        if (!hasPaymentAccess) {
           if (parsed.paymentStatus === 'pending') {
             console.log('Splash: payment pending → Score');
             navigateTo('Score');

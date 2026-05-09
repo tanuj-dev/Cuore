@@ -135,6 +135,7 @@ const Score = ({ navigation }) => {
     state => state.onboardingdata?.data?.data?.o3Data?.hasDiabetes,
   );
   const paymentStatus = useSelector(state => state.auth?.paymentStatus);
+  const isFreeFlag = useSelector(state => state.auth?.isFree);
   const viewShotRef = useRef(null);
   const [sharingLoading, setSharingLoading] = useState(false);
   const [showReferencesModal, setShowReferencesModal] = useState(false);
@@ -279,17 +280,27 @@ const Score = ({ navigation }) => {
 
   const handleContinue = useCallback(async () => {
     let status = paymentStatus;
-    if (status == null) {
-      try {
-        const tokenData = await EncryptedStorage.getItem('auth_tokens');
-        if (tokenData) {
-          const parsed = JSON.parse(tokenData);
-          status = parsed.paymentStatus;
+    let isFreeUser = Boolean(isFreeFlag);
+    try {
+      const tokenData = await EncryptedStorage.getItem('auth_tokens');
+      if (tokenData) {
+        const parsed = JSON.parse(tokenData);
+        if (status == null) status = parsed.paymentStatus;
+        if (!isFreeUser) {
+          isFreeUser =
+            parsed.isFree === true ||
+            parsed.isFree === 'true' ||
+            parsed.is_free === true;
         }
-      } catch (_) {}
-    }
-    console.log('Score: handleContinue paymentStatus:', status);
-    if (status === 'completed' || status === 'waived') {
+      }
+    } catch (_) {}
+
+    console.log('Score: handleContinue paymentStatus:', status, 'isFree:', isFreeUser);
+    if (
+      status === 'completed' ||
+      status === 'waived' ||
+      isFreeUser
+    ) {
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
@@ -300,7 +311,7 @@ const Score = ({ navigation }) => {
         routes: [{ name: 'Checkout' }],
       });
     }
-  }, [navigation, paymentStatus]);
+  }, [navigation, paymentStatus, isFreeFlag]);
 
   const handleReassess = useCallback(() => {
     navigation.navigate('OnBoarding', {

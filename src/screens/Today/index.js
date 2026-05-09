@@ -37,7 +37,7 @@ import { logoutUser } from '../../redux/Auth/authThunk';
 import SessionExpiredModal from '../../components/SessionExpired';
 import { checkReminderThunk } from '../../redux/slices';
 import { getNotification } from '../../redux/Home/notificationThunk';
-import { dismissAlert } from '../../redux/Home/homeThunk';
+import { dismissAlert, respondCheckin } from '../../redux/Home/homeThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 // Module-level fetch cache — survives re-mounts within the same JS session
@@ -294,6 +294,8 @@ const Today = ({ navigation, route }) => {
   const [reminderList, setReminderList] = useState([]);
   const [toastType, setToastType] = useState('success');
   const [loadingTaskId, setLoadingTaskId] = useState(null);
+  const [checkinResponseLoading, setCheckinResponseLoading] = useState({});
+  const [doctorImageLoadFailed, setDoctorImageLoadFailed] = useState(false);
 
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -303,6 +305,28 @@ const Today = ({ navigation, route }) => {
   const role = useSelector(state => state.auth.role);
   const profileData = useSelector(state => state.profile.data?.data?.user);
   const doctorProfile = useSelector(state => state.home.data?.doctor);
+  const doctorImageUri = useMemo(
+    () =>
+      profileData?.doctor?.photoUrl ||
+      profileData?.doctor?.photo_url ||
+      profileData?.doctor_profile?.photoUrl ||
+      profileData?.doctor_profile?.photo_url ||
+      doctorProfile?.profileImage ||
+      doctorProfile?.photoUrl ||
+      null,
+    [profileData, doctorProfile],
+  );
+  const normalizedDoctorImageUri = useMemo(() => {
+    if (typeof doctorImageUri !== 'string') return null;
+    const trimmed = doctorImageUri.trim();
+    if (!trimmed) return null;
+    if (!/^https?:\/\//i.test(trimmed)) return null;
+    return trimmed;
+  }, [doctorImageUri]);
+
+  useEffect(() => {
+    setDoctorImageLoadFailed(false);
+  }, [normalizedDoctorImageUri]);
 
   // Memoize derived data
   const homeData = useMemo(() => data || null, [data]);
@@ -362,6 +386,39 @@ const Today = ({ navigation, route }) => {
       }
     },
     [dispatch, localAlerts],
+  );
+
+  const isDoctorCheckinAlert = useCallback(text => {
+    const normalized = String(text || '').toLowerCase();
+    return (
+      normalized.includes('check-in requested by doctor') ||
+      normalized.includes('check in requested by doctor')
+    );
+  }, []);
+
+  const handleRespondCheckin = useCallback(
+    async (status, alertKey) => {
+      if (status !== 'accepted' && status !== 'declined') return;
+      setCheckinResponseLoading(prev => ({ ...prev, [alertKey]: status }));
+      try {
+        await dispatch(respondCheckin({ status })).unwrap();
+        setToast(
+          status === 'accepted'
+            ? 'Check-in accepted successfully'
+            : 'Check-in declined successfully',
+        );
+        setToastType('success');
+        if (userId) {
+          dispatch(getHomeData(userId));
+        }
+      } catch (error) {
+        setToast(error?.message || 'Failed to respond to check-in');
+        setToastType('error');
+      } finally {
+        setCheckinResponseLoading(prev => ({ ...prev, [alertKey]: null }));
+      }
+    },
+    [dispatch, userId],
   );
 
   const dates = useMemo(() => [formattedDate], [formattedDate]);
@@ -590,24 +647,21 @@ const Today = ({ navigation, route }) => {
               <View style={styles.buttonIconWrapper}>
                 <Image
                   source={
-                    doctorProfile?.profileImage || doctorProfile?.photoUrl
-                      ? {
-                          uri:
-                            doctorProfile?.profileImage ||
-                            doctorProfile?.photoUrl,
-                        }
+                    normalizedDoctorImageUri && !doctorImageLoadFailed
+                      ? { uri: normalizedDoctorImageUri }
                       : Images.DEFAULT_DOCTOR
                   }
                   style={
-                    doctorProfile?.profileImage || doctorProfile?.photoUrl
+                    normalizedDoctorImageUri && !doctorImageLoadFailed
                       ? styles.healthIconFull
                       : styles.healthIcon
                   }
                   resizeMode={
-                    doctorProfile?.profileImage || doctorProfile?.photoUrl
+                    normalizedDoctorImageUri && !doctorImageLoadFailed
                       ? 'cover'
                       : 'contain'
                   }
+                  onError={() => setDoctorImageLoadFailed(true)}
                 />
               </View>
               <Text style={styles.healthButtonText}>Cuore{'\n'}Health</Text>
@@ -685,12 +739,16 @@ const Today = ({ navigation, route }) => {
         {/* Alerts Horizontal Scroll */}
         <View style={styles.warnings}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {localAlerts.map((item, index) => (
+            {localAlerts.map((item, index) => {
+              const alertKey = item.alertId || item.id || String(index);
+              const isRespondable = isDoctorCheckinAlert(item?.text);
+              const loadingStatus = checkinResponseLoading[alertKey];
+              return (
               <View
-                key={item.id}
+                key={item.id || alertKey}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
                   borderRadius: hp(1),
                   padding: hp(2),
                   marginRight: hp(1),
@@ -703,34 +761,78 @@ const Today = ({ navigation, route }) => {
                   position: 'relative',
                 }}
               >
-                <Image
-                  style={{
-                    resizeMode: 'contain',
-                    height: hp(2),
-                    width: wp(4),
-                    tintColor:
-                      item?.type === 'red'
-                        ? '#EF4444'
-                        : item?.type === 'yellow'
-                        ? '#FFCE1B'
-                        : '#A16207',
-                    marginRight: hp(0.5),
-                  }}
-                  source={Images.WARNING}
-                />
-                <Text
-                  style={{
-                    color:
-                      item?.type === 'red'
-                        ? '#B91C1C'
-                        : item?.type === 'yellow'
-                        ? '#A16207'
-                        : '#A16207',
-                    marginRight: hp(2),
-                  }}
-                >
-                  {item?.text}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Image
+                    style={{
+                      resizeMode: 'contain',
+                      height: hp(2),
+                      width: wp(4),
+                      tintColor:
+                        item?.type === 'red'
+                          ? '#EF4444'
+                          : item?.type === 'yellow'
+                          ? '#FFCE1B'
+                          : '#A16207',
+                      marginRight: hp(0.5),
+                    }}
+                    source={Images.WARNING}
+                  />
+                  <Text
+                    style={{
+                      color:
+                        item?.type === 'red'
+                          ? '#B91C1C'
+                          : item?.type === 'yellow'
+                          ? '#A16207'
+                          : '#A16207',
+                      marginRight: hp(2),
+                    }}
+                  >
+                    {item?.text}
+                  </Text>
+                </View>
+                {isRespondable && !isCaregiver && (
+                  <View style={styles.checkinActionsRow}>
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      disabled={!!loadingStatus}
+                      onPress={() => handleRespondCheckin('accepted', alertKey)}
+                      style={[styles.checkinActionBtn, styles.checkinAcceptBtn]}
+                    >
+                      {loadingStatus === 'accepted' ? (
+                        <ActivityIndicator size="small" color="#065F46" />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.checkinActionText,
+                            styles.checkinAcceptText,
+                          ]}
+                        >
+                          Accept
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      disabled={!!loadingStatus}
+                      onPress={() => handleRespondCheckin('declined', alertKey)}
+                      style={[styles.checkinActionBtn, styles.checkinDeclineBtn]}
+                    >
+                      {loadingStatus === 'declined' ? (
+                        <ActivityIndicator size="small" color="#991B1B" />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.checkinActionText,
+                            styles.checkinDeclineText,
+                          ]}
+                        >
+                          Decline
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
                 <TouchableOpacity
                   onPress={() =>
                     handleDismissAlert({
@@ -754,7 +856,8 @@ const Today = ({ navigation, route }) => {
                   />
                 </TouchableOpacity>
               </View>
-            ))}
+            );
+            })}
           </ScrollView>
         </View>
 
@@ -1259,6 +1362,38 @@ const styles = StyleSheet.create({
     marginHorizontal: hp(2),
     backgroundColor: '#FFFFFF',
     padding: hp(0.5),
+  },
+  checkinActionsRow: {
+    flexDirection: 'row',
+    marginTop: hp(1.2),
+    gap: hp(0.8),
+  },
+  checkinActionBtn: {
+    minWidth: wp(18),
+    paddingVertical: hp(0.7),
+    paddingHorizontal: wp(2.5),
+    borderRadius: hp(0.8),
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkinAcceptBtn: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  checkinDeclineBtn: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+  },
+  checkinActionText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 12,
+  },
+  checkinAcceptText: {
+    color: '#065F46',
+  },
+  checkinDeclineText: {
+    color: '#991B1B',
   },
   consult: {
     fontFamily: 'Poppins-Medium',
