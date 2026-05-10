@@ -23,7 +23,20 @@ import {
   AIAssistantProvider,
   AIAssistantButton,
   AIAssistantChat,
+  useAIAssistant,
 } from './src/components/AIAssistant';
+
+// Renders AI widget only when the user has it enabled
+const AIAssistantWidget = () => {
+  const { isEnabled } = useAIAssistant();
+  if (!isEnabled) return null;
+  return (
+    <>
+      <AIAssistantButton />
+      <AIAssistantChat />
+    </>
+  );
+};
 
 const isOutdated = (current, minimum) => {
   const c = current.split('.').map(Number);
@@ -290,9 +303,8 @@ const AppContent = () => {
         {/* Redux Store Debugger - Remove in production */}
         {/* {__DEV__ && <ReduxDebugger />} */}
         {__DEV__ && <ApiDebugger />}
-        {/* Floating AI assistant — always on top */}
-        <AIAssistantButton />
-        <AIAssistantChat />
+        {/* Floating AI assistant — shown only when enabled in Profile */}
+        <AIAssistantWidget />
       </View>
     </AIAssistantProvider>
   );

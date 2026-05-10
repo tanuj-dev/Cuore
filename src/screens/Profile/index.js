@@ -4,6 +4,7 @@ import {
   Text,
   Image,
   StyleSheet,
+  Switch,
   TouchableOpacity,
   ScrollView,
   Modal,
@@ -11,6 +12,7 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { useAIAssistant } from '../../components/AIAssistant';
 import { WebView } from 'react-native-webview';
 import { hp, wp, Images } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
@@ -70,6 +72,7 @@ const profileOptions = [
 const Profile = ({ navigation }) => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
+  const { isEnabled: aiEnabled, toggleEnabled: toggleAI } = useAIAssistant();
   // Group the options by section
   const role = useSelector(state => state.auth.role);
   const isCaregiver = role === 'caregiver';
@@ -294,6 +297,30 @@ const Profile = ({ navigation }) => {
               </View>
               <Image source={Images.RIGHT_ARROW} style={styles.profileArrow} />
             </TouchableOpacity>
+
+            {/* AI Assistant toggle section */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionHeader}>AI ASSISTANT</Text>
+              <View style={styles.item}>
+                {/* Gradient sparkle icon */}
+                <View style={aiStyles.iconCircle}>
+                  <Text style={aiStyles.iconText}>✦</Text>
+                </View>
+                <View style={aiStyles.labelCol}>
+                  <Text style={aiStyles.label}>Cuore AI</Text>
+                  <Text style={aiStyles.sub}>
+                    {aiEnabled ? 'Floating assistant is active' : 'Floating assistant is off'}
+                  </Text>
+                </View>
+                <Switch
+                  value={aiEnabled}
+                  onValueChange={toggleAI}
+                  trackColor={{ false: '#CBD5E1', true: '#BFDBFE' }}
+                  thumbColor={aiEnabled ? '#1D6FE8' : '#94A3B8'}
+                  ios_backgroundColor="#CBD5E1"
+                />
+              </View>
+            </View>
 
             {/* Render sections */}
             {Object.entries(groupedSections).map(([sectionTitle, items]) =>
@@ -586,6 +613,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#475569',
     marginBottom: hp(0.8),
+  },
+});
+
+const aiStyles = StyleSheet.create({
+  iconCircle: {
+    width: wp(9),
+    height: wp(9),
+    borderRadius: wp(4.5),
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  iconText: {
+    fontSize: 16,
+    color: '#4F46E5',
+  },
+  labelCol: {
+    flex: 1,
+    marginLeft: wp(3.5),
+    justifyContent: 'center',
+  },
+  label: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#1E293B',
+    letterSpacing: -0.2,
+  },
+  sub: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 1,
   },
 });
 
