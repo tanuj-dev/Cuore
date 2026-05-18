@@ -39,6 +39,11 @@ import { checkReminderThunk } from '../../redux/slices';
 import { getNotification } from '../../redux/Home/notificationThunk';
 import { dismissAlert, respondCheckin } from '../../redux/Home/homeThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
+import SubscriptionExpiringModal from '../../components/SubscriptionExpiringModal';
+import {
+  isPaymentEndDateToday,
+  navigateToCheckoutFromTabs,
+} from '../../utilities/subscriptionExpiry';
 
 // Module-level fetch cache — survives re-mounts within the same JS session
 const _fetchTs = {};
@@ -296,6 +301,9 @@ const Today = ({ navigation, route }) => {
   const [loadingTaskId, setLoadingTaskId] = useState(null);
   const [checkinResponseLoading, setCheckinResponseLoading] = useState({});
   const [doctorImageLoadFailed, setDoctorImageLoadFailed] = useState(false);
+  const [subscriptionExpiryVisible, setSubscriptionExpiryVisible] =
+    useState(false);
+  const subscriptionExpiryShownRef = useRef(false);
 
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -304,6 +312,7 @@ const Today = ({ navigation, route }) => {
   const userId = useSelector(state => state.auth.userId);
   const role = useSelector(state => state.auth.role);
   const profileData = useSelector(state => state.profile.data?.data?.user);
+  const payment = useSelector(state => state.profile?.data?.data?.payment);
   const doctorProfile = useSelector(state => state.home.data?.doctor);
   const doctorImageUri = useMemo(
     () =>
@@ -463,6 +472,23 @@ const Today = ({ navigation, route }) => {
     }
   }, [dispatch, userId]);
 
+  useEffect(() => {
+    if (isCaregiver || subscriptionExpiryShownRef.current) return;
+    const endDate = payment?.endDate;
+    if (!isPaymentEndDateToday(endDate)) return;
+    subscriptionExpiryShownRef.current = true;
+    setSubscriptionExpiryVisible(true);
+  }, [isCaregiver, payment?.endDate]);
+
+  const handleSubscriptionUpdatePayment = useCallback(() => {
+    setSubscriptionExpiryVisible(false);
+    navigateToCheckoutFromTabs(navigation);
+  }, [navigation]);
+
+  const handleSubscriptionExpiryDismiss = useCallback(() => {
+    setSubscriptionExpiryVisible(false);
+  }, []);
+
   // Update reminder list when homeData changes
   useEffect(() => {
     if (homeData?.dailySchedule) {
@@ -606,6 +632,11 @@ const Today = ({ navigation, route }) => {
       style={{ flex: 1, backgroundColor: '#F8FAFC' }}
     >
       {AlertComponent}
+      <SubscriptionExpiringModal
+        visible={subscriptionExpiryVisible}
+        onUpdatePayment={handleSubscriptionUpdatePayment}
+        onDismiss={handleSubscriptionExpiryDismiss}
+      />
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       <ScrollView
@@ -744,119 +775,129 @@ const Today = ({ navigation, route }) => {
               const isRespondable = isDoctorCheckinAlert(item?.text);
               const loadingStatus = checkinResponseLoading[alertKey];
               return (
-              <View
-                key={item.id || alertKey}
-                style={{
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  borderRadius: hp(1),
-                  padding: hp(2),
-                  marginRight: hp(1),
-                  backgroundColor:
-                    item?.type === 'red'
-                      ? '#FEE4E4'
-                      : item?.type === 'yellow'
-                      ? '#FFFFC5'
-                      : '#f4ba62ff',
-                  position: 'relative',
-                }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image
-                    style={{
-                      resizeMode: 'contain',
-                      height: hp(2),
-                      width: wp(4),
-                      tintColor:
-                        item?.type === 'red'
-                          ? '#EF4444'
-                          : item?.type === 'yellow'
-                          ? '#FFCE1B'
-                          : '#A16207',
-                      marginRight: hp(0.5),
-                    }}
-                    source={Images.WARNING}
-                  />
-                  <Text
-                    style={{
-                      color:
-                        item?.type === 'red'
-                          ? '#B91C1C'
-                          : item?.type === 'yellow'
-                          ? '#A16207'
-                          : '#A16207',
-                      marginRight: hp(2),
-                    }}
-                  >
-                    {item?.text}
-                  </Text>
-                </View>
-                {isRespondable && !isCaregiver && (
-                  <View style={styles.checkinActionsRow}>
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      disabled={!!loadingStatus}
-                      onPress={() => handleRespondCheckin('accepted', alertKey)}
-                      style={[styles.checkinActionBtn, styles.checkinAcceptBtn]}
-                    >
-                      {loadingStatus === 'accepted' ? (
-                        <ActivityIndicator size="small" color="#065F46" />
-                      ) : (
-                        <Text
-                          style={[
-                            styles.checkinActionText,
-                            styles.checkinAcceptText,
-                          ]}
-                        >
-                          Accept
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      disabled={!!loadingStatus}
-                      onPress={() => handleRespondCheckin('declined', alertKey)}
-                      style={[styles.checkinActionBtn, styles.checkinDeclineBtn]}
-                    >
-                      {loadingStatus === 'declined' ? (
-                        <ActivityIndicator size="small" color="#991B1B" />
-                      ) : (
-                        <Text
-                          style={[
-                            styles.checkinActionText,
-                            styles.checkinDeclineText,
-                          ]}
-                        >
-                          Decline
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                )}
-                <TouchableOpacity
-                  onPress={() =>
-                    handleDismissAlert({
-                      userId,
-                      alertId: item.alertId,
-                      itemIndex: index,
-                    })
-                  }
-                  disabled={isCaregiver}
-                  style={{ position: 'absolute', right: hp(1), top: hp(1) }}
+                <View
+                  key={item.id || alertKey}
+                  style={{
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    borderRadius: hp(1),
+                    padding: hp(2),
+                    marginRight: hp(1),
+                    backgroundColor:
+                      item?.type === 'red'
+                        ? '#FEE4E4'
+                        : item?.type === 'yellow'
+                        ? '#FFFFC5'
+                        : '#f4ba62ff',
+                    position: 'relative',
+                  }}
                 >
-                  <Image
-                    style={{
-                      // backgroundColor: '#F6F0F1',
-                      height: hp(1.2),
-                      width: hp(2),
-                      resizeMode: 'contain',
-                      borderRadius: hp(1),
-                    }}
-                    source={Images.CROSS}
-                  />
-                </TouchableOpacity>
-              </View>
-            );
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Image
+                      style={{
+                        resizeMode: 'contain',
+                        height: hp(2),
+                        width: wp(4),
+                        tintColor:
+                          item?.type === 'red'
+                            ? '#EF4444'
+                            : item?.type === 'yellow'
+                            ? '#FFCE1B'
+                            : '#A16207',
+                        marginRight: hp(0.5),
+                      }}
+                      source={Images.WARNING}
+                    />
+                    <Text
+                      style={{
+                        color:
+                          item?.type === 'red'
+                            ? '#B91C1C'
+                            : item?.type === 'yellow'
+                            ? '#A16207'
+                            : '#A16207',
+                        marginRight: hp(2),
+                      }}
+                    >
+                      {item?.text}
+                    </Text>
+                  </View>
+                  {isRespondable && !isCaregiver && (
+                    <View style={styles.checkinActionsRow}>
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        disabled={!!loadingStatus}
+                        onPress={() =>
+                          handleRespondCheckin('accepted', alertKey)
+                        }
+                        style={[
+                          styles.checkinActionBtn,
+                          styles.checkinAcceptBtn,
+                        ]}
+                      >
+                        {loadingStatus === 'accepted' ? (
+                          <ActivityIndicator size="small" color="#065F46" />
+                        ) : (
+                          <Text
+                            style={[
+                              styles.checkinActionText,
+                              styles.checkinAcceptText,
+                            ]}
+                          >
+                            Accept
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        disabled={!!loadingStatus}
+                        onPress={() =>
+                          handleRespondCheckin('declined', alertKey)
+                        }
+                        style={[
+                          styles.checkinActionBtn,
+                          styles.checkinDeclineBtn,
+                        ]}
+                      >
+                        {loadingStatus === 'declined' ? (
+                          <ActivityIndicator size="small" color="#991B1B" />
+                        ) : (
+                          <Text
+                            style={[
+                              styles.checkinActionText,
+                              styles.checkinDeclineText,
+                            ]}
+                          >
+                            Decline
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    onPress={() =>
+                      handleDismissAlert({
+                        userId,
+                        alertId: item.alertId,
+                        itemIndex: index,
+                      })
+                    }
+                    disabled={isCaregiver}
+                    style={{ position: 'absolute', right: hp(1), top: hp(1) }}
+                  >
+                    <Image
+                      style={{
+                        // backgroundColor: '#F6F0F1',
+                        height: hp(1.2),
+                        width: hp(2),
+                        resizeMode: 'contain',
+                        borderRadius: hp(1),
+                      }}
+                      source={Images.CROSS}
+                    />
+                  </TouchableOpacity>
+                </View>
+              );
             })}
           </ScrollView>
         </View>

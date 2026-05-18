@@ -13,7 +13,7 @@ import AppUpdateModal from './src/components/AppUpdateModal';
 import ReduxDebugger from './src/components/ReduxDebugger';
 import ApiDebugger from './src/components/ApiDebugger';
 import { Common } from './src/utilities';
-import Constants, { APP_VERSION, STORE_URL } from './src/utilities/Constants';
+import Constants, { getNativeAppVersion, STORE_URL } from './src/utilities/Constants';
 import Endpoints from './src/utilities/Endpoints';
 import { setSessionExpired, setFCMToken } from './src/redux/Auth/slice';
 import { logoutUser, sendHeartbeatThunk } from './src/redux/Auth/authThunk';
@@ -68,7 +68,7 @@ const AppContent = () => {
           Platform.OS === 'ios' ? res.data?.ios : res.data?.android;
         if (
           platformData?.minVersion &&
-          isOutdated(APP_VERSION, platformData.minVersion)
+          isOutdated(getNativeAppVersion(), platformData.minVersion)
         ) {
           setUpdateStoreUrl(platformData.storeUrl || STORE_URL);
           setShowUpdateModal(true);

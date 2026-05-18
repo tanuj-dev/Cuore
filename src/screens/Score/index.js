@@ -295,12 +295,13 @@ const Score = ({ navigation }) => {
       }
     } catch (_) {}
 
-    console.log('Score: handleContinue paymentStatus:', status, 'isFree:', isFreeUser);
-    if (
-      status === 'completed' ||
-      status === 'waived' ||
-      isFreeUser
-    ) {
+    console.log(
+      'Score: handleContinue paymentStatus:',
+      status,
+      'isFree:',
+      isFreeUser,
+    );
+    if (status === 'completed' || status === 'waived' || isFreeUser) {
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
@@ -475,7 +476,7 @@ const Score = ({ navigation }) => {
                     resizeMode="contain"
                   /> */}
                     <Text style={styles.projectionDisclaimerText}>
-                      As you habits change, update you score regularly.
+                      As your habits change, update your score regularly.
                     </Text>
                   </View>
 

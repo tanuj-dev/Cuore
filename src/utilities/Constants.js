@@ -1,9 +1,28 @@
 import { Platform } from 'react-native';
+import DeviceInfo from 'react-native-device-info';
 
 /** Shown on Score, Today, and Health for the references / sources entry + modals */
 export const CLINICAL_REFERENCES_LABEL = 'Clinical References & Sources';
 
-export const APP_VERSION = Platform.OS === 'ios' ? '1.0.0' : '1.0.0';
+/**
+ * User-visible app version from the native binary (iOS `CFBundleShortVersionString` /
+ * Android `versionName`). Call this when you need a fresh read; `APP_VERSION` is
+ * captured once at startup for backwards compatibility.
+ */
+export function getNativeAppVersion() {
+  try {
+    const v = DeviceInfo.getVersion();
+    if (v != null && String(v).trim() !== '') {
+      return String(v).trim();
+    }
+  } catch {
+    // e.g. tests or bridge not ready
+  }
+  return '0.0.0';
+}
+
+/** Used for update checks (App.js) — same source as Profile version line. */
+export const APP_VERSION = getNativeAppVersion();
 
 export const APP_STORE_URL = 'https://apps.apple.com/app/cuore/id6744594718';
 export const PLAY_STORE_URL = 'market://details?id=com.cuore';
