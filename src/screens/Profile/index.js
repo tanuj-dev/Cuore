@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,12 @@ import {
 } from 'react-native-safe-area-context';
 import { getProfile } from '../../redux/slices';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
+import { getNativeAppVersion } from '../../utilities/Constants';
+import SubscriptionExpiringModal from '../../components/SubscriptionExpiringModal';
+import {
+  isPaymentEndDateToday,
+  navigateToCheckoutFromTabs,
+} from '../../utilities/subscriptionExpiry';
 
 const profileOptions = [
   {
@@ -81,6 +87,9 @@ const Profile = ({ navigation }) => {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [webViewUrl, setWebViewUrl] = useState('');
   const [isWebViewLoading, setIsWebViewLoading] = useState(false);
+  const [subscriptionExpiryVisible, setSubscriptionExpiryVisible] =
+    useState(false);
+  const subscriptionExpiryShownRef = useRef(false);
 
   // Filter out items that caregivers shouldn't see
   const filteredOptions = profileOptions.filter(item => {
@@ -136,7 +145,10 @@ const Profile = ({ navigation }) => {
             }
           }}
           key={index}
-          style={styles.item}
+          style={[
+            styles.item,
+            index === items.length - 1 ? styles.itemLast : null,
+          ]}
         >
           <Image
             source={item.icon}
@@ -169,6 +181,16 @@ const Profile = ({ navigation }) => {
           />
         </TouchableOpacity>
       ))}
+      {sectionTitle === 'GENERAL' ? (
+        <View style={styles.appVersionWrap}>
+          <Text
+            style={styles.appVersionText}
+            accessibilityLabel={`App version ${getNativeAppVersion()} on ${Platform.OS}`}
+          >
+            {`${Platform.OS === 'ios' ? 'iOS' : 'Android'} app · v${getNativeAppVersion()}`}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 
@@ -209,8 +231,37 @@ const Profile = ({ navigation }) => {
           .replace(/_/g, ' ')
           .replace(/\b\w/g, c => c.toUpperCase())
       : 'N/A';
-  const toDate = value =>
-    value ? new Date(value).toLocaleDateString() : 'N/A';
+  const toDateLong = value =>
+    value
+      ? new Date(value).toLocaleDateString(undefined, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : '—';
+
+  const subscriptionStatusKey = (payment?.status || '')
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+  const statusBadgeStyle =
+    {
+      active: { bg: '#DCFCE7', text: '#166534', border: '#BBF7D0' },
+      trialing: { bg: '#E0F2FE', text: '#0369A1', border: '#BAE6FD' },
+      expired: { bg: '#FEE2E2', text: '#B91C1C', border: '#FECACA' },
+      cancelled: { bg: '#F1F5F9', text: '#475569', border: '#E2E8F0' },
+      canceled: { bg: '#F1F5F9', text: '#475569', border: '#E2E8F0' },
+      pending: { bg: '#FEF9C3', text: '#854D0E', border: '#FEF08A' },
+    }[subscriptionStatusKey] || {
+      bg: '#F1F5F9',
+      text: '#475569',
+      border: '#E2E8F0',
+    };
+
+  const hasPaymentDetails = Boolean(
+    payment?.productId || payment?.status || payment?.startDate,
+  );
   console.log('userProfile', userProfile);
   console.log('userID', userID);
   useEffect(() => {
@@ -218,6 +269,23 @@ const Profile = ({ navigation }) => {
       dispatch(getProfile(userID));
     }
   }, [userID, dispatch]);
+
+  useEffect(() => {
+    if (isCaregiver || subscriptionExpiryShownRef.current) return;
+    const endDate = payment?.endDate;
+    if (!isPaymentEndDateToday(endDate)) return;
+    subscriptionExpiryShownRef.current = true;
+    setSubscriptionExpiryVisible(true);
+  }, [isCaregiver, payment?.endDate]);
+
+  const handleSubscriptionUpdatePayment = useCallback(() => {
+    setSubscriptionExpiryVisible(false);
+    navigateToCheckoutFromTabs(navigation);
+  }, [navigation]);
+
+  const handleSubscriptionExpiryDismiss = useCallback(() => {
+    setSubscriptionExpiryVisible(false);
+  }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -230,6 +298,11 @@ const Profile = ({ navigation }) => {
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       {AlertComponent}
+      <SubscriptionExpiringModal
+        visible={subscriptionExpiryVisible}
+        onUpdatePayment={handleSubscriptionUpdatePayment}
+        onDismiss={handleSubscriptionExpiryDismiss}
+      />
       <View style={styles.headerSection}>
         <Image
           source={Images.APP_LOGO}
@@ -356,26 +429,82 @@ const Profile = ({ navigation }) => {
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.subscriptionContent}>
-              <View style={styles.subscriptionCard}>
-                <Text style={styles.subscriptionTitle}>Current Plan</Text>
-                <Text style={styles.subscriptionRow}>
-                  Plan: {toLabel(payment?.productId)}
+            <ScrollView
+              style={styles.subscriptionScroll}
+              contentContainerStyle={styles.subscriptionScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.subscriptionHero}>
+                <Text style={styles.subscriptionHeroLabel}>Your plan</Text>
+                <Text style={styles.subscriptionPlanName} numberOfLines={2}>
+                  {hasPaymentDetails
+                    ? toLabel(payment?.productId)
+                    : 'No subscription on file'}
                 </Text>
-                <Text style={styles.subscriptionRow}>
-                  Status: {toLabel(payment?.status)}
-                </Text>
-                <Text style={styles.subscriptionRow}>
-                  Platform: {toLabel(payment?.platform)}
-                </Text>
-                <Text style={styles.subscriptionRow}>
-                  Start Date: {toDate(payment?.startDate)}
-                </Text>
-                <Text style={styles.subscriptionRow}>
-                  End Date: {toDate(payment?.endDate)}
-                </Text>
+                {hasPaymentDetails ? (
+                  <View
+                    style={[
+                      styles.subscriptionStatusPill,
+                      {
+                        backgroundColor: statusBadgeStyle.bg,
+                        borderColor: statusBadgeStyle.border,
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.subscriptionStatusDot,
+                        { backgroundColor: statusBadgeStyle.text },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.subscriptionStatusText,
+                        { color: statusBadgeStyle.text },
+                      ]}
+                    >
+                      {toLabel(payment?.status)}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.subscriptionHeroHint}>
+                    When you subscribe, your billing period and store platform will
+                    show here.
+                  </Text>
+                )}
               </View>
-            </View>
+
+              {hasPaymentDetails ? (
+                <View style={styles.subscriptionDetailsCard}>
+                  <Text style={styles.subscriptionDetailsHeading}>
+                    Billing details
+                  </Text>
+                  <View style={styles.subscriptionDivider} />
+                  <View style={styles.subscriptionDetailRow}>
+                    <Text style={styles.subscriptionDetailLabel}>Platform</Text>
+                    <Text style={styles.subscriptionDetailValue}>
+                      {toLabel(payment?.platform) === 'N/A'
+                        ? Platform.OS === 'ios'
+                          ? 'iOS'
+                          : 'Android'
+                        : toLabel(payment?.platform)}
+                    </Text>
+                  </View>
+                  <View style={styles.subscriptionDetailRow}>
+                    <Text style={styles.subscriptionDetailLabel}>Started</Text>
+                    <Text style={styles.subscriptionDetailValue}>
+                      {toDateLong(payment?.startDate)}
+                    </Text>
+                  </View>
+                  <View style={styles.subscriptionDetailRowLast}>
+                    <Text style={styles.subscriptionDetailLabel}>Renews / ends</Text>
+                    <Text style={styles.subscriptionDetailValue}>
+                      {toDateLong(payment?.endDate)}
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+            </ScrollView>
           </SafeAreaView>
         </SafeAreaProvider>
       </Modal>
@@ -521,6 +650,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#F1F5F9',
   },
+  itemLast: {
+    borderBottomWidth: 0,
+  },
+  appVersionWrap: {
+    paddingVertical: hp(1.6),
+    paddingHorizontal: wp(4),
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
+  },
+  appVersionText: {
+    textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#94A3B8',
+    letterSpacing: 0.2,
+  },
   itemIcon: {
     width: wp(5.5),
     height: wp(5.5),
@@ -592,27 +738,119 @@ const styles = StyleSheet.create({
     marginTop: -20,
     zIndex: 1,
   },
-  subscriptionContent: {
-    padding: wp(4),
+  subscriptionScroll: {
+    flex: 1,
+    backgroundColor: '#F1F5F9',
   },
-  subscriptionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: wp(4),
+  subscriptionScrollContent: {
+    paddingBottom: hp(4),
+    paddingTop: hp(1),
   },
-  subscriptionTitle: {
+  subscriptionHero: {
+    marginHorizontal: wp(4),
+    marginBottom: hp(2),
+    paddingVertical: hp(3),
+    paddingHorizontal: wp(5),
+    borderRadius: 20,
+    backgroundColor: '#11418A',
+    shadowColor: '#11418A',
+    shadowOpacity: 0.35,
+    shadowOffset: { width: 0, height: 12 },
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  subscriptionHeroLabel: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.85)',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: hp(0.6),
+  },
+  subscriptionPlanName: {
     fontFamily: 'Poppins-SemiBold',
-    fontSize: 16,
-    color: '#1E293B',
-    marginBottom: hp(1.2),
+    fontSize: 22,
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+    lineHeight: 30,
+    marginBottom: hp(1.5),
   },
-  subscriptionRow: {
+  subscriptionHeroHint: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#475569',
-    marginBottom: hp(0.8),
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 21,
+  },
+  subscriptionStatusPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: hp(0.65),
+    paddingHorizontal: wp(3.5),
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  subscriptionStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: wp(2),
+  },
+  subscriptionStatusText: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 13,
+    letterSpacing: 0.2,
+  },
+  subscriptionDetailsCard: {
+    marginHorizontal: wp(4),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: hp(2),
+    paddingHorizontal: wp(4),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  subscriptionDetailsHeading: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 15,
+    color: '#1E293B',
+    letterSpacing: -0.2,
+  },
+  subscriptionDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: hp(1.5),
+  },
+  subscriptionDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: hp(1.1),
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#F1F5F9',
+  },
+  subscriptionDetailRowLast: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: hp(1.1),
+  },
+  subscriptionDetailLabel: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#64748B',
+  },
+  subscriptionDetailValue: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14,
+    color: '#1E293B',
+    maxWidth: '58%',
+    textAlign: 'right',
   },
 });
 
