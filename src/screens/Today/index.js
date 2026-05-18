@@ -47,6 +47,7 @@ import {
 
 // Module-level fetch cache — survives re-mounts within the same JS session
 const _fetchTs = {};
+let _subscriptionExpiryShown = false;
 const CRITICAL_TTL = 5 * 60 * 1000; // 5 min — home + profile
 const isFresh = (key, ttl) =>
   !!_fetchTs[key] && Date.now() - _fetchTs[key] < ttl;
@@ -303,7 +304,6 @@ const Today = ({ navigation, route }) => {
   const [doctorImageLoadFailed, setDoctorImageLoadFailed] = useState(false);
   const [subscriptionExpiryVisible, setSubscriptionExpiryVisible] =
     useState(false);
-  const subscriptionExpiryShownRef = useRef(false);
 
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -473,10 +473,10 @@ const Today = ({ navigation, route }) => {
   }, [dispatch, userId]);
 
   useEffect(() => {
-    if (isCaregiver || subscriptionExpiryShownRef.current) return;
+    if (isCaregiver || _subscriptionExpiryShown) return;
     const endDate = payment?.endDate;
     if (!isPaymentEndDateToday(endDate)) return;
-    subscriptionExpiryShownRef.current = true;
+    _subscriptionExpiryShown = true;
     setSubscriptionExpiryVisible(true);
   }, [isCaregiver, payment?.endDate]);
 
