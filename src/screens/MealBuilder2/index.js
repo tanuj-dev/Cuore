@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -32,7 +32,7 @@ const MealBuilder2 = ({ navigation, route }) => {
 
   const [adjustedPortions, setAdjustedPortions] = useState(data || []);
 
-  const handleRecipePress = async recipeId => {
+  const handleRecipePress = useCallback(async recipeId => {
     if (!recipeId) return;
     try {
       setLoading(true);
@@ -48,7 +48,35 @@ const MealBuilder2 = ({ navigation, route }) => {
       console.error('Failed to fetch recipe:', error);
       navigation.navigate('Recipe', { recipeData: null });
     }
-  };
+  }, [dispatch, navigation]);
+
+  const renderAdjustedItem = useCallback(
+    ({ item }) => {
+      const newServingSize = item?.newServingSizeString;
+      return (
+        <TouchableOpacity
+          onPress={() => handleRecipePress(item?.recipeLink)}
+          style={styles.itemCard}
+          activeOpacity={0.7}
+        >
+          <View style={styles.itemRow}>
+            <View style={styles.itemDot} />
+            <View style={styles.itemContent}>
+              <Text style={styles.servingText}>{newServingSize}</Text>
+              <Text style={styles.calText}>{item?.adjustedCalories} cal</Text>
+            </View>
+            <Image style={styles.arrowIcon} source={Images.RIGHT_ARROW} />
+          </View>
+        </TouchableOpacity>
+      );
+    },
+    [handleRecipePress],
+  );
+
+  const keyExtractorAdjusted = useCallback(
+    (item, index) => String(item?.id ?? item?.name ?? index),
+    [],
+  );
 
   return (
     <ScrollView style={styles.scroll}>
@@ -81,31 +109,8 @@ const MealBuilder2 = ({ navigation, route }) => {
       <View style={styles.contentWrap}>
         <FlatList
           data={data}
-          keyExtractor={(item, index) =>
-            String(item?.id ?? item?.name ?? index)
-          }
-          renderItem={({ item }) => {
-            const newServingSize = item?.newServingSizeString;
-
-            return (
-              <TouchableOpacity
-                onPress={() => handleRecipePress(item?.recipeLink)}
-                style={styles.itemCard}
-                activeOpacity={0.7}
-              >
-                <View style={styles.itemRow}>
-                  <View style={styles.itemDot} />
-                  <View style={styles.itemContent}>
-                    <Text style={styles.servingText}>{newServingSize}</Text>
-                    <Text style={styles.calText}>
-                      {item?.adjustedCalories} cal
-                    </Text>
-                  </View>
-                  <Image style={styles.arrowIcon} source={Images.RIGHT_ARROW} />
-                </View>
-              </TouchableOpacity>
-            );
-          }}
+          keyExtractor={keyExtractorAdjusted}
+          renderItem={renderAdjustedItem}
         />
 
         <TouchableOpacity

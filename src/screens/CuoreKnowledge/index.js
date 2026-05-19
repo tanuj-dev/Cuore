@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -63,7 +63,7 @@ const CuoreKnowledge = ({ navigation }) => {
     }, 2000);
   }, [dispatch, userId]);
 
-  const renderItem = ({ item }) => (
+  const renderItem = useCallback(({ item }) => (
     <TouchableOpacity
       onPress={() =>
         navigation.navigate('KnowledgeDetails', {
@@ -86,7 +86,7 @@ const CuoreKnowledge = ({ navigation }) => {
         </Text>
       </View>
     </TouchableOpacity>
-  );
+  ), [navigation]);
 
   const knowledgeLoading = useSelector(state => state.knowledge.loading);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -53,7 +53,7 @@ const Search = ({ navigation }) => {
     fetchResults();
   }, [debouncedQuery, dispatch]);
 
-  const renderItem = ({ item }) => (
+  const renderItem = useCallback(({ item }) => (
     <TouchableOpacity
       onPress={() => navigation.navigate('Recipe', { recipeData: item })}
       style={[
@@ -103,7 +103,7 @@ const Search = ({ navigation }) => {
         {/* <View styl3e={styles.metaDivider} /> */}
       </View>
     </TouchableOpacity>
-  );
+  ), [navigation]);
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>

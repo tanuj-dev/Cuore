@@ -122,11 +122,7 @@ const Notes = () => {
     [editingId, dispatch, alert],
   );
 
-  if (loading && notes.length === 0) {
-    return <NotesSkeleton />;
-  }
-
-  const renderNote = ({ item }) => (
+  const renderNote = useCallback(({ item }) => (
     <View style={styles.noteWrapper}>
       <View style={styles.noteCard}>
         <Text style={styles.noteDate}>{formatDate(item.createdAt)}</Text>
@@ -147,7 +143,11 @@ const Notes = () => {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleEdit, handleDelete]);
+
+  if (loading && notes.length === 0) {
+    return <NotesSkeleton />;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>

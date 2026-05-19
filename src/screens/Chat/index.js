@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -34,7 +34,7 @@ const Chat = () => {
 
   const [input, setInput] = useState('');
 
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
     if (!input.trim()) return;
 
     const now = new Date();
@@ -53,9 +53,9 @@ const Chat = () => {
       },
     ]);
     setInput('');
-  };
+  }, [input]);
 
-  const renderItem = ({ item }) => {
+  const renderItem = useCallback(({ item }) => {
     if (item.type === 'user') {
       return (
         <View style={styles.userMsgContainer}>
@@ -75,7 +75,7 @@ const Chat = () => {
     }
 
     return null;
-  };
+  }, []);
 
   return (
     <SafeAreaView

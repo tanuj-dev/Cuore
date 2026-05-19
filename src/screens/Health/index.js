@@ -460,6 +460,60 @@ const Health = ({ navigation }) => {
     navigation.navigate('HealthRecords');
   }, [navigation]);
 
+  const renderObservationKey = useCallback(
+    (item, index) => `${item.parameter}-${index}`,
+    [],
+  );
+
+  const renderObservationItem = useCallback(
+    ({ item }) => (
+      <View
+        style={{
+          paddingVertical: hp(2),
+          borderBottomWidth: 1,
+          borderColor: '#E5E7EB',
+        }}
+      >
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between' }}
+        >
+          <Text
+            style={{
+              width: hp(17),
+              fontSize: 14,
+              color: '#000000',
+              fontFamily: 'Poppins-Regular',
+            }}
+          >
+            {item?.parameter}
+          </Text>
+          <Text
+            style={{
+              marginLeft: hp(2),
+              width: hp(17),
+              fontSize: 14,
+              color: '#374151',
+              fontFamily: 'Poppins-Regular',
+            }}
+          >
+            {item?.value ?? '-'}
+          </Text>
+          <View style={{ width: hp(17) }}>
+            <View
+              style={{
+                height: hp(2),
+                width: hp(2),
+                borderRadius: hp(4),
+                backgroundColor: item.status,
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    ),
+    [],
+  );
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -719,60 +773,13 @@ const Health = ({ navigation }) => {
                   </View>
                   <FlatList
                     data={healthObservationsData}
-                    keyExtractor={(item, index) => `${item.parameter}-${index}`}
+                    keyExtractor={renderObservationKey}
                     removeClippedSubviews={true}
                     maxToRenderPerBatch={10}
                     updateCellsBatchingPeriod={50}
                     initialNumToRender={7}
                     windowSize={10}
-                    renderItem={({ item }) => (
-                      <View
-                        style={{
-                          paddingVertical: hp(2),
-                          borderBottomWidth: 1,
-                          borderColor: '#E5E7EB',
-                        }}
-                      >
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <Text
-                            style={{
-                              width: hp(17),
-                              fontSize: 14,
-                              color: '#000000',
-                              fontFamily: 'Poppins-Regular',
-                            }}
-                          >
-                            {item?.parameter}
-                          </Text>
-                          <Text
-                            style={{
-                              marginLeft: hp(2),
-                              width: hp(17),
-                              fontSize: 14,
-                              color: '#374151',
-                              fontFamily: 'Poppins-Regular',
-                            }}
-                          >
-                            {item?.value ?? '-'}
-                          </Text>
-                          <View style={{ width: hp(17) }}>
-                            <View
-                              style={{
-                                height: hp(2),
-                                width: hp(2),
-                                borderRadius: hp(4),
-                                backgroundColor: item.status,
-                              }}
-                            />
-                          </View>
-                        </View>
-                      </View>
-                    )}
+                    renderItem={renderObservationItem}
                   />
                 </View>
 

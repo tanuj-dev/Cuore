@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -171,14 +171,14 @@ const OnBoarding2 = ({ onFormChange, initialData }) => {
               <FlatList
                 data={genderOptions}
                 keyExtractor={item => item.value}
-                renderItem={({ item }) => (
+                renderItem={useCallback(({ item }) => (
                   <TouchableOpacity
                     style={styles.modalItem}
                     onPress={() => handleGenderSelect(item.value)}
                   >
                     <Text style={styles.modalItemText}>{item.label}</Text>
                   </TouchableOpacity>
-                )}
+                ), [handleGenderSelect])}
               />
               <TouchableOpacity
                 style={styles.modalCancel}

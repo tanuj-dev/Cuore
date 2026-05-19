@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -223,7 +223,7 @@ const ApiDebugger = () => {
           <FlatList
             data={logs}
             keyExtractor={item => String(item.id)}
-            renderItem={({ item }) => <LogItem item={item} />}
+            renderItem={useCallback(({ item }) => <LogItem item={item} />, [])}
             contentContainerStyle={styles.list}
             ListEmptyComponent={
               <Text style={styles.emptyText}>No API calls yet</Text>

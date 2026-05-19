@@ -145,6 +145,96 @@ const ALERT_REFERENCES = [
 
 import SkeletonBox from '../../components/SkeletonBox';
 
+// ─── Memoized reminder row ─────────────────────────────────────────────────────
+
+const ReminderItem = React.memo(
+  ({
+    item,
+    isCaregiver,
+    loadingTaskId,
+    onToggleNotification,
+    onEdit,
+    onToggleComplete,
+    onNavigate,
+  }) => {
+    const isEditable =
+      item?.editable === true &&
+      ['wake up', 'fitness'].includes(item.title?.toLowerCase());
+
+    return (
+      <View style={styles.taskRow}>
+        <View style={styles.taskTimeColumn}>
+          <Text style={styles.time}>{item?.time}</Text>
+          <View style={styles.notificationRow}>
+            <TouchableOpacity
+              disabled={isCaregiver}
+              onPress={() => onToggleNotification(item)}
+            >
+              <Image
+                style={[
+                  styles.notificationIcon,
+                  { tintColor: item.alarm_notified ? '#FFCE1B' : '#6B7280' },
+                ]}
+                source={Images.NOTIFICATION}
+              />
+            </TouchableOpacity>
+            {isEditable && (
+              <TouchableOpacity
+                disabled={isCaregiver}
+                onPress={() => onEdit(item)}
+              >
+                <Image style={styles.editIcon} source={Images.EDIT} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        <TouchableOpacity
+          disabled={
+            isCaregiver ||
+            loadingTaskId === item.id ||
+            loadingTaskId === 'all'
+          }
+          onPress={() => onToggleComplete(item)}
+          style={styles.taskDotWrap}
+        >
+          <View style={styles.blackDot}>
+            {loadingTaskId === item.id || loadingTaskId === 'all' ? (
+              <ActivityIndicator size="small" color="#11418A" />
+            ) : (
+              item.completed && <View style={styles.blackDotInner} />
+            )}
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => onNavigate(item)}
+          style={[styles.taskCard, { borderLeftColor: item?.color }]}
+        >
+          <View style={styles.taskHeader}>
+            <Text style={styles.taskIcon}>{item?.icon}</Text>
+          </View>
+          <View style={styles.taskCardBody}>
+            <View style={styles.taskContent}>
+              <Text style={styles.taskTitle} numberOfLines={1}>
+                {item?.title?.length > 35
+                  ? `${item.title.slice(0, 35)}...`
+                  : item.title}
+              </Text>
+              <Text style={styles.taskDescription} numberOfLines={2}>
+                {item.description}
+              </Text>
+            </View>
+            {item?.completed && (
+              <Image source={Images.RIGHT} style={styles.checkIcon} />
+            )}
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  },
+);
+
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 const TodaySkeleton = () => (
@@ -558,6 +648,84 @@ const Today = ({ navigation, route }) => {
     }
   }, [dispatch, navigation]);
 
+  const handleToggleNotification = useCallback(
+    item => {
+      if (isCaregiver) return;
+      const isCurrentlyOn = item?.alarm_notified;
+      setReminderList(prev =>
+        prev.map(reminder =>
+          reminder.id === item.id
+            ? { ...reminder, alarm_notified: !reminder.alarm_notified }
+            : reminder,
+        ),
+      );
+      dispatch(
+        getNotification({
+          userId,
+          reminderId: item?.id,
+          time: item?.time,
+          title: item?.title,
+        }),
+      );
+      if (isCurrentlyOn) {
+        setToast('Reminder cancelled');
+        setToastType('error');
+      } else {
+        setToast(`Reminder set! You'll be notified at ${item?.time}`);
+        setToastType('success');
+      }
+    },
+    [isCaregiver, dispatch, userId],
+  );
+
+  const handleEditItem = useCallback(
+    item => {
+      if (isCaregiver) return;
+      setRequestId(item);
+      setShowModal(true);
+    },
+    [isCaregiver],
+  );
+
+  const handleToggleComplete = useCallback(
+    async item => {
+      if (isCaregiver) return;
+      setLoadingTaskId(item.id);
+      setReminderList(prev =>
+        prev.map(reminder =>
+          reminder.id === item.id
+            ? { ...reminder, completed: !reminder.completed }
+            : reminder,
+        ),
+      );
+      try {
+        await dispatch(
+          checkReminderThunk({
+            id: item.id,
+            userId,
+            body: { complete: !item.completed },
+          }),
+        ).unwrap();
+      } catch (error) {
+        setReminderList(prev =>
+          prev.map(reminder =>
+            reminder.id === item.id
+              ? { ...reminder, completed: item.completed }
+              : reminder,
+          ),
+        );
+      } finally {
+        setLoadingTaskId(null);
+      }
+    },
+    [isCaregiver, dispatch, userId],
+  );
+
+  const keyExtractorReminder = useCallback(
+    (item, index) => `${item?.id || item?.title || 'task'}-${index}`,
+    [],
+  );
+
   const handleNavigationPress = useCallback(
     item => {
       const targetRoute = TITLE_TO_ROUTE_MAP[item.title];
@@ -610,6 +778,28 @@ const Today = ({ navigation, route }) => {
       }
     },
     [navigation],
+  );
+
+  const renderReminderItem = useCallback(
+    ({ item }) => (
+      <ReminderItem
+        item={item}
+        isCaregiver={isCaregiver}
+        loadingTaskId={loadingTaskId}
+        onToggleNotification={handleToggleNotification}
+        onEdit={handleEditItem}
+        onToggleComplete={handleToggleComplete}
+        onNavigate={handleNavigationPress}
+      />
+    ),
+    [
+      isCaregiver,
+      loadingTaskId,
+      handleToggleNotification,
+      handleEditItem,
+      handleToggleComplete,
+      handleNavigationPress,
+    ],
   );
 
   // Show skeleton only on first load — not on background refetches where data already exists
@@ -930,9 +1120,7 @@ const Today = ({ navigation, route }) => {
 
           <FlatList
             data={reminderList}
-            keyExtractor={(item, index) =>
-              `${item?.id || item?.title || 'task'}-${index}`
-            }
+            keyExtractor={keyExtractorReminder}
             removeClippedSubviews={false}
             maxToRenderPerBatch={10}
             updateCellsBatchingPeriod={50}
@@ -943,172 +1131,7 @@ const Today = ({ navigation, route }) => {
                 <Text style={styles.emptyText}>No items found.</Text>
               </View>
             }
-            renderItem={({ item, index: itemIndex }) => {
-              const handleNotificationToggle = () => {
-                if (isCaregiver) return;
-
-                const isCurrentlyOn = item?.alarm_notified;
-
-                // Optimistically update local state
-                setReminderList(prev =>
-                  prev.map(reminder =>
-                    reminder.id === item.id
-                      ? {
-                          ...reminder,
-                          alarm_notified: !reminder.alarm_notified,
-                        }
-                      : reminder,
-                  ),
-                );
-
-                // Notify backend — it will schedule/cancel the FCM push notification
-                dispatch(
-                  getNotification({
-                    userId,
-                    reminderId: item?.id,
-                    time: item?.time,
-                    title: item?.title,
-                  }),
-                );
-
-                // Show toast
-                if (isCurrentlyOn) {
-                  setToast('Reminder cancelled');
-                  setToastType('error');
-                } else {
-                  setToast(`Reminder set! You'll be notified at ${item?.time}`);
-                  setToastType('success');
-                }
-              };
-
-              const handleEditPress = () => {
-                if (isCaregiver) return;
-                setRequestId(item);
-                setShowModal(true);
-              };
-
-              const handleCompleteToggle = async () => {
-                if (isCaregiver) return;
-
-                // Set loading state for this specific task
-                setLoadingTaskId(item.id);
-
-                // Optimistically update local state
-                setReminderList(prev =>
-                  prev.map(reminder =>
-                    reminder.id === item.id
-                      ? { ...reminder, completed: !reminder.completed }
-                      : reminder,
-                  ),
-                );
-
-                // Dispatch backend update
-                try {
-                  await dispatch(
-                    checkReminderThunk({
-                      id: item.id,
-                      userId,
-                      body: { complete: !item.completed },
-                    }),
-                  ).unwrap();
-                } catch (error) {
-                  // Revert optimistic update on error
-                  setReminderList(prev =>
-                    prev.map(reminder =>
-                      reminder.id === item.id
-                        ? { ...reminder, completed: item.completed }
-                        : reminder,
-                    ),
-                  );
-                  console.error('Failed to update task:', error);
-                } finally {
-                  // Clear loading state
-                  setLoadingTaskId(null);
-                }
-              };
-
-              const isEditable =
-                item?.editable === true &&
-                ['wake up', 'fitness'].includes(item.title?.toLowerCase());
-
-              return (
-                <View key={item?.id || itemIndex} style={styles.taskRow}>
-                  <View style={styles.taskTimeColumn}>
-                    <Text style={styles.time}>{item?.time}</Text>
-                    <View style={styles.notificationRow}>
-                      <TouchableOpacity
-                        disabled={isCaregiver}
-                        onPress={handleNotificationToggle}
-                      >
-                        <Image
-                          style={[
-                            styles.notificationIcon,
-                            {
-                              tintColor: item.alarm_notified
-                                ? '#FFCE1B'
-                                : '#6B7280',
-                            },
-                          ]}
-                          source={Images.NOTIFICATION}
-                        />
-                      </TouchableOpacity>
-
-                      {isEditable && (
-                        <TouchableOpacity
-                          disabled={isCaregiver}
-                          onPress={handleEditPress}
-                        >
-                          <Image style={styles.editIcon} source={Images.EDIT} />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  </View>
-
-                  {/* check black dot */}
-                  <TouchableOpacity
-                    disabled={
-                      isCaregiver ||
-                      loadingTaskId === item.id ||
-                      loadingTaskId === 'all'
-                    }
-                    onPress={handleCompleteToggle}
-                    style={styles.taskDotWrap}
-                  >
-                    <View style={styles.blackDot}>
-                      {loadingTaskId === item.id || loadingTaskId === 'all' ? (
-                        <ActivityIndicator size="small" color="#11418A" />
-                      ) : (
-                        item.completed && <View style={styles.blackDotInner} />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => handleNavigationPress(item)}
-                    style={[styles.taskCard, { borderLeftColor: item?.color }]}
-                  >
-                    <View style={styles.taskHeader}>
-                      <Text style={styles.taskIcon}>{item?.icon}</Text>
-                    </View>
-                    <View style={styles.taskCardBody}>
-                      <View style={styles.taskContent}>
-                        <Text style={styles.taskTitle} numberOfLines={1}>
-                          {item?.title?.length > 35
-                            ? `${item.title.slice(0, 35)}...`
-                            : item.title}
-                        </Text>
-                        <Text style={styles.taskDescription} numberOfLines={2}>
-                          {item.description}
-                        </Text>
-                      </View>
-                      {item?.completed && (
-                        <Image source={Images.RIGHT} style={styles.checkIcon} />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              );
-            }}
+            renderItem={renderReminderItem}
             showsVerticalScrollIndicator={false}
           />
 

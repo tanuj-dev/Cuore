@@ -555,14 +555,14 @@ export default function AIAssistantChat() {
             ref={flatListRef}
             data={messages}
             keyExtractor={item => item.id}
-            renderItem={({ item }) => (
+            renderItem={useCallback(({ item }) => (
               <MessageBubble
                 message={item}
                 colors={colors}
                 isDark={isDark}
                 onSuggestionPress={handleSuggestion}
               />
-            )}
+            ), [colors, isDark, handleSuggestion])}
             contentContainerStyle={panelS.messageList}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={scrollToBottom}

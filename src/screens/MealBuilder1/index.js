@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -39,29 +39,27 @@ const MealBuilder1 = ({ navigation, route }) => {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [adjustedPortions, setAdjustedPortions] = useState(null);
 
-  const increment = id => {
-    const updated = selectedItems.map(item =>
-      item.id === id ? { ...item, count: item.count + 1 } : item,
+  const increment = useCallback(id => {
+    setSelectedItems(prev =>
+      prev.map(item => (item.id === id ? { ...item, count: item.count + 1 } : item)),
     );
-    setSelectedItems(updated);
-  };
+  }, []);
 
-  const decrement = id => {
-    const updated = selectedItems
-      .map(item => (item.id === id ? { ...item, count: item.count - 1 } : item))
-      .filter(item => item.count > 0); // ⛔ Remove if count is 0
+  const decrement = useCallback(id => {
+    setSelectedItems(prev =>
+      prev
+        .map(item => (item.id === id ? { ...item, count: item.count - 1 } : item))
+        .filter(item => item.count > 0),
+    );
+  }, []);
 
-    setSelectedItems(updated);
-  };
-
-  const totalSelected = selectedItems.length;
-  const totalCalories = selectedItems.reduce(
-    (sum, item) => sum + item.count * item.calories,
-    0,
+  const totalCalories = useMemo(
+    () => selectedItems.reduce((sum, item) => sum + item.count * item.calories, 0),
+    [selectedItems],
   );
   const maxAllowed = 4;
 
-  const handleAdjustPortions = async () => {
+  const handleAdjustPortions = useCallback(async () => {
     console.log('Handling portion adjustment...');
 
     // Early exit if too many items
@@ -116,7 +114,36 @@ const MealBuilder1 = ({ navigation, route }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedItems, targetCalories, activeCuisine, activeTab, dispatch, navigation, alert]);
+
+  const renderDishItem = useCallback(
+    ({ item }) => (
+      <View style={styles.dishCard}>
+        <View style={styles.dishRow}>
+          <View style={styles.dishDot} />
+          <View style={styles.dishInfo}>
+            <Text style={styles.dishName}>{item?.dishname}</Text>
+            <Text style={styles.dishCal}>{item?.calories} cal</Text>
+          </View>
+        </View>
+        <View style={styles.portionRow}>
+          <TouchableOpacity onPress={() => decrement(item?.id)} style={styles.portionBtn}>
+            <Text style={styles.portionBtnText}>−</Text>
+          </TouchableOpacity>
+          <Text style={styles.countText}>{item.count}</Text>
+          <TouchableOpacity onPress={() => increment(item.id)} style={styles.portionBtn}>
+            <Text style={styles.portionBtnText}>+</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ),
+    [increment, decrement],
+  );
+
+  const keyExtractorDish = useCallback(
+    (item, index) => String(item?.id ?? item?.dishname ?? index),
+    [],
+  );
 
   return (
     <>
@@ -164,36 +191,8 @@ const MealBuilder1 = ({ navigation, route }) => {
         <View style={styles.contentWrap}>
           <FlatList
             data={selectedItems}
-            keyExtractor={(item, index) =>
-              String(item?.id ?? item?.dishname ?? index)
-            }
-            renderItem={({ item }) => (
-              <View style={styles.dishCard}>
-                <View style={styles.dishRow}>
-                  <View style={styles.dishDot} />
-                  <View style={styles.dishInfo}>
-                    <Text style={styles.dishName}>{item?.dishname}</Text>
-                    <Text style={styles.dishCal}>{item?.calories} cal</Text>
-                  </View>
-                </View>
-
-                <View style={styles.portionRow}>
-                  <TouchableOpacity
-                    onPress={() => decrement(item?.id)}
-                    style={styles.portionBtn}
-                  >
-                    <Text style={styles.portionBtnText}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.countText}>{item.count}</Text>
-                  <TouchableOpacity
-                    onPress={() => increment(item.id)}
-                    style={styles.portionBtn}
-                  >
-                    <Text style={styles.portionBtnText}>+</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+            keyExtractor={keyExtractorDish}
+            renderItem={renderDishItem}
           />
 
           {selectedItems?.length > 0 && (

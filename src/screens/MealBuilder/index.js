@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -129,9 +129,9 @@ const MealBuilder = ({ navigation, route }) => {
     };
   });
 
-  const sumofCalories = selectedItems.reduce(
-    (sum, item) => sum + item.calories,
-    0,
+  const sumofCalories = useMemo(
+    () => selectedItems.reduce((sum, item) => sum + item.calories, 0),
+    [selectedItems],
   );
 
   // Select dataset based on tab + cuisine
@@ -157,7 +157,7 @@ const MealBuilder = ({ navigation, route }) => {
       .filter(Boolean);
   }, [selectedData, searchText]);
 
-  const toggleExpand = category => {
+  const toggleExpand = useCallback(category => {
     const isSame = expandedCategory === category;
     const newCategory = isSame ? null : category;
     setExpandedCategory(newCategory);
@@ -184,9 +184,9 @@ const MealBuilder = ({ navigation, route }) => {
         }).start();
       }
     });
-  };
+  }, [animationMap, expandedCategory]);
 
-  const renderCard = ({ item }) => {
+  const renderCard = useCallback(({ item }) => {
     const category = item.category;
     const items = item.items || [];
 
@@ -302,9 +302,9 @@ const MealBuilder = ({ navigation, route }) => {
         </Animated.View>
       </View>
     );
-  };
+  }, [animationMap, expandedCategory, selectedItems, toggleExpand]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       const combos = [
@@ -319,7 +319,7 @@ const MealBuilder = ({ navigation, route }) => {
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [dispatch]);
 
   if (!itemsByCombo || Object.keys(itemsByCombo).length === 0) {
     return <MealBuilderSkeleton />;
