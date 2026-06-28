@@ -13,7 +13,10 @@ import AppUpdateModal from './src/components/AppUpdateModal';
 import ReduxDebugger from './src/components/ReduxDebugger';
 import ApiDebugger from './src/components/ApiDebugger';
 import { Common } from './src/utilities';
-import Constants, { getNativeAppVersion, STORE_URL } from './src/utilities/Constants';
+import Constants, {
+  getNativeAppVersion,
+  STORE_URL,
+} from './src/utilities/Constants';
 import Endpoints from './src/utilities/Endpoints';
 import { setSessionExpired, setFCMToken } from './src/redux/Auth/slice';
 import { logoutUser, sendHeartbeatThunk } from './src/redux/Auth/authThunk';

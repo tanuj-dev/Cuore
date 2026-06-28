@@ -24,7 +24,7 @@ export function getNativeAppVersion() {
 /** Used for update checks (App.js) — same source as Profile version line. */
 export const APP_VERSION = getNativeAppVersion();
 
-export const APP_STORE_URL = 'https://apps.apple.com/app/cuore/id6744594718';
+export const APP_STORE_URL = 'https://apps.apple.com/app/cuore/id6758409790';
 export const PLAY_STORE_URL = 'market://details?id=com.cuore';
 
 export const STORE_URL = Platform.OS === 'ios' ? APP_STORE_URL : PLAY_STORE_URL;

@@ -7,6 +7,7 @@ import {
   Animated,
   StyleSheet,
   Linking,
+  Platform,
 } from 'react-native';
 import { hp, wp } from '../../utilities';
 
@@ -26,24 +27,36 @@ const AppUpdateModal = ({ visible, storeUrl }) => {
     }
   }, [visible, slideAnim]);
 
-  const handleUpdate = () => {
-    if (storeUrl) {
-      Linking.canOpenURL(storeUrl)
-        .then(supported => {
-          if (supported) {
-            Linking.openURL(storeUrl);
-          } else {
-            // Fallback to https Play Store URL if market:// scheme unavailable
-            Linking.openURL(
-              'https://play.google.com/store/apps/details?id=com.cuore',
-            );
-          }
-        })
-        .catch(() => {
-          Linking.openURL(
-            'https://play.google.com/store/apps/details?id=com.cuore',
-          );
-        });
+  const handleUpdate = async () => {
+    const APP_STORE_ID = '6758409790';
+    const ANDROID_PACKAGE = 'com.cuore';
+
+    // Ordered list of URLs to try. The first that opens wins.
+    // iOS: itms-apps:// opens the native App Store using the DEVICE's storefront
+    //   (its account region), which avoids the "not available in your region"
+    //   error you get from a country-less https link (which defaults to US).
+    // Android: market:// opens the Play Store app; https is the universal fallback.
+    const candidates =
+      Platform.OS === 'ios'
+        ? [
+            `itms-apps://apps.apple.com/app/id${APP_STORE_ID}`,
+            storeUrl,
+            `https://apps.apple.com/app/id${APP_STORE_ID}`,
+          ]
+        : [
+            storeUrl,
+            `market://details?id=${ANDROID_PACKAGE}`,
+            `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}`,
+          ];
+
+    for (const url of candidates) {
+      if (!url) continue;
+      try {
+        await Linking.openURL(url);
+        return;
+      } catch (_e) {
+        // Try the next candidate.
+      }
     }
   };
 
