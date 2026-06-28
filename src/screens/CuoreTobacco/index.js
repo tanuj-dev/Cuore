@@ -25,27 +25,73 @@ import SkeletonBox from '../../components/SkeletonBox';
 const TobaccoSkeleton = () => (
   <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
     {/* Header placeholder */}
-    <View style={{ height: hp(7), backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', justifyContent: 'center', paddingHorizontal: hp(2) }}>
+    <View
+      style={{
+        height: hp(7),
+        backgroundColor: '#FFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+        justifyContent: 'center',
+        paddingHorizontal: hp(2),
+      }}
+    >
       <SkeletonBox width={140} height={20} />
     </View>
-    <ScrollView scrollEnabled={false} contentContainerStyle={{ padding: wp(4), backgroundColor: '#F8FAFC', gap: hp(2) }}>
+    <ScrollView
+      scrollEnabled={false}
+      contentContainerStyle={{
+        padding: wp(4),
+        backgroundColor: '#F8FAFC',
+        gap: hp(2),
+      }}
+    >
       {/* Main box */}
-      <View style={{ backgroundColor: '#F1F5F9', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(2) }}>
+      <View
+        style={{
+          backgroundColor: '#F1F5F9',
+          padding: wp(4),
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: '#E2E8F0',
+          gap: hp(2),
+        }}
+      >
         <SkeletonBox width={160} height={16} />
         <SkeletonBox width="100%" height={50} borderRadius={10} />
-        <SkeletonBox width={80} height={36} borderRadius={10} style={{ alignSelf: 'flex-end' }} />
+        <SkeletonBox
+          width={80}
+          height={36}
+          borderRadius={10}
+          style={{ alignSelf: 'flex-end' }}
+        />
         <SkeletonBox width={100} height={16} />
       </View>
       {/* Quote box */}
       <SkeletonBox width="100%" height={56} borderRadius={12} />
       {/* Challenge box */}
-      <View style={{ backgroundColor: '#F1F5F9', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(1.5) }}>
+      <View
+        style={{
+          backgroundColor: '#F1F5F9',
+          padding: wp(4),
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: '#E2E8F0',
+          gap: hp(1.5),
+        }}
+      >
         <SkeletonBox width={160} height={20} />
         <SkeletonBox width="90%" height={18} borderRadius={6} />
         <SkeletonBox width="70%" height={16} borderRadius={6} />
       </View>
       {/* Profile box */}
-      <View style={{ backgroundColor: '#E2E8F0', padding: wp(4), borderRadius: 12, gap: hp(1.5) }}>
+      <View
+        style={{
+          backgroundColor: '#E2E8F0',
+          padding: wp(4),
+          borderRadius: 12,
+          gap: hp(1.5),
+        }}
+      >
         <SkeletonBox width={160} height={18} />
         <SkeletonBox width="100%" height={44} borderRadius={10} />
         <SkeletonBox width="100%" height={44} borderRadius={10} />
@@ -60,6 +106,26 @@ const TobaccoSkeleton = () => (
   </View>
 );
 
+const NUDGES = [
+  'Pay attention to every puff. Is the experience as enjoyable as the anticipation?',
+  'Noticing a trigger is the first step to changing it.',
+  'Stress and smoking are connected by habit, not by need.',
+  'Smoking relieves withdrawal, not stress.',
+  "The cigarette didn't create relief. It ended a craving.",
+  'Notice the difference between wanting and needing.',
+  'The urge will pass whether you smoke or not.',
+  'Most cravings pass in minutes, not hours.',
+  'Cravings become easier to manage when they are understood.',
+  'The pause is where freedom begins.',
+  'Freedom grows with every conscious choice.',
+  'Every habit starts with a thought.',
+  'Notice how many people enjoy the moment without smoking.',
+  'Social confidence comes from you, not the cigarette.',
+  "The goal isn't resisting forever. It's not needing it anymore.",
+];
+
+const getRandomNudge = () => NUDGES[Math.floor(Math.random() * NUDGES.length)];
+
 const Tobacco = ({ navigation }) => {
   const [yesterdayCount, setYesterdayCount] = useState('');
   const [cigarettesPerDay, setCigarettesPerDay] = useState(0);
@@ -67,6 +133,7 @@ const Tobacco = ({ navigation }) => {
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [currentNudge, setCurrentNudge] = useState(getRandomNudge);
   const hasSyncedFromProfile = useRef(false);
 
   const data = useSelector(state => state.tobacco.data?.data);
@@ -143,6 +210,7 @@ const Tobacco = ({ navigation }) => {
 
   const onRefresh = () => {
     setRefreshing(true);
+    setCurrentNudge(getRandomNudge());
     hasSyncedFromProfile.current = false;
     if (userId) {
       dispatch(getTobacco(userId));
@@ -202,7 +270,7 @@ const Tobacco = ({ navigation }) => {
           </View>
 
           <View style={styles.quoteBox}>
-            <Text style={styles.quote}>{data?.encouragement}</Text>
+            <Text style={styles.quote}>{currentNudge}</Text>
           </View>
 
           <View style={styles.challengeBox}>

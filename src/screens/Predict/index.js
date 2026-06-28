@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 import { LineChart } from 'react-native-chart-kit';
 import { wp, hp, Images } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
 import { getPredict } from '../../redux/slices';
 import Loader from '../../components/Loader';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -190,11 +191,15 @@ const Predict = ({ navigation }) => {
   );
   const loading = useSelector(state => state?.predict?.loading);
 
-  useEffect(() => {
-    if (userId && !predictData) {
-      dispatch(getPredict(userId));
-    }
-  }, [dispatch, userId, predictData]);
+  // Refetch whenever the screen regains focus (e.g. coming back here after
+  // editing readings via "Update") so the graphs reflect the latest saved data.
+  useFocusEffect(
+    useCallback(() => {
+      if (userId) {
+        dispatch(getPredict(userId));
+      }
+    }, [dispatch, userId]),
+  );
 
   const onRefresh = useCallback(async () => {
     if (!userId) return;

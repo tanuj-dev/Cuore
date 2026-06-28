@@ -57,6 +57,29 @@ const AppContent = () => {
     tryNavigate(0);
   }, []);
 
+  // Keep the launcher badge in sync with the notification tray: the badge count
+  // mirrors how many notifications are still showing. When the user dismisses
+  // them the count drops to 0 — no need to open the app. (The killed/background
+  // case is handled by the module-level onBackgroundEvent in index.js.)
+  const syncBadgeToTray = useCallback(async () => {
+    try {
+      const displayed = await notifee.getDisplayedNotifications();
+      await notifee.setBadgeCount(displayed.length);
+    } catch (e) {
+      console.warn('[badge] sync failed:', e?.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    syncBadgeToTray();
+    const badgeSub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') {
+        syncBadgeToTray();
+      }
+    });
+    return () => badgeSub.remove();
+  }, [syncBadgeToTray]);
+
   useEffect(() => {
     const checkAppVersion = async () => {
       try {
@@ -206,19 +229,12 @@ const AppContent = () => {
           // Navigate to home page (Today screen)
           navigateFromNotification('Today');
         }
+        if (type === EventType.DISMISSED || type === EventType.DELIVERED) {
+          // A notification was added or swiped away — re-sync the badge.
+          syncBadgeToTray();
+        }
       },
     );
-
-    // Handle notification press events (background/killed state)
-    notifee.onBackgroundEvent(async ({ type, detail }) => {
-      if (type === EventType.PRESS) {
-        console.log(
-          '📱 Notification pressed (background):',
-          detail.notification,
-        );
-        // Navigation will happen when app opens
-      }
-    });
 
     // Check if app was opened from a notification (background/killed state)
     notifee.getInitialNotification().then(initialNotification => {
@@ -234,7 +250,7 @@ const AppContent = () => {
       unsubscribeNotification();
       cleanupFCM();
     };
-  }, [checkConnectivity, dispatch, navigateFromNotification]);
+  }, [checkConnectivity, dispatch, navigateFromNotification, syncBadgeToTray]);
 
   useEffect(() => {
     if (!userId) return;

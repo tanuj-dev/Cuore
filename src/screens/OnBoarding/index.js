@@ -35,11 +35,16 @@ const OnBoarding = ({ navigation, route }) => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   const { STEP, screen, navigateTo } = route?.params ?? {};
+  const isReassess = screen === 'Reassess';
 
   console.log('OnBoarding Screen Params:', route?.params);
 
   // Local state
-  const [step, setStep] = useState(1);
+  // Open directly on the requested section (edit/reassess deep-link) instead of
+  // flashing step 1 first. The effect below also re-syncs if params change.
+  const [step, setStep] = useState(() =>
+    typeof STEP === 'number' && STEP >= 1 && STEP <= 7 ? STEP : 1,
+  );
   const [onboarding2Data, setOnboarding2Data] = useState({});
   const [onboarding3Data, setOnboarding3Data] = useState({});
   const [onboarding4Data, setOnboarding4Data] = useState({});
@@ -194,9 +199,17 @@ const OnBoarding = ({ navigation, route }) => {
           type: 'error',
         });
       }
-      if (res?.status === 'success') {
+      // The submit endpoint returns { status: 'success' }, but the reassessment
+      // PUT body isn't guaranteed to carry that field. For reassess, treat the
+      // absence of an explicit error as success so the save reliably completes
+      // instead of silently stranding the user inside onboarding.
+      const isSuccess =
+        res?.status === 'success' || (isReassess && !res?.error);
+      if (isSuccess) {
         setToast({
-          message: 'Onboarding data submitted successfully!',
+          message: isReassess
+            ? 'Your details have been updated!'
+            : 'Onboarding data submitted successfully!',
           type: 'success',
         });
         // Alert.alert('Success', 'Onboarding data submitted successfully!');
@@ -252,10 +265,22 @@ const OnBoarding = ({ navigation, route }) => {
         }
         console.log('Onboarding data saved successfully');
 
-        navigation.navigate('Score', {
-          screen: screen === 'Reassess' ? 'Reassess' : 'Score',
-          navigateTo: navigateTo ?? 'Home',
-        });
+        if (isReassess) {
+          // Reassess: return the user to the screen they launched the edit from
+          // (e.g. Trend), instead of Score/Home. goBack pops this onboarding
+          // screen off the stack; fall back to Home if there is no back stack
+          // (e.g. opened from a deep link).
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+          }
+        } else {
+          navigation.navigate('Score', {
+            screen: 'Score',
+            navigateTo: navigateTo ?? 'Home',
+          });
+        }
       } else if (res?.payload?.error) {
         setLoading(false);
         alert('Submission Error', res.payload.error);
