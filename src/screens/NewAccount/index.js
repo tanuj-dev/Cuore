@@ -114,6 +114,8 @@ const CreateAccountScreen = () => {
                   requestId: resultAction?.payload.request_id,
                   CreateAccountScreen: true,
                   phone: mobileNumber,
+                  // Needed so Resend can re-submit the signup and get a fresh request_id
+                  registrationPayload: payload,
                 }),
             },
           ],

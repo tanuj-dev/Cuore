@@ -12,7 +12,7 @@ import {
 import { hp, wp, Images } from '../../utilities';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import { verifyOtp, sendOtp } from '../../redux/slices';
+import { verifyOtp, sendOtp, createAccountThunk } from '../../redux/slices';
 import { setUserData } from '../../redux/Auth/slice';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import Endpoints from '../../utilities/Endpoints';
@@ -29,10 +29,19 @@ const OtpScreen = () => {
 
   const loading = useSelector(state => state.auth.loading);
 
-  const { phone, role, requestId, retryAfter, CreateAccountScreen } =
-    route.params;
+  const {
+    phone,
+    role,
+    requestId: initialRequestId,
+    retryAfter,
+    CreateAccountScreen,
+    registrationPayload,
+  } = route.params;
   console.log('Route params:', route.params);
 
+  // Kept in state: every resend issues a NEW request_id, and verifying the new
+  // SMS code against the old one always fails with "didn't match".
+  const [requestId, setRequestId] = useState(initialRequestId);
   const [otp, setOtp] = useState(() => createEmptyOtp());
   const [timer, setTimer] = useState(retryAfter || 30);
   const [loader, setLoader] = useState(false);
@@ -262,15 +271,38 @@ const OtpScreen = () => {
   const handleResendOtp = async () => {
     try {
       setLoader(true);
-      const result = await dispatch(
-        sendOtp({ phone: `+91${phone}`, role }),
-      ).unwrap();
-      console.log('OTP resent:', result);
+      let newRequestId;
+      let newRetryAfter;
 
-      setTimer(result.retryAfter || 30);
+      if (CreateAccountScreen && registrationPayload) {
+        // Registration flow: the login resend endpoint would 404 for a
+        // not-yet-registered user — re-submit the signup instead, which
+        // re-sends the OTP and returns a fresh request_id.
+        const result = await dispatch(
+          createAccountThunk(registrationPayload),
+        ).unwrap();
+        console.log('Registration OTP resent:', result);
+        newRequestId = result?.request_id;
+      } else {
+        const result = await dispatch(
+          sendOtp({ phone: `+91${phone}`, role }),
+        ).unwrap();
+        console.log('OTP resent:', result);
+        newRequestId = result?.requestId || result?.data?.request_id;
+        newRetryAfter = result?.retryAfter;
+      }
+
+      if (newRequestId) {
+        setRequestId(newRequestId);
+      }
+      setTimer(newRetryAfter || 30);
       setOtp(createEmptyOtp());
     } catch (err) {
-      console.log('Resend OTP failed:', err.message);
+      console.log('Resend OTP failed:', err?.message);
+      alert(
+        'Resend Failed',
+        err?.message || 'Could not resend the code. Please try again.',
+      );
     } finally {
       setLoader(false);
     }
