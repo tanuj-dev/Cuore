@@ -19,7 +19,16 @@ import Endpoints from '../../utilities/Endpoints';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const OTP_LENGTH = 6;
+// Resend stays disabled while the current OTP is still valid (5 min,
+// matching the "Valid for 5 minutes" text and the backend OTP validity).
+const OTP_VALIDITY_SECONDS = 5 * 60;
 const createEmptyOtp = () => Array(OTP_LENGTH).fill('');
+
+const formatTimer = seconds => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+};
 
 const OtpScreen = () => {
   const route = useRoute();
@@ -33,7 +42,6 @@ const OtpScreen = () => {
     phone,
     role,
     requestId: initialRequestId,
-    retryAfter,
     CreateAccountScreen,
     registrationPayload,
   } = route.params;
@@ -43,7 +51,7 @@ const OtpScreen = () => {
   // SMS code against the old one always fails with "didn't match".
   const [requestId, setRequestId] = useState(initialRequestId);
   const [otp, setOtp] = useState(() => createEmptyOtp());
-  const [timer, setTimer] = useState(retryAfter || 30);
+  const [timer, setTimer] = useState(OTP_VALIDITY_SECONDS);
   const [loader, setLoader] = useState(false);
 
   const inputs = useRef([]);
@@ -264,6 +272,11 @@ const OtpScreen = () => {
       const rawMessage = err?.message || 'OTP verification failed';
       const match = rawMessage.match(/\((.+)\)/);
       const displayMessage = match ? match[1] : rawMessage;
+      // Code no longer valid — unlock Resend right away instead of
+      // making the user wait out the rest of the validity timer
+      if (/expired|already used|not found/i.test(rawMessage)) {
+        setTimer(0);
+      }
       alert('Verification Failed', displayMessage);
     }
   };
@@ -272,7 +285,6 @@ const OtpScreen = () => {
     try {
       setLoader(true);
       let newRequestId;
-      let newRetryAfter;
 
       if (CreateAccountScreen && registrationPayload) {
         // Registration flow: the login resend endpoint would 404 for a
@@ -289,13 +301,13 @@ const OtpScreen = () => {
         ).unwrap();
         console.log('OTP resent:', result);
         newRequestId = result?.requestId || result?.data?.request_id;
-        newRetryAfter = result?.retryAfter;
       }
 
       if (newRequestId) {
         setRequestId(newRequestId);
       }
-      setTimer(newRetryAfter || 30);
+      // Fresh code sent — lock Resend for its full validity window again
+      setTimer(OTP_VALIDITY_SECONDS);
       setOtp(createEmptyOtp());
     } catch (err) {
       console.log('Resend OTP failed:', err?.message);
@@ -386,14 +398,16 @@ const OtpScreen = () => {
       </TouchableOpacity>
 
       <Text style={styles.timerText}>
-        Didn't receive code? Resend in: {timer}s
+        {timer > 0
+          ? `You can resend a new code in ${formatTimer(timer)}`
+          : "Didn't receive the code?"}
       </Text>
 
       <TouchableOpacity
         onPress={handleResendOtp}
         disabled={timer > 0 || loader}
       >
-        <View style={styles.resendContainer}>
+        <View style={[styles.resendContainer, timer > 0 && { opacity: 0.4 }]}>
           {loader ? (
             <ActivityIndicator color="#11418A" />
           ) : (
