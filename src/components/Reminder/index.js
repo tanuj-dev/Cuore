@@ -47,8 +47,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
 
   // ✅ Handle Date Picker (store as Date, not string)
   const handleDateChange = (event, selectedDate) => {
-    // Close the picker regardless of platform / action
-    setShowDatePicker(false);
+    // Android shows a one-shot dialog — close on any response. iOS's inline
+    // spinner fires onChange on every wheel tick, so it must stay open until
+    // the user taps Done.
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
 
     // If user dismissed, don't update state
     if (event?.type === 'dismissed') {
@@ -66,8 +70,10 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
 
   // ✅ Handle Time Picker
   const handleTimeChange = (event, selectedTime) => {
-    // Close the picker regardless of platform / action
-    setShowTimePicker(false);
+    // Android: one-shot dialog, close on response. iOS: stay open until Done.
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+    }
 
     // If user dismissed, don't update state
     if (event?.type === 'dismissed') {
@@ -283,7 +289,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.dateTimeInput}
               onPress={() => setShowDatePicker(!showDatePicker)}
             >
-              <Text style={[styles.dateTimeLabel, !date && styles.dateTimePlaceholder]}>
+              <Text
+                style={[
+                  styles.dateTimeLabel,
+                  !date && styles.dateTimePlaceholder,
+                ]}
+              >
                 {date ? formatDisplayDate(date) : 'Start Date'}
               </Text>
               <Image source={Images.CALANDER} style={styles.dateTimeIcon} />
@@ -294,7 +305,12 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               style={styles.dateTimeInput}
               onPress={() => setShowTimePicker(!showTimePicker)}
             >
-              <Text style={[styles.dateTimeLabel, !time && styles.dateTimePlaceholder]}>
+              <Text
+                style={[
+                  styles.dateTimeLabel,
+                  !time && styles.dateTimePlaceholder,
+                ]}
+              >
                 {time ? formatTime(time) : 'Current Time'}
               </Text>
               <Image source={Images.CLOCK} style={styles.dateTimeIcon} />
@@ -310,6 +326,26 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                 textColor="#000000"
                 themeVariant="light"
               />
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  style={styles.pickerDoneButton}
+                  onPress={() => {
+                    if (!date) {
+                      // No wheel movement yet — commit the shown value (today),
+                      // converted the same way handleDateChange stores it
+                      const now = new Date();
+                      setDate(
+                        new Date(
+                          now.getTime() + now.getTimezoneOffset() * 60000,
+                        ),
+                      );
+                    }
+                    setShowDatePicker(false);
+                  }}
+                >
+                  <Text style={styles.pickerDoneText}>Done</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
           {showTimePicker && (
@@ -322,6 +358,19 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                 textColor="#000000"
                 themeVariant="light"
               />
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  style={styles.pickerDoneButton}
+                  onPress={() => {
+                    if (!time) {
+                      setTime(new Date());
+                    }
+                    setShowTimePicker(false);
+                  }}
+                >
+                  <Text style={styles.pickerDoneText}>Done</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
           {/* Repeat & End Repeat */}
@@ -601,6 +650,20 @@ const styles = StyleSheet.create({
     padding: 8,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+  pickerDoneButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    backgroundColor: '#11418A',
+    borderRadius: 8,
+    marginTop: 4,
+    marginRight: 4,
+  },
+  pickerDoneText: {
+    color: '#FFFFFF',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
   },
 });
 

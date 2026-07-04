@@ -100,8 +100,13 @@ const ReminderEditor = ({
     }
   };
 
-  const onTimeSelected = (_, selectedTime) => {
-    setShowTimePicker(false);
+  const onTimeSelected = (event, selectedTime) => {
+    // Android: one-shot dialog, close on response. iOS: the inline spinner
+    // fires onChange on every wheel tick — stay open until the user taps Done.
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+    }
+    if (event?.type === 'dismissed') return;
     if (selectedTime) setTime(selectedTime);
   };
 
@@ -145,6 +150,14 @@ const ReminderEditor = ({
                   textColor="#000000"
                   themeVariant="light"
                 />
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity
+                    style={styles.pickerDoneButton}
+                    onPress={() => setShowTimePicker(false)}
+                  >
+                    <Text style={styles.pickerDoneText}>Done</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
 
@@ -231,5 +244,19 @@ const styles = StyleSheet.create({
     padding: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+  },
+  pickerDoneButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    backgroundColor: '#11418A',
+    borderRadius: 8,
+    marginTop: 4,
+    marginRight: 4,
+  },
+  pickerDoneText: {
+    color: '#FFFFFF',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
   },
 });
