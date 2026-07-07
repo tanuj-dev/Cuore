@@ -60,6 +60,20 @@ const AppContent = () => {
     tryNavigate(0);
   }, []);
 
+  // Resolve the deep-link target from a notification's data payload.
+  // The backend sends data.screen (e.g. 'OnBoarding', 'HealthRecords',
+  // 'RenewSubscription', 'Today'); anything unknown falls back to Today.
+  const resolveScreen = useCallback(data => {
+    const allowed = [
+      'Today',
+      'OnBoarding',
+      'HealthRecords',
+      'RenewSubscription',
+    ];
+    const target = data?.screen;
+    return allowed.includes(target) ? target : 'Today';
+  }, []);
+
   // Keep the launcher badge in sync with the notification tray: the badge count
   // mirrors how many notifications are still showing. When the user dismisses
   // them the count drops to 0 — no need to open the app. (The killed/background
@@ -182,6 +196,8 @@ const AppContent = () => {
             id,
             title: remoteMessage.notification?.title || 'Notification',
             body: remoteMessage.notification?.body || '',
+            // Carry the deep-link target so the press handler can route
+            data: { screen: resolveScreen(remoteMessage.data) },
             android: {
               channelId: 'health-schedule',
               smallIcon: 'ic_launcher',
@@ -193,12 +209,12 @@ const AppContent = () => {
       onOpenedFromBg: remoteMessage => {
         if (cancelled) return;
         console.log('🔔 FCM opened from background:', remoteMessage);
-        navigateFromNotification('Today');
+        navigateFromNotification(resolveScreen(remoteMessage?.data));
       },
       onOpenedFromQuit: remoteMessage => {
         if (cancelled) return;
         console.log('🚀 FCM opened from quit:', remoteMessage);
-        navigateFromNotification('Today');
+        navigateFromNotification(resolveScreen(remoteMessage?.data));
       },
       onRefreshToken: newToken => {
         if (cancelled) return;
@@ -229,8 +245,7 @@ const AppContent = () => {
             '📱 Notification pressed (foreground):',
             detail.notification,
           );
-          // Navigate to home page (Today screen)
-          navigateFromNotification('Today');
+          navigateFromNotification(resolveScreen(detail.notification?.data));
         }
         if (type === EventType.DISMISSED || type === EventType.DELIVERED) {
           // A notification was added or swiped away — re-sync the badge.
@@ -243,7 +258,9 @@ const AppContent = () => {
     notifee.getInitialNotification().then(initialNotification => {
       if (initialNotification) {
         console.log('📱 App opened from notification:', initialNotification);
-        navigateFromNotification('Today');
+        navigateFromNotification(
+          resolveScreen(initialNotification.notification?.data),
+        );
       }
     });
 
@@ -253,7 +270,13 @@ const AppContent = () => {
       unsubscribeNotification();
       cleanupFCM();
     };
-  }, [checkConnectivity, dispatch, navigateFromNotification, syncBadgeToTray]);
+  }, [
+    checkConnectivity,
+    dispatch,
+    navigateFromNotification,
+    resolveScreen,
+    syncBadgeToTray,
+  ]);
 
   useEffect(() => {
     if (!userId) return;
