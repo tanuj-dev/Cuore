@@ -19,9 +19,10 @@ import Endpoints from '../../utilities/Endpoints';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const OTP_LENGTH = 6;
-// Resend stays disabled while the current OTP is still valid (5 min,
-// matching the "Valid for 5 minutes" text and the backend OTP validity).
-const OTP_VALIDITY_SECONDS = 5 * 60;
+// Fallback only — the real validity comes from the backend's
+// retry_after_seconds (which mirrors Message Central's OTP validity).
+// Resend stays disabled while the current OTP is still valid.
+const OTP_VALIDITY_SECONDS = 60;
 const createEmptyOtp = () => Array(OTP_LENGTH).fill('');
 
 const formatTimer = seconds => {
@@ -42,6 +43,7 @@ const OtpScreen = () => {
     phone,
     role,
     requestId: initialRequestId,
+    retryAfter,
     CreateAccountScreen,
     registrationPayload,
   } = route.params;
@@ -51,7 +53,11 @@ const OtpScreen = () => {
   // SMS code against the old one always fails with "didn't match".
   const [requestId, setRequestId] = useState(initialRequestId);
   const [otp, setOtp] = useState(() => createEmptyOtp());
-  const [timer, setTimer] = useState(OTP_VALIDITY_SECONDS);
+  // Server-driven so backend/MC validity changes don't need an app release
+  const [otpValidity, setOtpValidity] = useState(
+    retryAfter || OTP_VALIDITY_SECONDS,
+  );
+  const [timer, setTimer] = useState(retryAfter || OTP_VALIDITY_SECONDS);
   const [loader, setLoader] = useState(false);
 
   const inputs = useRef([]);
@@ -285,6 +291,7 @@ const OtpScreen = () => {
     try {
       setLoader(true);
       let newRequestId;
+      let newValidity;
 
       if (CreateAccountScreen && registrationPayload) {
         // Registration flow: the login resend endpoint would 404 for a
@@ -295,19 +302,23 @@ const OtpScreen = () => {
         ).unwrap();
         console.log('Registration OTP resent:', result);
         newRequestId = result?.request_id;
+        newValidity = result?.retry_after_seconds;
       } else {
         const result = await dispatch(
           sendOtp({ phone: `+91${phone}`, role }),
         ).unwrap();
         console.log('OTP resent:', result);
         newRequestId = result?.requestId || result?.data?.request_id;
+        newValidity = result?.retryAfter || result?.data?.retry_after_seconds;
       }
 
       if (newRequestId) {
         setRequestId(newRequestId);
       }
       // Fresh code sent — lock Resend for its full validity window again
-      setTimer(OTP_VALIDITY_SECONDS);
+      const validity = newValidity || otpValidity;
+      setOtpValidity(validity);
+      setTimer(validity);
       setOtp(createEmptyOtp());
     } catch (err) {
       console.log('Resend OTP failed:', err?.message);
@@ -378,7 +389,13 @@ const OtpScreen = () => {
       </TouchableOpacity>
 
       <Text style={styles.subtitle}>
-        OTP sent to your phone number. Valid for 5 minutes.{'\n'}
+        OTP sent to your phone number. Valid for{' '}
+        {otpValidity >= 60
+          ? `${Math.round(otpValidity / 60)} minute${
+              otpValidity >= 120 ? 's' : ''
+            }`
+          : `${otpValidity} seconds`}
+        .{'\n'}
         {/* <Text style={styles.subtitleHint}>
           Tap a box to edit that digit. On iPhone, use Remove last digit (the
           number pad has no backspace key).

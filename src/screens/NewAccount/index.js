@@ -112,6 +112,7 @@ const CreateAccountScreen = () => {
               onPress: () =>
                 navigation.navigate('OtpScreen', {
                   requestId: resultAction?.payload.request_id,
+                  retryAfter: resultAction?.payload.retry_after_seconds,
                   CreateAccountScreen: true,
                   phone: mobileNumber,
                   // Needed so Resend can re-submit the signup and get a fresh request_id
