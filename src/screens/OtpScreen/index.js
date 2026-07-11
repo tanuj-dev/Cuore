@@ -182,16 +182,21 @@ const OtpScreen = () => {
       } = otpData;
 
       const month = otpData.month ?? otpData.subscription_month ?? null;
+      const premiumExpiry = otpData.premiumExpiry ?? null;
       const isFreeUser =
         otpData.isFree === true ||
         otpData.is_free === true ||
         otpData.isFree === 'true' ||
         otpData.is_free === 'true';
 
+      // A waived/free grant only counts while the free window is still open.
+      // (Paid 'completed' always counts; no premiumExpiry = unlimited/corporate.)
+      const freeStillValid = premiumExpiry
+        ? new Date(premiumExpiry).getTime() > Date.now()
+        : true;
       const hasPaymentAccess =
         paymentStatus === 'completed' ||
-        paymentStatus === 'waived' ||
-        isFreeUser;
+        ((paymentStatus === 'waived' || isFreeUser) && freeStillValid);
 
       const tokenPayload = {
         accessToken: access_token,
@@ -204,6 +209,7 @@ const OtpScreen = () => {
         role: userRole,
         paymentStatus,
         month,
+        premiumExpiry,
         isFree: Boolean(isFreeUser),
       };
 

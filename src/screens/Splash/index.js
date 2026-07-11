@@ -1,12 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  Animated,
-  Easing,
-} from 'react-native';
+import { View, Text, StyleSheet, Image, Animated, Easing } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
@@ -128,10 +121,16 @@ const Splash = () => {
           parsed.isFree === 'true' ||
           parsed.is_free === true;
 
+        // Enforce the free-tier expiry locally: a waived/free grant lapses once
+        // premiumExpiry passes, so the user is routed to the paywall even mid-
+        // session (the app doesn't re-fetch status on launch). No premiumExpiry
+        // = unlimited/corporate grant.
+        const freeStillValid = parsed.premiumExpiry
+          ? new Date(parsed.premiumExpiry).getTime() > Date.now()
+          : true;
         const hasPaymentAccess =
           parsed.paymentStatus === 'completed' ||
-          parsed.paymentStatus === 'waived' ||
-          isFreeUser;
+          ((parsed.paymentStatus === 'waived' || isFreeUser) && freeStillValid);
 
         // Caregiver without valid payment → Login (free-tier counts as access)
         if (parsed.role === 'caregiver' && !hasPaymentAccess) {
