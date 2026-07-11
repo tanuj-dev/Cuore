@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import {
   View,
   Text,
@@ -54,11 +60,11 @@ const Checkout = ({ navigation }) => {
   const { alert, AlertComponent } = useCustomAlert();
   const userId = useSelector(state => state.auth?.userId);
 
-  const selected = IAP_PLANS.find(p => p.title === selectedPlan) || IAP_PLANS[0];
+  const selected =
+    IAP_PLANS.find(p => p.title === selectedPlan) || IAP_PLANS[0];
   const gstAmount = selected ? selected.newPrice * IAP_GST_RATE : 0;
   const loadedProductIds = useMemo(
-    () =>
-      subscriptions?.map(s => s.productId || s.id).filter(Boolean) || [],
+    () => subscriptions?.map(s => s.productId || s.id).filter(Boolean) || [],
     [subscriptions],
   );
   const availablePlans = useMemo(
@@ -81,6 +87,12 @@ const Checkout = ({ navigation }) => {
       '12 Months',
     [selected],
   );
+
+  // The backend returns HTTP 200 even for an EXPIRED subscription
+  // (payment:'expired'), so a 200 alone is NOT proof of an active entitlement.
+  // Only payment:'done' means the backend confirmed an active subscription.
+  const isVerifiedActive = res =>
+    res?.status === 200 && res?.data?.payment === 'done';
 
   // Ref to always have the latest subscriptions value (avoids stale closure in handleCheckout)
   const subscriptionsRef = useRef([]);
@@ -140,7 +152,7 @@ const Checkout = ({ navigation }) => {
               payload,
             );
 
-            if (response?.status === 200) {
+            if (isVerifiedActive(response)) {
               try {
                 const tokenData = await EncryptedStorage.getItem('auth_tokens');
                 if (tokenData) {
@@ -261,43 +273,48 @@ const Checkout = ({ navigation }) => {
           response?.data,
         );
 
-        // Persist payment status and navigate to Home
-        try {
-          const tokenData = await EncryptedStorage.getItem('auth_tokens');
-          if (tokenData) {
-            const parsed = JSON.parse(tokenData);
-            parsed.paymentStatus = 'completed';
-            await EncryptedStorage.setItem(
-              'auth_tokens',
-              JSON.stringify(parsed),
-            );
-            dispatch(setUserData(parsed));
+        // Only grant access when the BACKEND confirms an active subscription.
+        // (A 200 alone is not enough — the backend returns 200 for expired too.)
+        if (isVerifiedActive(response)) {
+          try {
+            const tokenData = await EncryptedStorage.getItem('auth_tokens');
+            if (tokenData) {
+              const parsed = JSON.parse(tokenData);
+              parsed.paymentStatus = 'completed';
+              await EncryptedStorage.setItem(
+                'auth_tokens',
+                JSON.stringify(parsed),
+              );
+              dispatch(setUserData(parsed));
+            }
+          } catch (e) {
+            console.warn('Could not persist payment status:', e);
           }
-        } catch (e) {
-          console.warn('Could not persist payment status:', e);
+          setIsProcessingPayment(false);
+          navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+        } else {
+          // Backend says not active (expired / failed / id mismatch) — do NOT
+          // grant access off a local store receipt.
+          setIsProcessingPayment(false);
+          const kind = response?.data?.payment;
+          alert(
+            kind === 'expired' ? 'Subscription Expired' : 'Not Activated',
+            kind === 'expired'
+              ? 'This subscription has expired. Please purchase again.'
+              : response?.data?.error ||
+                  'We could not verify your purchase. If you were charged, tap “Restore Purchases”.',
+          );
         }
-
-        setIsProcessingPayment(false);
-        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
       } catch (err) {
         console.error('Subscription verify error:', err);
-        // Payment was successful with Apple/Google, persist status and navigate even if backend fails
-        try {
-          const tokenData = await EncryptedStorage.getItem('auth_tokens');
-          if (tokenData) {
-            const parsed = JSON.parse(tokenData);
-            parsed.paymentStatus = 'completed';
-            await EncryptedStorage.setItem(
-              'auth_tokens',
-              JSON.stringify(parsed),
-            );
-            dispatch(setUserData(parsed));
-          }
-        } catch (e) {
-          console.warn('Could not persist payment status:', e);
-        }
+        // The store charge succeeded but our server could not confirm it right
+        // now. Do NOT silently grant access (that let expired/forged receipts
+        // through) — ask the user to Restore, which re-runs verification.
         setIsProcessingPayment(false);
-        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+        alert(
+          'Almost There',
+          'Your purchase went through, but we could not activate it just now. Please tap “Restore Purchases” in a moment to finish.',
+        );
       }
     },
     [navigation, userId, dispatch, getDurationByProductId],
@@ -366,7 +383,7 @@ const Checkout = ({ navigation }) => {
         response?.data,
       );
 
-      if (response?.status === 200) {
+      if (isVerifiedActive(response)) {
         try {
           const tokenData = await EncryptedStorage.getItem('auth_tokens');
           if (tokenData) {
@@ -429,12 +446,18 @@ const Checkout = ({ navigation }) => {
           return;
         }
         const subscription = subscriptions?.find(
-          p =>
-            (p.productId && p.productId === sku) || p.id === sku,
+          p => (p.productId && p.productId === sku) || p.id === sku,
         );
-        const offerToken = subscription ? getAndroidOfferToken(subscription) : null;
+        const offerToken = subscription
+          ? getAndroidOfferToken(subscription)
+          : null;
         const purchaseSku = subscription?.id ?? subscription?.productId ?? sku;
-        console.log('IAP: Android purchase sku:', purchaseSku, 'offerToken:', !!offerToken);
+        console.log(
+          'IAP: Android purchase sku:',
+          purchaseSku,
+          'offerToken:',
+          !!offerToken,
+        );
         if (!offerToken) {
           setIsProcessingPayment(false);
           alert(
