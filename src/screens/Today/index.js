@@ -295,7 +295,10 @@ const Today = ({ navigation, route }) => {
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [requestId, setRequestId] = useState(null);
-  const [sessionExpired, setSessionExpired] = useState(true);
+  // Only becomes true after a 401 is CONFIRMED by a second fetch (see effect
+  // below). Defaulting false stops a single transient invalid-token blip from
+  // hard-logging the user out.
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [toast, setToast] = useState(null);
   const [reminderList, setReminderList] = useState([]);
   const [toastType, setToastType] = useState('success');
@@ -502,6 +505,9 @@ const Today = ({ navigation, route }) => {
   // Auto-refresh every 30 minutes and on new day
   const lastRefreshRef = useRef(Date.now());
   const lastRefreshDateRef = useRef(new Date().toDateString());
+  // Tracks whether we've already re-verified the current 401 suspicion, so a
+  // logout only happens after TWO consecutive invalid-token responses.
+  const sessionRetryRef = useRef(false);
 
   const silentRefresh = useCallback(() => {
     if (!userId) return;
@@ -544,7 +550,31 @@ const Today = ({ navigation, route }) => {
     };
   }, [userId, silentRefresh]);
 
+  // Confirm-before-logout: a single "invalid or expired token" 401 is treated
+  // as a transient blip and re-verified with ONE more fetch. Only if that
+  // second fetch also comes back 401 do we conclude the session is genuinely
+  // dead and surface the logout. A healthy response clears the suspicion.
+  useEffect(() => {
+    if (!userId) return;
+    const is401 = data?.message === 'Not authorized, invalid or expired token.';
+    if (is401) {
+      if (sessionRetryRef.current) {
+        // Second consecutive 401 — the session is really invalid.
+        setSessionExpired(true);
+      } else {
+        // First 401 — could be a stale/transient token. Verify once.
+        sessionRetryRef.current = true;
+        dispatch(getHomeData(userId));
+      }
+    } else if (data) {
+      // A healthy payload arrived — reset and stay logged in.
+      sessionRetryRef.current = false;
+      setSessionExpired(false);
+    }
+  }, [data, userId, dispatch]);
+
   const handleLoginRedirect = useCallback(async () => {
+    sessionRetryRef.current = false;
     setSessionExpired(false);
     await dispatch(logoutUser({ skipRemote: true }));
     const rootNavigation = navigation.getParent();
