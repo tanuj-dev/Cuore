@@ -8,6 +8,7 @@ import {
   Image,
   Platform,
   ActivityIndicator,
+  BackHandler,
 } from 'react-native';
 import { hp, wp, Images } from '../../utilities';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -70,6 +71,19 @@ const OtpScreen = () => {
       return () => clearInterval(interval);
     }
   }, [timer]);
+
+  // Block going back while the resend timer is running, so the user can't
+  // leave the OTP screen and re-trigger a new send inside the cooldown.
+  // Covers Android hardware back + iOS swipe-back gesture. Re-enabled at 0.
+  useEffect(() => {
+    navigation.setOptions?.({ gestureEnabled: timer <= 0 });
+    const onHardwareBack = () => timer > 0; // returning true blocks the back
+    const sub = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onHardwareBack,
+    );
+    return () => sub.remove();
+  }, [timer, navigation]);
 
   const focusInput = i => {
     if (i >= 0 && i < OTP_LENGTH) {
@@ -342,7 +356,8 @@ const OtpScreen = () => {
       {AlertComponent}
       <TouchableOpacity
         hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-        style={styles.backArrow}
+        style={[styles.backArrow, timer > 0 && { opacity: 0.4 }]}
+        disabled={timer > 0}
         onPress={() => navigation.goBack()}
       >
         <Image
