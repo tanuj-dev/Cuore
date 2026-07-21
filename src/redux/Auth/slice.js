@@ -69,36 +69,16 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(verifyOtp.fulfilled, (state, action) => {
-        const d = action.payload.data || {};
-        const {
-          access_token,
-          refresh_token,
-          user_id,
-          expires_in,
-          new_user,
-          role,
-          paymentStatus,
-          onboardingStatus,
-        } = d;
-        const isFreeRaw = d.isFree ?? d.is_free;
-        const monthRaw = d.month ?? d.subscription_month ?? null;
-
-        state.accessToken = access_token;
-        state.refreshToken = refresh_token;
-        state.userId = user_id;
-        state.expiresIn = expires_in;
-        state.newUser = new_user;
-        state.role = role || null;
+      .addCase(verifyOtp.fulfilled, state => {
+        // NOTE: Do NOT establish the session (userId/tokens/role) here.
+        // OtpScreen sets those via setUserData ONLY AFTER it has persisted
+        // the token to EncryptedStorage (and after its caregiver/onboarding
+        // gate checks). Setting userId here fired the moment the API returned
+        // 200 — before the token was written — which tripped App.js's
+        // userId-triggered heartbeat effect and produced a 401
+        // "no token provided" on every login. Keep this to loading/error only.
         state.loading = false;
         state.error = null;
-        state.paymentStatus = paymentStatus;
-        state.onboardingStatus = onboardingStatus;
-        state.isFree =
-          isFreeRaw === true ||
-          isFreeRaw === 'true' ||
-          isFreeRaw === 1;
-        if (monthRaw != null && monthRaw !== '') state.month = monthRaw;
       })
       .addCase(verifyOtp.rejected, (state, action) => {
         state.loading = false;

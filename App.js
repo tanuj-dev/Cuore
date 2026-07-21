@@ -220,6 +220,10 @@ const AppContent = () => {
         if (cancelled) return;
         console.log('🔄 FCM Token refreshed — updated in Redux:', newToken);
         dispatch(setFCMToken(newToken));
+        // Push the rotated token to the backend immediately so it never holds a
+        // dead token while the app stays foregrounded (otherwise it would wait
+        // for the next background→foreground heartbeat).
+        dispatch(sendHeartbeatThunk());
       },
     }).then(cleanup => {
       if (cancelled) {
