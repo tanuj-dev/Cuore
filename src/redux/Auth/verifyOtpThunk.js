@@ -1,6 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { postApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
+import { getDeviceInfo } from '../../utilities/DeviceIdentity';
 
 export const verifyOtp = createAsyncThunk(
   'auth/verifyOtp',
@@ -11,6 +12,15 @@ export const verifyOtp = createAsyncThunk(
     const fcmToken = getState()?.auth?.fcmToken || null;
     console.log('[verifyOtp] FCM Token:', fcmToken);
 
+    // Attach device signals so the backend can track which device logs in to
+    // which account (same-device / duplicate detection). Best-effort.
+    let device_info = null;
+    try {
+      device_info = await getDeviceInfo();
+    } catch (e) {
+      console.warn('[verifyOtp] device_info skipped:', e?.message || e);
+    }
+
     try {
       const payload = {
         request_id: requestId,
@@ -19,11 +29,13 @@ export const verifyOtp = createAsyncThunk(
           app_version: '1.0',
         },
         ...(fcmToken && { fcm_token: fcmToken }),
+        ...(device_info && { device_info }),
       };
       const payload2 = {
         request_id: requestId,
         otp_code: testOtp,
         ...(fcmToken && { fcm_token: fcmToken }),
+        ...(device_info && { device_info }),
       };
 
       console.log('[verifyOtp] Sending payload:', payload);
