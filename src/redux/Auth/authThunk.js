@@ -6,6 +6,7 @@ import EndPoints from '../../utilities/Endpoints';
 import Constants from '../../utilities/Constants';
 import FCMService from '../../notifications/FCMService';
 import { setFCMToken } from './slice';
+import { getDeviceInfo } from '../../utilities/DeviceIdentity';
 
 export const sendOtp = createAsyncThunk(
   'auth/sendOtp',
@@ -83,11 +84,24 @@ export const createAccountThunk = createAsyncThunk(
     try {
       // Attach FCM token to signup payload so backend can link it to the new user
       const fcmToken = getState()?.auth?.fcmToken || null;
+
+      // Attach device signals so the backend can detect multiple accounts being
+      // onboarded from the same physical device. Best-effort — a failure here
+      // must not block account creation.
+      let device_info = null;
+      try {
+        device_info = await getDeviceInfo();
+      } catch (e) {
+        console.warn('[createAccount] device_info skipped:', e?.message || e);
+      }
+
       const enrichedPayload = {
         ...payload,
         ...(fcmToken && { fcm_token: fcmToken }),
+        ...(device_info && { device_info }),
       };
       console.log('[createAccount] FCM Token attached:', fcmToken);
+      console.log('[createAccount] device_info attached:', device_info?.vendor_id);
 
       // Example: payload = { name, email, phone, password }
       const response = await postApiCall(EndPoints.CREATEACCOUNT, enrichedPayload);
