@@ -21,6 +21,7 @@ import {
   errorCodes as docErrorCodes,
 } from '@react-native-documents/picker';
 import { useDispatch, useSelector } from 'react-redux';
+import EncryptedStorage from 'react-native-encrypted-storage';
 import { hp, wp, Images } from '../../utilities';
 import ProfileHeader from '../../components/ProfileHeader';
 import { uploadPhoto } from '../../redux/uploadPhoto/uploadPhotoThunk';
@@ -537,17 +538,25 @@ const HealthRecords = ({ navigation }) => {
       setIsFetching(true);
       const response = await dispatch(getPresRecordsThunk()).unwrap();
       if (response?.success && response?.data) {
-        const apiRecords = response.data.data.map((item, index) => ({
-          fileName: item?.fileName || 'Unnamed Record',
-          fileUrl: item?.fileUrl || '',
-          recordId: item?.recordId || index.toString(),
-          type:
-            item?.summarySnippet === 'prescription' ||
-            item?.type === 'Prescription'
-              ? 'Prescriptions'
-              : 'Diagnostics',
-          uploadDate: formatDate(item?.uploadDate || ''),
-        }));
+        const apiRecords = response.data.data
+          .map((item, index) => {
+            const rawDate = item?.uploadDate || '';
+            const parsedTime = rawDate ? new Date(rawDate).getTime() : NaN;
+            return {
+              fileName: item?.fileName || 'Unnamed Record',
+              fileUrl: item?.fileUrl || '',
+              recordId: item?.recordId || index.toString(),
+              type:
+                item?.summarySnippet === 'prescription' ||
+                item?.type === 'Prescription'
+                  ? 'Prescriptions'
+                  : 'Diagnostics',
+              uploadDate: formatDate(rawDate),
+              sortTime: isNaN(parsedTime) ? 0 : parsedTime,
+            };
+          })
+          // Auto-arrange sequentially by date — most recent first
+          .sort((a, b) => b.sortTime - a.sortTime);
         setRecords(apiRecords);
       }
     } catch (error) {
@@ -560,6 +569,22 @@ const HealthRecords = ({ navigation }) => {
   useEffect(() => {
     getRecords();
   }, [getRecords]);
+
+  // Load previously stored AI-processing consent so the user is asked only once
+  useEffect(() => {
+    (async () => {
+      try {
+        const storedConsent = await EncryptedStorage.getItem(
+          'ai_data_processing_consent',
+        );
+        if (storedConsent === 'true') {
+          setHasConsented(true);
+        }
+      } catch (e) {
+        // No stored consent (or read failed) — user will be prompted on upload
+      }
+    })();
+  }, []);
 
   return (
     <>
@@ -981,7 +1006,15 @@ const HealthRecords = ({ navigation }) => {
                       !consentToggle && styles.consentAgreeBtnDisabled,
                     ]}
                     disabled={!consentToggle}
-                    onPress={() => {
+                    onPress={async () => {
+                      try {
+                        await EncryptedStorage.setItem(
+                          'ai_data_processing_consent',
+                          'true',
+                        );
+                      } catch (e) {
+                        // Persisting failed — consent still applies this session
+                      }
                       setHasConsented(true);
                       setShowConsentModal(false);
                       setShowUploadModal(true);

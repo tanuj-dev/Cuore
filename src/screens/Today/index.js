@@ -725,7 +725,7 @@ const Today = ({ navigation, route }) => {
                   onError={() => setDoctorImageLoadFailed(true)}
                 />
               </View>
-              <Text style={styles.healthButtonText}>Cuore{'\n'}Health</Text>
+              <Text style={styles.healthButtonText}>My{'\n'}Health</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1683,19 +1683,19 @@ const styles = StyleSheet.create({
   healthButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
-    paddingVertical: hp(1.2),
-    paddingHorizontal: wp(2.5),
-    borderRadius: 12,
+    backgroundColor: '#DC2626',
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(3.5),
+    borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#FECACA',
+    borderColor: '#DC2626',
     shadowColor: '#DC2626',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+    shadowOpacity: 0.35,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
     ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 3 },
+      android: { elevation: 4 },
+      ios: { elevation: 6 },
     }),
   },
   buttonIconWrapper: {
@@ -1740,11 +1740,11 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   healthButtonText: {
-    fontSize: 11.5,
-    fontFamily: 'Poppins-Medium',
-    color: '#DC2626',
+    fontSize: 13,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#FFFFFF',
     textAlign: 'center',
-    lineHeight: 14,
+    lineHeight: 16,
     letterSpacing: -0.2,
   },
   updateButton: {

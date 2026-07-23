@@ -162,7 +162,7 @@ const Explore = ({ navigation }) => {
               style={styles.doctorIcon}
               resizeMode="cover"
             />
-            <Text style={styles.heading}>Cuore Health</Text>
+            <Text style={styles.heading}>My Health</Text>
           </TouchableOpacity>
 
           <Text style={styles.subheading}>Your Health Journey</Text>

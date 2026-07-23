@@ -121,7 +121,6 @@ const Health = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [lastConsulted, setLastConsulted] = useState(new Date());
   const [sharingLoading, setSharingLoading] = useState(false);
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [editedSummary, setEditedSummary] = useState({
     past_history: '',
@@ -495,7 +494,7 @@ const Health = ({ navigation }) => {
               />
             </TouchableOpacity>
             <View>
-              <Text style={styles.fixedHeaderTitle}>Cuore Health</Text>
+              <Text style={styles.fixedHeaderTitle}>My Health</Text>
             </View>
             <TouchableOpacity
               disabled={isCaregiver}
@@ -843,41 +842,17 @@ const Health = ({ navigation }) => {
 
                 {/* Summary of Records */}
                 <View style={styles.card}>
-                  <TouchableOpacity
-                    onPress={() => setIsSummaryExpanded(!isSummaryExpanded)}
-                    activeOpacity={0.7}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
                   >
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Text style={styles.sectionTitle}>
-                        Summary of Records
-                      </Text>
-                      <View
-                        style={{ flexDirection: 'row', alignItems: 'center' }}
-                      >
-                        <Image
-                          style={{
-                            height: hp(2),
-                            width: hp(2),
-                            resizeMode: 'contain',
-                            marginLeft: hp(1),
-                            transform: [
-                              { rotate: isSummaryExpanded ? '180deg' : '0deg' },
-                            ],
-                          }}
-                          source={Images.DOWN}
-                        />
-                      </View>
-                    </View>
-                  </TouchableOpacity>
+                    <Text style={styles.sectionTitle}>Summary of Records</Text>
+                  </View>
 
-                  {isSummaryExpanded && (
-                    <View style={{ marginTop: hp(2) }}>
+                  <View style={{ marginTop: hp(2) }}>
                       <TouchableOpacity
                         style={[
                           styles.flatFeedbackTapRow,
@@ -1190,7 +1165,6 @@ const Health = ({ navigation }) => {
                         </View>
                       )}
                     </View>
-                  )}
                 </View>
 
                 {/* AI & Data Disclaimer */}
