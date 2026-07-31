@@ -93,8 +93,6 @@ const CreateAccountScreen = () => {
         tos: true,
         share_with_doctor: false,
       },
-      month: '2months',
-      isFree: true,
     };
 
     try {
