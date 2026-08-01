@@ -21,6 +21,12 @@ import Endpoints from './src/utilities/Endpoints';
 import { setSessionExpired, setFCMToken } from './src/redux/Auth/slice';
 import { logoutUser, sendHeartbeatThunk } from './src/redux/Auth/authThunk';
 import notifee, { EventType } from '@notifee/react-native';
+import { connectSocket, disconnectSocket, getSocket } from './src/realtime/socket';
+import { EV as CC_EV } from './src/realtime/events';
+import {
+  declineIncomingCall,
+  cancelIncomingCallNotification,
+} from './src/notifications/incomingCall';
 
 const isOutdated = (current, minimum) => {
   const c = current.split('.').map(Number);
@@ -45,10 +51,39 @@ const AppContent = () => {
   const userId = useSelector(state => state.auth?.userId);
   const appStateRef = useRef(AppState.currentState);
 
-  const navigateFromNotification = useCallback((screen = 'Today') => {
+  // CuoreCare deep-link targets live inside the CuoreCare tab stack and need params, so
+  // they route through nested navigation. All other targets keep the original top-level
+  // navigate behavior untouched.
+  const navigateFromNotification = useCallback((screen = 'Today', data = {}) => {
+    const CUORECARE_TARGETS = {
+      AppointmentDetails: 'CuoreCareAppointment',
+      PrescriptionView: 'CuoreCarePrescription',
+    };
+
     const tryNavigate = attempt => {
       if (navigationRef.current?.isReady?.()) {
-        navigationRef.current.navigate(screen);
+        // Incoming call → the full-screen root screen (rings + Accept/Reject).
+        if (screen === 'IncomingCall') {
+          navigationRef.current.navigate('CuoreCareIncomingCall', {
+            appointmentId: data?.appointmentId,
+            mode: data?.mode || 'video',
+            from: { name: data?.doctorName || 'Your doctor', role: 'doctor' },
+          });
+          return;
+        }
+        const innerScreen = CUORECARE_TARGETS[screen];
+        if (innerScreen) {
+          const params =
+            innerScreen === 'CuoreCarePrescription'
+              ? { prescriptionId: data?.prescriptionId, appointmentId: data?.appointmentId }
+              : { appointmentId: data?.appointmentId };
+          navigationRef.current.navigate('Home', {
+            screen: 'CuoreCare',
+            params: { screen: innerScreen, params },
+          });
+        } else {
+          navigationRef.current.navigate(screen);
+        }
         return;
       }
 
@@ -60,6 +95,32 @@ const AppContent = () => {
     tryNavigate(0);
   }, []);
 
+  // Launch the full-screen incoming-call UI from a realtime `call:incoming` (§1/§8). Waits
+  // for the navigator to be ready (same retry pattern as notification deep-links).
+  const handleIncomingCall = useCallback((payload, attempt = 0) => {
+    if (!payload || !payload.appointmentId) return;
+    const nav = navigationRef.current;
+    if (nav?.isReady?.()) {
+      nav.navigate('CuoreCareIncomingCall', payload);
+      return;
+    }
+    if (attempt < 10) setTimeout(() => handleIncomingCall(payload, attempt + 1), 200);
+  }, []);
+
+  // Accept from a background/lock-screen call notification → straight into the consultation.
+  const openConsultationDirect = useCallback((data = {}, attempt = 0) => {
+    const nav = navigationRef.current;
+    if (nav?.isReady?.()) {
+      nav.navigate('CuoreCareConsultation', {
+        appointmentId: data.appointmentId,
+        mode: data.mode || 'video',
+        doctorName: data.doctorName,
+      });
+      return;
+    }
+    if (attempt < 10) setTimeout(() => openConsultationDirect(data, attempt + 1), 200);
+  }, []);
+
   // Resolve the deep-link target from a notification's data payload.
   // The backend sends data.screen (e.g. 'OnBoarding', 'HealthRecords',
   // 'RenewSubscription', 'Today'); anything unknown falls back to Today.
@@ -69,6 +130,11 @@ const AppContent = () => {
       'OnBoarding',
       'HealthRecords',
       'RenewSubscription',
+      // CuoreCare deep-link targets (routed into the CuoreCare tab by navigateFromNotification)
+      'AppointmentDetails',
+      'PrescriptionView',
+      // CuoreCare incoming call (iOS taps the APNs alert → routed to the full-screen screen)
+      'IncomingCall',
     ];
     const target = data?.screen;
     return allowed.includes(target) ? target : 'Today';
@@ -186,6 +252,9 @@ const AppContent = () => {
       onForeground: async remoteMessage => {
         if (cancelled) return;
         console.log('📩 FCM Foreground:', remoteMessage);
+        // Incoming call while foregrounded: the socket already launched the full-screen
+        // incoming-call screen, so don't also show a tray notification.
+        if (remoteMessage.data?.type === 'incoming_call') return;
         // iOS: willPresent in AppDelegate shows the banner automatically.
         // Android: FCM does not show foreground notifications — use Notifee.
         if (Platform.OS === 'android') {
@@ -196,8 +265,12 @@ const AppContent = () => {
             id,
             title: remoteMessage.notification?.title || 'Notification',
             body: remoteMessage.notification?.body || '',
-            // Carry the deep-link target so the press handler can route
-            data: { screen: resolveScreen(remoteMessage.data) },
+            // Carry the deep-link target (and CuoreCare ids) so the press handler can route
+            data: {
+              screen: resolveScreen(remoteMessage.data),
+              appointmentId: remoteMessage.data?.appointmentId,
+              prescriptionId: remoteMessage.data?.prescriptionId,
+            },
             android: {
               channelId: 'health-schedule',
               smallIcon: 'ic_launcher',
@@ -209,12 +282,18 @@ const AppContent = () => {
       onOpenedFromBg: remoteMessage => {
         if (cancelled) return;
         console.log('🔔 FCM opened from background:', remoteMessage);
-        navigateFromNotification(resolveScreen(remoteMessage?.data));
+        navigateFromNotification(
+          resolveScreen(remoteMessage?.data),
+          remoteMessage?.data,
+        );
       },
       onOpenedFromQuit: remoteMessage => {
         if (cancelled) return;
         console.log('🚀 FCM opened from quit:', remoteMessage);
-        navigateFromNotification(resolveScreen(remoteMessage?.data));
+        navigateFromNotification(
+          resolveScreen(remoteMessage?.data),
+          remoteMessage?.data,
+        );
       },
       onRefreshToken: newToken => {
         if (cancelled) return;
@@ -244,12 +323,33 @@ const AppContent = () => {
     // Handle notification press events (foreground)
     const unsubscribeNotification = notifee.onForegroundEvent(
       ({ type, detail }) => {
+        const nData = detail?.notification?.data || {};
+        const actionId = detail?.pressAction?.id;
+
+        // Incoming-call notification actions (foreground).
+        if (nData.type === 'incoming_call') {
+          if (type === EventType.ACTION_PRESS && actionId === 'call-decline') {
+            declineIncomingCall(nData.appointmentId);
+            cancelIncomingCallNotification(nData.appointmentId);
+          } else if (type === EventType.ACTION_PRESS && actionId === 'call-accept') {
+            cancelIncomingCallNotification(nData.appointmentId);
+            openConsultationDirect(nData);
+          } else if (type === EventType.PRESS) {
+            cancelIncomingCallNotification(nData.appointmentId);
+            navigateFromNotification('IncomingCall', nData);
+          }
+          return;
+        }
+
         if (type === EventType.PRESS) {
           console.log(
             '📱 Notification pressed (foreground):',
             detail.notification,
           );
-          navigateFromNotification(resolveScreen(detail.notification?.data));
+          navigateFromNotification(
+            resolveScreen(detail.notification?.data),
+            detail.notification?.data,
+          );
         }
         if (type === EventType.DISMISSED || type === EventType.DELIVERED) {
           // A notification was added or swiped away — re-sync the badge.
@@ -262,8 +362,20 @@ const AppContent = () => {
     notifee.getInitialNotification().then(initialNotification => {
       if (initialNotification) {
         console.log('📱 App opened from notification:', initialNotification);
+        const nData = initialNotification.notification?.data || {};
+        const actionId = initialNotification.pressAction?.id;
+        if (nData.type === 'incoming_call') {
+          cancelIncomingCallNotification(nData.appointmentId);
+          if (actionId === 'call-accept') {
+            openConsultationDirect(nData);
+          } else {
+            navigateFromNotification('IncomingCall', nData);
+          }
+          return;
+        }
         navigateFromNotification(
           resolveScreen(initialNotification.notification?.data),
+          initialNotification.notification?.data,
         );
       }
     });
@@ -278,6 +390,7 @@ const AppContent = () => {
     checkConnectivity,
     dispatch,
     navigateFromNotification,
+    openConsultationDirect,
     resolveScreen,
     syncBadgeToTray,
   ]);
@@ -311,6 +424,28 @@ const AppContent = () => {
       appStateSubscription.remove();
     };
   }, [dispatch, userId]);
+
+  // ── CuoreCare realtime socket ──────────────────────────────────────────────
+  // Connect on login, disconnect on logout. A `call:incoming` (doctor started the call)
+  // launches the full-screen incoming-call screen even if the app is foregrounded elsewhere.
+  useEffect(() => {
+    if (!userId) {
+      disconnectSocket();
+      return undefined;
+    }
+    let cancelled = false;
+    (async () => {
+      const s = await connectSocket();
+      if (!s || cancelled) return;
+      s.on(CC_EV.CALL_INCOMING, handleIncomingCall);
+    })();
+    return () => {
+      cancelled = true;
+      const s = getSocket();
+      if (s) s.off(CC_EV.CALL_INCOMING, handleIncomingCall);
+      disconnectSocket();
+    };
+  }, [userId, handleIncomingCall]);
 
   const handleRetry = useCallback(async () => {
     await checkConnectivity();

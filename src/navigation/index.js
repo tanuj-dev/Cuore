@@ -55,6 +55,10 @@ import Search from '../screens/Search/search';
 import Notes from '../screens/Notes';
 
 import { ExploreStack } from './ExploreStack';
+import { CuoreCareStack } from './CuoreCareStack';
+import CuoreCareConsultation from '../screens/CuoreCare/Consultation';
+import CuoreCareIncomingCall from '../screens/CuoreCare/IncomingCall';
+import { Stethoscope } from 'lucide-react-native';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -157,6 +161,16 @@ function BottomTabNavigator() {
                   resizeMode: 'contain',
                 }}
               />
+            ),
+          }}
+        />
+
+        <Tab.Screen
+          name="CuoreCare"
+          component={CuoreCareStack}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <Stethoscope size={size} color={color} />
             ),
           }}
         />
@@ -268,6 +282,16 @@ export default function Navigator() {
         <Stack.Screen name="ScoreMeter" component={ScoreMeter} />
         <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
         <Stack.Screen name="Checkout" component={Checkout} />
+        <Stack.Screen
+          name="CuoreCareConsultation"
+          component={CuoreCareConsultation}
+          options={{ gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="CuoreCareIncomingCall"
+          component={CuoreCareIncomingCall}
+          options={{ gestureEnabled: false, presentation: 'transparentModal', animationEnabled: true }}
+        />
         <Stack.Screen name="Tobacco" component={Tobacco} />
         <Stack.Screen name="Mind" component={Mind} />
         <Stack.Screen name="Fitness" component={Fitness} />

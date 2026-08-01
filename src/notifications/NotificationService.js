@@ -1,5 +1,6 @@
 // src/notifications/notifeeSetup.js
-import notifee, { AuthorizationStatus } from '@notifee/react-native';
+import notifee, { AuthorizationStatus, AndroidImportance } from '@notifee/react-native';
+import { CUORECARE_CALL_CHANNEL } from './incomingCall';
 
 export async function initializeNotifee() {
   // Ask for permission
@@ -19,5 +20,16 @@ export async function initializeNotifee() {
     sound: 'doorbell',
   });
 
-  console.log('📢 Notification channel ready');
+  // Dedicated high-importance channel for incoming CuoreCare calls (§7). HIGH importance +
+  // the looping ring (res/raw/cuorecare_ring) enable the full-screen-intent call UI.
+  await notifee.createChannel({
+    id: CUORECARE_CALL_CHANNEL,
+    name: 'CuoreCare Calls',
+    importance: AndroidImportance.HIGH,
+    sound: 'cuorecare_ring',
+    vibration: true,
+    vibrationPattern: [300, 800, 300, 800],
+  });
+
+  console.log('📢 Notification channels ready');
 }
