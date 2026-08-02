@@ -20,6 +20,7 @@ import {
   SafeAreaProvider,
 } from 'react-native-safe-area-context';
 import { getProfile } from '../../redux/slices';
+import { getCuoreCareStatus } from '../../redux/CuoreCare/thunks';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { getNativeAppVersion } from '../../utilities/Constants';
 import SubscriptionExpiringModal from '../../components/SubscriptionExpiringModal';
@@ -221,7 +222,30 @@ const Profile = ({ navigation }) => {
   };
   const userID = useSelector(state => state?.auth?.userId);
   const userProfile = useSelector(state => state?.profile?.data?.data);
-  const payment = userProfile?.payment || {};
+  const cuoreCareSub = useSelector(state => state?.cuoreCare?.subscription);
+  // CuoreCare is the superset / effective tier — when it's active, the subscription card
+  // reflects it (plan, store platform, dates) instead of the base premium record.
+  const basePayment = userProfile?.payment || {};
+  const CUORECARE_PLAN_LABELS = {
+    monthly: 'CuoreCare · Monthly',
+    quarterly: 'CuoreCare · 3 Months',
+    annual: 'CuoreCare · 1 Year',
+  };
+  const CUORECARE_PLATFORM_LABELS = {
+    ios: 'App Store',
+    android: 'Google Play',
+    razorpay: 'Web',
+  };
+  const payment = cuoreCareSub?.active
+    ? {
+        productId: CUORECARE_PLAN_LABELS[cuoreCareSub.plan] || 'CuoreCare',
+        status: 'active',
+        platform:
+          CUORECARE_PLATFORM_LABELS[cuoreCareSub.platform] || cuoreCareSub.platform,
+        startDate: cuoreCareSub.startDate,
+        endDate: cuoreCareSub.expiryDate,
+      }
+    : basePayment;
   const toLabel = value =>
     value
       ? String(value)
@@ -265,6 +289,8 @@ const Profile = ({ navigation }) => {
     if (userID) {
       dispatch(getProfile(userID));
     }
+    // Refresh the CuoreCare entitlement so the subscription card shows the right tier/dates.
+    dispatch(getCuoreCareStatus());
   }, [userID, dispatch]);
 
   useEffect(() => {

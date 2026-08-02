@@ -27,36 +27,42 @@ export const zegoPatientUserId = patientId => 'u_' + String(patientId);
 export const CUORECARE_MODES = ['video', 'voice', 'chat'];
 
 // ─── In-App Purchase (SEPARATE CuoreCare tier) ──────────────────────────────
-// ⚠️ TODO(store): these product IDs must be CREATED as auto-renewing subscriptions in
-// App Store Connect (iOS) and Google Play Console (Android) before real purchases work.
-// They are intentionally distinct from the base-premium SKUs so the tiers bill and verify
-// independently. The backend derives the plan from `plan` (sent explicitly) or the id.
+// Product IDs CREATED as auto-renewing subscriptions (2026-08-01):
+//   iOS (App Store Connect group "CuoreCare", status "Prepare for Submission" — sandbox-
+//     testable now; submit for review WITH the CuoreCare app build):
+//     com.cuore.cuorecare.quarterly (3 months, ₹999), com.cuore.cuorecare.annual (1 year, ₹1,999)
+//   Android (Play Console, auto-renewing base plans, ACTIVE):
+//     cuorecare_quarterly (3 months, ₹999), cuorecare_annual (1 year, ₹1,999)
+// Intentionally distinct from the base-premium SKUs so the tiers bill and verify independently.
+// The backend derives the plan from `plan` (sent explicitly) or the id.
 export const CUORECARE_IAP_PRODUCT_IDS =
   Platform.OS === 'ios'
-    ? ['com.cuore.cuorecare.monthly', 'com.cuore.cuorecare.annual']
-    : ['cuorecare_monthly', 'cuorecare_annual'];
+    ? ['com.cuore.cuorecare.quarterly', 'com.cuore.cuorecare.annual']
+    : ['cuorecare_quarterly', 'cuorecare_annual'];
 
 export const CUORECARE_IAP_PLANS = [
   {
-    key: 'monthly',
-    plan: 'monthly',
-    title: 'CuoreCare Monthly',
+    key: 'quarterly',
+    plan: 'quarterly',
+    title: 'CuoreCare 3 Months',
     subtitle: 'Unlimited video, voice & chat consultations',
-    duration: '1 Month',
-    oldPrice: 499,
-    newPrice: 299,
+    duration: '3 Months',
+    oldPrice: null,
+    newPrice: 999,
     productId:
-      Platform.OS === 'ios' ? 'com.cuore.cuorecare.monthly' : 'cuorecare_monthly',
+      Platform.OS === 'ios'
+        ? 'com.cuore.cuorecare.quarterly'
+        : 'cuorecare_quarterly',
     topPick: false,
   },
   {
     key: 'annual',
     plan: 'annual',
-    title: 'CuoreCare Annual',
+    title: 'CuoreCare 1 Year',
     subtitle: 'Best value — a full year of doctor access',
-    duration: '12 Months',
-    oldPrice: 4999,
-    newPrice: 2999,
+    duration: '1 Year',
+    oldPrice: null,
+    newPrice: 1999,
     productId:
       Platform.OS === 'ios' ? 'com.cuore.cuorecare.annual' : 'cuorecare_annual',
     topPick: true,

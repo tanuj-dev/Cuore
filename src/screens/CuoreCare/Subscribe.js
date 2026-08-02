@@ -272,7 +272,9 @@ export default function Subscribe({ navigation }) {
               </View>
               <View style={styles.priceCol}>
                 <Text style={styles.priceNew}>₹{plan.newPrice}</Text>
-                <Text style={styles.priceOld}>₹{plan.oldPrice}</Text>
+                {plan.oldPrice ? (
+                  <Text style={styles.priceOld}>₹{plan.oldPrice}</Text>
+                ) : null}
               </View>
             </TouchableOpacity>
           );

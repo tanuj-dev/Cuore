@@ -32,6 +32,14 @@ import {
   IAP_GST_RATE,
   IAP_PLANS,
 } from '../../utilities/Constants';
+import {
+  CUORECARE_IAP_PRODUCT_IDS,
+  CUORECARE_IAP_PLANS,
+} from '../../utilities/cuoreCareConfig';
+import {
+  verifyCuoreCareSubscription,
+  getCuoreCareStatus,
+} from '../../redux/CuoreCare/thunks';
 
 /** Play Billing offer token: legacy rows use offerToken; OpenIAP standardized offers use offerTokenAndroid. */
 function getAndroidOfferToken(sub) {
@@ -52,16 +60,55 @@ function getAndroidOfferToken(sub) {
   return null;
 }
 
+// ─── Unified two-tier catalog (Essentials + CuoreCare) ──────────────────────
+// CuoreEssentials = base premium (existing SKUs); CuoreCare = superset tier that
+// adds telemedicine. Both are shown on this one screen; the tiers are mutually
+// exclusive (a user holds one at a time — enforced by the backend effective-tier).
+const TIERS = [
+  {
+    key: 'essentials',
+    label: 'CuoreEssentials',
+    caption: 'Health tracking, insights & records',
+    plans: IAP_PLANS.map(p => ({ ...p, tier: 'essentials' })),
+  },
+  {
+    key: 'cuorecare',
+    label: 'CuoreCare',
+    caption: 'Everything in Essentials + doctor consultations',
+    plans: CUORECARE_IAP_PLANS.map(p => ({ ...p, tier: 'cuorecare' })),
+  },
+];
+const ALL_PLANS = TIERS.flatMap(t => t.plans);
+const ALL_SKUS = [...IAP_SUBSCRIPTION_IDS, ...CUORECARE_IAP_PRODUCT_IDS];
+const isCuoreCareProduct = pid => CUORECARE_IAP_PRODUCT_IDS.includes(pid);
+// Plan key the CuoreCare backend expects ('quarterly' | 'annual').
+const cuoreCarePlanFor = pid =>
+  CUORECARE_IAP_PLANS.find(p => p.productId === pid)?.plan ||
+  (/annual|year/i.test(pid || '') ? 'annual' : 'quarterly');
+// Feature bullets shown for the selected plan, by tier.
+const FEATURES = {
+  essentials: [
+    { title: 'Track & stay consistent', desc: 'Track BP, sugar, daily guidance' },
+    { title: 'Understand your health clearly', desc: 'Clear trends, insights, simple summaries' },
+    { title: 'Be prepared & stay ahead', desc: 'Doctor updates, alerts, records organized' },
+  ],
+  cuorecare: [
+    { title: 'Everything in CuoreEssentials', desc: 'All tracking, insights & records included' },
+    { title: 'Video, voice & chat consultations', desc: 'Talk to verified CuoreCare doctors' },
+    { title: 'Digital prescriptions', desc: 'Signed prescriptions after each consult' },
+  ],
+};
+
 const Checkout = ({ navigation }) => {
   const dispatch = useDispatch();
-  const [selectedPlan, setSelectedPlan] = useState('Thrive');
+  const [selectedPlan, setSelectedPlan] = useState('Annual');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const { alert, AlertComponent } = useCustomAlert();
   const userId = useSelector(state => state.auth?.userId);
 
   const selected =
-    IAP_PLANS.find(p => p.title === selectedPlan) || IAP_PLANS[0];
+    ALL_PLANS.find(p => p.title === selectedPlan) || ALL_PLANS[0];
   const gstAmount = selected ? selected.newPrice * IAP_GST_RATE : 0;
   const loadedProductIds = useMemo(
     () => subscriptions?.map(s => s.productId || s.id).filter(Boolean) || [],
@@ -70,23 +117,24 @@ const Checkout = ({ navigation }) => {
   const availablePlans = useMemo(
     () =>
       connected && loadedProductIds.length > 0
-        ? IAP_PLANS.filter(plan => loadedProductIds.includes(plan.productId))
-        : IAP_PLANS,
+        ? ALL_PLANS.filter(plan => loadedProductIds.includes(plan.productId))
+        : ALL_PLANS,
     [connected, loadedProductIds],
   );
   const plansToRender = useMemo(
-    () => (availablePlans.length > 0 ? availablePlans : IAP_PLANS),
+    () => (availablePlans.length > 0 ? availablePlans : ALL_PLANS),
     [availablePlans],
   );
   const selectedProductAvailable =
     !!selected && loadedProductIds.includes(selected.productId);
   const getDurationByProductId = useCallback(
     productId =>
-      IAP_PLANS.find(plan => plan.productId === productId)?.duration ||
+      ALL_PLANS.find(plan => plan.productId === productId)?.duration ||
       selected?.duration ||
       '12 Months',
     [selected],
   );
+  const isCuoreCareSelected = !!selected && isCuoreCareProduct(selected.productId);
 
   // The backend returns HTTP 200 even for an EXPIRED subscription
   // (payment:'expired'), so a 200 alone is NOT proof of an active entitlement.
@@ -130,10 +178,14 @@ const Checkout = ({ navigation }) => {
             onlyIncludeActiveItemsIOS: true,
           });
           const relevantPurchase = purchases?.find(p =>
-            IAP_SUBSCRIPTION_IDS.includes(p.productId),
+            ALL_SKUS.includes(p.productId),
           );
 
           if (relevantPurchase) {
+            if (isCuoreCareProduct(relevantPurchase.productId)) {
+              await grantCuoreCare(relevantPurchase);
+              return;
+            }
             const payload = {
               userId,
               platform: Platform.OS,
@@ -232,9 +284,9 @@ const Checkout = ({ navigation }) => {
   // Fetch subscription once IAP is connected
   useEffect(() => {
     if (connected) {
-      console.log('IAP: Connected, fetching:', IAP_SUBSCRIPTION_IDS);
+      console.log('IAP: Connected, fetching:', ALL_SKUS);
       setIsLoadingProducts(true);
-      fetchProducts({ skus: IAP_SUBSCRIPTION_IDS, type: 'subs' })
+      fetchProducts({ skus: ALL_SKUS, type: 'subs' })
         .then(() => {
           // useIAP's fetchProducts resolves to void; subscription details arrive via `subscriptions` state.
           console.log(
@@ -249,8 +301,62 @@ const Checkout = ({ navigation }) => {
     }
   }, [connected]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // CuoreCare purchases verify against the CuoreCare backend (staging) via the
+  // redux thunk, not the base-premium endpoint. On success we also complete the
+  // local premium gate (superset tier) so Essentials features unlock immediately.
+  const grantCuoreCare = useCallback(
+    async purchase => {
+      const payload = {
+        platform: Platform.OS,
+        productId: purchase.productId,
+        plan: cuoreCarePlanFor(purchase.productId),
+        purchaseToken: purchase.purchaseToken || purchase.transactionReceipt,
+        orderId: purchase.transactionId,
+      };
+      const res = await dispatch(verifyCuoreCareSubscription(payload));
+      if (verifyCuoreCareSubscription.fulfilled.match(res)) {
+        try {
+          const tokenData = await EncryptedStorage.getItem('auth_tokens');
+          if (tokenData) {
+            const parsed = JSON.parse(tokenData);
+            parsed.paymentStatus = 'completed';
+            await EncryptedStorage.setItem(
+              'auth_tokens',
+              JSON.stringify(parsed),
+            );
+            dispatch(setUserData(parsed));
+          }
+        } catch (e) {
+          console.warn('Could not persist payment status:', e);
+        }
+        await dispatch(getCuoreCareStatus());
+        setIsProcessingPayment(false);
+        alert('You are all set', 'Your CuoreCare subscription is now active.', [
+          {
+            text: 'Start',
+            onPress: () =>
+              navigation.reset({ index: 0, routes: [{ name: 'Home' }] }),
+          },
+        ]);
+        return true;
+      }
+      setIsProcessingPayment(false);
+      const kind = res.payload?.payment;
+      alert(
+        kind === 'expired' ? 'Subscription Expired' : 'Not Activated',
+        res.payload?.message ||
+          'We could not verify your purchase. If you were charged, tap “Restore Purchases”.',
+      );
+      return false;
+    },
+    [dispatch, alert, navigation],
+  );
+
   const handleSuccessfulPurchase = useCallback(
     async purchase => {
+      if (isCuoreCareProduct(purchase.productId)) {
+        return grantCuoreCare(purchase);
+      }
       try {
         const payload = {
           userId,
@@ -317,7 +423,7 @@ const Checkout = ({ navigation }) => {
         );
       }
     },
-    [navigation, userId, dispatch, getDurationByProductId],
+    [navigation, userId, dispatch, getDurationByProductId, grantCuoreCare],
   );
 
   const handlePlanSelect = planTitle => {
@@ -346,7 +452,7 @@ const Checkout = ({ navigation }) => {
       }
 
       const relevantPurchase = purchases.find(p =>
-        IAP_SUBSCRIPTION_IDS.includes(p.productId),
+        ALL_SKUS.includes(p.productId),
       );
 
       if (!relevantPurchase) {
@@ -354,6 +460,11 @@ const Checkout = ({ navigation }) => {
           'No Purchases Found',
           'No active subscription for this app was found.',
         );
+        return;
+      }
+
+      if (isCuoreCareProduct(relevantPurchase.productId)) {
+        await grantCuoreCare(relevantPurchase);
         return;
       }
 
@@ -573,41 +684,63 @@ const Checkout = ({ navigation }) => {
               <Text style={styles.offerText}>Launch Offer · Ends 31 March</Text>
             </View> */}
 
-            {/* Plan Selection */}
+            {/* Plan Selection — two tiers */}
             <Text style={styles.sectionTitle}>Choose Your Plan</Text>
-            <View style={styles.planSelectorRow}>
-              {plansToRender.map(plan => {
-                const active = selectedPlan === plan.title;
-                return (
-                  <TouchableOpacity
-                    key={plan.productId}
-                    onPress={() => handlePlanSelect(plan.title)}
-                    style={[
-                      styles.planSelectorChip,
-                      active && styles.planSelectorChipActive,
-                    ]}
-                    activeOpacity={0.8}
-                  >
-                    <Text
-                      style={[
-                        styles.planSelectorTitle,
-                        active && styles.planSelectorTitleActive,
-                      ]}
-                    >
-                      {plan.title}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.planSelectorPrice,
-                        active && styles.planSelectorPriceActive,
-                      ]}
-                    >
-                      ₹{plan.newPrice}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            {TIERS.map(tier => {
+              const tierPlans =
+                connected && loadedProductIds.length > 0
+                  ? tier.plans.filter(p =>
+                      loadedProductIds.includes(p.productId),
+                    )
+                  : tier.plans;
+              if (!tierPlans.length) return null;
+              return (
+                <View key={tier.key} style={styles.tierBlock}>
+                  <Text style={styles.tierLabel}>{tier.label}</Text>
+                  <Text style={styles.tierCaption}>{tier.caption}</Text>
+                  <View style={styles.planSelectorRow}>
+                    {tierPlans.map(plan => {
+                      const active = selectedPlan === plan.title;
+                      return (
+                        <TouchableOpacity
+                          key={plan.productId}
+                          onPress={() => handlePlanSelect(plan.title)}
+                          style={[
+                            styles.planSelectorChip,
+                            active && styles.planSelectorChipActive,
+                          ]}
+                          activeOpacity={0.8}
+                        >
+                          {plan.topPick && (
+                            <View style={styles.recommendBadge}>
+                              <Text style={styles.recommendBadgeText}>
+                                Recommended
+                              </Text>
+                            </View>
+                          )}
+                          <Text
+                            style={[
+                              styles.planSelectorTitle,
+                              active && styles.planSelectorTitleActive,
+                            ]}
+                          >
+                            {plan.duration}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.planSelectorPrice,
+                              active && styles.planSelectorPriceActive,
+                            ]}
+                          >
+                            ₹{plan.newPrice}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })}
 
             {/* Selected Plan Summary */}
             <View style={styles.selectedPlanCard}>
@@ -617,31 +750,26 @@ const Checkout = ({ navigation }) => {
               </Text>
               <Text style={styles.selectedPlanDuration}>
                 Duration: {selected.duration} · Auto-renews{' '}
-                {selected.duration === '1 Month' ? 'monthly' : 'annually'}
+                {selected.duration === '1 Month'
+                  ? 'monthly'
+                  : selected.duration === '3 Months'
+                  ? 'quarterly'
+                  : 'annually'}
               </Text>
 
               <View style={styles.priceRow}>
-                <Text style={styles.priceOld}>₹{selected.oldPrice}</Text>
+                {selected.oldPrice ? (
+                  <Text style={styles.priceOld}>₹{selected.oldPrice}</Text>
+                ) : (
+                  <View />
+                )}
                 <Text style={styles.priceNew}>₹{selected.newPrice}</Text>
               </View>
 
               {/* What's included */}
               <View style={styles.featuresDivider} />
               <Text style={styles.featuresHeading}>What you get</Text>
-              {[
-                {
-                  title: 'Track & stay consistent',
-                  desc: 'Track BP, sugar, daily guidance',
-                },
-                {
-                  title: 'Understand your health clearly',
-                  desc: 'Clear trends, insights, simple summaries',
-                },
-                {
-                  title: 'Be prepared & stay ahead',
-                  desc: 'Doctor updates, alerts, records organized',
-                },
-              ].map(item => (
+              {(FEATURES[selected.tier] || FEATURES.essentials).map(item => (
                 <View key={item.title} style={styles.featureRow}>
                   <Text style={styles.featureCheck}>✓</Text>
 
@@ -857,6 +985,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: wp(2.5),
     marginBottom: hp(1.5),
+  },
+  tierBlock: {
+    marginBottom: hp(1),
+  },
+  tierLabel: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#11418A',
+    marginBottom: 2,
+    letterSpacing: -0.2,
+  },
+  tierCaption: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: hp(1),
+  },
+  recommendBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#10B981',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginBottom: 4,
+  },
+  recommendBadgeText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 9,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
   planSelectorChip: {
     flex: 1,

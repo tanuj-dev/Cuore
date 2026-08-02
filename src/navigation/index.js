@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Image, Platform } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -6,7 +6,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 import images from '../utilities/Images';
 
@@ -59,6 +59,7 @@ import { CuoreCareStack } from './CuoreCareStack';
 import CuoreCareConsultation from '../screens/CuoreCare/Consultation';
 import CuoreCareIncomingCall from '../screens/CuoreCare/IncomingCall';
 import { Stethoscope } from 'lucide-react-native';
+import { getCuoreCareStatus } from '../redux/CuoreCare/thunks';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -66,6 +67,17 @@ const Tab = createBottomTabNavigator();
 /* -------------------- BOTTOM TABS -------------------- */
 function BottomTabNavigator() {
   const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
+
+  // CuoreCare tab is gated on an active CuoreCare (superset) subscription.
+  // Load the entitlement on entry so the tab shows/hides correctly even before
+  // the user opens it. Non-subscribers (Essentials/free) never see the tab.
+  const cuoreCareActive = useSelector(
+    state => state?.cuoreCare?.subscription?.active,
+  );
+  useEffect(() => {
+    dispatch(getCuoreCareStatus());
+  }, [dispatch]);
 
   // ✅ PROFILE IMAGE FROM REDUX
   const profileImage = useSelector(
@@ -165,15 +177,17 @@ function BottomTabNavigator() {
           }}
         />
 
-        <Tab.Screen
-          name="CuoreCare"
-          component={CuoreCareStack}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Stethoscope size={size} color={color} />
-            ),
-          }}
-        />
+        {cuoreCareActive && (
+          <Tab.Screen
+            name="CuoreCare"
+            component={CuoreCareStack}
+            options={{
+              tabBarIcon: ({ color, size }) => (
+                <Stethoscope size={size} color={color} />
+              ),
+            }}
+          />
+        )}
 
         {/* ✅ PROFILE TAB WITH USER IMAGE */}
         <Tab.Screen
@@ -290,7 +304,11 @@ export default function Navigator() {
         <Stack.Screen
           name="CuoreCareIncomingCall"
           component={CuoreCareIncomingCall}
-          options={{ gestureEnabled: false, presentation: 'transparentModal', animationEnabled: true }}
+          options={{
+            gestureEnabled: false,
+            presentation: 'transparentModal',
+            animationEnabled: true,
+          }}
         />
         <Stack.Screen name="Tobacco" component={Tobacco} />
         <Stack.Screen name="Mind" component={Mind} />

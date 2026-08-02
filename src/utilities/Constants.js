@@ -80,7 +80,7 @@ export const IAP_GST_RATE = 0.18;
 
 export const IAP_PLANS = [
   {
-    title: 'Cuore Monthly',
+    title: 'Monthly',
     subtitle: 'Flexible monthly access to all premium features',
     duration: '1 Month',
     oldPrice: 199,
@@ -92,7 +92,7 @@ export const IAP_PLANS = [
     topPick: false,
   },
   {
-    title: 'Thrive',
+    title: 'Annual',
     subtitle: 'Commit to lasting health and sustained results',
     duration: '12 Months',
     oldPrice: 2999,

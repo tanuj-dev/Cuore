@@ -3,7 +3,7 @@
 // Two layers, so ringing NEVER depends on native asset wiring:
 //   1. Vibration — always available, no asset, no linking. This is the guaranteed ring.
 //   2. Audio (react-native-sound, already a dependency) — plays a looping ring tone from the
-//      bundled `cuorecare_ring.wav`. On Android the file lives in res/raw; on iOS it must be
+//      bundled `iphoneringtone.mp3`. On Android the file lives in res/raw; on iOS it must be
 //      added to the Xcode target's "Copy Bundle Resources" (staged at ios/Cuore/). If it
 //      isn't bundled, the load callback errors and we silently fall back to vibration only.
 import { Vibration } from 'react-native';
@@ -25,7 +25,7 @@ export function startRing() {
     /* ignore */
   }
   try {
-    const snd = new Sound('cuorecare_ring.wav', Sound.MAIN_BUNDLE, err => {
+    const snd = new Sound('iphoneringtone.mp3', Sound.MAIN_BUNDLE, err => {
       // If the ring was stopped before the async load finished, or the asset is missing,
       // release immediately and leave vibration as the ring.
       if (err || !active) {

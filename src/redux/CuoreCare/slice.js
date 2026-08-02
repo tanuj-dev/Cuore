@@ -21,7 +21,9 @@ const initialState = {
     active: false,
     plan: null,
     state: 'none', // active | expired | none
+    startDate: null,
     expiryDate: null,
+    platform: null, // ios | android | razorpay
     error: null,
   },
   doctors: { loading: false, list: [], total: 0, page: 1, error: null },
@@ -74,7 +76,9 @@ const cuoreCareSlice = createSlice({
         state.subscription.active = !!cc.active;
         state.subscription.plan = cc.plan || null;
         state.subscription.state = cc.state || 'none';
+        state.subscription.startDate = cc.startDate || null;
         state.subscription.expiryDate = cc.expiryDate || null;
+        state.subscription.platform = cc.platform || null;
       })
       .addCase(getCuoreCareStatus.rejected, (state, action) => {
         state.subscription.loading = false;

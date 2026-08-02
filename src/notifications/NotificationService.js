@@ -21,12 +21,12 @@ export async function initializeNotifee() {
   });
 
   // Dedicated high-importance channel for incoming CuoreCare calls (§7). HIGH importance +
-  // the looping ring (res/raw/cuorecare_ring) enable the full-screen-intent call UI.
+  // the looping ring (res/raw/iphoneringtone) enable the full-screen-intent call UI.
   await notifee.createChannel({
     id: CUORECARE_CALL_CHANNEL,
     name: 'CuoreCare Calls',
     importance: AndroidImportance.HIGH,
-    sound: 'cuorecare_ring',
+    sound: 'iphoneringtone',
     vibration: true,
     vibrationPattern: [300, 800, 300, 800],
   });

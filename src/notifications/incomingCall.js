@@ -12,7 +12,9 @@ import notifee, {
 } from '@notifee/react-native';
 import { recordConsultationEvent } from '../redux/CuoreCare/thunks';
 
-export const CUORECARE_CALL_CHANNEL = 'cuorecare-call';
+// Channel sound is immutable once Android creates the channel, so this id is
+// versioned (-v2) to force a fresh channel that adopts the new `iphoneringtone`.
+export const CUORECARE_CALL_CHANNEL = 'cuorecare-call-v2';
 
 const callNotifId = appointmentId => `cuorecare-call-${appointmentId}`;
 
@@ -42,7 +44,7 @@ export async function displayIncomingCallNotification(data = {}) {
       smallIcon: 'ic_launcher',
       ongoing: true,
       autoCancel: false,
-      loopSound: true, // ring loops (channel sound = cuorecare_ring)
+      loopSound: true, // ring loops (channel sound = iphoneringtone)
       timeoutAfter: 45000, // auto-dismiss if unanswered (~missed)
       fullScreenAction: { id: 'default', launchActivity: 'default' },
       pressAction: { id: 'call-open', launchActivity: 'default' },
