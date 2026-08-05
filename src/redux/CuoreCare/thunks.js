@@ -173,6 +173,19 @@ export const getPrescriptions = createAsyncThunk(
   },
 );
 
+/* -------------------------------- Certificates ----------------------------- */
+
+export const getCertificates = createAsyncThunk(
+  'cuoreCare/getCertificates',
+  async (_arg, { rejectWithValue }) => {
+    const res = await ccGet('/api/cuorecare/certificates');
+    if (res.status === 200 && res.data?.status === 'success') {
+      return { certificates: res.data.certificates || [], count: res.data.count || 0 };
+    }
+    return rejectWithValue(fail(res, 'Could not load your certificates'));
+  },
+);
+
 /* ----------------------- Transient (screen-local) actions ------------------ *
  * join / token refresh / presence events / signed-URL fetch return short-lived
  * capabilities (ZEGO tokens, presigned S3 URLs). These are NOT stored in redux — the
@@ -208,4 +221,22 @@ export async function fetchPrescriptionUrl(idOrRxId) {
     return { ok: true, data: res.data }; // { prescriptionId, issuedAt, url, expiresInSec }
   }
   return { ok: false, error: fail(res, 'Could not open this prescription') };
+}
+
+export async function fetchCertificateUrl(idOrCertId) {
+  const res = await ccGet(`/api/cuorecare/certificates/${idOrCertId}`);
+  if (res.status === 200 && res.data?.status === 'success') {
+    return { ok: true, data: res.data }; // { certificateId, type, issuedAt, url, expiresInSec }
+  }
+  return { ok: false, error: fail(res, 'Could not open this certificate') };
+}
+
+// The finalised casesheet for a consultation. Returns { ok, data: casesheet|null } — the
+// server returns null (not an error) while the doctor is still drafting it.
+export async function fetchCasesheet(appointmentId) {
+  const res = await ccGet(`/api/cuorecare/appointments/${appointmentId}/casesheet`);
+  if (res.status === 200 && res.data?.status === 'success') {
+    return { ok: true, data: res.data.casesheet || null };
+  }
+  return { ok: false, error: fail(res, 'Could not load the consultation notes') };
 }

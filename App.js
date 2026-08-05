@@ -58,6 +58,7 @@ const AppContent = () => {
     const CUORECARE_TARGETS = {
       AppointmentDetails: 'CuoreCareAppointment',
       PrescriptionView: 'CuoreCarePrescription',
+      CertificateView: 'CuoreCareCertificate',
     };
 
     const tryNavigate = attempt => {
@@ -73,10 +74,12 @@ const AppContent = () => {
         }
         const innerScreen = CUORECARE_TARGETS[screen];
         if (innerScreen) {
-          const params =
-            innerScreen === 'CuoreCarePrescription'
-              ? { prescriptionId: data?.prescriptionId, appointmentId: data?.appointmentId }
-              : { appointmentId: data?.appointmentId };
+          let params = { appointmentId: data?.appointmentId };
+          if (innerScreen === 'CuoreCarePrescription') {
+            params = { ...params, prescriptionId: data?.prescriptionId };
+          } else if (innerScreen === 'CuoreCareCertificate') {
+            params = { ...params, certificateId: data?.certificateId };
+          }
           navigationRef.current.navigate('Home', {
             screen: 'CuoreCare',
             params: { screen: innerScreen, params },
@@ -133,6 +136,7 @@ const AppContent = () => {
       // CuoreCare deep-link targets (routed into the CuoreCare tab by navigateFromNotification)
       'AppointmentDetails',
       'PrescriptionView',
+      'CertificateView',
       // CuoreCare incoming call (iOS taps the APNs alert → routed to the full-screen screen)
       'IncomingCall',
     ];

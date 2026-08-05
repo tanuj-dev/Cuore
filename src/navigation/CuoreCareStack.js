@@ -26,6 +26,8 @@ export function CuoreCareStack() {
       <Stack.Screen name="CuoreCareSubscribe" component={Subscribe} />
       <Stack.Screen name="CuoreCareHistory" component={History} />
       <Stack.Screen name="CuoreCarePrescription" component={PrescriptionView} />
+      {/* Same signed-URL PDF viewer, reached with a `certificateId` param instead. */}
+      <Stack.Screen name="CuoreCareCertificate" component={PrescriptionView} />
     </Stack.Navigator>
   );
 }

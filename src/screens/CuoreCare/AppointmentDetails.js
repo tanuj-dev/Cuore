@@ -26,6 +26,7 @@ import {
   CalendarClock as Reschedule,
   Clock,
   Info,
+  ClipboardList,
 } from 'lucide-react-native';
 
 import { CC, statusMeta, modeMeta } from './ccTheme';
@@ -38,6 +39,7 @@ import {
   cancelAppointment,
   rescheduleAppointment,
   getAppointments,
+  fetchCasesheet,
 } from '../../redux/CuoreCare/thunks';
 import { getSocket } from '../../realtime/socket';
 import { EV as CC_EV } from '../../realtime/events';
@@ -63,12 +65,22 @@ export default function AppointmentDetails({ navigation, route }) {
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [rDate, setRDate] = useState(new Date());
   const [picker, setPicker] = useState(null);
+  // The doctor's finalised casesheet. Null while they're still drafting it — the server
+  // only releases it once it's locked, so there's nothing to poll for.
+  const [casesheet, setCasesheet] = useState(null);
 
   const isThis = appt && appt.appointmentId === appointmentId;
 
   useFocusEffect(
     useCallback(() => {
       dispatch(getAppointment(appointmentId));
+      let cancelled = false;
+      fetchCasesheet(appointmentId).then(res => {
+        if (!cancelled && res.ok) setCasesheet(res.data);
+      });
+      return () => {
+        cancelled = true;
+      };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [appointmentId]),
   );
@@ -310,6 +322,8 @@ export default function AppointmentDetails({ navigation, route }) {
           </View>
         )}
 
+        <CasesheetCard casesheet={casesheet} />
+
         {/* Secondary actions */}
         {canModify && (
           <View style={styles.secondaryActions}>
@@ -383,8 +397,104 @@ export default function AppointmentDetails({ navigation, route }) {
   );
 }
 
+/* --------------------------------- Casesheet -------------------------------- *
+ * The doctor's finalised clinical notes for this consultation. Only the sections they
+ * actually filled in are shown — an empty-field skeleton would read as a broken record
+ * rather than a concise one. The doctor's private notes are stripped server-side and
+ * never reach this screen.
+ * ---------------------------------------------------------------------------- */
+
+const CASESHEET_SECTIONS = [
+  ['chiefComplaint', 'Chief complaint'],
+  ['historyOfPresentIllness', 'History'],
+  ['pastHistory', 'Past history'],
+  ['examination', 'Examination'],
+  ['diagnosis', 'Diagnosis'],
+  ['plan', 'Plan'],
+];
+
+const VITAL_ROWS = [
+  ['systolic', 'Systolic', 'mmHg'],
+  ['diastolic', 'Diastolic', 'mmHg'],
+  ['pulse', 'Pulse', 'bpm'],
+  ['spo2', 'SpO₂', '%'],
+  ['weightKg', 'Weight', 'kg'],
+  ['heightCm', 'Height', 'cm'],
+  ['bmi', 'BMI', ''],
+];
+
+function CasesheetCard({ casesheet }) {
+  const content = casesheet && casesheet.content;
+  if (!content) return null;
+
+  const sections = CASESHEET_SECTIONS.filter(([key]) => String(content[key] || '').trim());
+  const vitals = VITAL_ROWS.filter(
+    ([key]) => content.vitals && content.vitals[key] !== null && content.vitals[key] !== undefined,
+  );
+  if (sections.length === 0 && vitals.length === 0) return null;
+
+  return (
+    <Card style={styles.csCard}>
+      <View style={styles.csHead}>
+        <ClipboardList size={17} color={CC.primary} />
+        <Text style={styles.csTitle}>Consultation notes</Text>
+      </View>
+
+      {vitals.length > 0 && (
+        <View style={styles.csVitals}>
+          {vitals.map(([key, label, unit]) => (
+            <View key={key} style={styles.csVital}>
+              <Text style={styles.csVitalLabel}>{label}</Text>
+              <Text style={styles.csVitalValue}>
+                {content.vitals[key]}
+                {unit ? <Text style={styles.csVitalUnit}> {unit}</Text> : null}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {sections.map(([key, label]) => (
+        <View key={key} style={styles.csSection}>
+          <Text style={styles.csLabel}>{label}</Text>
+          <Text style={styles.csBody}>{String(content[key]).trim()}</Text>
+        </View>
+      ))}
+    </Card>
+  );
+}
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: CC.surface },
+  csCard: { marginTop: 16 },
+  csHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  csTitle: { fontFamily: F.PoppinsSemiBold, fontSize: 14.5, color: CC.text },
+  csVitals: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  csVital: {
+    backgroundColor: CC.primarySoft,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    minWidth: 78,
+  },
+  csVitalLabel: { fontFamily: F.PoppinsRegular, fontSize: 10.5, color: CC.subText },
+  csVitalValue: { fontFamily: F.PoppinsSemiBold, fontSize: 14, color: CC.primary },
+  csVitalUnit: { fontFamily: F.PoppinsRegular, fontSize: 10.5, color: CC.subText },
+  csSection: { marginBottom: 12 },
+  csLabel: {
+    fontFamily: F.PoppinsMedium,
+    fontSize: 11,
+    color: CC.subText,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 3,
+  },
+  csBody: { fontFamily: F.PoppinsRegular, fontSize: 13.5, color: CC.text, lineHeight: 20 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { padding: 20 },
 

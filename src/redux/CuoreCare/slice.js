@@ -11,6 +11,7 @@ import {
   cancelAppointment,
   rescheduleAppointment,
   getPrescriptions,
+  getCertificates,
 } from './thunks';
 
 const initialState = {
@@ -40,6 +41,7 @@ const initialState = {
   appointments: { loading: false, list: [], count: 0, scope: 'all', error: null },
   current: { loading: false, data: null, error: null },
   prescriptions: { loading: false, list: [], error: null },
+  certificates: { loading: false, list: [], error: null },
   // Shared transient flag for write actions (book/cancel/reschedule/verify)
   action: { loading: false, error: null, lastResult: null },
 };
@@ -224,6 +226,21 @@ const cuoreCareSlice = createSlice({
       .addCase(getPrescriptions.rejected, (state, action) => {
         state.prescriptions.loading = false;
         state.prescriptions.error = action.payload?.message || 'Failed to load prescriptions';
+      });
+
+    /* ---- certificates ---- */
+    builder
+      .addCase(getCertificates.pending, state => {
+        state.certificates.loading = true;
+        state.certificates.error = null;
+      })
+      .addCase(getCertificates.fulfilled, (state, action) => {
+        state.certificates.loading = false;
+        state.certificates.list = action.payload.certificates;
+      })
+      .addCase(getCertificates.rejected, (state, action) => {
+        state.certificates.loading = false;
+        state.certificates.error = action.payload?.message || 'Failed to load certificates';
       });
   },
 });

@@ -18,26 +18,54 @@ import { CC } from './ccTheme';
 import { CCHeader } from './components';
 import { fmtDayLabel } from './ccFormat';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
-import { fetchPrescriptionUrl } from '../../redux/CuoreCare/thunks';
+import { fetchPrescriptionUrl, fetchCertificateUrl } from '../../redux/CuoreCare/thunks';
 
 const F = CC.fonts;
 
+// Certificate type → the wording the patient sees.
+const CERT_LABEL = {
+  fitness: 'Medical Fitness Certificate',
+  sick_leave: 'Medical Leave Certificate',
+  medical: 'Medical Certificate',
+  fit_to_travel: 'Fit to Travel Certificate',
+  custom: 'Medical Certificate',
+};
+
+/**
+ * Signed-URL PDF viewer for CuoreCare documents. Serves BOTH prescriptions and medical
+ * certificates — they share the same private-S3 + short-lived-signed-URL delivery, so the
+ * screen is one component registered under two routes. Pass either `prescriptionId` or
+ * `certificateId` in route params.
+ */
 export default function PrescriptionView({ navigation, route }) {
-  const { prescriptionId } = route.params || {};
+  const { prescriptionId, certificateId } = route.params || {};
+  const isCertificate = !!certificateId && !prescriptionId;
+  const docId = isCertificate ? certificateId : prescriptionId;
+  const docLabel = isCertificate ? 'Certificate' : 'Prescription';
   const { alert, AlertComponent } = useCustomAlert();
 
   const [state, setState] = useState({ loading: true, url: null, error: null, meta: null });
   const [busy, setBusy] = useState(false);
 
+  const fetchUrl = useCallback(
+    id => (isCertificate ? fetchCertificateUrl(id) : fetchPrescriptionUrl(id)),
+    [isCertificate],
+  );
+
   const load = useCallback(async () => {
     setState(s => ({ ...s, loading: true, error: null }));
-    const res = await fetchPrescriptionUrl(prescriptionId);
+    const res = await fetchUrl(docId);
     if (res.ok) {
       setState({ loading: false, url: res.data.url, error: null, meta: res.data });
     } else {
-      setState({ loading: false, url: null, error: res.error?.message || 'Could not open prescription', meta: null });
+      setState({
+        loading: false,
+        url: null,
+        error: res.error?.message || `Could not open ${isCertificate ? 'certificate' : 'prescription'}`,
+        meta: null,
+      });
     }
-  }, [prescriptionId]);
+  }, [docId, fetchUrl, isCertificate]);
 
   useEffect(() => {
     load();
@@ -48,9 +76,9 @@ export default function PrescriptionView({ navigation, route }) {
     async fn => {
       setBusy(true);
       try {
-        const res = await fetchPrescriptionUrl(prescriptionId);
+        const res = await fetchUrl(docId);
         if (!res.ok) {
-          alert('Unavailable', res.error?.message || 'Could not fetch the prescription.');
+          alert('Unavailable', res.error?.message || `Could not fetch the ${docLabel.toLowerCase()}.`);
           return;
         }
         await fn(res.data);
@@ -60,10 +88,11 @@ export default function PrescriptionView({ navigation, route }) {
         setBusy(false);
       }
     },
-    [prescriptionId, alert],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [docId, fetchUrl, alert],
   );
 
-  const fileName = `CuoreCare_Prescription_${String(prescriptionId).replace(/[^a-zA-Z0-9_-]/g, '')}.pdf`;
+  const fileName = `CuoreCare_${docLabel}_${String(docId).replace(/[^a-zA-Z0-9_-]/g, '')}.pdf`;
 
   const downloadToTemp = async url => {
     const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
@@ -96,13 +125,13 @@ export default function PrescriptionView({ navigation, route }) {
             useDownloadManager: true,
             notification: true,
             title: fileName,
-            description: 'CuoreCare prescription',
+            description: `CuoreCare ${docLabel.toLowerCase()}`,
             mime: 'application/pdf',
             mediaScannable: true,
             path: `${dirs.DownloadDir}/${fileName}`,
           },
         }).fetch('GET', data.url);
-        alert('Downloaded', 'Your prescription has been saved to Downloads.');
+        alert('Downloaded', `Your ${docLabel.toLowerCase()} has been saved to Downloads.`);
       } else {
         // iOS has no shared Downloads folder — route through the share sheet ("Save to Files").
         const localPath = await downloadToTemp(data.url);
@@ -116,7 +145,7 @@ export default function PrescriptionView({ navigation, route }) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {AlertComponent}
       <CCHeader
-        title="Prescription"
+        title={isCertificate ? CERT_LABEL[state.meta?.type] || 'Certificate' : 'Prescription'}
         subtitle={state.meta?.issuedAt ? `Issued ${fmtDayLabel(state.meta.issuedAt)}` : undefined}
         onBack={() => navigation.goBack()}
       />
@@ -125,14 +154,14 @@ export default function PrescriptionView({ navigation, route }) {
         {state.loading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color={CC.primary} />
-            <Text style={styles.loadingText}>Loading prescription…</Text>
+            <Text style={styles.loadingText}>Loading {docLabel.toLowerCase()}…</Text>
           </View>
         ) : state.error ? (
           <View style={styles.center}>
             <View style={styles.errIcon}>
               <FileWarning size={30} color={CC.danger} />
             </View>
-            <Text style={styles.errTitle}>Couldn’t open prescription</Text>
+            <Text style={styles.errTitle}>Couldn’t open {docLabel.toLowerCase()}</Text>
             <Text style={styles.errMsg}>{state.error}</Text>
             <TouchableOpacity style={styles.retryBtn} onPress={load}>
               <RefreshCw size={16} color={CC.white} />
