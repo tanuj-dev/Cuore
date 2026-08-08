@@ -46,6 +46,11 @@ const profileOptions = [
     icon: Images.HEALTH_RECORD,
     section: 'ACCOUNT & PRIVACY',
   },
+  {
+    title: 'Connected Health Sources',
+    icon: Images.HEALTH_RECORD,
+    section: 'ACCOUNT & PRIVACY',
+  },
 
   {
     title: 'Delete Account',
@@ -92,7 +97,12 @@ const Profile = ({ navigation }) => {
   // Filter out items that caregivers shouldn't see
   const filteredOptions = profileOptions.filter(item => {
     if (isCaregiver) {
-      return item.title !== 'Delete Account';
+      // A caregiver views someone else's record. Connecting their own phone's health data
+      // to that account would attribute the caregiver's steps and sleep to the patient.
+      return (
+        item.title !== 'Delete Account' &&
+        item.title !== 'Connected Health Sources'
+      );
     }
     return true;
   });
@@ -107,6 +117,7 @@ const Profile = ({ navigation }) => {
     Caregiver: 'EditCaregiver',
     Doctor: 'EditDoctor',
     'Health Records': 'HealthRecords',
+    'Connected Health Sources': 'ConnectedHealth',
     'Delete Account': 'DeleteAccount',
     Support: 'Support',
     Subscription: 'SubscriptionDetails',

@@ -34,6 +34,7 @@ import SelectPersona from '../screens/SelectPersona';
 import HealthRecords from '../screens/HealthRecords';
 import Support from '../screens/Support';
 import DeleteAccount from '../screens/DeleteAccount';
+import ConnectedHealth from '../screens/ConnectedHealth';
 import TermsAndCondtion from '../screens/TermsAndCondtion';
 import RenewSubscription from '../screens/RenewSubscription';
 import EditProfile from '../screens/EditProfile';
@@ -232,6 +233,7 @@ function ProfileStack() {
       <Stack.Screen name="ProfileMain" component={Profile} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
+      <Stack.Screen name="ConnectedHealth" component={ConnectedHealth} />
       <Stack.Screen name="Support" component={Support} />
       <Stack.Screen name="EditCaregiver" component={EditCaregive} />
       <Stack.Screen name="EditDoctor" component={EditDoctor} />
