@@ -1,9 +1,17 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  BackHandler,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import {
   ZegoUIKitPrebuiltCall,
+  ZegoMenuBarButtonName,
   ONE_ON_ONE_VIDEO_CALL_CONFIG,
   ONE_ON_ONE_VOICE_CALL_CONFIG,
 } from '@zegocloud/zego-uikit-prebuilt-call-rn';
@@ -24,12 +32,28 @@ import {
   unsubscribeAppointment,
 } from '../../realtime/socket';
 import { EV as CC_EV } from '../../realtime/events';
+import { getCallState } from '../../call/callState';
+import {
+  callConnecting,
+  callConnected,
+  callMinimized,
+  restoreCall,
+  endCall,
+} from '../../call/callManager';
+import { minimizeZegoCall, primeRouteParams } from '../../call/zegoMinimize';
 
 const F = CC.fonts;
 
 export default function Consultation({ navigation, route }) {
-  const { appointmentId, mode: paramMode, doctorId: paramDoctorId, doctorName: paramDoctorName } =
-    route.params || {};
+  const {
+    appointmentId,
+    mode: paramMode,
+    doctorId: paramDoctorId,
+    doctorName: paramDoctorName,
+    // Set when the user restores a MINIMIZED call: the ZEGO room is still connected, so
+    // we must not run /join again — we only need the screen back.
+    resume: paramResume,
+  } = route.params || {};
 
   const profileUser = useSelector(state => state.profile?.data?.data?.user);
   const currentAppt = useSelector(state => state.cuoreCare.current?.data);
@@ -41,6 +65,10 @@ export default function Consultation({ navigation, route }) {
   const [remoteEnded, setRemoteEnded] = useState(false); // doctor/system ended the call
   const [socketOk, setSocketOk] = useState(true); // false → show "Reconnecting…"
   const leftRef = useRef(false);
+  // Set while we are handing the call over to the floating window, so the unmount
+  // cleanup below does NOT report the patient as having left the consultation.
+  const minimizingRef = useRef(false);
+  const callRef = useRef(null);
 
   // Resolve the doctor id for the ZIM chat peer (d_<doctorId>) from whatever we have.
   const doctorRaw = paramDoctorId || currentAppt?.doctorId;
@@ -49,8 +77,21 @@ export default function Consultation({ navigation, route }) {
     paramDoctorName || currentAppt?.doctorId?.displayName || 'CuoreCare doctor';
 
   const join = useCallback(async () => {
+    // Restoring a minimized call: reuse the cached ZEGO credentials.
+    const cached = getCallState();
+    if (paramResume && cached.joinData && cached.appointmentId === appointmentId) {
+      setJoinData(cached.joinData);
+      setPhase('ready');
+      return;
+    }
     setPhase('joining');
     setErr(null);
+    callConnecting({
+      appointmentId,
+      mode: paramMode,
+      doctorId,
+      doctorName,
+    });
     const res = await joinConsultation(appointmentId);
     if (res.ok) {
       setJoinData(res.data);
@@ -58,8 +99,11 @@ export default function Consultation({ navigation, route }) {
     } else {
       setErr(res.error);
       setPhase('error');
+      endCall('join_failed');
     }
-  }, [appointmentId]);
+    // doctorId/doctorName are display-only here; excluded to keep join() stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointmentId, paramMode, paramResume]);
 
   useEffect(() => {
     join();
@@ -74,6 +118,7 @@ export default function Consultation({ navigation, route }) {
 
   const leave = useCallback(() => {
     recordLeft();
+    endCall('local_hangup');
     if (navigation.canGoBack()) navigation.goBack();
   }, [navigation, recordLeft]);
 
@@ -82,8 +127,62 @@ export default function Consultation({ navigation, route }) {
     return r.ok ? r.data.rtcToken : '';
   }, [appointmentId]);
 
-  // Record "left" if the screen unmounts mid-call (e.g. hardware back).
-  useEffect(() => () => recordLeft(), [recordLeft]);
+  // Record "left" if the screen unmounts mid-call — but NOT when we are only minimizing
+  // (the ZEGO room stays connected behind the floating window).
+  useEffect(
+    () => () => {
+      if (!minimizingRef.current) recordLeft();
+    },
+    [recordLeft],
+  );
+
+  const effectiveMode = joinData?.mode || paramMode || 'video';
+  const isAvCall = effectiveMode === 'video' || effectiveMode === 'voice';
+
+  // Once the room is up: publish the connected state (starts the Android foreground
+  // service + arms PiP) and hand ZEGO the params it needs to restore this call from the
+  // floating window.
+  useEffect(() => {
+    if (phase !== 'ready' || !isAvCall) return;
+    callConnected({
+      appointmentId,
+      mode: effectiveMode,
+      doctorName,
+      joinData,
+    });
+    primeRouteParams({
+      roomID: joinData?.roomId,
+      onCallEnd: () => {
+        // Remote hang-up while minimized — ZEGO tells us through this callback.
+        recordLeft();
+        endCall('remote_ended');
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, isAvCall, appointmentId, effectiveMode, joinData]);
+
+  /* ------------------------- Minimize (back press) ------------------------- */
+  const minimize = useCallback(() => {
+    if (phase !== 'ready' || !isAvCall) return false;
+    minimizingRef.current = true;
+    const ok = minimizeZegoCall(callRef);
+    if (!ok) minimizingRef.current = false;
+    return ok;
+  }, [phase, isAvCall]);
+
+  // Android hardware back → minimize into the floating window, never hang up.
+  // Registered here (after ZEGO's own back handler, which swallows the event) so RN's
+  // last-registered-first dispatch reaches us first.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (phase === 'ready' && isAvCall) {
+        minimize();
+        return true; // handled: the call keeps running, minimized
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, [phase, isAvCall, minimize]);
 
   // Realtime call lifecycle (§5/§8): react to the doctor ending/leaving + connection drops.
   useEffect(() => {
@@ -209,7 +308,6 @@ export default function Consultation({ navigation, route }) {
   }
 
   /* -------------------------------- Ready -------------------------------- */
-  const effectiveMode = joinData?.mode || paramMode || 'video';
 
   if (effectiveMode === 'chat') {
     return (
@@ -236,6 +334,7 @@ export default function Consultation({ navigation, route }) {
   return (
     <View style={styles.callContainer}>
       <ZegoUIKitPrebuiltCall
+        ref={callRef}
         appID={ZEGO_APP_ID}
         appSign={''}
         userID={joinData.userId}
@@ -245,8 +344,25 @@ export default function Consultation({ navigation, route }) {
         onRequireNewToken={handleRequireNewToken}
         config={{
           ...baseConfig,
+          // A visible minimize control, in addition to the hardware back button.
+          topMenuBarConfig: {
+            ...(baseConfig.topMenuBarConfig || {}),
+            isVisible: true,
+            buttons: [ZegoMenuBarButtonName.minimizingButton],
+          },
           onHangUp: leave,
           onHangUpConfirmation: undefined,
+          // Fired by the SDK's floating window once it has taken over the room. The room
+          // stays connected; we just leave this screen.
+          onWindowMinimized: () => {
+            minimizingRef.current = true;
+            callMinimized();
+            if (navigation.canGoBack()) navigation.goBack();
+          },
+          // Fired when the user taps the floating window.
+          onWindowMaximized: () => {
+            restoreCall();
+          },
         }}
       />
 

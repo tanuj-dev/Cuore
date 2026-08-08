@@ -23,10 +23,20 @@ import { logoutUser, sendHeartbeatThunk } from './src/redux/Auth/authThunk';
 import notifee, { EventType } from '@notifee/react-native';
 import { connectSocket, disconnectSocket, getSocket } from './src/realtime/socket';
 import { EV as CC_EV } from './src/realtime/events';
+import { cancelIncomingCallNotification } from './src/notifications/incomingCall';
+import { navigationRef as rootNavigationRef } from './src/navigation/navigationRef';
+import CallFloatingWindow from './src/call/CallFloatingWindow';
 import {
-  declineIncomingCall,
-  cancelIncomingCallNotification,
-} from './src/notifications/incomingCall';
+  handleIncomingCall as onIncomingCall,
+  acceptCall,
+  declineCall,
+  dismissIncomingCall,
+  remoteEndedCall,
+  restoreCall,
+  setPipMode,
+  teardownCalls,
+} from './src/call/callManager';
+import { onPipModeChanged } from './src/call/pip';
 
 const isOutdated = (current, minimum) => {
   const c = current.split('.').map(Number);
@@ -38,8 +48,10 @@ const isOutdated = (current, minimum) => {
   return false;
 };
 
-// Navigation ref to access navigation from outside components
-export const navigationRef = React.createRef();
+// Navigation ref to access navigation from outside components.
+// Defined in src/navigation/navigationRef.js so notification handlers and the call
+// manager can navigate without importing App.js; re-exported here for compatibility.
+export const navigationRef = rootNavigationRef;
 
 // Inner component that has access to Redux
 const AppContent = () => {
@@ -65,11 +77,15 @@ const AppContent = () => {
       if (navigationRef.current?.isReady?.()) {
         // Incoming call → the full-screen root screen (rings + Accept/Reject).
         if (screen === 'IncomingCall') {
-          navigationRef.current.navigate('CuoreCareIncomingCall', {
-            appointmentId: data?.appointmentId,
-            mode: data?.mode || 'video',
-            from: { name: data?.doctorName || 'Your doctor', role: 'doctor' },
-          });
+          onIncomingCall(
+            {
+              appointmentId: data?.appointmentId,
+              mode: data?.mode || 'video',
+              doctorName: data?.doctorName,
+              from: { name: data?.doctorName || 'Your doctor', role: 'doctor' },
+            },
+            'notification',
+          );
           return;
         }
         const innerScreen = CUORECARE_TARGETS[screen];
@@ -98,30 +114,20 @@ const AppContent = () => {
     tryNavigate(0);
   }, []);
 
-  // Launch the full-screen incoming-call UI from a realtime `call:incoming` (§1/§8). Waits
-  // for the navigator to be ready (same retry pattern as notification deep-links).
-  const handleIncomingCall = useCallback((payload, attempt = 0) => {
-    if (!payload || !payload.appointmentId) return;
-    const nav = navigationRef.current;
-    if (nav?.isReady?.()) {
-      nav.navigate('CuoreCareIncomingCall', payload);
-      return;
-    }
-    if (attempt < 10) setTimeout(() => handleIncomingCall(payload, attempt + 1), 200);
+  // A realtime `call:incoming` (the doctor started the consultation). The call manager
+  // owns the ring, the notification and the navigation so every entry point — socket,
+  // FCM, notification tap — behaves identically and never rings twice.
+  const handleIncomingCall = useCallback(payload => {
+    onIncomingCall(payload, 'socket');
   }, []);
 
   // Accept from a background/lock-screen call notification → straight into the consultation.
-  const openConsultationDirect = useCallback((data = {}, attempt = 0) => {
-    const nav = navigationRef.current;
-    if (nav?.isReady?.()) {
-      nav.navigate('CuoreCareConsultation', {
-        appointmentId: data.appointmentId,
-        mode: data.mode || 'video',
-        doctorName: data.doctorName,
-      });
-      return;
-    }
-    if (attempt < 10) setTimeout(() => openConsultationDirect(data, attempt + 1), 200);
+  const openConsultationDirect = useCallback((data = {}) => {
+    acceptCall({
+      appointmentId: data.appointmentId,
+      mode: data.mode || 'video',
+      doctorName: data.doctorName,
+    });
   }, []);
 
   // Resolve the deep-link target from a notification's data payload.
@@ -223,6 +229,8 @@ const AppContent = () => {
 
   const handleSessionExpired = useCallback(async () => {
     console.log('Session expired - clearing tokens and navigating to login');
+    // A call must never outlive the session (ring, foreground service, ZEGO room).
+    teardownCalls();
     await dispatch(logoutUser({ skipRemote: true }));
     dispatch(setSessionExpired(false));
 
@@ -256,9 +264,17 @@ const AppContent = () => {
       onForeground: async remoteMessage => {
         if (cancelled) return;
         console.log('📩 FCM Foreground:', remoteMessage);
-        // Incoming call while foregrounded: the socket already launched the full-screen
-        // incoming-call screen, so don't also show a tray notification.
-        if (remoteMessage.data?.type === 'incoming_call') return;
+        // Incoming call: ring immediately from whichever transport arrives first. The
+        // manager de-duplicates against the socket event, so the ringtone starts once.
+        if (remoteMessage.data?.type === 'incoming_call') {
+          onIncomingCall(remoteMessage.data, 'fcm');
+          return;
+        }
+        // Caller hung up before we answered.
+        if (remoteMessage.data?.type === 'call_cancelled') {
+          dismissIncomingCall(remoteMessage.data.appointmentId, 'remote_cancelled');
+          return;
+        }
         // iOS: willPresent in AppDelegate shows the banner automatically.
         // Android: FCM does not show foreground notifications — use Notifee.
         if (Platform.OS === 'android') {
@@ -333,15 +349,19 @@ const AppContent = () => {
         // Incoming-call notification actions (foreground).
         if (nData.type === 'incoming_call') {
           if (type === EventType.ACTION_PRESS && actionId === 'call-decline') {
-            declineIncomingCall(nData.appointmentId);
-            cancelIncomingCallNotification(nData.appointmentId);
+            declineCall(nData.appointmentId);
           } else if (type === EventType.ACTION_PRESS && actionId === 'call-accept') {
-            cancelIncomingCallNotification(nData.appointmentId);
             openConsultationDirect(nData);
           } else if (type === EventType.PRESS) {
             cancelIncomingCallNotification(nData.appointmentId);
             navigateFromNotification('IncomingCall', nData);
           }
+          return;
+        }
+
+        // Ongoing-call notification → back to the full-screen call.
+        if (nData.type === 'ongoing_call') {
+          if (type === EventType.PRESS) restoreCall();
           return;
         }
 
@@ -371,10 +391,15 @@ const AppContent = () => {
         if (nData.type === 'incoming_call') {
           cancelIncomingCallNotification(nData.appointmentId);
           if (actionId === 'call-accept') {
+            // Answered straight from the lock screen / tray: join the room directly.
             openConsultationDirect(nData);
           } else {
             navigateFromNotification('IncomingCall', nData);
           }
+          return;
+        }
+        if (nData.type === 'ongoing_call') {
+          restoreCall();
           return;
         }
         navigateFromNotification(
@@ -438,18 +463,35 @@ const AppContent = () => {
       return undefined;
     }
     let cancelled = false;
+    // App-wide call teardown: these must be handled even when the consultation screen is
+    // unmounted (call minimized into the floating window, or app in the background).
+    const onRemoteEnd = p => remoteEndedCall(p?.appointmentId);
+    const onCallCancelled = p => dismissIncomingCall(p?.appointmentId, 'remote_cancelled');
     (async () => {
       const s = await connectSocket();
       if (!s || cancelled) return;
       s.on(CC_EV.CALL_INCOMING, handleIncomingCall);
+      s.on(CC_EV.CALL_ENDED, onRemoteEnd);
+      s.on(CC_EV.CALL_MISSED, onCallCancelled);
+      s.on(CC_EV.CALL_DECLINED, onCallCancelled);
     })();
     return () => {
       cancelled = true;
       const s = getSocket();
-      if (s) s.off(CC_EV.CALL_INCOMING, handleIncomingCall);
+      if (s) {
+        s.off(CC_EV.CALL_INCOMING, handleIncomingCall);
+        s.off(CC_EV.CALL_ENDED, onRemoteEnd);
+        s.off(CC_EV.CALL_MISSED, onCallCancelled);
+        s.off(CC_EV.CALL_DECLINED, onCallCancelled);
+      }
       disconnectSocket();
     };
   }, [userId, handleIncomingCall]);
+
+  // ── Android Picture-in-Picture ─────────────────────────────────────────────
+  // MainActivity enters PiP on Home/recents while a call is live; this keeps the call
+  // state (and the in-app chrome) in sync with the system window.
+  useEffect(() => onPipModeChanged(setPipMode), []);
 
   const handleRetry = useCallback(async () => {
     await checkConnectivity();
@@ -460,6 +502,9 @@ const AppContent = () => {
       <NavigationContainer ref={navigationRef}>
         <Navigator />
       </NavigationContainer>
+      {/* Minimized call window — lives above the whole app so the consultation keeps
+          running while the user browses the rest of Cuore. */}
+      <CallFloatingWindow />
       {!isConnected && <NetworkError onRetry={handleRetry} />}
       <SessionExpiredModal
         visible={sessionExpired}

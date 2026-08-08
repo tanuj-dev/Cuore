@@ -3,16 +3,31 @@
 // Rings (vibration + tone) until the patient accepts/rejects, the doctor cancels, or it
 // times out. Accept enters the ZEGO consultation; Reject tells the backend (→ doctor sees it).
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, StatusBar } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Easing,
+  StatusBar,
+  BackHandler,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Phone, PhoneOff, Video, MessageSquare } from 'lucide-react-native';
 
 import { CC } from './ccTheme';
 import { DoctorAvatar } from './components';
-import { startRing, stopRing } from '../../realtime/ringtone';
 import { getSocket } from '../../realtime/socket';
 import { EV as CC_EV } from '../../realtime/events';
-import { recordConsultationEvent } from '../../redux/CuoreCare/thunks';
+import {
+  ensureRinging,
+  acceptCall,
+  declineCall,
+  dismissIncomingCall,
+  stopRinging,
+} from '../../call/callManager';
+import { setShowWhenLocked } from '../../call/pip';
 
 const F = CC.fonts;
 const RING_TIMEOUT_MS = 45000;
@@ -34,26 +49,29 @@ export default function IncomingCall({ navigation, route }) {
   const onAccept = () => {
     if (answeredRef.current) return;
     answeredRef.current = true;
-    stopRing();
     const doctorId = appointment?.doctorId?._id || appointment?.doctorId;
-    navigation.replace('CuoreCareConsultation', {
-      appointmentId,
-      mode,
-      doctorId,
-      doctorName,
-    });
+    // The manager stops the ring, clears the notification and moves the state machine to
+    // `connecting`; we only decide HOW to navigate (replace, so Back never lands back on
+    // a dead ringing screen).
+    acceptCall({ appointmentId, mode, doctorId, doctorName }, params =>
+      navigation.replace('CuoreCareConsultation', params),
+    );
   };
 
   const onReject = () => {
     if (answeredRef.current) return;
     answeredRef.current = true;
-    stopRing();
-    recordConsultationEvent(appointmentId, 'declined'); // best-effort → doctor is notified
+    declineCall(appointmentId); // stops ring + notification, tells the backend
     dismiss();
   };
 
   useEffect(() => {
-    startRing();
+    // Ringing normally starts the moment the call event arrives. This covers the case
+    // where the screen was opened by tapping the notification (whose channel ringtone was
+    // just cancelled) — the in-app ring takes over so the phone never falls silent.
+    ensureRinging();
+    // Show this screen over the keyguard + wake the display, like the system dialer.
+    setShowWhenLocked(true);
 
     // Pulsing halo behind the avatar.
     const loop = Animated.loop(
@@ -68,8 +86,7 @@ export default function IncomingCall({ navigation, route }) {
     const timeout = setTimeout(() => {
       if (!answeredRef.current) {
         answeredRef.current = true;
-        stopRing();
-        dismiss();
+        dismissIncomingCall(appointmentId, 'timeout');
       }
     }, RING_TIMEOUT_MS);
 
@@ -79,8 +96,7 @@ export default function IncomingCall({ navigation, route }) {
       if (p && p.appointmentId && p.appointmentId !== appointmentId) return;
       if (answeredRef.current) return;
       answeredRef.current = true;
-      stopRing();
-      dismiss();
+      dismissIncomingCall(appointmentId, 'remote_cancelled');
     };
     if (s) {
       s.on(CC_EV.CALL_ENDED, onRemoteEnd);
@@ -88,10 +104,16 @@ export default function IncomingCall({ navigation, route }) {
       s.on(CC_EV.CALL_DECLINED, onRemoteEnd);
     }
 
+    // Back must not silently kill a ringing call — the user answers or declines,
+    // exactly like the system dialer.
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => true);
+
     return () => {
       clearTimeout(timeout);
       loop.stop();
-      stopRing();
+      backSub.remove();
+      setShowWhenLocked(false);
+      stopRinging();
       if (s) {
         s.off(CC_EV.CALL_ENDED, onRemoteEnd);
         s.off(CC_EV.CALL_MISSED, onRemoteEnd);

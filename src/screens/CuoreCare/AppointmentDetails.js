@@ -43,6 +43,8 @@ import {
 } from '../../redux/CuoreCare/thunks';
 import { getSocket } from '../../realtime/socket';
 import { EV as CC_EV } from '../../realtime/events';
+import { getCallState, isCallConnected } from '../../call/callState';
+import { restoreCall } from '../../call/callManager';
 
 const F = CC.fonts;
 const MODE_ICON = { video: Video, voice: Phone, chat: MessageSquare };
@@ -280,14 +282,23 @@ export default function AppointmentDetails({ navigation, route }) {
             label={status === 'in_progress' ? 'Rejoin consultation' : 'Join consultation'}
             icon={<ModeIcon size={18} color={CC.white} />}
             disabled={!canJoin}
-            onPress={() =>
+            onPress={() => {
+              // This consultation is already running behind the floating window — bring
+              // it back instead of joining the room a second time.
+              if (
+                isCallConnected() &&
+                getCallState().appointmentId === appt.appointmentId
+              ) {
+                restoreCall();
+                return;
+              }
               navigation.navigate('CuoreCareConsultation', {
                 appointmentId: appt.appointmentId,
                 mode: appt.mode,
                 doctorId: doc?._id,
                 doctorName: doc?.displayName,
-              })
-            }
+              });
+            }}
             style={{ marginTop: 8 }}
           />
         )}
