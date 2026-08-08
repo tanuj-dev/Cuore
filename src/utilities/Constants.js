@@ -38,7 +38,8 @@ let API_VERSION_2 = 'api/2.0';
 
 let MAIN_URL = MAIN_URL_QA_A2;
 
-let BASE_URL = 'https://cuore-backend-995g.onrender.com';
+// let BASE_URL = 'https://cuore-backend-995g.onrender.com';
+let BASE_URL = 'https://cuore-backend-staging.onrender.com';
 let BASE_URL_V2 = MAIN_URL + API_VERSION_2;
 
 let IS_PRODUCTION = MAIN_URL === MAIN_URL_PRODUCTION ? true : false;
