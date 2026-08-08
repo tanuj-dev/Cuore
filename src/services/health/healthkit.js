@@ -68,25 +68,51 @@ const READ_PERMISSIONS = [
 
 const HK_OPTIONS = { permissions: { read: READ_PERMISSIONS, write: [] } };
 
-/** Promisify react-native-health's (err, results) callbacks. Never rejects. */
+/**
+ * Promisify react-native-health's (err, results) callbacks. Never rejects.
+ *
+ * Every outcome is logged in __DEV__. A read returning nothing is indistinguishable from a
+ * read that failed unless we say which happened -- HealthKit reports a denied type as an
+ * error, and "no data" and "not allowed" both end up as an empty array otherwise. That
+ * ambiguity cost a debugging round already.
+ */
 function query(method, options) {
   return new Promise(resolve => {
     const fn = HK && HK[method];
+
     if (typeof fn !== 'function') {
+      if (__DEV__) {
+        console.warn(`[healthSync] ${method} is not exposed by the native module`);
+      }
       resolve([]);
       return;
     }
+
     try {
       fn(options, (err, results) => {
         if (err) {
           // A denied read is reported as an error. That is a normal state, not a failure:
-          // the user is allowed to share heart rate but not sleep.
+          // the user may share heart rate but not sleep.
+          if (__DEV__) {
+            console.log(`[healthSync] ${method} -> error:`, err);
+          }
           resolve([]);
           return;
         }
-        resolve(Array.isArray(results) ? results : results ? [results] : []);
+
+        const list = Array.isArray(results) ? results : results ? [results] : [];
+        if (__DEV__) {
+          console.log(
+            `[healthSync] ${method} -> ${list.length} sample(s)`,
+            list.length ? JSON.stringify(list[0]) : '',
+          );
+        }
+        resolve(list);
       });
     } catch (e) {
+      if (__DEV__) {
+        console.warn(`[healthSync] ${method} threw:`, e?.message || e);
+      }
       resolve([]);
     }
   });
@@ -138,6 +164,15 @@ export async function readMetrics({ metricTypes, since, until }) {
   const startDate = new Date(since).toISOString();
   const endDate = new Date(until).toISOString();
   const base = { startDate, endDate, ascending: true };
+
+  if (__DEV__) {
+    // The window itself is a suspect whenever reads come back empty: an inverted or
+    // future-dated range returns nothing without erroring.
+    console.log(
+      `[healthSync] reading ${metricTypes.length} metric(s) from ${startDate} to ${endDate}`,
+    );
+  }
+
   const want = new Set(metricTypes);
   const jobs = [];
 
