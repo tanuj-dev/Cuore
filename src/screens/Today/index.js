@@ -478,10 +478,10 @@ const Today = ({ navigation, route }) => {
   useEffect(() => {
     if (isCaregiver || _subscriptionExpiryShown) return;
     const endDate = payment?.endDate;
-    if (!isPaymentEndDateToday(endDate)) return;
+    if (!isPaymentEndDateToday(endDate, payment?.startDate)) return;
     _subscriptionExpiryShown = true;
     setSubscriptionExpiryVisible(true);
-  }, [isCaregiver, payment?.endDate]);
+  }, [isCaregiver, payment?.endDate, payment?.startDate]);
 
   const handleSubscriptionUpdatePayment = useCallback(() => {
     setSubscriptionExpiryVisible(false);

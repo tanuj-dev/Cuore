@@ -296,10 +296,10 @@ const Profile = ({ navigation }) => {
   useEffect(() => {
     if (isCaregiver || subscriptionExpiryShownRef.current) return;
     const endDate = payment?.endDate;
-    if (!isPaymentEndDateToday(endDate)) return;
+    if (!isPaymentEndDateToday(endDate, payment?.startDate)) return;
     subscriptionExpiryShownRef.current = true;
     setSubscriptionExpiryVisible(true);
-  }, [isCaregiver, payment?.endDate]);
+  }, [isCaregiver, payment?.endDate, payment?.startDate]);
 
   const handleSubscriptionUpdatePayment = useCallback(() => {
     setSubscriptionExpiryVisible(false);
