@@ -16,8 +16,15 @@ const isIOS = Platform.OS === 'ios';
 // Loaded lazily so the other platform's native module is never touched. Importing
 // react-native-health on Android (or vice versa) logs noisy warnings at best.
 function adapter() {
-  if (isIOS) return require('./healthkit');
-  if (Platform.OS === 'android') return require('./healthconnect');
+  // Wrapped because a require() that throws at module-load time -- a missing native
+  // module, a renamed export -- would otherwise escape every try/catch below and take the
+  // whole screen down. Degrading to "unavailable" is the correct failure mode.
+  try {
+    if (isIOS) return require('./healthkit');
+    if (Platform.OS === 'android') return require('./healthconnect');
+  } catch (e) {
+    console.warn('[healthSync] health adapter failed to load:', e?.message || e);
+  }
   return null;
 }
 

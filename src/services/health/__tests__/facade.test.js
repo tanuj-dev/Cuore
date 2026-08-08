@@ -75,7 +75,10 @@ describe('facade contract (iOS)', () => {
 
   beforeAll(() => {
     jest.resetModules();
-    jest.doMock('react-native', () => ({ Platform: { OS: 'ios' } }));
+    jest.doMock('react-native', () => ({
+      Platform: { OS: 'ios' },
+      NativeModules: { AppleHealthKit: {} },
+    }));
     health = require('../index');
   });
 
@@ -108,7 +111,7 @@ describe('facade contract (Android)', () => {
 
   beforeAll(() => {
     jest.resetModules();
-    jest.doMock('react-native', () => ({ Platform: { OS: 'android' } }));
+    jest.doMock('react-native', () => ({ Platform: { OS: 'android' }, NativeModules: {} }));
     health = require('../index');
   });
 
@@ -135,7 +138,7 @@ describe('anchors', () => {
 
   beforeAll(() => {
     jest.resetModules();
-    jest.doMock('react-native', () => ({ Platform: { OS: 'android' } }));
+    jest.doMock('react-native', () => ({ Platform: { OS: 'android' }, NativeModules: {} }));
     anchors = require('../anchors');
   });
 

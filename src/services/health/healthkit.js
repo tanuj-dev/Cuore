@@ -10,6 +10,7 @@
 // The returned samples do NOT echo which unit was used, so a wrong default is invisible
 // downstream. Always pass `unit` explicitly for those two.
 
+import { NativeModules } from 'react-native';
 import AppleHealthKit from 'react-native-health';
 
 import { METRIC } from './types';
@@ -19,6 +20,22 @@ import {
   hkSleep,
   normalizeSpO2,
 } from './normalize';
+
+// react-native-health builds its export as Object.assign({}, NativeModules.AppleHealthKit,
+// { Constants }). Constants is plain JS, so the import SUCCEEDS even when the native module
+// is missing -- you just get an object with no methods. Without this check, an unlinked
+// build is indistinguishable from a device that genuinely lacks HealthKit, and both surface
+// as a bland "not supported on this device".
+export const isNativeModuleLinked = () => !!(NativeModules && NativeModules.AppleHealthKit);
+
+if (!isNativeModuleLinked()) {
+  console.warn(
+    '[healthSync] NativeModules.AppleHealthKit is missing. The JS package is installed but ' +
+      'the native pod is not in this build. Run `cd ios && LANG=en_US.UTF-8 pod install`, ' +
+      'then rebuild from Xcode (Product > Clean Build Folder first). HealthKit will report ' +
+      'as unavailable until then.',
+  );
+}
 
 const P = AppleHealthKit.Constants.Permissions;
 const U = AppleHealthKit.Constants.Units;
@@ -64,10 +81,18 @@ function query(method, options) {
 }
 
 export async function isAvailable() {
+  if (!isNativeModuleLinked()) return false;
+
   return new Promise(resolve => {
     try {
-      AppleHealthKit.isAvailable((err, available) => resolve(!err && !!available));
+      AppleHealthKit.isAvailable((err, available) => {
+        if (err) {
+          console.warn('[healthSync] HealthKit isAvailable returned an error:', err);
+        }
+        resolve(!err && !!available);
+      });
     } catch (e) {
+      console.warn('[healthSync] HealthKit isAvailable threw:', e?.message || e);
       resolve(false);
     }
   });
