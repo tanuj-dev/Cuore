@@ -348,17 +348,31 @@ Then, with a real bearer token:
 
 # PHASE 2 — iOS native setup
 
-## Step 2.1 — Install the library
+## Step 2.1 — Install the library — DONE (`react-native-health`, not the Nitro one)
 
-New Architecture is on (`android/gradle.properties:41` → `newArchEnabled=true`), and `react-native-nitro-modules` is already a dependency, so the Nitro-based HealthKit library is the better fit:
+The original recommendation here was `@kingstinct/react-native-healthkit`, on the reasoning that New Architecture is on and `react-native-nitro-modules` was already a dependency. **That reasoning was wrong** — the installed nitro version is pinned by something else:
+
+| Package | Requires nitro |
+|---|---|
+| `react-native-iap@14.7.7` (installed) | `^0.31.1` → 0.31.x only |
+| `@kingstinct/react-native-healthkit` ≥13.2.3 | ≥0.33 |
+| `@kingstinct/react-native-healthkit` ≥13.3.1 | ≥0.35 |
+| `react-native-iap@16.1.0` (latest) | `^0.36.5` |
+| `react-native-health@1.19.0` | none |
+
+Using the Nitro library means dragging `react-native-iap` from 14 → 16, a two-major upgrade that rewrites subscription verification. Not worth it for a nicer HealthKit API.
 
 ```bash
-cd /Users/apple/Desktop/CuoreApp && npm install @kingstinct/react-native-healthkit
+npm install react-native-health --legacy-peer-deps
 ```
 
-Fallback if you hit New Arch friction: `react-native-health` (older, callback-based, runs through the interop layer).
+`react-native-iap` stays on 14.7.7 and nitro on 0.31.10 — verify both after installing.
 
-**Pin the exact version and read that version's README before writing query code** — both libraries have renamed exports across majors. Do not copy API names from memory or from this doc without checking.
+**This is not a React Native version problem.** RN 0.81.1 satisfies every candidate library (they all peer `>=0.79`), so upgrading RN would not resolve it.
+
+Trade-off accepted: an older callback-based API running through the New Architecture interop layer. Both are hidden behind the `src/services/health/` facade, so if IAP is ever upgraded for its own reasons, swapping to the Nitro library touches only the iOS adapter.
+
+**Pin the exact version and read that version's README before writing query code** — do not copy API names from memory or from this doc without checking.
 
 ## Step 2.2 — Entitlement
 
