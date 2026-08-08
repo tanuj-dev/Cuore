@@ -35,6 +35,12 @@ import { getNotification } from './Home/notificationThunk';
 import { shareData } from './Share/shareThunk';
 import { editFilename } from './uploadPhoto/editFilenameThunk';
 import { deleteRecord } from './uploadPhoto/deleteRecordThunk';
+import {
+  connectHealthThunk,
+  syncHealthThunk,
+  getHealthStatusThunk,
+  disconnectHealthThunk,
+} from './Health/healthThunks';
 
 export {
   sendOtp,
@@ -73,4 +79,8 @@ export {
   shareData,
   editFilename,
   deleteRecord,
+  connectHealthThunk,
+  syncHealthThunk,
+  getHealthStatusThunk,
+  disconnectHealthThunk,
 };
