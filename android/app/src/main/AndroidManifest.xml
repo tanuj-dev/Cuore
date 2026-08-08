@@ -37,6 +37,22 @@
 
     <uses-permission android:name="com.android.vending.BILLING" />
 
+    <!-- Health Connect (READ ONLY). Every type here must also be justified, type by type,
+         in the Play Console "Health apps declaration" or the release is rejected.
+         Note Health Connect itself needs Android 9+: it ships in the OS on Android 14+ and
+         is a Play Store app on 9-13. Android 8.x devices install the app fine but have no
+         provider, so the feature must degrade rather than assume availability. -->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_BLOOD_PRESSURE" />
+    <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE" />
+    <uses-permission android:name="android.permission.health.READ_WEIGHT" />
+    <uses-permission android:name="android.permission.health.READ_HEIGHT" />
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />
+
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
@@ -51,6 +67,9 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
+        <!-- Without this we cannot detect whether Health Connect is installed on
+             Android 9-13, where it is a normal Play Store app rather than part of the OS. -->
+        <package android:name="com.google.android.apps.healthdata" />
     </queries>
 
     <application
@@ -95,7 +114,28 @@
             <action android:name="OPEN_APP" />
             <category android:name="android.intent.category.DEFAULT" />
         </intent-filter>
+
+        <!-- Health Connect permission rationale, Android 13 and below. Health Connect's own
+             settings screen links here so the user can see WHY we asked. MainActivity is
+             singleTask, so this arrives through onNewIntent rather than a cold start. -->
+        <intent-filter>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        </intent-filter>
       </activity>
+
+      <!-- Same rationale screen for Android 14+, which replaced the action above with a
+           permission-usage intent. BOTH declarations are required: ship only one and the
+           rationale link is dead on half the fleet. -->
+      <activity-alias
+        android:name="ViewPermissionUsageActivity"
+        android:exported="true"
+        android:targetActivity=".MainActivity"
+        android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+            <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+        </intent-filter>
+      </activity-alias>
 
       <receiver
   android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationBootEventReceiver"

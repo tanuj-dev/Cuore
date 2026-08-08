@@ -1,7 +1,11 @@
 buildscript {
     ext {
         buildToolsVersion = "36.0.0"
-        minSdkVersion = 24
+        // 26 is the floor for androidx.health.connect:connect-client, which
+        // react-native-health-connect pulls in. Raised from 24 after checking Play Console:
+        // Android 7.0/7.1 did not appear as named rows at all and the entire "all other
+        // versions" bucket was 1 user out of 285 (2026-08-08).
+        minSdkVersion = 26
         compileSdkVersion = 36
         targetSdkVersion = 36
         ndkVersion = "27.1.12297006"
