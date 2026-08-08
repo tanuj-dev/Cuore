@@ -18,6 +18,7 @@ import {
   hkQuantity,
   hkBloodPressure,
   hkSleep,
+  hkDailyTotal,
   normalizeSpO2,
 } from './normalize';
 
@@ -226,19 +227,22 @@ export async function readMetrics({ metricTypes, since, until }) {
   }
 
   if (want.has(METRIC.steps)) {
-    // Daily buckets rather than raw samples: HealthKit merges iPhone and Watch step counts
-    // for us here. Raw samples would double-count a user who carries both.
+    // A statistics collection rather than raw samples, so HealthKit merges iPhone and Watch
+    // counts for us -- raw samples would double-count anyone carrying both. The results
+    // carry no id and their bucket edges move with the query time, so hkDailyTotal rolls
+    // them into stable per-day rows. See the note on hkDailyTotal.
     jobs.push(
       query('getDailyStepCountSamples', { ...base, unit: U.count }).then(r =>
-        hkQuantity(METRIC.steps, r)
+        hkDailyTotal(METRIC.steps, r)
       )
     );
   }
 
   if (want.has(METRIC.exerciseMinutes)) {
+    // Same collection query, same lack of ids, same treatment.
     jobs.push(
       query('getAppleExerciseTime', { ...base, unit: U.minute }).then(r =>
-        hkQuantity(METRIC.exerciseMinutes, r)
+        hkDailyTotal(METRIC.exerciseMinutes, r)
       )
     );
   }

@@ -154,6 +154,63 @@ export function hkBloodPressure(samples) {
 }
 
 /**
+ * Cumulative statistics samples (steps, Apple exercise time) rolled up to local calendar
+ * days.
+ *
+ * These come from HKStatisticsCollectionQuery, and two things make them unusable as-is:
+ *
+ *   1. NO id. They are computed aggregates, not stored samples, so there is no UUID to
+ *      dedupe on and every one of them would be dropped for want of an externalId.
+ *   2. The bucket boundaries MOVE. react-native-health builds the collection with
+ *      `interval.minute = period` (default 60) and leaves `anchorComponents.hour = 0`
+ *      commented out, so buckets are anchored to the moment of the query -- 13:56:02 to
+ *      14:56:02 for a sync run at :56:02. Deriving an id from a bucket edge would therefore
+ *      produce different ids on every sync and duplicate without end.
+ *
+ * Rolling up to the local calendar day fixes both: the key is stable no matter how
+ * HealthKit chopped the data, and it matches how the server aggregates these metrics
+ * anyway. Re-syncing a day updates that day's row rather than inserting another.
+ *
+ * `sourceName` also sits inside metadata[] on these samples rather than at the top level.
+ */
+export function hkDailyTotal(metricType, samples, transform) {
+  if (!Array.isArray(samples)) return [];
+
+  const byDay = new Map();
+  for (const s of samples) {
+    const value = transform ? transform(s.value) : s.value;
+    if (!isFiniteNumber(value)) continue;
+    // Attribute a bucket to the day it STARTS in. A bucket straddling midnight is
+    // inherently ambiguous; picking one end consistently is what matters.
+    const key = dayKey(s.startDate);
+    if (!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key).push({ ...s, value });
+  }
+
+  const out = [];
+  for (const [key, group] of byDay) {
+    const total = group.reduce((sum, s) => sum + s.value, 0);
+    if (total <= 0) continue;
+
+    const starts = group.map(s => new Date(s.startDate).getTime());
+    const ends = group.map(s => new Date(s.endDate).getTime());
+    const sourceName =
+      group.map(s => s.sourceName || s.metadata?.[0]?.sourceName).find(Boolean) || null;
+
+    const sample = make(
+      metricType,
+      Math.round(total * 100) / 100,
+      new Date(Math.min(...starts)),
+      new Date(Math.max(...ends)),
+      `hk-${metricType}-${key}`,
+      sourceName,
+    );
+    if (sample) out.push(sample);
+  }
+  return out;
+}
+
+/**
  * Sleep: keep only asleep stages, merge overlaps, and roll up to one sample per night.
  * The externalId is derived from the day rather than a source UUID, because the value is an
  * aggregate of many samples -- so re-syncing the same night updates that night's row rather

@@ -5,6 +5,7 @@ import {
   hkQuantity,
   hkBloodPressure,
   hkSleep,
+  hkDailyTotal,
   hcSimple,
   hcHeartRate,
   hcBloodPressure,
@@ -187,6 +188,79 @@ describe('hkSleep', () => {
 
   it('returns nothing when the night is only INBED', () => {
     expect(hkSleep([night[0]])).toHaveLength(0);
+  });
+});
+
+describe('hkDailyTotal', () => {
+  // Verbatim shape from a real iPhone: no id, sourceName nested in metadata[], and bucket
+  // edges anchored to the query time rather than the hour.
+  const realShape = [
+    {
+      metadata: [{ quantity: 162, sourceName: "TANUJ's iPhone", sourceId: 'com.apple.health.A2A1' }],
+      value: 162,
+      startDate: '2026-05-18T13:56:02.000+0530',
+      endDate: '2026-05-18T14:56:02.000+0530',
+    },
+    {
+      metadata: [{ quantity: 38, sourceName: "TANUJ's iPhone" }],
+      value: 38,
+      startDate: '2026-05-18T14:56:02.000+0530',
+      endDate: '2026-05-18T15:56:02.000+0530',
+    },
+  ];
+
+  it('keeps samples that have no id, by synthesising a day-based one', () => {
+    // hkQuantity would drop every one of these for want of an externalId.
+    const out = hkDailyTotal(METRIC.steps, realShape);
+    expect(out).toHaveLength(1);
+    expect(out[0].externalId).toMatch(/^hk-steps-\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('sums the buckets into a single daily total', () => {
+    const [s] = hkDailyTotal(METRIC.steps, realShape);
+    expect(s.value).toBe(200);
+    expect(s.unit).toBe('count');
+  });
+
+  it('reads sourceName out of metadata when it is not top-level', () => {
+    const [s] = hkDailyTotal(METRIC.steps, realShape);
+    expect(s.sourceName).toBe("TANUJ's iPhone");
+  });
+
+  it('produces the SAME id when bucket edges shift between syncs', () => {
+    // The anchor moves with query time, so a later sync returns different boundaries for
+    // the same day. The id must not move with them or every sync duplicates the day.
+    const shifted = [
+      { value: 100, startDate: '2026-05-18T09:13:44.000+0530', endDate: '2026-05-18T10:13:44.000+0530' },
+      { value: 100, startDate: '2026-05-18T10:13:44.000+0530', endDate: '2026-05-18T11:13:44.000+0530' },
+    ];
+    expect(hkDailyTotal(METRIC.steps, shifted)[0].externalId).toBe(
+      hkDailyTotal(METRIC.steps, realShape)[0].externalId,
+    );
+  });
+
+  it('splits distinct days into separate rows', () => {
+    const twoDays = [
+      { value: 100, startDate: '2026-05-18T10:00:00.000+0530', endDate: '2026-05-18T11:00:00.000+0530' },
+      { value: 250, startDate: '2026-05-19T10:00:00.000+0530', endDate: '2026-05-19T11:00:00.000+0530' },
+    ];
+    const out = hkDailyTotal(METRIC.steps, twoDays);
+    expect(out).toHaveLength(2);
+    expect(out.map(s => s.value).sort((a, b) => a - b)).toEqual([100, 250]);
+  });
+
+  it('drops days that total zero', () => {
+    expect(
+      hkDailyTotal(METRIC.steps, [
+        { value: 0, startDate: '2026-05-18T10:00:00.000+0530', endDate: '2026-05-18T11:00:00.000+0530' },
+      ]),
+    ).toHaveLength(0);
+  });
+
+  it('applies a transform when given', () => {
+    const [s] = hkDailyTotal(METRIC.exerciseMinutes, realShape, v => v / 2);
+    expect(s.value).toBe(100);
+    expect(s.unit).toBe('min');
   });
 });
 
