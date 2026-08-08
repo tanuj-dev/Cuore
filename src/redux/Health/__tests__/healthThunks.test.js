@@ -88,14 +88,19 @@ describe('chunking', () => {
     expect(body.grantedTypes).toEqual(['steps']);
   });
 
-  it('does not POST at all when there is nothing new', async () => {
+  it('still POSTs once when there is nothing to send, to register the connection', async () => {
+    // The server records healthSync.enabled inside the sync handler. Skipping the request
+    // on an empty read would leave the server believing the user never connected, so the
+    // next status fetch returns enabled:false and the screen asks them to connect again --
+    // every single time. An empty batch is a few bytes and keeps lastSyncedAt honest.
     Health.readMetrics.mockResolvedValue({ samples: [], anchors: {} });
+    Services.postApiCall.mockResolvedValue(okResponse(0));
 
     const store = makeStore({ connected: true });
     await store.dispatch(syncHealthThunk({ force: true }));
 
-    expect(Services.postApiCall).not.toHaveBeenCalled();
-    // Still counts as a successful sync so the UI does not look stalled.
+    expect(Services.postApiCall).toHaveBeenCalledTimes(1);
+    expect(Services.postApiCall.mock.calls[0][1].samples).toEqual([]);
     expect(store.getState().healthSync.lastSyncedAt).toBeTruthy();
   });
 });

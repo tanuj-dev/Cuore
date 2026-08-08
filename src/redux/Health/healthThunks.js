@@ -36,14 +36,16 @@ async function runSync({ metricTypes } = {}) {
     metricTypes ? { metricTypes } : undefined,
   );
 
-  if (!samples.length) {
-    // Nothing new is a success, not a failure. Still report so the UI can show a fresh
-    // "last synced" -- otherwise a healthy no-op looks like a stall.
-    return { synced: 0, accepted: 0, rejected: {}, anchors: {} };
-  }
-
   const grantedTypes = await Health.getGrantedMetrics();
-  const batches = chunk(samples, CHUNK_SIZE);
+
+  // Always POST at least once, even with nothing to send.
+  //
+  // The server records the connection itself -- healthSync.enabled, platform, grantedTypes
+  // -- inside the sync handler. Skipping the request when Health has no data to give would
+  // mean the server never learns the user connected, so the next status fetch returns
+  // enabled:false and the screen asks them to connect again, forever. An empty batch is a
+  // few bytes and keeps lastSyncedAt honest.
+  const batches = samples.length ? chunk(samples, CHUNK_SIZE) : [[]];
 
   let accepted = 0;
   const rejected = {};
