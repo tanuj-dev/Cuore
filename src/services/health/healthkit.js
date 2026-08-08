@@ -21,14 +21,26 @@ import {
   normalizeSpO2,
 } from './normalize';
 
-// react-native-health builds its export as Object.assign({}, NativeModules.AppleHealthKit,
-// { Constants }). Constants is plain JS, so the import SUCCEEDS even when the native module
-// is missing -- you just get an object with no methods. Without this check, an unlinked
-// build is indistinguishable from a device that genuinely lacks HealthKit, and both surface
-// as a bland "not supported on this device".
-export const isNativeModuleLinked = () => !!(NativeModules && NativeModules.AppleHealthKit);
+// WHY WE DO NOT CALL METHODS ON THE PACKAGE'S DEFAULT EXPORT
+//
+// react-native-health builds its export as:
+//     Object.assign({}, NativeModules.AppleHealthKit, { Constants })
+//
+// Object.assign copies only OWN ENUMERABLE properties. Under the old bridge
+// NativeModules.X was a plain object whose methods were own properties, so that worked.
+// Under the New Architecture -- which this app has enabled -- NativeModules.X is an interop
+// proxy whose methods resolve through a handler rather than existing as own properties, so
+// Object.assign copies nothing but Constants. Every method then reads as undefined:
+//     "_reactNativeHealth.default.isAvailable is not a function"
+//
+// The native module itself is present and correct; only the package's export pattern is
+// pre-New-Arch. So take the METHODS straight off NativeModules, and use the package purely
+// for Constants, which are plain JS and unaffected.
+const HK = NativeModules.AppleHealthKit;
 
-if (!isNativeModuleLinked()) {
+export const isNativeModuleLinked = () => !!HK;
+
+if (!HK) {
   console.warn(
     '[healthSync] NativeModules.AppleHealthKit is missing. The JS package is installed but ' +
       'the native pod is not in this build. Run `cd ios && LANG=en_US.UTF-8 pod install`, ' +
@@ -59,7 +71,7 @@ const HK_OPTIONS = { permissions: { read: READ_PERMISSIONS, write: [] } };
 /** Promisify react-native-health's (err, results) callbacks. Never rejects. */
 function query(method, options) {
   return new Promise(resolve => {
-    const fn = AppleHealthKit[method];
+    const fn = HK && HK[method];
     if (typeof fn !== 'function') {
       resolve([]);
       return;
@@ -85,7 +97,7 @@ export async function isAvailable() {
 
   return new Promise(resolve => {
     try {
-      AppleHealthKit.isAvailable((err, available) => {
+      HK.isAvailable((err, available) => {
         if (err) {
           console.warn('[healthSync] HealthKit isAvailable returned an error:', err);
         }
@@ -105,10 +117,18 @@ export async function isAvailable() {
  * empty results speak for themselves.
  */
 export async function requestPermissions() {
+  if (!HK) return false;
+
   return new Promise(resolve => {
     try {
-      AppleHealthKit.initHealthKit(HK_OPTIONS, err => resolve(!err));
+      HK.initHealthKit(HK_OPTIONS, err => {
+        if (err) {
+          console.warn('[healthSync] initHealthKit returned an error:', err);
+        }
+        resolve(!err);
+      });
     } catch (e) {
+      console.warn('[healthSync] initHealthKit threw:', e?.message || e);
       resolve(false);
     }
   });

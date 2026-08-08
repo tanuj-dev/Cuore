@@ -39,16 +39,23 @@ jest.mock(
         minute: 'minute',
       },
     },
-    isAvailable: cb => cb(null, true),
-    initHealthKit: (_o, cb) => cb(null),
-    // Every read throws -- the harshest case the facade must absorb.
-    getHeartRateSamples: () => {
-      throw new Error('native blew up');
-    },
-    getDailyStepCountSamples: (_o, cb) => cb('permission denied'),
+    // Deliberately NO methods here. This mirrors reality under the New Architecture: the
+    // package's Object.assign export carries Constants only, and every method must be
+    // reached through NativeModules.AppleHealthKit instead.
   }),
   { virtual: true }
 );
+
+// The real method surface, where the adapter actually looks.
+const mockHealthKitNative = {
+  isAvailable: cb => cb(null, true),
+  initHealthKit: (_o, cb) => cb(null),
+  // Every read misbehaves -- the harshest case the facade must absorb.
+  getHeartRateSamples: () => {
+    throw new Error('native blew up');
+  },
+  getDailyStepCountSamples: (_o, cb) => cb('permission denied'),
+};
 
 jest.mock(
   'react-native-health-connect',
@@ -77,7 +84,7 @@ describe('facade contract (iOS)', () => {
     jest.resetModules();
     jest.doMock('react-native', () => ({
       Platform: { OS: 'ios' },
-      NativeModules: { AppleHealthKit: {} },
+      NativeModules: { AppleHealthKit: mockHealthKitNative },
     }));
     health = require('../index');
   });
