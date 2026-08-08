@@ -17,7 +17,6 @@ import {
   RefreshControl,
   Platform,
   Modal,
-  TextInput,
   Linking,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -26,25 +25,17 @@ import Share from 'react-native-share';
 
 import { hp, wp, Images } from '../../utilities';
 import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
-import { Info } from 'lucide-react-native';
+import { Info, ChevronLeft, Share2, FolderOpen, FileUp } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { getHealthRecord, updateAISummary } from '../../redux/slices';
+import { getHealthRecord } from '../../redux/slices';
 import { updateLastConsulted } from '../../redux/Home/homeThunk';
 import { shareData } from '../../redux/slices';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
-import { postApiCall } from '../../utilities/Services';
-import EndPoints from '../../utilities/Endpoints';
 
 // Constants
 const HIT_SLOP = { top: 20, bottom: 20, left: 20, right: 20 };
 const REASSESS_STEP_3 = 3;
 const REASSESS_STEP_7 = 7;
-const FLAT_FEEDBACK_OPTIONS = [
-  { id: 'inaccurate', label: 'Inaccurate summary' },
-  { id: 'missing', label: 'Missing key information' },
-  { id: 'terminology', label: 'Incorrect medical terminology' },
-];
-
 const MEDICAL_REFERENCES = [
   {
     parameter: 'Blood Pressure',
@@ -121,87 +112,13 @@ const Health = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [lastConsulted, setLastConsulted] = useState(new Date());
   const [sharingLoading, setSharingLoading] = useState(false);
-  const [isEditingMode, setIsEditingMode] = useState(false);
-  const [editedSummary, setEditedSummary] = useState({
-    past_history: '',
-    medications: '',
-    labs: '',
-    imaging: '',
-  });
-  const [isSaving, setIsSaving] = useState(false);
-  const [showFlatFeedbackModal, setShowFlatFeedbackModal] = useState(false);
-  const [flatFeedbackSelected, setFlatFeedbackSelected] = useState([]);
-  const [flatFeedbackSubmitting, setFlatFeedbackSubmitting] = useState(false);
   const [showReferencesModal, setShowReferencesModal] = useState(false);
   const viewShotRef = useRef(null);
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
 
-  const handleToggleFlatFeedbackOption = useCallback(id => {
-    setFlatFeedbackSelected(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id],
-    );
-  }, []);
-
-  const handleOpenFlatFeedback = useCallback(() => {
-    setFlatFeedbackSelected([]);
-    setShowFlatFeedbackModal(true);
-  }, []);
-
-  const handleCloseFlatFeedback = useCallback(() => {
-    setShowFlatFeedbackModal(false);
-    setFlatFeedbackSelected([]);
-  }, []);
-
-  const handleSubmitFlatFeedback = useCallback(async () => {
-    if (flatFeedbackSelected.length === 0) {
-      alert('Select an option', 'Please select at least one issue to report.');
-      return;
-    }
-    setFlatFeedbackSubmitting(true);
-    try {
-      const selectedLabels = FLAT_FEEDBACK_OPTIONS.filter(o =>
-        flatFeedbackSelected.includes(o.id),
-      ).map(o => o.label);
-
-      const payload = {
-        healthRecordId: healthRecordId,
-        reasons: selectedLabels,
-      };
-
-      const response = await postApiCall(EndPoints.REPORT_SUMMARY, payload);
-
-      if (response?.status === 200 || response?.status === 201) {
-        handleCloseFlatFeedback();
-        alert(
-          'Thank you',
-          'Your feedback has been submitted to our support team.',
-        );
-      } else {
-        const message =
-          response?.data?.message ||
-          'Failed to submit feedback. Please try again.';
-        alert('Error', message);
-      }
-    } catch (err) {
-      alert('Error', 'Failed to submit feedback. Please try again.');
-    } finally {
-      setFlatFeedbackSubmitting(false);
-    }
-  }, [flatFeedbackSelected, healthRecordId, alert, handleCloseFlatFeedback]);
-
   const healthObservations = useSelector(
     state => state.health?.data?.data?.data?.healthObservations,
-  );
-  const healthRecordId = useSelector(
-    state => state.health?.data?.data?.data?.healthRecords?.healthRecordId,
-  );
-  const statusofSummary = useSelector(
-    state => state.health?.data?.data?.status,
-  );
-  console.log(healthRecordId, 'healthRecordId');
-  const healtRecords = useSelector(
-    state => state.health?.data?.data?.data?.healthRecords,
   );
   const userId = useSelector(state => state.auth?.userId);
   const role = useSelector(state => state.auth?.role);
@@ -372,78 +289,6 @@ const Health = ({ navigation }) => {
     navigation.goBack();
   }, [navigation]);
 
-  const handleEnterEditMode = useCallback(() => {
-    setEditedSummary({
-      past_history: healtRecords?.summary?.past_history?.join(', ') || '',
-      medications: healtRecords?.summary?.medications?.join(', ') || '',
-      labs: healtRecords?.summary?.labs?.join(', ') || '',
-      imaging: healtRecords?.summary?.imaging?.join(', ') || '',
-    });
-    setIsEditingMode(true);
-  }, [healtRecords]);
-
-  const handleCancelEdit = useCallback(() => {
-    setIsEditingMode(false);
-    setEditedSummary({
-      past_history: '',
-      medications: '',
-      labs: '',
-      imaging: '',
-    });
-  }, []);
-
-  const handleUpdateField = useCallback((field, value) => {
-    setEditedSummary(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  }, []);
-
-  const handleSaveSummary = useCallback(async () => {
-    try {
-      setIsSaving(true);
-
-      const summaryData = {
-        past_history: editedSummary.past_history
-          .split(',')
-          .map(item => item.trim())
-          .filter(item => item.length > 0),
-        medications: editedSummary.medications
-          .split(',')
-          .map(item => item.trim())
-          .filter(item => item.length > 0),
-        labs: editedSummary.labs
-          .split(',')
-          .map(item => item.trim())
-          .filter(item => item.length > 0),
-        imaging: editedSummary.imaging
-          .split(',')
-          .map(item => item.trim())
-          .filter(item => item.length > 0),
-      };
-
-      const response = await dispatch(
-        updateAISummary({
-          userId,
-          summary: summaryData,
-        }),
-      ).unwrap();
-
-      if (response?.success) {
-        alert('Success', 'Summary updated successfully');
-        setIsEditingMode(false);
-        dispatch(getHealthRecord(userId));
-      } else {
-        alert('Error', response?.message || 'Failed to update summary');
-      }
-    } catch (error) {
-      console.error('Error saving summary:', error);
-      alert('Error', error?.message || 'Failed to update summary');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [dispatch, userId, editedSummary, alert]);
-
   const handleNavigateToReassess = useCallback(
     step => {
       navigation.navigate('OnBoarding', {
@@ -481,37 +326,33 @@ const Health = ({ navigation }) => {
             <TouchableOpacity
               hitSlop={HIT_SLOP}
               onPress={handleNavigateBack}
-              style={styles.fixedButton}
+              style={styles.headerBtn}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
             >
-              <Image
-                source={Images.BACK_BUTTON}
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(2.5),
-                  width: hp(4),
-                }}
-                resizeMode="contain"
-              />
+              <ChevronLeft size={22} color="#1F2937" />
             </TouchableOpacity>
-            <View>
-              <Text style={styles.fixedHeaderTitle}>My Health</Text>
-            </View>
+
+            {/* flex:1 + equal-width side buttons keeps the title truly centred */}
+            <Text style={styles.fixedHeaderTitle} numberOfLines={1}>
+              My Health
+            </Text>
+
             <TouchableOpacity
-              disabled={isCaregiver}
+              disabled={isCaregiver || sharingLoading}
               hitSlop={HIT_SLOP}
               onPress={handleShareScreenshot}
-              style={styles.fixedButton}
+              style={[
+                styles.headerBtn,
+                styles.headerBtnAccent,
+                (isCaregiver || sharingLoading) && styles.headerBtnDisabled,
+              ]}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Share my health report"
             >
-              <Image
-                source={Images.SHARE_4}
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(2),
-                  width: hp(3),
-                  tintColor: 'black',
-                }}
-                resizeMode="contain"
-              />
+              <Share2 size={19} color="#11418A" />
             </TouchableOpacity>
           </View>
 
@@ -801,373 +642,38 @@ const Health = ({ navigation }) => {
                   style={styles.card}
                 >
                   <Text style={styles.sectionTitle}>Health Records</Text>
-                  <View
-                    style={{
-                      borderStyle: 'dotted',
-                      borderWidth: 1,
-                      padding: hp(1),
-                      backgroundColor: '#F9FAFB',
-                    }}
-                  >
-                    <Image
-                      source={Images.PRECRIPTION}
-                      style={styles.recordImage}
-                    />
+
+                  <View style={styles.recordsTile}>
+                    <View style={styles.recordsTileIcon}>
+                      <FolderOpen size={20} color="#11418A" />
+                    </View>
+                    <View style={styles.recordsTileText}>
+                      <Text style={styles.recordsTileTitle}>
+                        Reports, prescriptions & scans
+                      </Text>
+                      <Text style={styles.recordsTileSub}>
+                        Named by you, kept in one place
+                      </Text>
+                    </View>
                   </View>
 
                   <TouchableOpacity
                     onPress={handleNavigateToHealthRecords}
                     style={styles.button}
+                    activeOpacity={0.85}
                   >
-                    <Image
-                      source={Images.CAMERA}
-                      style={{
-                        tintColor: 'white',
-                        resizeMode: 'contain',
-                        height: hp(2.5),
-                        width: hp(4),
-                      }}
-                      resizeMode="contain"
-                    />
+                    <FileUp size={18} color="#FFFFFF" />
                     <Text style={styles.buttonText}>
-                      {' '}
                       Add / View Health Records
                     </Text>
                   </TouchableOpacity>
                   <Text style={styles.note}>
-                    * By uploading records, you consent to AI-assisted OCR
-                    processing to organize and summarize your documents.
+                    * Your records are stored securely and are only visible to
+                    you and the doctors you are linked with.
                   </Text>
                 </TouchableOpacity>
 
-                {/* Summary of Records */}
-                <View style={styles.card}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text style={styles.sectionTitle}>Summary of Records</Text>
-                  </View>
-
-                  <View style={{ marginTop: hp(2) }}>
-                      <TouchableOpacity
-                        style={[
-                          styles.flatFeedbackTapRow,
-                          statusofSummary &&
-                            statusofSummary !== 'solved' &&
-                            styles.flatFeedbackTapRowDisabled,
-                        ]}
-                        onPress={handleOpenFlatFeedback}
-                        activeOpacity={0.7}
-                        disabled={
-                          !!(statusofSummary && statusofSummary !== 'solved')
-                        }
-                      >
-                        <Image
-                          source={Images.FLAG}
-                          style={[
-                            styles.flatHistoryFlag,
-                            statusofSummary &&
-                              statusofSummary !== 'solved' && {
-                                tintColor: '#9CA3AF',
-                              },
-                          ]}
-                          resizeMode="contain"
-                        />
-                        <Text
-                          style={[
-                            styles.flatFeedbackTapText,
-                            statusofSummary &&
-                              statusofSummary !== 'solved' && {
-                                color: '#9CA3AF',
-                              },
-                          ]}
-                        >
-                          Report Inaccuracy
-                        </Text>
-                        {statusofSummary && statusofSummary !== 'solved' && (
-                          <Text style={styles.flatFeedbackPendingBadge}>
-                            Pending review
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: '#4B5563',
-                          fontFamily: 'Poppins-Regular',
-                          fontStyle: 'italic',
-                          marginBottom: hp(1),
-                        }}
-                      >
-                        AI-assisted extraction. Accuracy may vary. Please verify
-                        with your original report.
-                      </Text>
-                      {isEditingMode ? (
-                        <View>
-                          <View style={{ marginBottom: hp(2) }}>
-                            <View style={styles.flatHistoryRow}>
-                              <Text style={styles.bold}>
-                                History (from uploaded records):
-                              </Text>
-                            </View>
-                            <TextInput
-                              style={styles.editInput}
-                              value={editedSummary.past_history}
-                              onChangeText={text =>
-                                handleUpdateField('past_history', text)
-                              }
-                              placeholder="Enter history items separated by commas"
-                              placeholderTextColor="#9CA3AF"
-                              multiline
-                            />
-                          </View>
-
-                          <View style={{ marginBottom: hp(2) }}>
-                            <Text style={styles.bold}>
-                              Medications (as listed in records):
-                            </Text>
-                            <TextInput
-                              style={styles.editInput}
-                              value={editedSummary.medications}
-                              onChangeText={text =>
-                                handleUpdateField('medications', text)
-                              }
-                              placeholder="Enter medications separated by commas"
-                              placeholderTextColor="#9CA3AF"
-                              multiline
-                            />
-                          </View>
-
-                          <View style={{ marginBottom: hp(2) }}>
-                            <Text style={styles.bold}>
-                              Lab values (as recorded in reports):
-                            </Text>
-                            <TextInput
-                              style={styles.editInput}
-                              value={editedSummary.labs}
-                              onChangeText={text =>
-                                handleUpdateField('labs', text)
-                              }
-                              placeholder="Enter lab results separated by commas"
-                              placeholderTextColor="#9CA3AF"
-                              multiline
-                            />
-                          </View>
-
-                          <View style={{ marginBottom: hp(2) }}>
-                            <Text style={styles.bold}>
-                              Imaging findings (as recorded in reports):
-                            </Text>
-                            <TextInput
-                              style={styles.editInput}
-                              value={editedSummary.imaging}
-                              onChangeText={text =>
-                                handleUpdateField('imaging', text)
-                              }
-                              placeholder="Enter imaging results separated by commas"
-                              placeholderTextColor="#9CA3AF"
-                              multiline
-                            />
-                          </View>
-
-                          <View style={{ flexDirection: 'row', gap: hp(1) }}>
-                            <TouchableOpacity
-                              style={{
-                                flex: 1,
-                                backgroundColor: '#10B981',
-                                borderRadius: 8,
-                                paddingVertical: hp(1.5),
-                                alignItems: 'center',
-                              }}
-                              onPress={handleSaveSummary}
-                              disabled={isSaving}
-                              activeOpacity={0.8}
-                            >
-                              {isSaving ? (
-                                <ActivityIndicator
-                                  color="#FFFFFF"
-                                  size="small"
-                                />
-                              ) : (
-                                <Text
-                                  style={{
-                                    color: '#FFFFFF',
-                                    fontSize: 14,
-                                    fontFamily: 'Poppins-Medium',
-                                  }}
-                                >
-                                  Save Changes
-                                </Text>
-                              )}
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                              style={{
-                                flex: 1,
-                                backgroundColor: '#6B7280',
-                                borderRadius: 8,
-                                paddingVertical: hp(1.5),
-                                alignItems: 'center',
-                              }}
-                              onPress={handleCancelEdit}
-                              disabled={isSaving}
-                              activeOpacity={0.8}
-                            >
-                              <Text
-                                style={{
-                                  color: '#FFFFFF',
-                                  fontSize: 14,
-                                  fontFamily: 'Poppins-Medium',
-                                }}
-                              >
-                                Cancel
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      ) : (
-                        <View>
-                          {healtRecords?.summary?.past_history &&
-                            Array.isArray(healtRecords.summary.past_history) &&
-                            healtRecords.summary.past_history.length > 0 && (
-                              <View>
-                                <View style={styles.flatHistoryRow}>
-                                  <Text style={styles.bold}>
-                                    History (from uploaded records):
-                                  </Text>
-                                </View>
-                                <Text
-                                  style={{
-                                    fontSize: 14,
-                                    color: '#4B5563',
-                                    fontFamily: 'Poppins-Regular',
-                                    marginTop: hp(0.5),
-                                  }}
-                                >
-                                  {healtRecords.summary.past_history.join(
-                                    '   ',
-                                  )}
-                                </Text>
-                              </View>
-                            )}
-
-                          {healtRecords?.summary?.medications &&
-                            Array.isArray(healtRecords.summary.medications) &&
-                            healtRecords.summary.medications.length > 0 && (
-                              <View style={{ marginTop: hp(1) }}>
-                                <Text style={styles.bold}>
-                                  Medications (as listed in records):
-                                </Text>
-                                <Text
-                                  style={{
-                                    fontSize: 14,
-                                    color: '#4B5563',
-                                    fontFamily: 'Poppins-Regular',
-                                    marginTop: hp(0.5),
-                                  }}
-                                >
-                                  {healtRecords.summary.medications.join('   ')}
-                                </Text>
-                              </View>
-                            )}
-
-                          {healtRecords?.summary?.labs &&
-                            Array.isArray(healtRecords.summary.labs) &&
-                            healtRecords.summary.labs.length > 0 && (
-                              <View style={{ marginTop: hp(1) }}>
-                                <Text style={styles.bold}>
-                                  Lab values (as recorded in reports):
-                                </Text>
-                                <Text
-                                  style={{
-                                    fontSize: 14,
-                                    color: '#4B5563',
-                                    fontFamily: 'Poppins-Regular',
-                                    marginTop: hp(0.5),
-                                  }}
-                                >
-                                  {healtRecords.summary.labs.join('   ')}
-                                </Text>
-                              </View>
-                            )}
-
-                          {healtRecords?.summary?.imaging &&
-                            Array.isArray(healtRecords.summary.imaging) &&
-                            healtRecords.summary.imaging.length > 0 && (
-                              <View style={{ marginTop: hp(1) }}>
-                                <Text style={styles.bold}>
-                                  {' '}
-                                  Imaging findings (as recorded in reports):
-                                </Text>
-                                <Text
-                                  style={{
-                                    fontSize: 14,
-                                    color: '#4B5563',
-                                    fontFamily: 'Poppins-Regular',
-                                    marginTop: hp(0.5),
-                                  }}
-                                >
-                                  {healtRecords.summary.imaging.join('   ')}
-                                </Text>
-                              </View>
-                            )}
-
-                          {(!healtRecords?.summary ||
-                            ((!healtRecords.summary.past_history ||
-                              healtRecords.summary.past_history.length === 0) &&
-                              (!healtRecords.summary.medications ||
-                                healtRecords.summary.medications.length ===
-                                  0) &&
-                              (!healtRecords.summary.labs ||
-                                healtRecords.summary.labs.length === 0) &&
-                              (!healtRecords.summary.imaging ||
-                                healtRecords.summary.imaging.length ===
-                                  0))) && (
-                            <Text
-                              style={{
-                                fontSize: 14,
-                                color: '#6B7280',
-                                fontFamily: 'Poppins-Regular',
-                                fontStyle: 'italic',
-                                marginTop: hp(1),
-                              }}
-                            >
-                              No summary data available
-                            </Text>
-                          )}
-
-                          <TouchableOpacity
-                            style={{
-                              backgroundColor: '#11418A',
-                              borderRadius: 8,
-                              paddingVertical: hp(1.5),
-                              paddingHorizontal: wp(4),
-                              marginTop: hp(2),
-                              alignItems: 'center',
-                            }}
-                            onPress={handleEnterEditMode}
-                            activeOpacity={0.8}
-                          >
-                            <Text
-                              style={{
-                                color: '#FFFFFF',
-                                fontSize: 14,
-                                fontFamily: 'Poppins-Medium',
-                              }}
-                            >
-                              Edit Summary
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
-                </View>
-
-                {/* AI & Data Disclaimer */}
+                {/* Data & privacy */}
                 <View style={styles.card}>
                   <View style={styles.aiDisclaimerHeader}>
                     <Image
@@ -1175,20 +681,14 @@ const Health = ({ navigation }) => {
                       source={Images.NOTICE}
                     />
                     <Text style={styles.aiDisclaimerTitle}>
-                      About AI & Data Usage
+                      About Your Data
                     </Text>
                   </View>
                   <Text style={styles.aiDisclaimerText}>
                     <Text style={{ fontFamily: 'Poppins-Medium' }}>
-                      AI Summary:{' '}
+                      Health Records:{' '}
                     </Text>
-                    {`This summary is generated using Cuore's AI from your uploaded records. It is for informational purposes only and not medical advice. Please review with your doctor.`}
-                  </Text>
-                  <Text style={styles.aiDisclaimerText}>
-                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
-                      Data Use:{' '}
-                    </Text>
-                    {`To improve accuracy, text may be processed by secure AI services. Personal identifiers (like name or contact details) are not shared. By uploading records, you consent to this processing.`}
+                    {`Documents you upload are stored securely under the name you give them. They are not scanned, analysed or summarised — they are simply kept for you and the doctors you are linked with.`}
                   </Text>
                   <Text style={styles.aiDisclaimerText}>
                     <Text style={{ fontFamily: 'Poppins-Medium' }}>
@@ -1264,78 +764,7 @@ const Health = ({ navigation }) => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Flat History feedback popup */}
-      <Modal
-        visible={showFlatFeedbackModal}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCloseFlatFeedback}
-      >
-        <TouchableOpacity
-          style={styles.flatFeedbackOverlay}
-          activeOpacity={1}
-          onPress={handleCloseFlatFeedback}
-        >
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={e => e.stopPropagation()}
-            style={styles.flatFeedbackBox}
-          >
-            <Text style={styles.flatFeedbackTitle}>Report summary issue</Text>
-            <Text style={styles.flatFeedbackSubtitle}>
-              Select one or more issues below. Tap outside to close.
-            </Text>
-            {FLAT_FEEDBACK_OPTIONS.map(opt => (
-              <TouchableOpacity
-                key={opt.id}
-                style={[
-                  styles.flatFeedbackOption,
-                  flatFeedbackSelected.includes(opt.id) &&
-                    styles.flatFeedbackOptionSelected,
-                ]}
-                onPress={() => handleToggleFlatFeedbackOption(opt.id)}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.flatFeedbackOptionText,
-                    flatFeedbackSelected.includes(opt.id) &&
-                      styles.flatFeedbackOptionTextSelected,
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-                {flatFeedbackSelected.includes(opt.id) && (
-                  <Text style={styles.flatFeedbackCheck}>✓</Text>
-                )}
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={[
-                styles.flatFeedbackSubmitBtn,
-                flatFeedbackSubmitting && styles.flatFeedbackSubmitDisabled,
-              ]}
-              onPress={handleSubmitFlatFeedback}
-              disabled={flatFeedbackSubmitting}
-              activeOpacity={0.8}
-            >
-              {flatFeedbackSubmitting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.flatFeedbackSubmitText}>Submit</Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.flatFeedbackCancelBtn}
-              onPress={handleCloseFlatFeedback}
-            >
-              <Text style={styles.flatFeedbackCancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
 
-      {/* Loading overlay for PDF sharing */}
       <Modal
         transparent={true}
         animationType="fade"
@@ -1364,9 +793,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: hp(1),
+    paddingHorizontal: wp(4),
     paddingTop: Platform.OS === 'ios' ? hp(2) : hp(3),
     paddingBottom: hp(1.5),
     zIndex: 1000,
@@ -1374,20 +802,32 @@ const styles = StyleSheet.create({
     pointerEvents: 'box-none',
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#EEF2F7',
   },
-  fixedButton: {
-    padding: hp(0.5),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  // Both header buttons are the same 38x38 circle, so the flex:1 title between
+  // them lands dead centre. (The old style put a drop shadow on the touchable
+  // itself, which rendered as a grey box behind the bare icon on Android.)
+  headerBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+  },
+  headerBtnAccent: {
+    backgroundColor: '#EFF6FF',
+  },
+  headerBtnDisabled: {
+    opacity: 0.45,
   },
   fixedHeaderTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 20,
-    color: '#1F2937',
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 19,
+    color: '#111827',
+    marginHorizontal: wp(2),
   },
   header: {
     flexDirection: 'row',
@@ -1400,13 +840,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
   },
   card: {
-    backgroundColor: 'white',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     padding: hp(2),
-    marginVertical: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    marginVertical: hp(0.8),
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2,
     justifyContent: 'center',
   },
@@ -1452,111 +895,6 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     marginRight: wp(2),
-  },
-  flatFeedbackTapRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(1.5),
-  },
-  flatFeedbackTapRowDisabled: {
-    opacity: 0.5,
-  },
-  flatFeedbackTapText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 13,
-    color: '#11418A',
-  },
-  flatFeedbackPendingBadge: {
-    marginLeft: wp(2),
-    fontSize: 11,
-    fontFamily: 'Poppins-Regular',
-    color: '#F59E0B',
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: wp(2),
-    paddingVertical: 2,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  flatFeedbackOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: wp(5),
-  },
-  flatFeedbackBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: hp(2.5),
-    width: '100%',
-    maxWidth: 340,
-  },
-  flatFeedbackTitle: {
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 18,
-    color: '#1E293B',
-    marginBottom: hp(0.5),
-  },
-  flatFeedbackSubtitle: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 12,
-    color: '#64748B',
-    marginBottom: hp(2),
-  },
-  flatFeedbackOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(3),
-    borderRadius: 10,
-    marginBottom: hp(1),
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-  },
-  flatFeedbackOptionSelected: {
-    borderColor: '#11418A',
-    backgroundColor: '#EFF6FF',
-  },
-  flatFeedbackOptionText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#475569',
-  },
-  flatFeedbackOptionTextSelected: {
-    fontFamily: 'Poppins-Medium',
-    color: '#11418A',
-  },
-  flatFeedbackCheck: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#11418A',
-  },
-  flatFeedbackSubmitBtn: {
-    backgroundColor: '#11418A',
-    paddingVertical: hp(1.5),
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: hp(1.5),
-  },
-  flatFeedbackSubmitDisabled: {
-    opacity: 0.7,
-  },
-  flatFeedbackSubmitText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 15,
-    color: '#FFFFFF',
-  },
-  flatFeedbackCancelBtn: {
-    alignItems: 'center',
-    paddingVertical: hp(1),
-    marginTop: hp(0.5),
-  },
-  flatFeedbackCancelText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#64748B',
   },
   sectionTitle: {
     fontSize: 16,
@@ -1634,23 +972,47 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
   },
-  recordImage: {
-    resizeMode: 'contain',
-    width: '100%',
-    height: 150,
-    borderRadius: 6,
-    marginVertical: 10,
+  recordsTile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: hp(1.6),
+    marginTop: hp(1.4),
+  },
+  recordsTileIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recordsTileText: {
+    flex: 1,
+    marginLeft: wp(3),
+  },
+  recordsTileTitle: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  recordsTileSub: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12.5,
+    color: '#6B7280',
+    marginTop: 2,
   },
   button: {
-    marginTop: hp(1),
+    marginTop: hp(1.6),
     backgroundColor: '#11418A',
-    borderRadius: hp(1),
-    padding: 10,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
-    paddingVertical: hp(2),
+    gap: wp(2),
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(4),
   },
   buttonText: {
     color: '#FFFFFF',
@@ -1658,10 +1020,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
   },
   note: {
-    marginHorizontal: hp(1),
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: hp(0.5),
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: '#94A3B8',
+    marginTop: hp(1.2),
     fontFamily: 'Poppins-Regular',
   },
   loadingContainer: {

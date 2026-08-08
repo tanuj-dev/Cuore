@@ -3,27 +3,31 @@ import { putApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
 
 /**
- * Edit filename of an uploaded file/record.
- * @param {{ recordId: string, fileName: string }} payload - recordId and new fileName (API body: { fileName })
- * @returns Thunk result with updated record data or error
+ * Rename a health record. The custom document name is the primary name shown
+ * everywhere (patient app and doctor panel), so this is a first-class action.
+ * @param {{ recordId: string, name: string }} payload
  */
 export const editFilename = createAsyncThunk(
   'uploadPhoto/editFilename',
-  async ({ recordId, fileName }, { rejectWithValue }) => {
+  async ({ recordId, name, fileName }, { rejectWithValue }) => {
     try {
-      const endpoint = `${EndPoints.EDIT_FILENAME}/${recordId}`;
-      const response = await putApiCall(endpoint, { fileName });
+      const endpoint = `${EndPoints.HEALTH_RECORDS}/${recordId}`;
+      const response = await putApiCall(endpoint, { name: name || fileName });
 
       if (response?.status === 200) {
         return { data: response.data, success: true };
-      } else {
-        return rejectWithValue(
-          response?.data?.message || 'Failed to update filename',
-        );
       }
+      return rejectWithValue(
+        response?.data?.error ||
+          response?.data?.message ||
+          'Failed to rename record',
+      );
     } catch (error) {
       return rejectWithValue(
-        error?.response?.data?.message || error?.message || 'Failed to update filename',
+        error?.response?.data?.error ||
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to rename record',
       );
     }
   },

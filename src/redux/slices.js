@@ -11,7 +11,6 @@ import { createAccountThunk } from './Auth/authThunk';
 import { getOnboardingThunk } from './OnBoardng/onBoardingThunk';
 import { createReassessment } from './OnBoardng/onBoardingThunk';
 import { getHomeData, getHealthRecord } from './Home/homeThunk';
-import { updateAISummary } from './Home/updateSummaryThunk';
 import { setReminder } from './Home/setReminderThunk';
 // import { updateReminderTime } from './Home/updateTime';
 import { getCuoreScoreThunk } from './OnBoardng/onBoardingThunk';
@@ -72,7 +71,6 @@ export {
   searchDoctors,
   getNotification,
   shareData,
-  updateAISummary,
   editFilename,
   deleteRecord,
 };

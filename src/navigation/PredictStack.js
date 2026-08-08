@@ -12,7 +12,7 @@ export const PredictStack = () => (
     <Stack.Screen name="PredictHome" component={Predict} />
     <Stack.Screen name="Score" component={Score} />
     <Stack.Screen name="ScoreMeter" component={ScoreMeter} />
-    <Stack.Screen name="HealthRecords" compomemt={HealthRecords} />
-    <Stack.Screen name="Health" compomemt={Health} />
+    <Stack.Screen name="HealthRecords" component={HealthRecords} />
+    <Stack.Screen name="Health" component={Health} />
   </Stack.Navigator>
 );
