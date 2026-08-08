@@ -189,8 +189,13 @@ export function hkDailyTotal(metricType, samples, transform) {
 
   const out = [];
   for (const [key, group] of byDay) {
-    const total = group.reduce((sum, s) => sum + s.value, 0);
-    if (total <= 0) continue;
+    const rawTotal = group.reduce((sum, s) => sum + s.value, 0);
+    if (rawTotal <= 0) continue;
+
+    // Counts must be whole numbers. HealthKit's statistics collection apportions raw
+    // samples across bucket boundaries, so a bucket reads 391.50438462695746 steps; summed
+    // over a day that would be stored and displayed as "5231.47 steps".
+    const total = UNIT[metricType] === 'count' ? Math.round(rawTotal) : rawTotal;
 
     const starts = group.map(s => new Date(s.startDate).getTime());
     const ends = group.map(s => new Date(s.endDate).getTime());

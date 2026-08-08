@@ -262,6 +262,25 @@ describe('hkDailyTotal', () => {
     expect(s.value).toBe(100);
     expect(s.unit).toBe('min');
   });
+
+  it('rounds counts to whole numbers', () => {
+    // HealthKit apportions raw samples across bucket edges, so a bucket really does read
+    // 391.50438462695746 steps. Nobody walks half a step.
+    const fractional = [
+      { value: 391.50438462695746, startDate: '2026-05-18T14:02:50.000+0530', endDate: '2026-05-18T15:02:50.000+0530' },
+      { value: 162.4956153730425, startDate: '2026-05-18T15:02:50.000+0530', endDate: '2026-05-18T16:02:50.000+0530' },
+    ];
+    const [s] = hkDailyTotal(METRIC.steps, fractional);
+    expect(Number.isInteger(s.value)).toBe(true);
+    expect(s.value).toBe(554);
+  });
+
+  it('does NOT round metrics whose unit is not a count', () => {
+    const [s] = hkDailyTotal(METRIC.exerciseMinutes, [
+      { value: 12.5, startDate: '2026-05-18T10:00:00.000+0530', endDate: '2026-05-18T11:00:00.000+0530' },
+    ]);
+    expect(s.value).toBe(12.5);
+  });
 });
 
 describe('hcHeartRate', () => {
