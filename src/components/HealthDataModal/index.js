@@ -29,10 +29,13 @@ import { getHealthLatestThunk, getHealthSeriesThunk } from '../../redux/slices';
 
 // Presentation for each canonical metric. Anything the server returns that is not listed
 // here is simply not shown, so adding a metric server-side cannot break this screen.
+// `daily: true` marks the metrics the server returns as TODAY'S TOTAL rather than a point
+// reading. They need saying so: at 4am "Steps 21" beside a chart of thousands reads as a
+// broken number unless it is labelled as today-so-far.
 const DISPLAY = {
-  steps: { label: 'Steps', Icon: Footprints, decimals: 0 },
-  exerciseMinutes: { label: 'Exercise', Icon: Timer, decimals: 0, suffix: ' min' },
-  sleepMinutes: { label: 'Sleep', Icon: Moon, decimals: 0, format: v => formatSleep(v) },
+  steps: { label: 'Steps', Icon: Footprints, decimals: 0, daily: true, hideUnit: true },
+  exerciseMinutes: { label: 'Exercise', Icon: Timer, decimals: 0, daily: true, format: v => `${Math.round(v)} min` },
+  sleepMinutes: { label: 'Sleep', Icon: Moon, decimals: 0, daily: true, format: v => formatSleep(v) },
   heartRate: { label: 'Heart rate', Icon: HeartPulse, decimals: 0 },
   restingHeartRate: { label: 'Resting heart rate', Icon: HeartPulse, decimals: 0 },
   bloodPressureSystolic: { label: 'Systolic', Icon: Activity, decimals: 0 },
@@ -195,7 +198,11 @@ const HealthDataModal = ({ visible, onClose }) => {
                 const { Icon } = row;
                 const value = row.format
                   ? row.format(row.value)
-                  : `${row.value.toFixed(row.decimals)}${row.suffix || ''}`;
+                  : row.value.toFixed(row.decimals);
+                // A daily total is "today so far", not a moment. Showing "14m ago" against
+                // it invites reading a whole day's number as a single reading.
+                const when = row.daily ? 'Today' : formatMeasuredAt(row.measuredAt);
+                const showUnit = !row.format && !row.hideUnit;
                 return (
                   <View
                     key={row.key}
@@ -205,13 +212,13 @@ const HealthDataModal = ({ visible, onClose }) => {
                     <View style={styles.rowText}>
                       <Text style={styles.rowLabel}>{row.label}</Text>
                       <Text style={styles.rowMeta}>
-                        {formatMeasuredAt(row.measuredAt)}
+                        {when}
                         {row.sourceName ? ` · ${row.sourceName}` : ''}
                       </Text>
                     </View>
                     <Text style={styles.rowValue}>
                       {value}
-                      {row.format ? '' : <Text style={styles.rowUnit}> {row.unit}</Text>}
+                      {showUnit ? <Text style={styles.rowUnit}> {row.unit}</Text> : null}
                     </Text>
                   </View>
                 );
