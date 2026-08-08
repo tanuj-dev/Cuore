@@ -40,6 +40,8 @@ import {
   syncHealthThunk,
   getHealthStatusThunk,
   disconnectHealthThunk,
+  getHealthLatestThunk,
+  getHealthSeriesThunk,
 } from './Health/healthThunks';
 
 export {
@@ -83,4 +85,6 @@ export {
   syncHealthThunk,
   getHealthStatusThunk,
   disconnectHealthThunk,
+  getHealthLatestThunk,
+  getHealthSeriesThunk,
 };

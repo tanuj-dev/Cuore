@@ -24,6 +24,7 @@ import { getCuoreCareStatus } from '../../redux/CuoreCare/thunks';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { getNativeAppVersion } from '../../utilities/Constants';
 import SubscriptionExpiringModal from '../../components/SubscriptionExpiringModal';
+import HealthDataModal from '../../components/HealthDataModal';
 import {
   isPaymentEndDateToday,
   navigateToCheckoutFromTabs,
@@ -48,6 +49,11 @@ const profileOptions = [
   },
   {
     title: 'Connected Health Sources',
+    icon: Images.HEALTH_RECORD,
+    section: 'ACCOUNT & PRIVACY',
+  },
+  {
+    title: 'Health Data',
     icon: Images.HEALTH_RECORD,
     section: 'ACCOUNT & PRIVACY',
   },
@@ -88,6 +94,7 @@ const Profile = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [showWebViewModal, setShowWebViewModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showHealthDataModal, setShowHealthDataModal] = useState(false);
   const [webViewUrl, setWebViewUrl] = useState('');
   const [isWebViewLoading, setIsWebViewLoading] = useState(false);
   const [subscriptionExpiryVisible, setSubscriptionExpiryVisible] =
@@ -118,6 +125,8 @@ const Profile = ({ navigation }) => {
     Doctor: 'EditDoctor',
     'Health Records': 'HealthRecords',
     'Connected Health Sources': 'ConnectedHealth',
+    // Opens a modal rather than navigating; intercepted in the row handler below.
+    'Health Data': 'HealthDataModal',
     'Delete Account': 'DeleteAccount',
     Support: 'Support',
     Subscription: 'SubscriptionDetails',
@@ -144,6 +153,10 @@ const Profile = ({ navigation }) => {
               if (route === 'TermsAndConditions') {
                 setWebViewUrl('https://cuore.health/terms');
                 setShowWebViewModal(true);
+                return;
+              }
+              if (route === 'HealthDataModal') {
+                setShowHealthDataModal(true);
                 return;
               }
 
@@ -420,6 +433,12 @@ const Profile = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Synced Apple Health / Health Connect readings */}
+      <HealthDataModal
+        visible={showHealthDataModal}
+        onClose={() => setShowHealthDataModal(false)}
+      />
 
       {/* Subscription Modal */}
       <Modal

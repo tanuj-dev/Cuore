@@ -5,6 +5,8 @@ import {
   syncHealthThunk,
   getHealthStatusThunk,
   disconnectHealthThunk,
+  getHealthLatestThunk,
+  getHealthSeriesThunk,
 } from './healthThunks';
 
 // NOTE ON THE STATE KEY
@@ -30,6 +32,17 @@ const initialState = {
   // Last sync outcome, for the settings row.
   lastResult: null,
   error: null,
+
+  // --- Read models for the data modal ---
+  // latest: { metricType: { value, unit, measuredAt, origin, sourceName } }
+  latest: null,
+  latestTimezone: null,
+  loadingLatest: false,
+  // series: [{ date: 'YYYY-MM-DD', value, min, max, samples }]
+  series: [],
+  seriesMetric: null,
+  seriesUnit: null,
+  loadingSeries: false,
 };
 
 const healthSyncSlice = createSlice({
@@ -104,6 +117,38 @@ const healthSyncSlice = createSlice({
         }
       })
 
+      // --- latest ---
+      .addCase(getHealthLatestThunk.pending, state => {
+        state.loadingLatest = true;
+      })
+      .addCase(getHealthLatestThunk.fulfilled, (state, action) => {
+        state.loadingLatest = false;
+        state.latest = action.payload?.metrics || {};
+        state.latestTimezone = action.payload?.timezone || null;
+        if (action.payload?.lastSyncedAt) state.lastSyncedAt = action.payload.lastSyncedAt;
+      })
+      .addCase(getHealthLatestThunk.rejected, state => {
+        state.loadingLatest = false;
+        // Deliberately not set as a user-visible error: the modal shows an empty state
+        // instead, which is the same thing a user with no data would see anyway.
+        state.latest = state.latest || {};
+      })
+
+      // --- series ---
+      .addCase(getHealthSeriesThunk.pending, state => {
+        state.loadingSeries = true;
+      })
+      .addCase(getHealthSeriesThunk.fulfilled, (state, action) => {
+        state.loadingSeries = false;
+        state.series = action.payload?.series || [];
+        state.seriesMetric = action.payload?.metricType || null;
+        state.seriesUnit = action.payload?.unit || null;
+      })
+      .addCase(getHealthSeriesThunk.rejected, state => {
+        state.loadingSeries = false;
+        state.series = [];
+      })
+
       // --- disconnect ---
       .addCase(disconnectHealthThunk.pending, state => {
         state.disconnecting = true;
@@ -115,6 +160,10 @@ const healthSyncSlice = createSlice({
         state.grantedTypes = [];
         state.lastSyncedAt = null;
         state.lastResult = null;
+        // Drop the read models too. Leaving them would show stale readings on a screen
+        // that now says "not connected".
+        state.latest = null;
+        state.series = [];
       })
       .addCase(disconnectHealthThunk.rejected, (state, action) => {
         state.disconnecting = false;

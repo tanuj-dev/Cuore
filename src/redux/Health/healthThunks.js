@@ -160,6 +160,36 @@ export const getHealthStatusThunk = createAsyncThunk(
   },
 );
 
+/** Latest value per metric, for the summary list. */
+export const getHealthLatestThunk = createAsyncThunk(
+  'healthSync/latest',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await getApiCall(EndPoints.HEALTH_LATEST);
+      if (res?.status === 200 && res?.data?.success) return res.data;
+      return rejectWithValue({ message: res?.data?.message || 'Could not load metrics' });
+    } catch (err) {
+      return rejectWithValue({ message: err?.message || 'Network error' });
+    }
+  },
+);
+
+/** Daily buckets for one metric, for the chart. */
+export const getHealthSeriesThunk = createAsyncThunk(
+  'healthSync/series',
+  async ({ metricType = 'steps', days = 30 } = {}, { rejectWithValue }) => {
+    try {
+      const res = await getApiCall(
+        `${EndPoints.HEALTH_SERIES}?metricType=${metricType}&days=${days}`,
+      );
+      if (res?.status === 200 && res?.data?.success) return res.data;
+      return rejectWithValue({ message: res?.data?.message || 'Could not load series' });
+    } catch (err) {
+      return rejectWithValue({ message: err?.message || 'Network error' });
+    }
+  },
+);
+
 /**
  * Disconnect. Stops our syncing and optionally purges what was already stored.
  *
