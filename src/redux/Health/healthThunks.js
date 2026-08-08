@@ -160,12 +160,19 @@ export const getHealthStatusThunk = createAsyncThunk(
   },
 );
 
-/** Latest value per metric, for the summary list. */
+/**
+ * Latest value per metric, for the summary list.
+ *
+ * maxAgeDays is deliberately wide. The server defaults to 30 so that the Health screen does
+ * not present a months-old weight as current, but this list exists to show what was synced
+ * -- hiding an older reading there just looks like the sync lost it. Each row states its own
+ * age, so staleness is communicated rather than concealed.
+ */
 export const getHealthLatestThunk = createAsyncThunk(
   'healthSync/latest',
-  async (_, { rejectWithValue }) => {
+  async ({ maxAgeDays = 365 } = {}, { rejectWithValue }) => {
     try {
-      const res = await getApiCall(EndPoints.HEALTH_LATEST);
+      const res = await getApiCall(`${EndPoints.HEALTH_LATEST}?maxAgeDays=${maxAgeDays}`);
       if (res?.status === 200 && res?.data?.success) return res.data;
       return rejectWithValue({ message: res?.data?.message || 'Could not load metrics' });
     } catch (err) {

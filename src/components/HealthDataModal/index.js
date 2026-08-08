@@ -64,6 +64,27 @@ function formatSleep(minutes) {
   return h ? `${h}h ${m}m` : `${m}m`;
 }
 
+/**
+ * Which day a cumulative total covers. The server reports the most recent day that HAS
+ * data, which is not necessarily today -- before you have walked anywhere, "Today" would be
+ * a lie about a figure that came from Tuesday.
+ */
+function formatPeriod(periodDate) {
+  if (!periodDate) return 'Today';
+
+  const today = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const key = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  if (periodDate === key(today)) return 'Today';
+
+  const yesterday = new Date(today.getTime() - 86400000);
+  if (periodDate === key(yesterday)) return 'Yesterday';
+
+  const [y, m, d] = periodDate.split('-').map(Number);
+  const dt = new Date(y, (m || 1) - 1, d || 1);
+  return dt.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+}
+
 function formatMeasuredAt(iso) {
   if (!iso) return '';
   const then = new Date(iso).getTime();
@@ -201,7 +222,9 @@ const HealthDataModal = ({ visible, onClose }) => {
                   : row.value.toFixed(row.decimals);
                 // A daily total is "today so far", not a moment. Showing "14m ago" against
                 // it invites reading a whole day's number as a single reading.
-                const when = row.daily ? 'Today' : formatMeasuredAt(row.measuredAt);
+                const when = row.daily
+                  ? formatPeriod(row.periodDate)
+                  : formatMeasuredAt(row.measuredAt);
                 const showUnit = !row.format && !row.hideUnit;
                 return (
                   <View
