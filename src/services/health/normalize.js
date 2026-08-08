@@ -130,13 +130,26 @@ export function hkQuantity(metricType, samples, transform) {
 export function hkBloodPressure(samples) {
   if (!Array.isArray(samples)) return [];
   const out = [];
+
   for (const s of samples) {
+    // react-native-health builds the blood pressure dictionary from four keys only --
+    // bloodPressureSystolicValue, bloodPressureDiastolicValue, startDate, endDate -- so
+    // unlike other quantity samples there is NO id and no sourceName. Requiring s.id
+    // silently dropped every reading.
+    //
+    // Falling back to the timestamp is safe here in a way it was not for step buckets:
+    // these are real stored samples whose startDate is the moment of the reading, not a
+    // bucket edge anchored to query time, so the key is stable across syncs. A corrected
+    // reading re-entered at the same instant updates the row, which is what should happen.
+    const start = new Date(s.startDate).getTime();
+    const baseId = s.id || (Number.isFinite(start) ? `hk-bp-${start}` : null);
+
     const sys = make(
       METRIC.bloodPressureSystolic,
       s.bloodPressureSystolicValue,
       s.startDate,
       s.endDate,
-      s.id ? `${s.id}:sys` : null,
+      baseId ? `${baseId}:sys` : null,
       s.sourceName
     );
     const dia = make(
@@ -144,7 +157,7 @@ export function hkBloodPressure(samples) {
       s.bloodPressureDiastolicValue,
       s.startDate,
       s.endDate,
-      s.id ? `${s.id}:dia` : null,
+      baseId ? `${baseId}:dia` : null,
       s.sourceName
     );
     // Only emit a pair. Half a blood pressure reading is not a reading.

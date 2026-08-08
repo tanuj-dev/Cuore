@@ -150,6 +150,51 @@ describe('hkBloodPressure', () => {
   it('emits nothing when only one half is present', () => {
     expect(hkBloodPressure([{ ...bp[0], bloodPressureDiastolicValue: undefined }])).toHaveLength(0);
   });
+
+  // react-native-health builds the BP dictionary from exactly four keys and includes
+  // neither id nor sourceName, so this -- not the shape above -- is what a device sends.
+  const realShape = [
+    {
+      bloodPressureSystolicValue: 120,
+      bloodPressureDiastolicValue: 80,
+      startDate: '2026-08-08T22:50:00.000+0530',
+      endDate: '2026-08-08T22:50:00.000+0530',
+    },
+  ];
+
+  it('keeps readings that carry no id at all', () => {
+    const out = hkBloodPressure(realShape);
+    expect(out).toHaveLength(2);
+    expect(out[0].value).toBe(120);
+    expect(out[1].value).toBe(80);
+  });
+
+  it('derives a stable id from the timestamp, still distinct per half', () => {
+    const first = hkBloodPressure(realShape);
+    const second = hkBloodPressure(realShape);
+    expect(first[0].externalId).toBe(second[0].externalId);
+    expect(first[0].externalId).not.toBe(first[1].externalId);
+    expect(first[0].externalId).toMatch(/:sys$/);
+    expect(first[1].externalId).toMatch(/:dia$/);
+  });
+
+  it('gives two readings at different times different ids', () => {
+    const later = [{ ...realShape[0], startDate: '2026-08-08T23:50:00.000+0530' }];
+    expect(hkBloodPressure(realShape)[0].externalId).not.toBe(
+      hkBloodPressure(later)[0].externalId,
+    );
+  });
+
+  it('still prefers a real id when the library provides one', () => {
+    const withId = [{ ...realShape[0], id: 'UUID-1' }];
+    expect(hkBloodPressure(withId)[0].externalId).toBe('UUID-1:sys');
+  });
+
+  it('drops a reading whose timestamp is unusable', () => {
+    expect(
+      hkBloodPressure([{ ...realShape[0], startDate: 'nonsense', endDate: 'nonsense' }]),
+    ).toHaveLength(0);
+  });
 });
 
 describe('hkSleep', () => {
