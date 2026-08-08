@@ -159,23 +159,27 @@ function BottomTabNavigator() {
           }}
         />
 
-        <Tab.Screen
-          name="Notes"
-          component={Notes}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Image
-                source={images.CHAT}
-                style={{
-                  width: size,
-                  height: size,
-                  tintColor: color,
-                  resizeMode: 'contain',
-                }}
-              />
-            ),
-          }}
-        />
+        {/* Notes is an Essentials-tier feature. CuoreCare subscribers get the
+            CuoreCare tab instead, so hide Notes when CuoreCare is active. */}
+        {!cuoreCareActive && (
+          <Tab.Screen
+            name="Notes"
+            component={Notes}
+            options={{
+              tabBarIcon: ({ color, size }) => (
+                <Image
+                  source={images.CHAT}
+                  style={{
+                    width: size,
+                    height: size,
+                    tintColor: color,
+                    resizeMode: 'contain',
+                  }}
+                />
+              ),
+            }}
+          />
+        )}
 
         {cuoreCareActive && (
           <Tab.Screen
