@@ -216,8 +216,9 @@ const ConnectedHealth = ({ navigation }) => {
 
         <Text style={styles.disclaimer}>
           Cuore only reads. It never changes anything in {sourceName()}, and never uses this
-          data for advertising. Anything you have entered yourself is always kept in
-          preference to a reading from your device.
+          data for advertising. Where {sourceName()} has a reading, Cuore uses it and keeps
+          it up to date automatically, including in your Cuore Score. Anything it cannot
+          provide stays yours to enter.
         </Text>
 
         {connected ? (
