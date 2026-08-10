@@ -64,3 +64,36 @@ export const PLATFORM = {
   ios: 'healthkit',
   android: 'healthconnect',
 };
+
+// --- Onboarding score bands ---
+//
+// These strings MUST match EXERCISE_SCORE_MAP and SLEEP_MAP in the backend's
+// models/onboardingModel.js character for character. An unrecognised value scores as
+// undefined and silently drops that component from the Cuore Score, with no error anywhere.
+// Duplicated here only because onboarding pre-fills the form field before anything has been
+// synced, so the server cannot supply it. There is a test pinning every string.
+export function exerciseBand(weeklyMinutes) {
+  if (!Number.isFinite(weeklyMinutes)) return null;
+  if (weeklyMinutes < 75) return 'Less than 75 min';
+  if (weeklyMinutes <= 150) return '75 to 150 min';
+  return 'More than 150 min';
+}
+
+export function sleepBand(nightlyHours) {
+  if (!Number.isFinite(nightlyHours)) return null;
+  if (nightlyHours < 6) return 'Less than 6 hours';
+  if (nightlyHours < 7) return 'Between 6 to 7 hours';
+  if (nightlyHours < 8) return 'Between 7 to 8 hours';
+  if (nightlyHours <= 9) return 'Between 8 to 9 hours';
+  return 'More than 9 hours';
+}
+
+// HealthKit biological sex -> the app's gender values. 'other' and 'notSet' map to null on
+// purpose: scoreBmi applies different thresholds per gender, so guessing would quietly skew
+// someone's score. Those users are asked instead.
+export function mapBiologicalSex(raw) {
+  const v = String(raw || '').toLowerCase();
+  if (v === 'male') return 'male';
+  if (v === 'female') return 'female';
+  return null;
+}

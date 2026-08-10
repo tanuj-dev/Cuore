@@ -141,6 +141,29 @@ export async function readMetrics({ metricTypes = SYNCED_METRICS, since, until }
   }
 }
 
+/**
+ * Values for pre-filling the onboarding form, read straight from the device.
+ *
+ * Returns ONLY the fields the platform actually answered:
+ *   { age?, gender?, height_cm?, weight_kg?, waist_cm?, pulse?, bp_upper?, bp_lower?,
+ *     bs_am?, min_exercise_per_week?, sleep_hours? }
+ *
+ * A missing key means "ask the user" -- never a default and never a zero. Callers must treat
+ * absence as a question, because on iOS a denied type is indistinguishable from an empty one.
+ *
+ * Android returns less by nature: Health Connect has no date-of-birth or biological-sex
+ * record, so age and gender are always asked there.
+ */
+export async function readOnboardingProfile() {
+  const a = adapter();
+  if (!a || typeof a.readOnboardingProfile !== 'function') return {};
+  try {
+    return (await a.readOnboardingProfile()) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
 /** Persist anchors. Call ONLY after the server has accepted the corresponding samples. */
 export async function commitAnchors(anchors) {
   return advanceAnchors(anchors);

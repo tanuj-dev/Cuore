@@ -9,7 +9,7 @@ Copy-paste source for the Play Console form. **Play Console → Policy → App c
 | App | Cuore (`com.cuore`) |
 | Privacy policy URL | `https://cuore.health/privacy` — **verify this resolves before submitting** |
 | Access | Read only. No write permissions are declared. |
-| Permissions declared | 9 (see table) |
+| Permissions declared | 10 (see table) |
 
 > The form's exact field labels change from time to time. Treat the headings below as *content to supply*, and map them onto whatever the console actually asks for.
 
@@ -42,12 +42,16 @@ Every justification must name a **specific, user-visible feature**. Vague purpos
 | Steps | `READ_STEPS` | Used to calculate the fitness component of the user's Cuore Score, which previously relied on the user estimating their own weekly activity. |
 | Exercise | `READ_EXERCISE` | Used to calculate the fitness component of the user's Cuore Score. |
 | Sleep | `READ_SLEEP` | Used to calculate the sleep component of the user's Cuore Score, which previously relied on the user estimating their own nightly sleep hours. |
+| Height | `READ_HEIGHT` | Read once during account setup to pre-fill the user's height, which the app uses to derive BMI. |
 
 **Deliberately NOT declared:**
 
-- **Height** — BMI is derived server-side from the height captured at onboarding. Declaring a permission with no corresponding feature is itself a rejection reason.
 - **All write permissions** — Cuore never writes to Health Connect.
 - **Background reads** — sync happens on app foreground only.
+
+> **Height was added later.** It was originally excluded because nothing used it, and declaring a permission with no corresponding feature is itself a rejection reason. Onboarding pre-fill gave it a feature, so it went back in. If you have already submitted the declaration without it, this needs resubmitting — a permission present in the manifest but absent from the declaration is a mismatch reviewers check for.
+
+**iOS reads four types Android cannot:** date of birth, biological sex, waist circumference and height are used to pre-fill account setup. Health Connect has no date-of-birth or biological-sex record at all, so Android users always enter age and gender by hand. Nothing to declare here — this section is Health Connect only — but expect the two platforms' setup flows to differ.
 
 ---
 
@@ -72,7 +76,7 @@ Rejections most often come from the declaration, the policy, and the app disagre
 
 | Claim | Where it must hold |
 |---|---|
-| Exactly these 9 types, no more | `AndroidManifest.xml`, this form, privacy policy Section 4 |
+| Exactly these 10 types, no more | `AndroidManifest.xml`, this form, privacy policy Section 4 |
 | Read-only | Manifest has zero `WRITE_*` health permissions |
 | Never for ads | Privacy policy Section 4, this form |
 | Revocable | In-app disconnect exists and works |
@@ -81,7 +85,7 @@ Rejections most often come from the declaration, the policy, and the app disagre
 grep -oE 'android\.permission\.health\.[A-Z_]+' /Users/apple/Desktop/CuoreApp/android/app/src/main/AndroidManifest.xml | sort
 ```
 
-That should print exactly 9 lines, all beginning `READ_`. If it prints a `WRITE_` or a tenth type, the declaration and the manifest have drifted apart — fix before submitting.
+That should print exactly 10 lines, all beginning `READ_`. If it prints a `WRITE_` or an eleventh type, the declaration and the manifest have drifted apart — fix before submitting.
 
 ---
 
@@ -100,8 +104,12 @@ The one thing that will waste weeks is submitting before the policy is live, get
 
 ---
 
-## 6. Known gap at time of writing
+## 6. Status of the attestations
 
-The in-app disconnect described in the policy and attested above is **implemented on the backend** (`DELETE /api/v1/health-metrics`, with an optional purge) and in the service facade, but the **Profile screen UI for it is Phase 6 and not built yet**.
+The in-app disconnect the policy points users to now exists: **Profile → Connected Health Sources → Disconnect**, offering "Stop syncing" or "Stop and delete". The backend endpoint (`DELETE /api/v1/health-metrics`, optional `?purge=true`) is live behind the feature flag. That attestation is truthful.
 
-Do not submit the declaration until that screen exists and works. Attesting that users can revoke in-app, when the app has no such control, is a false attestation — and a reviewer following the policy's own instructions ("Profile → Connected Health Sources → Disconnect") would find nothing there.
+Remaining before submission:
+
+1. **Privacy policy must be published.** It is written and committed but not deployed.
+2. **`HEALTH_SYNC_ENABLED` must be true on the production service** for the disconnect to work for real users. It is currently on staging only, which is correct while the feature is dark — but a reviewer testing a production build would find every health route returning 503.
+3. **Android has never been tested on a device.** Health Connect is a separate adapter from HealthKit and has not executed once. Declaring behaviour that has never run is a risk worth closing first.

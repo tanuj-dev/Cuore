@@ -15,7 +15,7 @@ import {
   SdkAvailabilityStatus,
 } from 'react-native-health-connect';
 
-import { METRIC } from './types';
+import { METRIC, exerciseBand, sleepBand } from './types';
 import {
   hcSimple,
   hcHeartRate,
@@ -41,8 +41,13 @@ const RECORD_FOR = {
   [METRIC.sleepMinutes]: 'SleepSession',
 };
 
+// Height is requested but is NOT a synced metric -- it is read once to pre-fill onboarding,
+// since BMI is derived server-side from the height captured there. Kept out of RECORD_FOR so
+// nothing tries to sync it as a time series.
+const EXTRA_READ_RECORDS = ['Height'];
+
 const READ_PERMISSIONS = [
-  ...new Set(Object.values(RECORD_FOR)),
+  ...new Set([...Object.values(RECORD_FOR), ...EXTRA_READ_RECORDS]),
 ].map(recordType => ({ accessType: 'read', recordType }));
 
 export const SDK = {
@@ -181,6 +186,81 @@ export async function readMetrics({ metricTypes, since, until }) {
 
   const results = await Promise.all(jobs);
   return results.flat();
+}
+
+/**
+ * Onboarding pre-fill, Android side.
+ *
+ * Health Connect has NO equivalent for date of birth or biological sex -- they are not
+ * record types -- so age and gender are always asked on Android even when an iPhone user
+ * would have had them filled. That asymmetry is the platform's, not a gap here.
+ */
+export async function readOnboardingProfile() {
+  if (!(await ensureInitialized())) return {};
+
+  const now = Date.now();
+  const monthAgo = new Date(now - 30 * 86400000);
+  const weekAgo = new Date(now - 7 * 86400000);
+  const until = new Date(now);
+
+  const [height, weight, rhr, bp, glucose, exercise, sleep] = await Promise.all([
+    read('Height', monthAgo, until),
+    read('Weight', monthAgo, until),
+    read('RestingHeartRate', monthAgo, until),
+    read('BloodPressure', monthAgo, until),
+    read('BloodGlucose', monthAgo, until),
+    read('ExerciseSession', weekAgo, until),
+    read('SleepSession', weekAgo, until),
+  ]);
+
+  const out = {};
+  const put = (key, value, decimals = 0) => {
+    if (!Number.isFinite(value) || value <= 0) return;
+    const f = 10 ** decimals;
+    out[key] = Math.round(value * f) / f;
+  };
+  const newest = (rows, timeKey = 'time') =>
+    Array.isArray(rows) && rows.length
+      ? rows.reduce((a, b) => (new Date(b[timeKey]) > new Date(a[timeKey]) ? b : a))
+      : null;
+
+  const h = newest(height);
+  if (h) put('height_cm', (h.height?.inMeters ?? h.height?.value) * 100);
+
+  const w = newest(weight);
+  if (w) put('weight_kg', w.weight?.inKilograms ?? w.weight?.value, 1);
+
+  const r = newest(rhr);
+  if (r) put('pulse', r.beatsPerMinute);
+
+  const b = newest(bp);
+  if (b) {
+    const sys = b.systolic?.inMillimetersOfMercury ?? b.systolic?.value;
+    const dia = b.diastolic?.inMillimetersOfMercury ?? b.diastolic?.value;
+    if (Number.isFinite(sys) && Number.isFinite(dia)) {
+      put('bp_upper', sys);
+      put('bp_lower', dia);
+    }
+  }
+
+  const g = newest(glucose);
+  if (g) put('bs_am', glucoseToMgDl(g.level?.value, g.level?.unit));
+
+  const sessions = hcDuration(METRIC.exerciseMinutes, exercise);
+  if (sessions.length) {
+    const weekly = sessions.reduce((sum, s) => sum + s.value, 0);
+    const band = exerciseBand(weekly);
+    if (band) out.min_exercise_per_week = band;
+  }
+
+  const nights = hcSleep(sleep);
+  if (nights.length) {
+    const avgMinutes = nights.reduce((sum, n) => sum + n.value, 0) / nights.length;
+    const band = sleepBand(avgMinutes / 60);
+    if (band) out.sleep_hours = band;
+  }
+
+  return out;
 }
 
 export function openSettings() {

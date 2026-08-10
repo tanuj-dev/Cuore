@@ -47,9 +47,10 @@
     <uses-permission android:name="android.permission.health.READ_BLOOD_PRESSURE" />
     <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE" />
     <uses-permission android:name="android.permission.health.READ_WEIGHT" />
-    <!-- No READ_HEIGHT: BMI is derived server-side from the height captured at
-         onboarding, and height does not change often enough to be worth syncing.
-         Declaring a permission with no corresponding feature fails Play review. -->
+    <!-- Height is read ONCE to pre-fill the onboarding form; it is not synced as a time
+         series. It was removed earlier when nothing used it, since declaring a permission
+         with no corresponding feature fails Play review. Now there is a feature. -->
+    <uses-permission android:name="android.permission.health.READ_HEIGHT" />
     <uses-permission android:name="android.permission.health.READ_STEPS" />
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
     <uses-permission android:name="android.permission.health.READ_SLEEP" />

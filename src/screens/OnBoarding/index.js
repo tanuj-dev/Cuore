@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
 
 import { Images, hp, wp } from '../../utilities';
+import * as Health from '../../services/health';
 import OnBoarding2 from '../../components/OnBoardingOne';
 import OnBoardingThree from '../../components/OnBoardingThree';
 import OnBoardingFour from '../../components/OnBoardingFour';
@@ -56,6 +57,8 @@ const OnBoarding = ({ navigation, route }) => {
   const [toast, setToast] = useState(null);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const healthPrefillRef = useRef(false);
+  const [healthPrefilled, setHealthPrefilled] = useState([]);
   const scrollRef = useRef(null);
   const scrollYRef = useRef(0);
 
@@ -95,6 +98,65 @@ const OnBoarding = ({ navigation, route }) => {
     //   onboarding6Data,
     //   onboarding7Data,
   });
+
+  // ── Pre-fill from Apple Health / Health Connect ────────────────────────────
+  // Runs once, when the user first reaches the basic-info step. Only EMPTY fields are
+  // filled, so anything already typed is never overwritten, and a field the platform cannot
+  // answer is simply left as a question -- there are no defaults and no zeros.
+  //
+  // Skipped for reassessment, which loads the user's stored answers and should show what
+  // they last confirmed rather than silently replacing it mid-review.
+  useEffect(() => {
+    if (isReassess || step !== 2 || healthPrefillRef.current) return;
+    healthPrefillRef.current = true;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        if (!(await Health.isHealthAvailable())) return;
+
+        // Shows the OS permission sheet the first time only; harmless afterwards. Reading
+        // without it would silently return nothing.
+        await Health.requestHealthPermissions();
+
+        const profile = await Health.readOnboardingProfile();
+        if (cancelled || !profile || !Object.keys(profile).length) return;
+
+        const filled = [];
+        const takeEmpty = (current, keys) => {
+          const next = { ...current };
+          keys.forEach(k => {
+            const unset =
+              next[k] === undefined || next[k] === null || next[k] === '';
+            if (unset && profile[k] !== undefined) {
+              next[k] = profile[k];
+              filled.push(k);
+            }
+          });
+          return next;
+        };
+
+        setOnboarding2Data(d =>
+          takeEmpty(d, ['age', 'gender', 'height_cm', 'weight_kg', 'waist_cm']),
+        );
+        setOnboarding5Data(d => takeEmpty(d, ['min_exercise_per_week']));
+        setOnboarding6Data(d => takeEmpty(d, ['sleep_hours']));
+        setOnboarding7Data(d =>
+          takeEmpty(d, ['pulse', 'bp_upper', 'bp_lower', 'bs_am']),
+        );
+
+        if (!cancelled && filled.length) setHealthPrefilled(filled);
+      } catch (e) {
+        // Pre-fill is a convenience. If it fails the user simply types, exactly as before.
+        console.warn('[healthSync] onboarding pre-fill skipped:', e?.message || e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isReassess, step]);
 
   // Validate required fields for each step
   const validateStepData = step => {
@@ -499,6 +561,20 @@ const OnBoarding = ({ navigation, route }) => {
             </>
           )}
 
+          {/* Say where the numbers came from. Filling identity fields like age and sex
+              from a device without telling anyone is exactly the sort of thing that
+              unsettles people, and every value stays editable. */}
+          {step === 2 && healthPrefilled.length > 0 && (
+            <View style={styles.healthPrefillNotice}>
+              <Text style={styles.healthPrefillText}>
+                {healthPrefilled.length} field
+                {healthPrefilled.length === 1 ? '' : 's'} filled from{' '}
+                {Platform.OS === 'ios' ? 'Apple Health' : 'Health Connect'}. Check them and
+                edit anything that looks wrong.
+              </Text>
+            </View>
+          )}
+
           {step === 2 && (
             <OnBoarding2
               initialData={
@@ -637,6 +713,22 @@ const OnBoarding = ({ navigation, route }) => {
 
 export default OnBoarding;
 const styles = StyleSheet.create({
+  healthPrefillNotice: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: wp(2.5),
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(3.5),
+    marginHorizontal: wp(5),
+    marginBottom: hp(1.5),
+  },
+  healthPrefillText: {
+    fontSize: wp(3.2),
+    fontFamily: 'Poppins-Regular',
+    color: '#11418A',
+    lineHeight: hp(2.2),
+  },
   container: {
     flex: 1,
     paddingHorizontal: wp(5),

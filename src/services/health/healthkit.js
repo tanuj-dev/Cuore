@@ -13,7 +13,7 @@
 import { NativeModules } from 'react-native';
 import AppleHealthKit from 'react-native-health';
 
-import { METRIC } from './types';
+import { METRIC, exerciseBand, sleepBand, mapBiologicalSex } from './types';
 import {
   hkQuantity,
   hkBloodPressure,
@@ -65,6 +65,13 @@ const READ_PERMISSIONS = [
   P.Steps,
   P.AppleExerciseTime,
   P.SleepAnalysis,
+  // Onboarding pre-fill only. These are never synced to the server -- they populate the
+  // basic-info form so a user with a Watch and a scale does not retype what their phone
+  // already knows.
+  P.DateOfBirth,
+  P.BiologicalSex,
+  P.Height,
+  P.WaistCircumference,
 ];
 
 const HK_OPTIONS = { permissions: { read: READ_PERMISSIONS, write: [] } };
@@ -253,6 +260,97 @@ export async function readMetrics({ metricTypes, since, until }) {
 
   const results = await Promise.all(jobs);
   return results.flat();
+}
+
+/**
+ * Values for pre-filling the onboarding form. Read straight from HealthKit rather than the
+ * server, because onboarding happens before anything has ever synced.
+ *
+ * Returns only the keys HealthKit actually answered. A missing key means "ask the user" --
+ * never a default, never a zero. On iOS a denied type is indistinguishable from an empty
+ * one, so absence is the only signal available and the form must treat it as a question.
+ *
+ * UNITS: height and waist default to INCHES in this library and there is no centimetre unit,
+ * so both are requested in metres and scaled. Reading the default would have shown a 175cm
+ * person as 69cm.
+ */
+export async function readOnboardingProfile() {
+  if (!HK) return {};
+
+  const now = Date.now();
+  const iso = ms => new Date(ms).toISOString();
+  const monthAgo = { startDate: iso(now - 30 * 86400000), endDate: iso(now) };
+  const weekAgo = { startDate: iso(now - 7 * 86400000), endDate: iso(now) };
+
+  const first = arr => (Array.isArray(arr) && arr.length ? arr[0] : null);
+  const latest = arr =>
+    Array.isArray(arr) && arr.length
+      ? arr.reduce((a, b) => (new Date(b.endDate) > new Date(a.endDate) ? b : a))
+      : null;
+
+  const [dob, sex, height, weight, waist, rhr, bp, glucose, exercise, sleep] =
+    await Promise.all([
+      query('getDateOfBirth', {}),
+      query('getBiologicalSex', {}),
+      query('getLatestHeight', { unit: U.meter }),
+      query('getLatestWeight', { unit: U.gram }),
+      query('getLatestWaistCircumference', { unit: U.meter }),
+      query('getRestingHeartRateSamples', { ...monthAgo, unit: U.bpm }),
+      query('getBloodPressureSamples', monthAgo),
+      query('getBloodGlucoseSamples', { ...monthAgo, unit: U.mgPerdL }),
+      query('getAppleExerciseTime', { ...weekAgo, unit: U.minute }),
+      query('getSleepSamples', { ...weekAgo, limit: 10000 }),
+    ]);
+
+  const out = {};
+  const put = (key, value, decimals = 0) => {
+    if (!Number.isFinite(value) || value <= 0) return;
+    const f = 10 ** decimals;
+    out[key] = Math.round(value * f) / f;
+  };
+
+  // getDateOfBirth returns { value: <iso>, age } and either may be null.
+  const age = first(dob)?.age;
+  if (Number.isFinite(age) && age > 0) out.age = age;
+
+  const gender = mapBiologicalSex(first(sex)?.value);
+  if (gender) out.gender = gender;
+
+  put('height_cm', first(height)?.value * 100);
+  put('weight_kg', first(weight)?.value / 1000, 1);
+  put('waist_cm', first(waist)?.value * 100);
+  put('pulse', latest(rhr)?.value);
+
+  // Both halves or nothing; half a reading is not a reading.
+  const bpLatest = latest(bp);
+  if (bpLatest) {
+    const sys = bpLatest.bloodPressureSystolicValue;
+    const dia = bpLatest.bloodPressureDiastolicValue;
+    if (Number.isFinite(sys) && Number.isFinite(dia)) {
+      put('bp_upper', sys);
+      put('bp_lower', dia);
+    }
+  }
+
+  put('bs_am', latest(glucose)?.value);
+
+  // Weekly total, mapped to the band the Cuore Score expects.
+  if (Array.isArray(exercise) && exercise.length) {
+    const weekly = exercise.reduce((sum, s) => sum + (s.value || 0), 0);
+    const band = exerciseBand(weekly);
+    if (band) out.min_exercise_per_week = band;
+  }
+
+  // Average over nights that HAVE data, not over seven. Dividing by seven when three nights
+  // were recorded reports a good sleeper as sleeping three hours.
+  const nights = hkSleep(sleep);
+  if (nights.length) {
+    const avgMinutes = nights.reduce((sum, n) => sum + n.value, 0) / nights.length;
+    const band = sleepBand(avgMinutes / 60);
+    if (band) out.sleep_hours = band;
+  }
+
+  return out;
 }
 
 export function openSettings() {

@@ -12,7 +12,7 @@ import {
   hcDuration,
   hcSleep,
 } from '../normalize';
-import { METRIC } from '../types';
+import { METRIC, exerciseBand, sleepBand, mapBiologicalSex } from '../types';
 
 describe('normalizeSpO2', () => {
   it('scales a 0-1 fraction to percent', () => {
@@ -233,6 +233,42 @@ describe('hkSleep', () => {
 
   it('returns nothing when the night is only INBED', () => {
     expect(hkSleep([night[0]])).toHaveLength(0);
+  });
+});
+
+describe('onboarding band mapping', () => {
+  // These strings are duplicated from the backend's EXERCISE_SCORE_MAP / SLEEP_MAP because
+  // onboarding pre-fills before anything has synced. A drift of one character scores as
+  // undefined and silently removes that component from the Cuore Score, so pin them.
+  it('produces exactly the exercise bands the score expects', () => {
+    expect(exerciseBand(0)).toBe('Less than 75 min');
+    expect(exerciseBand(74)).toBe('Less than 75 min');
+    expect(exerciseBand(75)).toBe('75 to 150 min');
+    expect(exerciseBand(150)).toBe('75 to 150 min');
+    expect(exerciseBand(151)).toBe('More than 150 min');
+  });
+
+  it('produces exactly the sleep bands the score expects', () => {
+    expect(sleepBand(5.9)).toBe('Less than 6 hours');
+    expect(sleepBand(6)).toBe('Between 6 to 7 hours');
+    expect(sleepBand(7)).toBe('Between 7 to 8 hours');
+    expect(sleepBand(8)).toBe('Between 8 to 9 hours');
+    expect(sleepBand(9)).toBe('Between 8 to 9 hours');
+    expect(sleepBand(9.1)).toBe('More than 9 hours');
+  });
+
+  it('returns null rather than a band for unusable input', () => {
+    expect(exerciseBand(undefined)).toBeNull();
+    expect(sleepBand(NaN)).toBeNull();
+  });
+
+  it('maps biological sex, refusing to guess at other/unknown', () => {
+    expect(mapBiologicalSex('male')).toBe('male');
+    expect(mapBiologicalSex('female')).toBe('female');
+    // scoreBmi uses different thresholds per gender, so a guess would skew the score.
+    expect(mapBiologicalSex('other')).toBeNull();
+    expect(mapBiologicalSex('unknown')).toBeNull();
+    expect(mapBiologicalSex(undefined)).toBeNull();
   });
 });
 

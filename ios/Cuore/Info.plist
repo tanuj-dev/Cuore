@@ -46,7 +46,7 @@
 	<!-- Read-only: no NSHealthUpdateUsageDescription, because we never write back to Health.
 	     App Review rejects vague purpose strings, so name the categories and the reason. -->
 	<key>NSHealthShareUsageDescription</key>
-	<string>Cuore reads your heart rate, blood pressure, blood glucose, weight, steps, exercise and sleep from Apple Health so your health dashboard and Cuore Score stay up to date without manual entry. This data is never used for advertising and is never sold.</string>
+	<string>Cuore reads your heart rate, blood pressure, blood glucose, weight, height, waist, date of birth, biological sex, steps, exercise and sleep from Apple Health so your health dashboard and Cuore Score stay up to date, and so you do not have to retype details your phone already has when setting up. This data is never used for advertising and is never sold.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIBackgroundModes</key>
