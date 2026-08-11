@@ -60,7 +60,7 @@ import { CuoreCareStack } from './CuoreCareStack';
 import CuoreCareConsultation from '../screens/CuoreCare/Consultation';
 import CuoreCareIncomingCall from '../screens/CuoreCare/IncomingCall';
 import { Stethoscope } from 'lucide-react-native';
-import { getCuoreCareStatus } from '../redux/CuoreCare/thunks';
+import { getCuoreCareStatus, getCuoreCareAccess } from '../redux/CuoreCare/thunks';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -70,14 +70,16 @@ function BottomTabNavigator() {
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
 
-  // CuoreCare tab is gated on an active CuoreCare (superset) subscription.
-  // Load the entitlement on entry so the tab shows/hides correctly even before
-  // the user opens it. Non-subscribers (Essentials/free) never see the tab.
+  // CuoreCare tab is gated on the centralized access object — true for a real CuoreCare
+  // subscription (superset) OR an admin-granted per-doctor entitlement for an
+  // Essential-tier user. Load both on entry so the tab shows/hides correctly even before
+  // the user opens it; `subscription` still separately drives the paywall/Profile card.
   const cuoreCareActive = useSelector(
-    state => state?.cuoreCare?.subscription?.active,
+    state => state?.cuoreCare?.access?.cuoreCare,
   );
   useEffect(() => {
     dispatch(getCuoreCareStatus());
+    dispatch(getCuoreCareAccess());
   }, [dispatch]);
 
   // ✅ PROFILE IMAGE FROM REDUX
