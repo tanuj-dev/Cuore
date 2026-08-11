@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
   getCuoreCareStatus,
+  getCuoreCareAccess,
   verifyCuoreCareSubscription,
   getCuoreCareDoctors,
   getDoctorAvailableDates,
@@ -25,6 +26,21 @@ const initialState = {
     startDate: null,
     expiryDate: null,
     platform: null, // ios | android | razorpay
+    error: null,
+  },
+  // Centralized permission object (subscription OR admin-granted entitlement, per
+  // feature) — see utilities/cuoreCareAccess.js. Additive to `subscription` above: that
+  // state still drives the paywall/Profile subscription card unchanged; `access` drives
+  // tab visibility + feature-level gating so Essential+granted users are also covered.
+  access: {
+    loading: false,
+    checked: false,
+    cuoreCare: false,
+    appointmentBooking: false,
+    videoCall: false,
+    voiceCall: false,
+    chat: false,
+    doctor: null, // { id, name } | null
     error: null,
   },
   doctors: { loading: false, list: [], total: 0, page: 1, error: null },
@@ -88,6 +104,29 @@ const cuoreCareSlice = createSlice({
         state.subscription.error = action.payload?.message || 'Failed to load subscription';
       });
 
+    /* ---- centralized access config ---- */
+    builder
+      .addCase(getCuoreCareAccess.pending, state => {
+        state.access.loading = true;
+        state.access.error = null;
+      })
+      .addCase(getCuoreCareAccess.fulfilled, (state, action) => {
+        const a = action.payload?.access || {};
+        state.access.loading = false;
+        state.access.checked = true;
+        state.access.cuoreCare = !!a.cuoreCare;
+        state.access.appointmentBooking = !!a.appointmentBooking;
+        state.access.videoCall = !!a.videoCall;
+        state.access.voiceCall = !!a.voiceCall;
+        state.access.chat = !!a.chat;
+        state.access.doctor = action.payload?.doctor || null;
+      })
+      .addCase(getCuoreCareAccess.rejected, (state, action) => {
+        state.access.loading = false;
+        state.access.checked = true;
+        state.access.error = action.payload?.message || 'Failed to load CuoreCare access';
+      });
+
     /* ---- verify subscription (IAP) ---- */
     builder
       .addCase(verifyCuoreCareSubscription.pending, state => {
@@ -103,6 +142,14 @@ const cuoreCareSlice = createSlice({
         state.subscription.plan = action.payload?.plan || state.subscription.plan;
         state.subscription.expiryDate = action.payload?.endDate || state.subscription.expiryDate;
         state.subscription.checked = true;
+        // A real subscription grants every feature outright — reflect it immediately so
+        // the tab/gates don't wait on a follow-up /access fetch.
+        state.access.checked = true;
+        state.access.cuoreCare = true;
+        state.access.appointmentBooking = true;
+        state.access.videoCall = true;
+        state.access.voiceCall = true;
+        state.access.chat = true;
       })
       .addCase(verifyCuoreCareSubscription.rejected, (state, action) => {
         state.action.loading = false;

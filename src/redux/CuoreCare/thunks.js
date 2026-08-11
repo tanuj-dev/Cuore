@@ -30,6 +30,19 @@ export const getCuoreCareStatus = createAsyncThunk(
   },
 );
 
+// The one centralized permission response — subscription OR admin-granted entitlement,
+// per feature. Drives tab visibility + action-level gating (see utilities/cuoreCareAccess).
+export const getCuoreCareAccess = createAsyncThunk(
+  'cuoreCare/getAccess',
+  async (doctorId, { rejectWithValue }) => {
+    const res = await ccGet(withQuery('/api/cuorecare/access', { doctorId }));
+    if (res.status === 200 && res.data?.status === 'success') {
+      return res.data; // { subscription, doctor, access }
+    }
+    return rejectWithValue(fail(res, 'Could not load your CuoreCare access'));
+  },
+);
+
 // The verify endpoint returns { payment: 'done' | 'expired' | 'failed', ... } — a 200 with
 // payment !== 'done' is NOT an active entitlement.
 export const verifyCuoreCareSubscription = createAsyncThunk(

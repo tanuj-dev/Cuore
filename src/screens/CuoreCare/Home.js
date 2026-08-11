@@ -26,6 +26,7 @@ import { PrimaryButton, EmptyState, Card } from './components';
 import AppointmentCard from './AppointmentCard';
 import {
   getCuoreCareStatus,
+  getCuoreCareAccess,
   getAppointments,
   getPrescriptions,
 } from '../../redux/CuoreCare/thunks';
@@ -43,6 +44,7 @@ const BENEFITS = [
 export default function CuoreCareHome({ navigation }) {
   const dispatch = useDispatch();
   const subscription = useSelector(state => state.cuoreCare.subscription);
+  const access = useSelector(state => state.cuoreCare.access);
   const appointments = useSelector(state => state.cuoreCare.appointments);
   const [segment, setSegment] = useState('upcoming'); // upcoming | completed
   const [refreshing, setRefreshing] = useState(false);
@@ -50,6 +52,7 @@ export default function CuoreCareHome({ navigation }) {
   const load = useCallback(
     (scope = segment) => {
       dispatch(getCuoreCareStatus());
+      dispatch(getCuoreCareAccess());
       dispatch(getAppointments({ scope }));
     },
     [dispatch, segment],
@@ -85,6 +88,7 @@ export default function CuoreCareHome({ navigation }) {
     setRefreshing(true);
     await Promise.all([
       dispatch(getCuoreCareStatus()),
+      dispatch(getCuoreCareAccess()),
       dispatch(getAppointments({ scope: segment })),
       dispatch(getPrescriptions()),
     ]);
@@ -96,8 +100,8 @@ export default function CuoreCareHome({ navigation }) {
     dispatch(getAppointments({ scope }));
   };
 
-  /* ----- initial subscription check still loading ----- */
-  if (!subscription.checked && subscription.loading) {
+  /* ----- initial access check still loading ----- */
+  if (!access.checked && (access.loading || subscription.loading)) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.center}>
@@ -107,8 +111,10 @@ export default function CuoreCareHome({ navigation }) {
     );
   }
 
-  /* ----- not subscribed → paywall ----- */
-  if (subscription.checked && !subscription.active) {
+  /* ----- no access at all (real subscription OR admin-granted entitlement) → paywall.
+     Essential+granted users have access.cuoreCare=true even though subscription.active
+     is false, so they skip this branch entirely and go straight to the scheduler. ----- */
+  if (access.checked && !access.cuoreCare) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <ScrollView

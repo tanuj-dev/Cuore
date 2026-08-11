@@ -24,6 +24,7 @@ import {
   getDoctorSlots,
 } from '../../redux/CuoreCare/thunks';
 import { resetBookingAvailability } from '../../redux/CuoreCare/slice';
+import { useCuoreCareAccess } from '../../utilities/cuoreCareAccess';
 
 const F = CC.fonts;
 
@@ -57,6 +58,8 @@ export default function BookAppointment({ navigation, route }) {
   const { alert, AlertComponent } = useCustomAlert();
 
   const actionLoading = useSelector(state => state.cuoreCare.action.loading);
+  const { canAccess } = useCuoreCareAccess();
+  const canBook = canAccess('appointmentBooking');
   const { datesLoading, dates, configured, slotsLoading, slots, slotsDate } = useSelector(
     state => state.cuoreCare.availability,
   );
@@ -293,16 +296,22 @@ export default function BookAppointment({ navigation, route }) {
           </View>
         )}
 
-        <Text style={styles.note}>
-          Your request is sent to the doctor for confirmation. You will be notified once it is
-          accepted.
-        </Text>
+        {canBook ? (
+          <Text style={styles.note}>
+            Your request is sent to the doctor for confirmation. You will be notified once it is
+            accepted.
+          </Text>
+        ) : (
+          <Text style={styles.note}>
+            Appointment booking isn't enabled for your account with this doctor yet.
+          </Text>
+        )}
 
         <PrimaryButton
           label="Request appointment"
           onPress={handleBook}
           loading={actionLoading}
-          disabled={!selectedSlot}
+          disabled={!selectedSlot || !canBook}
           style={{ marginTop: 20 }}
         />
         <View style={{ height: 40 }} />

@@ -270,6 +270,14 @@ export default function Consultation({ navigation, route }) {
             params: { screen: 'CuoreCareSubscribe' },
           }),
       };
+    } else if (code === 'CUORECARE_ACCESS_REQUIRED') {
+      // Distinct from a lapsed subscription: this account has no admin-granted
+      // entitlement for this feature with this doctor. There's no self-serve fix (no
+      // "View plans" CTA) — the doctor/admin needs to grant it.
+      Icon = CreditCard;
+      title = 'Not available yet';
+      message = "This consultation type hasn't been enabled for your account with this doctor.";
+      showRetry = false;
     } else if (code === 'ZEGO_NOT_CONFIGURED' || err?.httpStatus === 503) {
       title = 'Service unavailable';
       message = 'The consultation service is being set up. Please try again shortly.';
