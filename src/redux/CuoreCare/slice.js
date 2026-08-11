@@ -25,6 +25,9 @@ const initialState = {
     startDate: null,
     expiryDate: null,
     platform: null, // ios | android | razorpay
+    // Admin-granted access to CuoreCare features with one specific linked doctor, as an
+    // alternative to a paid subscription. null when no grant exists for this patient.
+    doctorGrant: null,
     error: null,
   },
   doctors: { loading: false, list: [], total: 0, page: 1, error: null },
@@ -81,6 +84,7 @@ const cuoreCareSlice = createSlice({
         state.subscription.startDate = cc.startDate || null;
         state.subscription.expiryDate = cc.expiryDate || null;
         state.subscription.platform = cc.platform || null;
+        state.subscription.doctorGrant = cc.doctorGrant || null;
       })
       .addCase(getCuoreCareStatus.rejected, (state, action) => {
         state.subscription.loading = false;
