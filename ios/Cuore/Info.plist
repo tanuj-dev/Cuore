@@ -43,6 +43,10 @@
 	<string>This app requires access to save photos of health records to your library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app requires access to your photo library to select health records and documents.</string>
+	<!-- Read-only: no NSHealthUpdateUsageDescription, because we never write back to Health.
+	     App Review rejects vague purpose strings, so name the categories and the reason. -->
+	<key>NSHealthShareUsageDescription</key>
+	<string>Cuore reads your heart rate, blood pressure, blood glucose, weight, steps, exercise and sleep from Apple Health so your health dashboard and Cuore Score stay up to date without manual entry. This data is never used for advertising and is never sold.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIBackgroundModes</key>

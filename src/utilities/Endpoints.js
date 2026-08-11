@@ -41,6 +41,14 @@ const Endpoints = {
   REQUEST_SUPERVISION: '/api/v1/users/request/supervision',
   RESPOND_CHECKIN: '/api/v1/users/respond-checkin',
   HEARTBEAT: '/api/v1/users/heartbeat',
+
+  // Apple Health / Health Connect sync. No :userId anywhere — the server takes the id
+  // from the bearer token. All of these 503 while HEALTH_SYNC_ENABLED is off.
+  HEALTH_SYNC: '/api/v1/health-metrics/sync',
+  HEALTH_STATUS: '/api/v1/health-metrics/status',
+  HEALTH_LATEST: '/api/v1/health-metrics/latest',
+  HEALTH_SERIES: '/api/v1/health-metrics/series',
+  HEALTH_DISCONNECT: '/api/v1/health-metrics',
 };
 
 export default Endpoints;

@@ -4,5 +4,11 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
+	<!-- HealthKit, read-only. Must also be enabled on the com.cuore App ID in the Apple
+	     Developer portal and the provisioning profiles regenerated, or signing fails.
+	     Deliberately NOT adding com.apple.developer.healthkit.access: that key is for
+	     Clinical Health Records, which is a separate and much heavier App Review. -->
+	<key>com.apple.developer.healthkit</key>
+	<true/>
 </dict>
 </plist>

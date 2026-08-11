@@ -20,6 +20,10 @@ import Constants, {
 import Endpoints from './src/utilities/Endpoints';
 import { setSessionExpired, setFCMToken } from './src/redux/Auth/slice';
 import { logoutUser, sendHeartbeatThunk } from './src/redux/Auth/authThunk';
+import {
+  syncHealthThunk,
+  getHealthStatusThunk,
+} from './src/redux/Health/healthThunks';
 import notifee, { EventType } from '@notifee/react-native';
 import { connectSocket, disconnectSocket, getSocket } from './src/realtime/socket';
 import { EV as CC_EV } from './src/realtime/events';
@@ -427,13 +431,27 @@ const AppContent = () => {
   useEffect(() => {
     if (!userId) return;
 
-    const sendHeartbeat = () => {
+    const onForeground = async () => {
       dispatch(sendHeartbeatThunk());
+
+      // Apple Health / Health Connect sync. Deliberately shares this listener rather than
+      // adding its own: appStateRef is mutated here, so a second listener would race this
+      // one and whichever ran first would swallow the background -> active transition.
+      //
+      // Status FIRST. On a cold start the slice defaults to connected:false, and
+      // syncHealthThunk refuses to run when it believes the user is not connected -- so
+      // without this the sync would only ever happen after a visit to the settings screen.
+      await dispatch(getHealthStatusThunk());
+
+      // Then sync unconditionally: the thunk owns every guard. It rejects silently when
+      // the user is not connected, when a sync is already in flight, and when the last one
+      // was under 4h ago. Nothing here needs to know any of that.
+      dispatch(syncHealthThunk({}));
     };
 
-    // Send heartbeat when app is already active (cold start or login flow complete).
+    // Run when the app is already active (cold start or login flow complete).
     if (AppState.currentState === 'active') {
-      sendHeartbeat();
+      onForeground();
     }
 
     const appStateSubscription = AppState.addEventListener(
@@ -443,7 +461,7 @@ const AppContent = () => {
           appStateRef.current === 'background' ||
           appStateRef.current === 'inactive';
         if (wasBackgrounded && nextAppState === 'active') {
-          sendHeartbeat();
+          onForeground();
         }
         appStateRef.current = nextAppState;
       },
