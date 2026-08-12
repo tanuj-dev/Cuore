@@ -41,11 +41,15 @@ export const STATUS_META = {
 export const statusMeta = status =>
   STATUS_META[status] || { label: status || 'Unknown', fg: '#475569', bg: '#F1F5F9' };
 
-// Consultation mode → { label, iconName (lucide) }.
+// Consultation mode → { label, iconName (lucide) }. `in_person` is a walk-in/OPD visit
+// the doctor created directly (no live call) — everything else here assumes video/voice/
+// chat by default, so this must be listed explicitly or it silently renders as "Video
+// consult".
 export const MODE_META = {
   video: { label: 'Video consult', icon: 'Video' },
   voice: { label: 'Voice consult', icon: 'Phone' },
   chat: { label: 'Chat consult', icon: 'MessageSquare' },
+  in_person: { label: 'In-person visit', icon: 'Stethoscope' },
 };
 
 export const modeMeta = mode => MODE_META[mode] || MODE_META.video;

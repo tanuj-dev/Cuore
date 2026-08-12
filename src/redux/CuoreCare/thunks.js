@@ -199,6 +199,35 @@ export const getCertificates = createAsyncThunk(
   },
 );
 
+/* -------------------------------- Vaccinations ------------------------------ *
+ * Written only by the doctor-side walk-in EMR — no CuoreCare appointment involved, so
+ * this is a patient's own record across every doctor, not scoped to one consultation.
+ * ---------------------------------------------------------------------------- */
+
+export const getVaccinations = createAsyncThunk(
+  'cuoreCare/getVaccinations',
+  async (_arg, { rejectWithValue }) => {
+    const res = await ccGet('/api/cuorecare/my/vaccinations');
+    if (res.status === 200 && res.data?.status === 'success') {
+      return { vaccinations: res.data.vaccinations || [] };
+    }
+    return rejectWithValue(fail(res, 'Could not load your vaccinations'));
+  },
+);
+
+/* ----------------------------------- Bills ---------------------------------- */
+
+export const getBills = createAsyncThunk(
+  'cuoreCare/getBills',
+  async (_arg, { rejectWithValue }) => {
+    const res = await ccGet('/api/cuorecare/my/bills');
+    if (res.status === 200 && res.data?.status === 'success') {
+      return { bills: res.data.bills || [], totalDue: res.data.totalDue || 0 };
+    }
+    return rejectWithValue(fail(res, 'Could not load your bills'));
+  },
+);
+
 /* ----------------------- Transient (screen-local) actions ------------------ *
  * join / token refresh / presence events / signed-URL fetch return short-lived
  * capabilities (ZEGO tokens, presigned S3 URLs). These are NOT stored in redux — the

@@ -20,6 +20,7 @@ import {
   Video,
   Phone,
   MessageSquare,
+  Stethoscope,
   CalendarClock,
   FileText,
   XCircle,
@@ -47,7 +48,7 @@ import { getCallState, isCallConnected } from '../../call/callState';
 import { restoreCall } from '../../call/callManager';
 
 const F = CC.fonts;
-const MODE_ICON = { video: Video, voice: Phone, chat: MessageSquare };
+const MODE_ICON = { video: Video, voice: Phone, chat: MessageSquare, in_person: Stethoscope };
 
 export default function AppointmentDetails({ navigation, route }) {
   const dispatch = useDispatch();
@@ -123,7 +124,11 @@ export default function AppointmentDetails({ navigation, route }) {
   const ModeIcon = MODE_ICON[appt?.mode] || Video;
 
   const { canJoin, joinOpensAt, joinLabel } = useMemo(() => {
-    if (!appt || !['scheduled', 'in_progress', 'accepted'].includes(status)) {
+    // A walk-in ("in_person") visit has no live call to join — the doctor documents it
+    // directly in their EMR queue. Without this check, a walk-in with status
+    // scheduled/in_progress would still compute canJoin:true and render a "Join
+    // consultation" button that has nothing to actually join.
+    if (!appt || appt.mode === 'in_person' || !['scheduled', 'in_progress', 'accepted'].includes(status)) {
       return { canJoin: false, joinOpensAt: null, joinLabel: null };
     }
     const opensAt = moment(appt.scheduledStart).subtract(JOIN_EARLY_MINUTES, 'minutes');

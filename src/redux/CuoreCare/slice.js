@@ -13,6 +13,8 @@ import {
   rescheduleAppointment,
   getPrescriptions,
   getCertificates,
+  getVaccinations,
+  getBills,
 } from './thunks';
 
 const initialState = {
@@ -40,6 +42,7 @@ const initialState = {
     videoCall: false,
     voiceCall: false,
     chat: false,
+    emr: false,
     doctor: null, // { id, name } | null
     error: null,
   },
@@ -58,6 +61,8 @@ const initialState = {
   current: { loading: false, data: null, error: null },
   prescriptions: { loading: false, list: [], error: null },
   certificates: { loading: false, list: [], error: null },
+  vaccinations: { loading: false, list: [], error: null },
+  bills: { loading: false, list: [], totalDue: 0, error: null },
   // Shared transient flag for write actions (book/cancel/reschedule/verify)
   action: { loading: false, error: null, lastResult: null },
 };
@@ -119,6 +124,7 @@ const cuoreCareSlice = createSlice({
         state.access.videoCall = !!a.videoCall;
         state.access.voiceCall = !!a.voiceCall;
         state.access.chat = !!a.chat;
+        state.access.emr = !!a.emr;
         state.access.doctor = action.payload?.doctor || null;
       })
       .addCase(getCuoreCareAccess.rejected, (state, action) => {
@@ -288,6 +294,37 @@ const cuoreCareSlice = createSlice({
       .addCase(getCertificates.rejected, (state, action) => {
         state.certificates.loading = false;
         state.certificates.error = action.payload?.message || 'Failed to load certificates';
+      });
+
+    /* ---- vaccinations ---- */
+    builder
+      .addCase(getVaccinations.pending, state => {
+        state.vaccinations.loading = true;
+        state.vaccinations.error = null;
+      })
+      .addCase(getVaccinations.fulfilled, (state, action) => {
+        state.vaccinations.loading = false;
+        state.vaccinations.list = action.payload.vaccinations;
+      })
+      .addCase(getVaccinations.rejected, (state, action) => {
+        state.vaccinations.loading = false;
+        state.vaccinations.error = action.payload?.message || 'Failed to load vaccinations';
+      });
+
+    /* ---- bills ---- */
+    builder
+      .addCase(getBills.pending, state => {
+        state.bills.loading = true;
+        state.bills.error = null;
+      })
+      .addCase(getBills.fulfilled, (state, action) => {
+        state.bills.loading = false;
+        state.bills.list = action.payload.bills;
+        state.bills.totalDue = action.payload.totalDue;
+      })
+      .addCase(getBills.rejected, (state, action) => {
+        state.bills.loading = false;
+        state.bills.error = action.payload?.message || 'Failed to load bills';
       });
   },
 });

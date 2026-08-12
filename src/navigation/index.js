@@ -71,11 +71,16 @@ function BottomTabNavigator() {
   const dispatch = useDispatch();
 
   // CuoreCare tab is gated on the centralized access object — true for a real CuoreCare
-  // subscription (superset) OR an admin-granted per-doctor entitlement for an
-  // Essential-tier user. Load both on entry so the tab shows/hides correctly even before
-  // the user opens it; `subscription` still separately drives the paywall/Profile card.
+  // subscription (superset), an admin-granted per-doctor entitlement for an
+  // Essential-tier user, OR a walk-in patient whose doctor has EMR enabled for them
+  // (access.emr). The tab now hosts both telemedicine (booking/video/voice/chat) and
+  // EMR (prescriptions/vaccinations/bills) content — CuoreCareHome decides which of those
+  // to actually show based on which specific feature keys are true, so showing the tab
+  // itself only needs "does this patient have ANY reason to be in here at all". Load both
+  // on entry so the tab shows/hides correctly even before the user opens it; `subscription`
+  // still separately drives the paywall/Profile card.
   const cuoreCareActive = useSelector(
-    state => state?.cuoreCare?.access?.cuoreCare,
+    state => state?.cuoreCare?.access?.cuoreCare || state?.cuoreCare?.access?.emr,
   );
   useEffect(() => {
     dispatch(getCuoreCareStatus());

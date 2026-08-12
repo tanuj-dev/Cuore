@@ -461,7 +461,7 @@ const Predict = ({ navigation }) => {
                   : 'contain'
               }
             />
-            <Text style={styles.footerText}>Cuore Health</Text>
+            <Text style={styles.footerText}>My Health</Text>
           </TouchableOpacity>
           {/* <View style={styles.card1}>
             <Image style={styles.noticeIcon} source={Images.NOTICE} />
@@ -603,24 +603,24 @@ const styles = StyleSheet.create({
   footerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
-    paddingVertical: hp(1.2),
-    paddingHorizontal: wp(2.5),
-    borderRadius: 12,
+    backgroundColor: '#DC2626',
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(3.5),
+    borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#FECACA',
+    borderColor: '#DC2626',
     shadowColor: '#DC2626',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+    shadowOpacity: 0.35,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
     ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 3 },
+      android: { elevation: 4 },
+      ios: { elevation: 6 },
     }),
   },
   footerText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#DC2626',
+    fontFamily: 'Poppins-SemiBold',
+    color: '#FFFFFF',
     fontSize: 14,
     letterSpacing: -0.2,
   },
