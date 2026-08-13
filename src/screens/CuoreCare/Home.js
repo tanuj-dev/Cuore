@@ -112,11 +112,9 @@ export default function CuoreCareHome({ navigation }) {
   }
 
   /* ----- no access to EITHER family (real subscription/entitlement for CuoreCare, or an
-     EMR-enabled doctor for walk-in records) → paywall. A walk-in-only patient
-     (access.emr but not access.cuoreCare) skips this and lands on the records-only
-     view below instead — they have nothing to subscribe to, they just have no telemedicine
-     doctor yet. Essential+granted users have access.cuoreCare=true even though
-     subscription.active is false, so they skip this branch entirely too. ----- */
+     EMR-enabled doctor for walk-in bookings) → paywall. Essential+granted users have
+     access.cuoreCare=true even though subscription.active is false, so they skip this
+     branch entirely too. ----- */
   if (access.checked && !access.cuoreCare && !access.emr) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
@@ -192,17 +190,18 @@ export default function CuoreCareHome({ navigation }) {
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {/* Book CTA — booking is a CuoreCare (telemedicine) feature; a walk-in-only
-            patient (access.emr but not access.cuoreCare) has no doctor to book with here,
-            their visits are created by the doctor in-clinic. */}
-        {access.cuoreCare && (
+        {/* Book CTA — a patient can book here if they have EITHER a teleconsult
+            relationship (access.cuoreCare) or a walk-in one (access.emr) with their doctor;
+            DoctorList/BookAppointment already only offer the channel(s) that doctor has
+            actually published for this patient. */}
+        {(access.cuoreCare || access.emr) && (
           <Card style={styles.bookCard} onPress={() => navigation.navigate('CuoreCareDoctors')}>
             <View style={styles.bookIcon}>
               <CalendarPlus size={22} color={CC.white} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.bookTitle}>Book a consultation</Text>
-              <Text style={styles.bookDesc}>Browse CuoreCare doctors and pick a time</Text>
+              <Text style={styles.bookDesc}>Browse your CuoreCare doctors and pick a time</Text>
             </View>
           </Card>
         )}
@@ -242,13 +241,13 @@ export default function CuoreCareHome({ navigation }) {
             title={segment === 'upcoming' ? 'No upcoming consultations' : 'No past consultations'}
             message={
               segment === 'upcoming'
-                ? access.cuoreCare
-                  ? 'Book a consultation with a CuoreCare doctor to get started.'
+                ? access.cuoreCare || access.emr
+                  ? 'Book a consultation to get started.'
                   : 'Your doctor will add you here when they check you in for a visit.'
                 : 'Your completed consultations will appear here.'
             }
             action={
-              segment === 'upcoming' && access.cuoreCare ? (
+              segment === 'upcoming' && (access.cuoreCare || access.emr) ? (
                 <PrimaryButton
                   label="Book a consultation"
                   onPress={() => navigation.navigate('CuoreCareDoctors')}
