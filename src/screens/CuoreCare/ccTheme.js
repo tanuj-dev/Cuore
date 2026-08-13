@@ -1,3 +1,4 @@
+import { Video, Phone, MessageSquare, Stethoscope } from 'lucide-react-native';
 import Fonts from '../../utilities/Fonts';
 
 /**
@@ -53,5 +54,12 @@ export const MODE_META = {
 };
 
 export const modeMeta = mode => MODE_META[mode] || MODE_META.video;
+
+// Icon COMPONENTS (not name strings, unlike MODE_META.icon above) for the few screens that
+// render the icon directly rather than through a name→component lookup. Single source of
+// truth — previously duplicated as a local MODE_ICON const in AppointmentCard.js and
+// AppointmentDetails.js.
+const MODE_ICON_COMPONENT = { video: Video, voice: Phone, chat: MessageSquare, in_person: Stethoscope };
+export const modeIcon = mode => MODE_ICON_COMPONENT[mode] || MODE_ICON_COMPONENT.video;
 
 export default CC;

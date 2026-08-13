@@ -12,11 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
-import { Video, Phone, MessageSquare, CalendarX, Clock } from 'lucide-react-native';
+import { Video, Phone, MessageSquare, Stethoscope, CalendarX, Clock } from 'lucide-react-native';
 
 import { CC } from './ccTheme';
 import { fmtTime } from './ccFormat';
-import { CCHeader, PrimaryButton, DoctorAvatar, Card } from './components';
+import { CCHeader, PrimaryButton, DoctorAvatar, Card, EmptyState } from './components';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import {
   bookAppointment,
@@ -24,11 +24,21 @@ import {
   getDoctorSlots,
 } from '../../redux/CuoreCare/thunks';
 import { resetBookingAvailability } from '../../redux/CuoreCare/slice';
-import { useCuoreCareAccess } from '../../utilities/cuoreCareAccess';
 
 const F = CC.fonts;
 
-const MODES = [
+// Mirrors the backend's Appointment.CHANNEL_FOR_MODE exactly — a walk-in and a
+// video/voice/chat consultation are independently bookable (they don't share a slot), so
+// which of these a patient may even pick depends on doctor.channels (see below).
+const CHANNEL_FOR_MODE = {
+  in_person: 'walkin',
+  video: 'teleconsult',
+  voice: 'teleconsult',
+  chat: 'teleconsult',
+};
+
+const ALL_MODES = [
+  { key: 'in_person', label: 'Walk-in', desc: 'Visit the clinic', icon: Stethoscope },
   { key: 'video', label: 'Video', desc: 'Face-to-face', icon: Video },
   { key: 'voice', label: 'Voice', desc: 'Audio only', icon: Phone },
   { key: 'chat', label: 'Chat', desc: 'Text messages', icon: MessageSquare },
@@ -58,35 +68,46 @@ export default function BookAppointment({ navigation, route }) {
   const { alert, AlertComponent } = useCustomAlert();
 
   const actionLoading = useSelector(state => state.cuoreCare.action.loading);
-  const { canAccess } = useCuoreCareAccess();
-  const canBook = canAccess('appointmentBooking');
   const { datesLoading, dates, configured, slotsLoading, slots, slotsDate } = useSelector(
     state => state.cuoreCare.availability,
   );
 
-  const [mode, setMode] = useState('video');
+  // Which channels THIS doctor actually offers to THIS patient — already access-aware
+  // (computed server-side in listDoctors from the doctor's published toggles intersected
+  // with the patient's own entitlement), so the picker below never needs its own separate
+  // access fetch. Falls back to teleconsult-only for a stale cached doctor object from
+  // before this field existed.
+  const channels = doctor.channels && doctor.channels.length ? doctor.channels : ['teleconsult'];
+  const MODES = ALL_MODES.filter(m => channels.includes(CHANNEL_FOR_MODE[m.key]));
+
+  const [mode, setMode] = useState(() => MODES[0]?.key || null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
 
   const [reason, setReason] = useState('');
 
   const doctorId = doctor?._id;
+  const channel = mode ? CHANNEL_FOR_MODE[mode] : null;
 
-  // Load the doctor's bookable dates on mount; clear slot state on unmount.
+  // Re-fetch bookable dates whenever the CHANNEL changes (walk-in vs teleconsult have
+  // independent slot lists) — switching between video/voice/chat doesn't refetch, since
+  // those all share the same teleconsult channel/slot list.
   useEffect(() => {
-    if (doctorId) dispatch(getDoctorAvailableDates({ doctorId }));
+    if (doctorId && channel) dispatch(getDoctorAvailableDates({ doctorId, channel }));
+    setSelectedDate(null);
+    setSelectedSlot(null);
     return () => {
       dispatch(resetBookingAvailability());
     };
-  }, [dispatch, doctorId]);
+  }, [dispatch, doctorId, channel]);
 
   const pickDate = useCallback(
     dateStr => {
       setSelectedDate(dateStr);
       setSelectedSlot(null);
-      if (doctorId) dispatch(getDoctorSlots({ doctorId, date: dateStr }));
+      if (doctorId && channel) dispatch(getDoctorSlots({ doctorId, date: dateStr, channel }));
     },
-    [dispatch, doctorId],
+    [dispatch, doctorId, channel],
   );
 
   const handleBook = async () => {
@@ -242,78 +263,82 @@ export default function BookAppointment({ navigation, route }) {
         </Card>
 
         {/* Mode */}
-        <Text style={styles.section}>Consultation type</Text>
-        <View style={styles.modeRow}>
-          {MODES.map(m => {
-            const active = mode === m.key;
-            const Icon = m.icon;
-            return (
-              <TouchableOpacity
-                key={m.key}
-                style={[styles.modeCard, active && styles.modeCardActive]}
-                onPress={() => setMode(m.key)}
-                activeOpacity={0.85}
-              >
-                <Icon size={22} color={active ? CC.primary : CC.subText} />
-                <Text style={[styles.modeLabel, active && { color: CC.primary }]}>{m.label}</Text>
-                <Text style={styles.modeDesc}>{m.desc}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Date */}
-        <Text style={styles.section}>Select a date</Text>
-        {renderDates()}
-
-        {/* Time slots */}
-        {selectedDate && (
+        {MODES.length === 0 ? (
+          <EmptyState
+            icon={<CalendarX size={40} color={CC.muted} />}
+            title="Nothing bookable yet"
+            message="This doctor hasn't opened Walk-in or Teleconsult bookings right now."
+          />
+        ) : (
           <>
-            <Text style={styles.section}>Select a time</Text>
-            {renderSlots()}
+            <Text style={styles.section}>Consultation type</Text>
+            <View style={styles.modeRow}>
+              {MODES.map(m => {
+                const active = mode === m.key;
+                const Icon = m.icon;
+                return (
+                  <TouchableOpacity
+                    key={m.key}
+                    style={[styles.modeCard, active && styles.modeCardActive]}
+                    onPress={() => setMode(m.key)}
+                    activeOpacity={0.85}
+                  >
+                    <Icon size={22} color={active ? CC.primary : CC.subText} />
+                    <Text style={[styles.modeLabel, active && { color: CC.primary }]}>{m.label}</Text>
+                    <Text style={styles.modeDesc}>{m.desc}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Date */}
+            <Text style={styles.section}>Select a date</Text>
+            {renderDates()}
+
+            {/* Time slots */}
+            {selectedDate && (
+              <>
+                <Text style={styles.section}>Select a time</Text>
+                {renderSlots()}
+              </>
+            )}
+
+            {/* Reason */}
+            <Text style={styles.section}>Reason (optional)</Text>
+            <TextInput
+              style={styles.reason}
+              placeholder="Briefly describe your concern"
+              placeholderTextColor={CC.muted}
+              value={reason}
+              onChangeText={setReason}
+              multiline
+              maxLength={500}
+            />
+
+            {selectedSlot && (
+              <View style={styles.summary}>
+                <Clock size={15} color={CC.primary} />
+                <Text style={styles.summaryText}>
+                  {moment(selectedSlot.start).format('ddd, D MMM')} · {fmtTime(selectedSlot.start)}
+                  {selectedSlot.durationMinutes ? ` · ${selectedSlot.durationMinutes} min` : ''}
+                </Text>
+              </View>
+            )}
+
+            <Text style={styles.note}>
+              Your request is sent to the doctor for confirmation. You will be notified once it is
+              accepted.
+            </Text>
+
+            <PrimaryButton
+              label="Request appointment"
+              onPress={handleBook}
+              loading={actionLoading}
+              disabled={!selectedSlot}
+              style={{ marginTop: 20 }}
+            />
           </>
         )}
-
-        {/* Reason */}
-        <Text style={styles.section}>Reason (optional)</Text>
-        <TextInput
-          style={styles.reason}
-          placeholder="Briefly describe your concern"
-          placeholderTextColor={CC.muted}
-          value={reason}
-          onChangeText={setReason}
-          multiline
-          maxLength={500}
-        />
-
-        {selectedSlot && (
-          <View style={styles.summary}>
-            <Clock size={15} color={CC.primary} />
-            <Text style={styles.summaryText}>
-              {moment(selectedSlot.start).format('ddd, D MMM')} · {fmtTime(selectedSlot.start)}
-              {selectedSlot.durationMinutes ? ` · ${selectedSlot.durationMinutes} min` : ''}
-            </Text>
-          </View>
-        )}
-
-        {canBook ? (
-          <Text style={styles.note}>
-            Your request is sent to the doctor for confirmation. You will be notified once it is
-            accepted.
-          </Text>
-        ) : (
-          <Text style={styles.note}>
-            Appointment booking isn't enabled for your account with this doctor yet.
-          </Text>
-        )}
-
-        <PrimaryButton
-          label="Request appointment"
-          onPress={handleBook}
-          loading={actionLoading}
-          disabled={!selectedSlot || !canBook}
-          style={{ marginTop: 20 }}
-        />
         <View style={{ height: 40 }} />
       </KeyboardAwareScrollView>
     </SafeAreaView>

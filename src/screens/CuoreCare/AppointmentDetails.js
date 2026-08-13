@@ -17,10 +17,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import {
-  Video,
-  Phone,
-  MessageSquare,
-  Stethoscope,
   CalendarClock,
   FileText,
   XCircle,
@@ -30,7 +26,7 @@ import {
   ClipboardList,
 } from 'lucide-react-native';
 
-import { CC, statusMeta, modeMeta } from './ccTheme';
+import { CC, statusMeta, modeMeta, modeIcon } from './ccTheme';
 import { CCHeader, PrimaryButton, SecondaryButton, StatusPill, DoctorAvatar, Card } from './components';
 import { fmtDayLabel, fmtRange, fmtTime } from './ccFormat';
 import { JOIN_EARLY_MINUTES } from '../../utilities/cuoreCareConfig';
@@ -48,7 +44,6 @@ import { getCallState, isCallConnected } from '../../call/callState';
 import { restoreCall } from '../../call/callManager';
 
 const F = CC.fonts;
-const MODE_ICON = { video: Video, voice: Phone, chat: MessageSquare, in_person: Stethoscope };
 
 export default function AppointmentDetails({ navigation, route }) {
   const dispatch = useDispatch();
@@ -121,7 +116,7 @@ export default function AppointmentDetails({ navigation, route }) {
 
   const doc = appt?.doctorId || {};
   const status = appt?.status;
-  const ModeIcon = MODE_ICON[appt?.mode] || Video;
+  const ModeIcon = modeIcon(appt?.mode);
 
   const { canJoin, joinOpensAt, joinLabel } = useMemo(() => {
     // A walk-in ("in_person") visit has no live call to join — the doctor documents it

@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Video, Phone, MessageSquare, Stethoscope, ChevronRight } from 'lucide-react-native';
-import { CC, modeMeta } from './ccTheme';
+import { ChevronRight } from 'lucide-react-native';
+import { CC, modeMeta, modeIcon } from './ccTheme';
 import { fmtDateTime, fmtRange } from './ccFormat';
 import { Card, StatusPill, DoctorAvatar } from './components';
 
 const F = CC.fonts;
-const MODE_ICON = { video: Video, voice: Phone, chat: MessageSquare, in_person: Stethoscope };
 
 /**
  * Compact appointment row. Expects the patient-scoped shape where `doctorId` is populated
@@ -14,7 +13,7 @@ const MODE_ICON = { video: Video, voice: Phone, chat: MessageSquare, in_person: 
  */
 export default function AppointmentCard({ appointment, onPress }) {
   const doc = appointment?.doctorId || {};
-  const ModeIcon = MODE_ICON[appointment?.mode] || Video;
+  const ModeIcon = modeIcon(appointment?.mode);
   const meta = modeMeta(appointment?.mode);
 
   return (

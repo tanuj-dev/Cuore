@@ -82,10 +82,12 @@ export const getCuoreCareDoctors = createAsyncThunk(
 /* ----------------------------- Availability & slots ------------------------ */
 
 // Dates (within the doctor's booking horizon) that have at least one open slot.
+// `channel` ('walkin' | 'teleconsult') is required by the backend — a walk-in and a
+// teleconsult have independent slot lists for the same doctor.
 export const getDoctorAvailableDates = createAsyncThunk(
   'cuoreCare/getAvailableDates',
-  async ({ doctorId, from, to } = {}, { rejectWithValue }) => {
-    const path = withQuery(`/api/cuorecare/doctors/${doctorId}/available-dates`, { from, to });
+  async ({ doctorId, channel, from, to } = {}, { rejectWithValue }) => {
+    const path = withQuery(`/api/cuorecare/doctors/${doctorId}/available-dates`, { channel, from, to });
     const res = await ccGet(path);
     if (res.status === 200 && res.data?.status === 'success') {
       return {
@@ -102,8 +104,8 @@ export const getDoctorAvailableDates = createAsyncThunk(
 // Open slots for one date. Booked / blocked / expired are already filtered out server-side.
 export const getDoctorSlots = createAsyncThunk(
   'cuoreCare/getSlots',
-  async ({ doctorId, date } = {}, { rejectWithValue }) => {
-    const path = withQuery(`/api/cuorecare/doctors/${doctorId}/slots`, { date });
+  async ({ doctorId, date, channel } = {}, { rejectWithValue }) => {
+    const path = withQuery(`/api/cuorecare/doctors/${doctorId}/slots`, { date, channel });
     const res = await ccGet(path);
     if (res.status === 200 && res.data?.status === 'success') {
       return { date, slots: res.data.slots || [], configured: res.data.configured !== false };

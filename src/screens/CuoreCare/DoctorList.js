@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-import { Search, MapPin, Stethoscope, ChevronRight } from 'lucide-react-native';
+import { Search, MapPin, Stethoscope, Video, ChevronRight } from 'lucide-react-native';
 
 import { CC } from './ccTheme';
 import { CCHeader, Card, DoctorAvatar, EmptyState } from './components';
@@ -109,6 +109,20 @@ export default function DoctorList({ navigation }) {
                     <Text style={styles.cityText}>{doc.address.city}</Text>
                   </View>
                 )}
+                <View style={styles.channelRow}>
+                  {(doc.channels || []).includes('walkin') && (
+                    <View style={styles.channelChip}>
+                      <Stethoscope size={11} color={CC.primary} />
+                      <Text style={styles.channelChipText}>Walk-in</Text>
+                    </View>
+                  )}
+                  {(doc.channels || ['teleconsult']).includes('teleconsult') && (
+                    <View style={styles.channelChip}>
+                      <Video size={11} color={CC.primary} />
+                      <Text style={styles.channelChipText}>Teleconsult</Text>
+                    </View>
+                  )}
+                </View>
               </View>
               <ChevronRight size={20} color={CC.muted} />
             </Card>
@@ -150,4 +164,15 @@ const styles = StyleSheet.create({
   docSpec: { fontFamily: F.PoppinsRegular, fontSize: 12.5, color: CC.subText, marginTop: 1 },
   cityRow: { flexDirection: 'row', alignItems: 'center', marginTop: 5 },
   cityText: { fontFamily: F.PoppinsRegular, fontSize: 11.5, color: CC.muted, marginLeft: 4 },
+  channelRow: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  channelChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: CC.primarySoft,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  channelChipText: { fontFamily: F.PoppinsMedium, fontSize: 10.5, color: CC.primary },
 });
