@@ -29,7 +29,7 @@ import {
 import { CC, statusMeta, modeMeta, modeIcon } from './ccTheme';
 import { CCHeader, PrimaryButton, SecondaryButton, StatusPill, DoctorAvatar, Card } from './components';
 import { fmtDayLabel, fmtRange, fmtTime } from './ccFormat';
-import { JOIN_EARLY_MINUTES } from '../../utilities/cuoreCareConfig';
+import { useJoinWindow } from './joinWindow';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import {
   getAppointment,
@@ -118,25 +118,10 @@ export default function AppointmentDetails({ navigation, route }) {
   const status = appt?.status;
   const ModeIcon = modeIcon(appt?.mode);
 
-  const { canJoin, joinOpensAt, joinLabel } = useMemo(() => {
-    // A walk-in ("in_person") visit has no live call to join — the doctor documents it
-    // directly in their EMR queue. Without this check, a walk-in with status
-    // scheduled/in_progress would still compute canJoin:true and render a "Join
-    // consultation" button that has nothing to actually join.
-    if (!appt || appt.mode === 'in_person' || !['scheduled', 'in_progress', 'accepted'].includes(status)) {
-      return { canJoin: false, joinOpensAt: null, joinLabel: null };
-    }
-    const opensAt = moment(appt.scheduledStart).subtract(JOIN_EARLY_MINUTES, 'minutes');
-    const now = moment();
-    if (now.isBefore(opensAt)) {
-      return {
-        canJoin: false,
-        joinOpensAt: opensAt,
-        joinLabel: `Join opens ${fmtDayLabel(appt.scheduledStart)} at ${fmtTime(opensAt)}`,
-      };
-    }
-    return { canJoin: true, joinOpensAt: opensAt, joinLabel: null };
-  }, [appt, status]);
+  // Shared with the Today screen's consultation card (see CuoreCare/joinWindow.js). The
+  // hook re-evaluates on a timer, so the button enables itself the moment the window opens
+  // instead of staying greyed out until the screen happens to re-render.
+  const { canJoin, opensAt: joinOpensAt, joinLabel } = useJoinWindow(appt);
 
   const canModify = ['requested', 'scheduled', 'accepted'].includes(status);
 

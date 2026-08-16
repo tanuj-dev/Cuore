@@ -26,6 +26,8 @@ import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
 import { Info, Bell } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { fetchNotifications } from '../../redux/Notifications/thunks';
+import { getTodayConsultations } from '../../redux/CuoreCare/thunks';
+import ConsultationTimeCard from './ConsultationTimeCard';
 import ProgressBarWithImage from '../../components/ProgressBar';
 import Reminder from '../../components/Reminder';
 import { useDispatch, useSelector } from 'react-redux';
@@ -349,6 +351,18 @@ const Today = ({ navigation, route }) => {
     useCallback(() => {
       dispatch(fetchNotifications({ page: 1 }));
     }, [dispatch]),
+  );
+
+  // Today's CuoreCare consultations. Fetched only when the patient actually has access —
+  // a free/Essential user with no CuoreCare or EMR entitlement would just get an empty 200,
+  // so this avoids a pointless request on every Home focus for the majority of users.
+  const ccAccess = useSelector(state => state.cuoreCare?.access);
+  const todayConsults = useSelector(state => state.cuoreCare?.todayConsults?.list) || [];
+  const hasConsultAccess = !!(ccAccess?.cuoreCare || ccAccess?.emr);
+  useFocusEffect(
+    useCallback(() => {
+      if (hasConsultAccess) dispatch(getTodayConsultations());
+    }, [dispatch, hasConsultAccess]),
   );
 
   // Memoize derived data
@@ -976,6 +990,21 @@ const Today = ({ navigation, route }) => {
           </Text>
           <Text style={styles.alertRefsCardChevron}>›</Text>
         </TouchableOpacity>
+
+        {/* Today's CuoreCare consultations — shown only when there is one, so Home is
+            unchanged for patients without a consultation booked today. */}
+        {todayConsults.length > 0 && (
+          <View style={styles.consultSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {todayConsults.length === 1 ? 'Your consultation today' : 'Your consultations today'}
+              </Text>
+            </View>
+            {todayConsults.map(appt => (
+              <ConsultationTimeCard key={appt.appointmentId || appt._id} appointment={appt} />
+            ))}
+          </View>
+        )}
 
         {/* Daily Schedule */}
         <View style={{ backgroundColor: '#F9FAFB' }}>

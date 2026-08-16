@@ -8,6 +8,7 @@ import {
   getDoctorSlots,
   bookAppointment,
   getAppointments,
+  getTodayConsultations,
   getAppointment,
   cancelAppointment,
   rescheduleAppointment,
@@ -58,6 +59,9 @@ const initialState = {
     error: null,
   },
   appointments: { loading: false, list: [], count: 0, scope: 'all', error: null },
+  // Separate from `appointments` above on purpose: the Today screen and the CuoreCare tab
+  // load different scopes and would otherwise overwrite each other's list.
+  todayConsults: { loading: false, list: [], error: null },
   current: { loading: false, data: null, error: null },
   prescriptions: { loading: false, list: [], error: null },
   certificates: { loading: false, list: [], error: null },
@@ -215,6 +219,20 @@ const cuoreCareSlice = createSlice({
 
     /* ---- appointments list ---- */
     builder
+      .addCase(getTodayConsultations.pending, state => {
+        state.todayConsults.loading = true;
+        state.todayConsults.error = null;
+      })
+      .addCase(getTodayConsultations.fulfilled, (state, action) => {
+        state.todayConsults.loading = false;
+        state.todayConsults.list = action.payload || [];
+      })
+      .addCase(getTodayConsultations.rejected, (state, action) => {
+        state.todayConsults.loading = false;
+        state.todayConsults.list = [];
+        state.todayConsults.error = action.payload?.message || 'Failed to load consultations';
+      })
+
       .addCase(getAppointments.pending, state => {
         state.appointments.loading = true;
         state.appointments.error = null;

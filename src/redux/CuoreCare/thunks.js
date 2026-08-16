@@ -140,6 +140,24 @@ export const getAppointments = createAsyncThunk(
   },
 );
 
+// Today's confirmed consultations, for the Home/Today time-card.
+//
+// Hits the SAME /appointments endpoint (scope=today -> scheduled|in_progress starting
+// today, server-side) rather than reimplementing any of that filtering client-side. It
+// lands in its own slice bucket because `appointments` is a single scope-keyed list shared
+// with the CuoreCare tab — writing this into it would clobber whatever scope that tab is
+// showing whenever Today refreshes.
+export const getTodayConsultations = createAsyncThunk(
+  'cuoreCare/getTodayConsultations',
+  async (_arg, { rejectWithValue }) => {
+    const res = await ccGet(withQuery('/api/cuorecare/appointments', { scope: 'today' }));
+    if (res.status === 200 && res.data?.status === 'success') {
+      return res.data.appointments || [];
+    }
+    return rejectWithValue(fail(res, 'Could not load your consultations'));
+  },
+);
+
 export const getAppointment = createAsyncThunk(
   'cuoreCare/getAppointment',
   async (appointmentId, { rejectWithValue }) => {

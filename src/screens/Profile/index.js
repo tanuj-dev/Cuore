@@ -24,6 +24,7 @@ import { getCuoreCareStatus } from '../../redux/CuoreCare/thunks';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { getNativeAppVersion } from '../../utilities/Constants';
 import SubscriptionExpiringModal from '../../components/SubscriptionExpiringModal';
+import { getApiCall, putApiCall } from '../../utilities/Services';
 import HealthDataModal from '../../components/HealthDataModal';
 import {
   isPaymentEndDateToday,
@@ -74,6 +75,12 @@ const profileOptions = [
     section: 'GENERAL',
   },
   {
+    // Lets a patient withdraw record sharing after granting it at their first upload.
+    title: 'Record Sharing',
+    icon: Images.HEALTH_RECORD,
+    section: 'GENERAL',
+  },
+  {
     title: 'Terms and Conditions',
     icon: Images.TERMS_AND_CONDITION,
     section: 'GENERAL',
@@ -94,6 +101,10 @@ const Profile = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [showWebViewModal, setShowWebViewModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  // Record-sharing consent. Server-held, so it follows the account rather than the device.
+  const [showRecordSharing, setShowRecordSharing] = useState(false);
+  const [recordConsent, setRecordConsent] = useState({ granted: false, loaded: false });
+  const [savingRecordConsent, setSavingRecordConsent] = useState(false);
   const [showHealthDataModal, setShowHealthDataModal] = useState(false);
   const [webViewUrl, setWebViewUrl] = useState('');
   const [isWebViewLoading, setIsWebViewLoading] = useState(false);
@@ -130,6 +141,7 @@ const Profile = ({ navigation }) => {
     'Delete Account': 'DeleteAccount',
     Support: 'Support',
     Subscription: 'SubscriptionDetails',
+    'Record Sharing': 'RecordSharingModal',
     'Terms and Conditions': 'TermsAndConditions',
     // Logout: 'Login', // Typically, logout wouldn't navigate to a screen
 
@@ -157,6 +169,11 @@ const Profile = ({ navigation }) => {
               }
               if (route === 'HealthDataModal') {
                 setShowHealthDataModal(true);
+                return;
+              }
+              if (route === 'RecordSharingModal') {
+                loadRecordConsent();
+                setShowRecordSharing(true);
                 return;
               }
 
@@ -259,6 +276,15 @@ const Profile = ({ navigation }) => {
     ios: 'App Store',
     android: 'Google Play',
     razorpay: 'Web',
+  };
+  // Every platform string either tier can carry, mapped to what a user would recognise.
+  // Anything unmapped falls through to a title-cased raw value rather than a guess.
+  const PLATFORM_LABELS = {
+    ...CUORECARE_PLATFORM_LABELS,
+    web_registration: 'Web',
+    'App Store': 'App Store',
+    'Google Play': 'Google Play',
+    Web: 'Web',
   };
   const payment = cuoreCareSub?.active
     ? {
@@ -440,6 +466,52 @@ const Profile = ({ navigation }) => {
         onClose={() => setShowHealthDataModal(false)}
       />
 
+      {/* Record sharing — grant or withdraw. Withdrawing hides uploads from doctors on the
+          server (utils/recordConsent.js); nothing is deleted and the patient keeps them. */}
+      <Modal
+        visible={showRecordSharing}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRecordSharing(false)}
+      >
+        <View style={styles.consentBackdrop}>
+          <View style={styles.consentCard}>
+            <Text style={styles.consentTitle}>Record sharing</Text>
+            <Text style={styles.consentBody}>
+              {recordConsent.granted
+                ? 'Your uploaded records are visible to the doctor treating you.'
+                : 'Your uploaded records are hidden from doctors. You can still see them yourself.'}
+            </Text>
+            <Text style={styles.consentNote}>
+              Turning this off never deletes anything. Prescriptions and case sheets your
+              doctor issued stay in their own records either way.
+            </Text>
+            <View style={styles.consentActions}>
+              <TouchableOpacity onPress={() => setShowRecordSharing(false)} style={styles.consentCancel}>
+                <Text style={styles.consentCancelText}>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => toggleRecordConsent(!recordConsent.granted)}
+                disabled={savingRecordConsent || !recordConsent.loaded}
+                style={[
+                  styles.consentAgree,
+                  recordConsent.granted && styles.consentRevoke,
+                  (savingRecordConsent || !recordConsent.loaded) && { opacity: 0.6 },
+                ]}
+              >
+                {savingRecordConsent ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.consentAgreeText}>
+                    {recordConsent.granted ? 'Stop sharing' : 'Share my records'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Subscription Modal */}
       <Modal
         visible={showSubscriptionModal}
@@ -512,11 +584,12 @@ const Profile = ({ navigation }) => {
                   <View style={styles.subscriptionDetailRow}>
                     <Text style={styles.subscriptionDetailLabel}>Platform</Text>
                     <Text style={styles.subscriptionDetailValue}>
-                      {toLabel(payment?.platform) === 'N/A'
-                        ? Platform.OS === 'ios'
-                          ? 'iOS'
-                          : 'Android'
-                        : toLabel(payment?.platform)}
+                      {/* Never substitute the DEVICE's OS for the purchase platform. A user
+                          can buy on Android and read this on an iPad, or have no record at
+                          all — guessing produced a confident wrong answer ("iOS") where the
+                          truth is simply unknown. Backend now sends null in that case. */}
+                      {PLATFORM_LABELS[payment?.platform] ||
+                        (payment?.platform ? toLabel(payment.platform) : 'Not recorded')}
                     </Text>
                   </View>
                   <View style={styles.subscriptionDetailRow}>
@@ -767,6 +840,17 @@ const styles = StyleSheet.create({
     marginTop: -20,
     zIndex: 1,
   },
+  consentBackdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.45)', justifyContent: 'center', paddingHorizontal: wp(6) },
+  consentCard: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: wp(5) },
+  consentTitle: { fontSize: hp(2), fontWeight: '700', color: '#0F172A', marginBottom: hp(1) },
+  consentBody: { fontSize: hp(1.65), color: '#334155', lineHeight: hp(2.3), marginBottom: hp(1) },
+  consentNote: { fontSize: hp(1.5), color: '#64748B', lineHeight: hp(2.1) },
+  consentActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: hp(1.5) },
+  consentCancel: { paddingVertical: hp(1.2), paddingHorizontal: wp(4) },
+  consentCancelText: { color: '#64748B', fontSize: hp(1.7), fontWeight: '600' },
+  consentAgree: { backgroundColor: '#11418A', borderRadius: 10, paddingVertical: hp(1.2), paddingHorizontal: wp(5), minWidth: wp(34), alignItems: 'center' },
+  consentRevoke: { backgroundColor: '#DC2626' },
+  consentAgreeText: { color: '#FFFFFF', fontSize: hp(1.7), fontWeight: '700' },
   subscriptionScroll: {
     flex: 1,
     backgroundColor: '#F1F5F9',

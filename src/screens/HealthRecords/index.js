@@ -55,6 +55,7 @@ import { getPresRecordsThunk } from '../../redux/uploadPhoto/getPresRecordsThunk
 import { editFilename } from '../../redux/uploadPhoto/editFilenameThunk';
 import { deleteRecord } from '../../redux/uploadPhoto/deleteRecordThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
+import { getApiCall, putApiCall } from '../../utilities/Services';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -141,6 +142,11 @@ const HealthRecords = ({ navigation }) => {
 
   // Records
   const [records, setRecords] = useState([]);
+  // Record-sharing consent. `required` comes from the server so the prompt follows the
+  // account, not the device — reinstalling must not re-ask, and revoking must re-ask.
+  const [consent, setConsent] = useState({ granted: false, required: false, loaded: false });
+  const [showConsent, setShowConsent] = useState(false);
+  const [savingConsent, setSavingConsent] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState('');
@@ -407,6 +413,44 @@ const HealthRecords = ({ navigation }) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Read consent state once on mount. Kept on the server so it follows the account rather
+  // than the device.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getApiCall('/api/health-records/consent', '');
+        if (!cancelled && res?.status === 200 && res.data?.consent) {
+          setConsent({ ...res.data.consent, loaded: true });
+        }
+      } catch (_) {
+        // Non-fatal: the server enforces the gate regardless, so a failed read just means
+        // the prompt may appear once more than strictly necessary.
+        if (!cancelled) setConsent(c => ({ ...c, loaded: true }));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const grantConsent = async () => {
+    setSavingConsent(true);
+    try {
+      const res = await putApiCall('/api/health-records/consent', { granted: true });
+      if (res?.status === 200 && res.data?.consent) {
+        setConsent({ ...res.data.consent, loaded: true });
+        setShowConsent(false);
+        // Continue straight into the upload the patient already asked for.
+        setTimeout(() => handleSubmit(), 0);
+        return;
+      }
+      alert('Could not save', 'Please try again.');
+    } catch (_) {
+      alert('Could not save', 'Please try again.');
+    } finally {
+      setSavingConsent(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (selectedFiles.length === 0) {
       alert('Nothing to upload', 'Select a file or photo first.');
@@ -429,6 +473,14 @@ const HealthRecords = ({ navigation }) => {
         'File too large',
         `Some files exceed ${MAX_FILE_SIZE_MB}MB. Please choose smaller files.`,
       );
+      return;
+    }
+
+    // One-time consent. Asked before the FIRST upload only; once granted the prompt never
+    // appears again (the server tracks it, not this screen). The backend enforces the same
+    // rule, so this modal is the explanation — not the protection.
+    if (consent.required) {
+      setShowConsent(true);
       return;
     }
 
@@ -492,6 +544,14 @@ const HealthRecords = ({ navigation }) => {
             fileType: item?.fileType || '',
             fileSize: item?.fileSize || 0,
             uploadedAt: item?.uploadedAt || item?.uploadDate || null,
+            // The date the document is ABOUT (a prescription's issue date, or the date the
+            // patient filed a scan under) — falls back to the upload time for older records.
+            documentDate: item?.documentDate || item?.uploadedAt || item?.uploadDate || null,
+            // Doctor-issued documents (prescriptions, case sheets) are mirrored into Records
+            // read-only: the backend refuses rename/delete on them because the authoritative
+            // document lives elsewhere and the S3 object is shared with the doctor's copy.
+            isClinical: !!item?.isClinical,
+            source: item?.source || 'upload',
           })),
         );
       } catch (error) {
@@ -643,13 +703,13 @@ const HealthRecords = ({ navigation }) => {
   // Newest first, split into month headings.
   const groupedRecords = useMemo(() => {
     const sorted = [...filteredRecords].sort((a, b) => {
-      const ta = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
-      const tb = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
+      const ta = a.documentDate ? new Date(a.documentDate).getTime() : 0;
+      const tb = b.documentDate ? new Date(b.documentDate).getTime() : 0;
       return tb - ta;
     });
     const groups = [];
     sorted.forEach(record => {
-      const label = monthGroupOf(record.uploadedAt);
+      const label = monthGroupOf(record.documentDate);
       const last = groups[groups.length - 1];
       if (last && last.label === label) last.items.push(record);
       else groups.push({ label, items: [record] });
@@ -711,8 +771,8 @@ const HealthRecords = ({ navigation }) => {
               </Text>
               <Text style={styles.recordMeta}>
                 {[
-                  formatDate(record.uploadedAt),
-                  formatTime(record.uploadedAt),
+                  formatDate(record.documentDate),
+                  formatTime(record.documentDate),
                   formatSize(record.fileSize),
                 ]
                   .filter(Boolean)
@@ -743,7 +803,7 @@ const HealthRecords = ({ navigation }) => {
                 <Download size={18} color="#11418A" />
               )}
             </TouchableOpacity>
-            {!isCaregiver && (
+            {!isCaregiver && !record.isClinical && (
               <TouchableOpacity
                 onPress={() => startRename(record)}
                 style={styles.iconBtn}
@@ -752,7 +812,7 @@ const HealthRecords = ({ navigation }) => {
                 <Pencil size={17} color="#11418A" />
               </TouchableOpacity>
             )}
-            {!isCaregiver && (
+            {!isCaregiver && !record.isClinical && (
               <TouchableOpacity
                 onPress={() => handleDelete(record)}
                 style={styles.iconBtn}
@@ -1048,6 +1108,40 @@ const HealthRecords = ({ navigation }) => {
           </Modal>
         </View>
       </ScrollView>
+
+      {/* One-time record-sharing consent. Shown before the FIRST upload only — once granted
+          the server remembers, so it never reappears (and reappears if consent is revoked). */}
+      <Modal visible={showConsent} transparent animationType="fade" onRequestClose={() => setShowConsent(false)}>
+        <View style={styles.consentBackdrop}>
+          <View style={styles.consentCard}>
+            <Text style={styles.consentTitle}>Share records with your doctor?</Text>
+            <Text style={styles.consentBody}>
+              The documents you upload will be visible to the doctor treating you, so they can
+              see your reports during a consultation.
+            </Text>
+            <Text style={styles.consentBody}>
+              You can turn this off at any time from your Profile. Turning it off hides your
+              uploads from doctors — nothing is deleted, and they stay in your own records.
+            </Text>
+            <View style={styles.consentActions}>
+              <TouchableOpacity onPress={() => setShowConsent(false)} style={styles.consentCancel}>
+                <Text style={styles.consentCancelText}>Not now</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={grantConsent}
+                disabled={savingConsent}
+                style={[styles.consentAgree, savingConsent && { opacity: 0.6 }]}
+              >
+                {savingConsent ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.consentAgreeText}>Agree &amp; upload</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };
@@ -1146,6 +1240,15 @@ const styles = StyleSheet.create({
   submitBtnText: { color: '#FFFFFF', fontSize: hp(1.9), fontWeight: '600' },
   uploadingRow: { flexDirection: 'row', alignItems: 'center', gap: wp(2) },
 
+  consentBackdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.45)', justifyContent: 'center', paddingHorizontal: wp(6) },
+  consentCard: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: wp(5) },
+  consentTitle: { fontSize: hp(2), fontWeight: '700', color: '#0F172A', marginBottom: hp(1) },
+  consentBody: { fontSize: hp(1.6), color: '#475569', lineHeight: hp(2.3), marginBottom: hp(1) },
+  consentActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: hp(1) },
+  consentCancel: { paddingVertical: hp(1.2), paddingHorizontal: wp(4) },
+  consentCancelText: { color: '#64748B', fontSize: hp(1.7), fontWeight: '600' },
+  consentAgree: { backgroundColor: '#11418A', borderRadius: 10, paddingVertical: hp(1.2), paddingHorizontal: wp(5), minWidth: wp(34), alignItems: 'center' },
+  consentAgreeText: { color: '#FFFFFF', fontSize: hp(1.7), fontWeight: '700' },
   recordsHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
