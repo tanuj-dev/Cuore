@@ -41,6 +41,8 @@ import {
   teardownCalls,
 } from './src/call/callManager';
 import { onPipModeChanged } from './src/call/pip';
+import { resolveScreen, navigateFromNotification as navigateFromNotificationData } from './src/utils/notificationNavigation';
+import { markNotificationRead } from './src/redux/Notifications/thunks';
 
 const isOutdated = (current, minimum) => {
   const c = current.split('.').map(Number);
@@ -67,56 +69,18 @@ const AppContent = () => {
   const userId = useSelector(state => state.auth?.userId);
   const appStateRef = useRef(AppState.currentState);
 
-  // CuoreCare deep-link targets live inside the CuoreCare tab stack and need params, so
-  // they route through nested navigation. All other targets keep the original top-level
-  // navigate behavior untouched.
+  // Deep-link resolution + nested-navigate logic lives in src/utils/notificationNavigation.js
+  // now, shared verbatim with the in-app Notifications screen so a tap on the OS banner and
+  // a tap on the in-app list can never drift apart. This wrapper just binds navigationRef and,
+  // when the payload carries a notificationId (attached server-side by
+  // utils/notificationService.js), marks that row read — so opening a notification either
+  // way converges on the same read state.
   const navigateFromNotification = useCallback((screen = 'Today', data = {}) => {
-    const CUORECARE_TARGETS = {
-      AppointmentDetails: 'CuoreCareAppointment',
-      PrescriptionView: 'CuoreCarePrescription',
-      CertificateView: 'CuoreCareCertificate',
-    };
-
-    const tryNavigate = attempt => {
-      if (navigationRef.current?.isReady?.()) {
-        // Incoming call → the full-screen root screen (rings + Accept/Reject).
-        if (screen === 'IncomingCall') {
-          onIncomingCall(
-            {
-              appointmentId: data?.appointmentId,
-              mode: data?.mode || 'video',
-              doctorName: data?.doctorName,
-              from: { name: data?.doctorName || 'Your doctor', role: 'doctor' },
-            },
-            'notification',
-          );
-          return;
-        }
-        const innerScreen = CUORECARE_TARGETS[screen];
-        if (innerScreen) {
-          let params = { appointmentId: data?.appointmentId };
-          if (innerScreen === 'CuoreCarePrescription') {
-            params = { ...params, prescriptionId: data?.prescriptionId };
-          } else if (innerScreen === 'CuoreCareCertificate') {
-            params = { ...params, certificateId: data?.certificateId };
-          }
-          navigationRef.current.navigate('Home', {
-            screen: 'CuoreCare',
-            params: { screen: innerScreen, params },
-          });
-        } else {
-          navigationRef.current.navigate(screen);
-        }
-        return;
-      }
-
-      if (attempt < 10) {
-        setTimeout(() => tryNavigate(attempt + 1), 200);
-      }
-    };
-
-    tryNavigate(0);
-  }, []);
+    if (data?.notificationId) {
+      dispatch(markNotificationRead(data.notificationId));
+    }
+    navigateFromNotificationData(navigationRef, screen, data);
+  }, [dispatch]);
 
   // A realtime `call:incoming` (the doctor started the consultation). The call manager
   // owns the ring, the notification and the navigation so every entry point — socket,
@@ -132,26 +96,6 @@ const AppContent = () => {
       mode: data.mode || 'video',
       doctorName: data.doctorName,
     });
-  }, []);
-
-  // Resolve the deep-link target from a notification's data payload.
-  // The backend sends data.screen (e.g. 'OnBoarding', 'HealthRecords',
-  // 'RenewSubscription', 'Today'); anything unknown falls back to Today.
-  const resolveScreen = useCallback(data => {
-    const allowed = [
-      'Today',
-      'OnBoarding',
-      'HealthRecords',
-      'RenewSubscription',
-      // CuoreCare deep-link targets (routed into the CuoreCare tab by navigateFromNotification)
-      'AppointmentDetails',
-      'PrescriptionView',
-      'CertificateView',
-      // CuoreCare incoming call (iOS taps the APNs alert → routed to the full-screen screen)
-      'IncomingCall',
-    ];
-    const target = data?.screen;
-    return allowed.includes(target) ? target : 'Today';
   }, []);
 
   // Keep the launcher badge in sync with the notification tray: the badge count

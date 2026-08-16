@@ -23,6 +23,7 @@ import { predictSlice } from './Predict/slice';
 import notesSlice from './Notes/slice';
 import cuoreCareSlice from './CuoreCare/slice';
 import healthSyncSlice from './Health/slice';
+import notificationsSlice from './Notifications/slice';
 
 const store = configureStore({
   reducer: {
@@ -48,6 +49,7 @@ const store = configureStore({
     doctors: doctorsSlice.reducer,
     notes: notesSlice.reducer,
     cuoreCare: cuoreCareSlice.reducer,
+    notifications: notificationsSlice.reducer,
   },
   // Enable Redux DevTools in development
   devTools: __DEV__,

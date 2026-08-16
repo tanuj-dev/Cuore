@@ -6,16 +6,22 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { CC, statusMeta } from './ccTheme';
 
 const F = CC.fonts;
 
-/* ------------------------------- Screen header ----------------------------- */
+/* ------------------------------- Screen header -----------------------------
+   Every CuoreCare screen using this header sits inside a SafeAreaView painted
+   CC.surface — but StatusBar is a native singleton, not scoped per screen, so
+   without setting it here it keeps whatever color the previously-focused
+   screen (e.g. Today, which sets pure white) last left it as. */
 export function CCHeader({ title, subtitle, onBack, right }) {
   return (
     <View style={s.header}>
+      <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
       {onBack ? (
         <TouchableOpacity
           onPress={onBack}

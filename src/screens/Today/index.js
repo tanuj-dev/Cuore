@@ -23,7 +23,9 @@ import {
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
-import { Info } from 'lucide-react-native';
+import { Info, Bell } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { fetchNotifications } from '../../redux/Notifications/thunks';
 import ProgressBarWithImage from '../../components/ProgressBar';
 import Reminder from '../../components/Reminder';
 import { useDispatch, useSelector } from 'react-redux';
@@ -339,6 +341,15 @@ const Today = ({ navigation, route }) => {
   useEffect(() => {
     setDoctorImageLoadFailed(false);
   }, [normalizedDoctorImageUri]);
+
+  // In-app notification bell (header) — refreshed every time this tab regains focus,
+  // e.g. coming back from the Notifications screen after reading something.
+  const unreadNotificationCount = useSelector(state => state.notifications.unreadCount);
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchNotifications({ page: 1 }));
+    }, [dispatch]),
+  );
 
   // Memoize derived data
   const homeData = useMemo(() => data || null, [data]);
@@ -683,70 +694,86 @@ const Today = ({ navigation, route }) => {
         style={styles.container}
       >
         <View style={styles.header}>
-          <Text style={styles.username}>
-            {profileData?.display_name
-              ? `Hi, ${profileData.display_name.split(' ')[0]}`
-              : 'User'}
-          </Text>
-          <View style={styles.headerButtonsContainer}>
+          <View style={styles.headerTopRow}>
+            <Text style={styles.username}>
+              {profileData?.display_name
+                ? `Hi, ${profileData.display_name.split(' ')[0]}`
+                : 'User'}
+            </Text>
             <TouchableOpacity
-              disabled={isCaregiver}
-              onPress={() => setIsVisible(true)}
-              style={styles.addReminderButton}
+              onPress={() => navigation.navigate('Notifications')}
+              style={styles.notificationButton}
               activeOpacity={0.8}
             >
               <View style={styles.buttonIconWrapper}>
-                <Image source={Images.ADD} style={styles.addIcon} />
+                <Bell size={hp(2)} color="#11418A" />
+                {unreadNotificationCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationBadgeText}>
+                      {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                    </Text>
+                  </View>
+                )}
               </View>
-              <Text style={styles.addReminderText}>Add{'\n'}Reminder</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.healthButton}
-              onPress={() => navigation.navigate('Health')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.buttonIconWrapper}>
-                <Image
-                  source={
-                    normalizedDoctorImageUri && !doctorImageLoadFailed
-                      ? { uri: normalizedDoctorImageUri }
-                      : Images.DEFAULT_DOCTOR
-                  }
-                  style={
-                    normalizedDoctorImageUri && !doctorImageLoadFailed
-                      ? styles.healthIconFull
-                      : styles.healthIcon
-                  }
-                  resizeMode={
-                    normalizedDoctorImageUri && !doctorImageLoadFailed
-                      ? 'cover'
-                      : 'contain'
-                  }
-                  onError={() => setDoctorImageLoadFailed(true)}
-                />
-              </View>
-              <Text style={styles.healthButtonText}>My{'\n'}Health</Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        {/* Dates Tabs */}
-        <View style={styles.tabs}>
-          {dates.map(date => (
-            <TouchableOpacity
-              key={date}
-              disabled={isCaregiver}
-              onPress={() => setActiveTab(date)}
-            >
-              <Text
-                style={
-                  activeTab === date ? styles.activeTab : styles.inactiveTab
-                }
+          <View style={styles.headerBottomRow}>
+            {dates.map(date => (
+              <TouchableOpacity
+                key={date}
+                disabled={isCaregiver}
+                onPress={() => setActiveTab(date)}
               >
-                {date}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={
+                    activeTab === date ? styles.activeTab : styles.inactiveTab
+                  }
+                >
+                  {date}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <View style={styles.headerButtonsContainer}>
+              <TouchableOpacity
+                disabled={isCaregiver}
+                onPress={() => setIsVisible(true)}
+                style={styles.addReminderButton}
+                activeOpacity={0.8}
+              >
+                <View style={styles.buttonIconWrapper}>
+                  <Image source={Images.ADD} style={styles.addIcon} />
+                </View>
+                <Text style={styles.addReminderText}>Add{'\n'}Reminder</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.healthButton}
+                onPress={() => navigation.navigate('Health')}
+                activeOpacity={0.8}
+              >
+                <View style={styles.buttonIconWrapper}>
+                  <Image
+                    source={
+                      normalizedDoctorImageUri && !doctorImageLoadFailed
+                        ? { uri: normalizedDoctorImageUri }
+                        : Images.DEFAULT_DOCTOR
+                    }
+                    style={
+                      normalizedDoctorImageUri && !doctorImageLoadFailed
+                        ? styles.healthIconFull
+                        : styles.healthIcon
+                    }
+                    resizeMode={
+                      normalizedDoctorImageUri && !doctorImageLoadFailed
+                        ? 'cover'
+                        : 'contain'
+                    }
+                    onError={() => setDoctorImageLoadFailed(true)}
+                  />
+                </View>
+                <Text style={styles.healthButtonText}>My{'\n'}Health</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         {/* Alerts */}
@@ -1330,10 +1357,18 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'ios' ? hp(0) : hp(1),
     paddingHorizontal: hp(2),
     paddingVertical: hp(1.5),
+    backgroundColor: '#FFFFFF',
+  },
+  headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    marginBottom: hp(1.5),
+  },
+  headerBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   username: {
     fontFamily: 'Poppins-Regular',
@@ -1350,17 +1385,8 @@ const styles = StyleSheet.create({
     height: hp(2),
     resizeMode: 'contain',
   },
-  tabs: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    backgroundColor: '#F8FAFC',
-    borderBottomWidth: 2,
-    borderBottomColor: '#E2E8F0',
-    paddingVertical: hp(1.2),
-    paddingHorizontal: hp(2),
-  },
-  activeTab: { fontFamily: 'Poppins-Medium', fontSize: 16, color: '#11418A' },
-  inactiveTab: { fontFamily: 'Poppins-Medium', fontSize: 16, color: '#94A3B8' },
+  activeTab: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#11418A' },
+  inactiveTab: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#94A3B8' },
   alert: {
     fontFamily: 'Poppins-Medium',
     color: '#DC2626',
@@ -1661,6 +1687,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: wp(2),
+  },
+  notificationButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: hp(1.8),
+    height: hp(1.8),
+    borderRadius: hp(0.9),
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: '#F8FAFC',
+  },
+  notificationBadgeText: {
+    fontSize: 9,
+    fontFamily: 'Poppins-Bold',
+    color: '#FFFFFF',
   },
   addReminderButton: {
     flexDirection: 'row',

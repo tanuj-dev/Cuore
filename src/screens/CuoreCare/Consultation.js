@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   BackHandler,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -228,6 +229,7 @@ export default function Consultation({ navigation, route }) {
   if (phase === 'joining') {
     return (
       <SafeAreaView style={styles.stateSafe}>
+        <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
         <View style={styles.stateCenter}>
           <ActivityIndicator size="large" color={CC.primary} />
           <Text style={styles.stateTitle}>Connecting…</Text>
@@ -285,6 +287,7 @@ export default function Consultation({ navigation, route }) {
 
     return (
       <SafeAreaView style={styles.stateSafe}>
+        <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
         <TouchableOpacity style={styles.errBack} onPress={leave} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <ChevronLeft size={26} color={CC.text} />
         </TouchableOpacity>

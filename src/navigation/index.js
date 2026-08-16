@@ -54,6 +54,7 @@ import Doctor from '../screens/Doctor';
 import Health from '../screens/Health';
 import Search from '../screens/Search/search';
 import Notes from '../screens/Notes';
+import Notifications from '../screens/Notifications';
 
 import { ExploreStack } from './ExploreStack';
 import { CuoreCareStack } from './CuoreCareStack';
@@ -332,6 +333,7 @@ export default function Navigator() {
         <Stack.Screen name="KnowledgeDetails" component={KnowledgeDetails} />
         <Stack.Screen name="Doctor" component={Doctor} />
         <Stack.Screen name="Health" component={Health} />
+        <Stack.Screen name="Notifications" component={Notifications} />
       </Stack.Navigator>
     </SafeAreaView>
   );

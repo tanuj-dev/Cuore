@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -104,6 +105,7 @@ export default function CuoreCareHome({ navigation }) {
   if (!access.checked && (access.loading || subscription.loading)) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
+        <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
         <View style={styles.center}>
           <ActivityIndicator size="large" color={CC.primary} />
         </View>
@@ -118,6 +120,7 @@ export default function CuoreCareHome({ navigation }) {
   if (access.checked && !access.cuoreCare && !access.emr) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
+        <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
         <ScrollView
           contentContainerStyle={styles.paywallScroll}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -171,6 +174,7 @@ export default function CuoreCareHome({ navigation }) {
   const list = appointments.list || [];
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
       {/* Header */}
       <View style={styles.topBar}>
         <View>
