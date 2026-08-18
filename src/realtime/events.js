@@ -11,6 +11,11 @@ export const EV = {
   PARTICIPANT_JOINED: 'participant:joined',
   PARTICIPANT_LEFT: 'participant:left',
   PRESCRIPTION_READY: 'prescription:ready',
+  // Invalidation signal for a doctor's bookable slot list. Payload is only
+  // { doctorId, channel, dates? } -- no appointment or patient data, because the
+  // slots:<doctorId>:<channel> room is shared by every patient viewing that doctor.
+  // On receipt, refetch through the normal slots endpoint.
+  SLOTS_CHANGED: 'slots:changed',
 };
 
 export default EV;

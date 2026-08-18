@@ -24,6 +24,8 @@ import {
   getDoctorSlots,
 } from '../../redux/CuoreCare/thunks';
 import { resetBookingAvailability } from '../../redux/CuoreCare/slice';
+import { getSocket, subscribeSlots, unsubscribeSlots } from '../../realtime/socket';
+import EV from '../../realtime/events';
 
 const F = CC.fonts;
 
@@ -110,6 +112,68 @@ export default function BookAppointment({ navigation, route }) {
     [dispatch, doctorId, channel],
   );
 
+  // ---- live slot updates ----
+  // Watch this doctor's calendar for the channel on screen, so a slot someone else takes greys
+  // out without a pull-to-refresh. The server gates the subscription with the same access rule
+  // as the REST slot endpoints and the event it sends is a bare invalidation signal — we always
+  // refetch through the normal authorized endpoint rather than trusting pushed data.
+  //
+  // If the socket is down this is simply inert: the screen keeps working from its initial fetch.
+  useEffect(() => {
+    if (!doctorId || !channel) return undefined;
+    const socket = getSocket();
+    if (!socket) return undefined;
+
+    subscribeSlots(doctorId, channel);
+
+    // socket.io restores the CONNECTION automatically but not room membership — rooms live on
+    // the server and are dropped when the socket goes away. Without this, one blip (backgrounded
+    // app, tunnel change) would leave the screen silently subscribed to nothing for the rest of
+    // its life. Re-subscribing on every connect also covers the case where the socket existed
+    // but hadn't connected yet when this effect ran; the emit while disconnected is a no-op.
+    // A refetch is paired with it because anything could have changed while we were away.
+    const onConnect = () => {
+      subscribeSlots(doctorId, channel);
+      dispatch(getDoctorAvailableDates({ doctorId, channel }));
+      if (selectedDate) dispatch(getDoctorSlots({ doctorId, date: selectedDate, channel }));
+    };
+
+    const onSlotsChanged = payload => {
+      // Ignore other doctors and the other channel — one socket serves the whole app.
+      if (!payload || String(payload.doctorId) !== String(doctorId) || payload.channel !== channel) return;
+      // The dates hint lets us skip a refetch for a day we aren't showing. No hint (an
+      // availability edit) means "anything could have changed", so always refetch.
+      const days = Array.isArray(payload.dates) ? payload.dates : null;
+      const affectsOpenDay = !days || (selectedDate && days.includes(selectedDate));
+
+      // The date strip itself can change either way — a day can become fully booked, or open
+      // up again — so it is refetched on every signal.
+      dispatch(getDoctorAvailableDates({ doctorId, channel }));
+      if (selectedDate && affectsOpenDay) {
+        dispatch(getDoctorSlots({ doctorId, date: selectedDate, channel }));
+      }
+    };
+
+    socket.on(EV.SLOTS_CHANGED, onSlotsChanged);
+    socket.on('connect', onConnect);
+    return () => {
+      socket.off(EV.SLOTS_CHANGED, onSlotsChanged);
+      socket.off('connect', onConnect);
+      unsubscribeSlots(doctorId, channel);
+    };
+  }, [dispatch, doctorId, channel, selectedDate]);
+
+  // If the slot the patient has already tapped disappears from a refreshed list, drop the
+  // selection rather than letting them submit a time that is now taken — otherwise the first
+  // they learn of it is a SLOT_TAKEN error on Confirm.
+  useEffect(() => {
+    if (!selectedSlot) return;
+    if (slotsDate !== selectedDate) return; // list is for another day; nothing to compare against
+    if (slotsLoading) return;
+    const stillThere = slots.some(s => s.start === selectedSlot.start);
+    if (!stillThere) setSelectedSlot(null);
+  }, [slots, slotsDate, slotsLoading, selectedDate, selectedSlot]);
+
   const handleBook = async () => {
     if (!doctorId) {
       alert('Missing doctor', 'Please select a doctor again.');
@@ -142,7 +206,10 @@ export default function BookAppointment({ navigation, route }) {
     // Slot got taken between selection and booking → refresh this day's slots and let them retry.
     if (err?.code === 'SLOT_TAKEN' || err?.code === 'SLOT_UNAVAILABLE') {
       setSelectedSlot(null);
-      if (selectedDate) dispatch(getDoctorSlots({ doctorId, date: selectedDate }));
+      // `channel` is REQUIRED by /doctors/:id/slots (requireDoctorChannelAccess rejects a
+      // request without it), so omitting it here made this recovery refetch 400 silently and
+      // leave the stale list on screen — the one moment the patient most needs it refreshed.
+      if (selectedDate) dispatch(getDoctorSlots({ doctorId, date: selectedDate, channel }));
       alert('Slot no longer available', err?.message || 'Please pick another time.');
     } else if (err?.code === 'NO_AVAILABILITY') {
       alert('No slots yet', err?.message || "This doctor hasn't opened any consultation slots yet.");

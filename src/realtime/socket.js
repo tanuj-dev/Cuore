@@ -75,3 +75,20 @@ export function subscribeAppointment(appointmentId) {
 export function unsubscribeAppointment(appointmentId) {
   if (socket && appointmentId) socket.emit('appointment:unsubscribe', { appointmentId });
 }
+
+/**
+ * Watch one doctor's bookable slots for one channel, so the booking screen can grey a slot out
+ * the moment someone else takes it. The server re-checks access before joining the room and
+ * acks { ok } — a false ack just means no live updates, so the screen still works from its
+ * initial fetch and pull-to-refresh.
+ *
+ * @param {string} doctorId
+ * @param {'walkin'|'teleconsult'} channel
+ */
+export function subscribeSlots(doctorId, channel) {
+  if (socket && doctorId && channel) socket.emit('slots:subscribe', { doctorId, channel });
+}
+
+export function unsubscribeSlots(doctorId, channel) {
+  if (socket && doctorId && channel) socket.emit('slots:unsubscribe', { doctorId, channel });
+}
