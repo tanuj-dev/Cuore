@@ -51,6 +51,7 @@ import {
 import { hp, wp, Images } from '../../utilities';
 import ProfileHeader from '../../components/ProfileHeader';
 import { uploadPhoto } from '../../redux/uploadPhoto/uploadPhotoThunk';
+import { uploadImagingStudy } from '../../redux/uploadPhoto/uploadImagingStudyThunk';
 import { getPresRecordsThunk } from '../../redux/uploadPhoto/getPresRecordsThunk';
 import { editFilename } from '../../redux/uploadPhoto/editFilenameThunk';
 import { deleteRecord } from '../../redux/uploadPhoto/deleteRecordThunk';
@@ -60,6 +61,11 @@ import { getApiCall, putApiCall } from '../../utilities/Services';
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_FILES_PER_UPLOAD = 10;
+// Imaging has its own, far larger ceiling — it streams straight to S3 rather than through
+// our server. Must match MAX_BYTES in backend/controllers/imagingUploadController.js; the
+// server re-checks the real object size, so this is only to fail fast before a long upload.
+const MAX_IMAGING_SIZE_MB = 2048;
+const MAX_IMAGING_SIZE_BYTES = MAX_IMAGING_SIZE_MB * 1024 * 1024;
 const MAX_NAME_LENGTH = 120;
 const SEARCH_MIN_RECORDS = 5; // below this a search box is just noise
 
@@ -73,6 +79,16 @@ const MONTHS_SHORT = [
 ];
 
 /* -------------------------------- helpers -------------------------------- */
+
+// Which upload path a picked file takes. Extension-based on purpose: pickers report DICOM
+// inconsistently (Android commonly says application/octet-stream for a .dcm), and the server
+// decides by extension too, so the two agree. Keep in step with ALLOWED_EXTENSIONS in
+// backend/controllers/imagingUploadController.js.
+const IMAGING_EXTENSIONS = ['dcm', 'dicom', 'zip'];
+const isImagingFile = fileName => {
+  const ext = String(fileName || '').split('.').pop().toLowerCase();
+  return IMAGING_EXTENSIONS.includes(ext);
+};
 
 const isPdf = record =>
   /pdf/i.test(record?.fileType || '') ||
@@ -379,7 +395,17 @@ const HealthRecords = ({ navigation }) => {
     await new Promise(resolve => setTimeout(resolve, 300));
     try {
       const result = await pickDocument({
-        type: [docTypes.pdf],
+        // PDFs, plus imaging: DICOM (.dcm) and a zipped study, which is how an imaging centre
+        // usually hands one over.
+        //
+        // `allFiles` rather than a DICOM type on purpose. DICOM has a registered MIME type, but
+        // `type` is MIME on Android and a UTI on iOS, and there is no DICOM UTI in this picker's
+        // table — passing a raw MIME string would break the iOS picker rather than widen it.
+        // Meanwhile Android pickers commonly report a .dcm as application/octet-stream anyway.
+        // So the picker is permissive and the SERVER decides, by extension: the ordinary upload
+        // route accepts PDF/images, the imaging route accepts .dcm/.zip, and anything else is
+        // refused with a clear message.
+        type: [docTypes.allFiles],
         allowMultiSelection: true,
       });
       if (result?.length) {
@@ -467,11 +493,28 @@ const HealthRecords = ({ navigation }) => {
       return;
     }
 
-    const oversized = selectedFiles.filter(f => f.size > MAX_FILE_SIZE_BYTES);
+    // The 10 MB cap belongs to the ORDINARY upload path, which posts a FormData through our own
+    // server. Imaging is exempt: it streams straight to S3 and has its own, much larger limit
+    // enforced server-side. Without this exemption a scan would be refused here and never reach
+    // the path built for it.
+    const oversized = selectedFiles.filter(
+      f => !isImagingFile(f.name) && f.size > MAX_FILE_SIZE_BYTES,
+    );
     if (oversized.length > 0) {
       alert(
         'File too large',
         `Some files exceed ${MAX_FILE_SIZE_MB}MB. Please choose smaller files.`,
+      );
+      return;
+    }
+
+    const oversizedImaging = selectedFiles.filter(
+      f => isImagingFile(f.name) && f.size > MAX_IMAGING_SIZE_BYTES,
+    );
+    if (oversizedImaging.length > 0) {
+      alert(
+        'Scan too large',
+        `Scans must be under ${MAX_IMAGING_SIZE_MB / 1024}GB. Please ask the imaging centre for a smaller export.`,
       );
       return;
     }
@@ -493,16 +536,37 @@ const HealthRecords = ({ navigation }) => {
     for (let i = 0; i < selectedFiles.length; i++) {
       const f = selectedFiles[i];
       try {
-        await dispatch(
-          uploadPhoto({
-            file: {
-              uri: Platform.OS === 'ios' ? f.uri.replace('file://', '') : f.uri,
-              type: f.type || 'image/jpeg',
-              name: f.name || `health_record_${Date.now()}_${i}.jpg`,
-            },
-            name: f.docName.trim(),
-          }),
-        ).unwrap();
+        if (isImagingFile(f.name)) {
+          // Imaging goes a different way entirely: presigned URL, streamed straight to S3,
+          // then finalized. It cannot use the thunk below, which posts a FormData to our own
+          // server and is capped at 15 MB — a study is 100 MB-2 GB.
+          await dispatch(
+            uploadImagingStudy({
+              file: {
+                uri: f.uri,
+                type: f.type || 'application/octet-stream',
+                name: f.name,
+                size: f.size || 0,
+              },
+              name: f.docName.trim(),
+              // Per-file byte progress, so a multi-hundred-megabyte upload is not a frozen
+              // spinner. Reported as a fraction of THIS file within the batch counter.
+              onProgress: fraction =>
+                setUploadProgress({ done: i + fraction, total: selectedFiles.length }),
+            }),
+          ).unwrap();
+        } else {
+          await dispatch(
+            uploadPhoto({
+              file: {
+                uri: Platform.OS === 'ios' ? f.uri.replace('file://', '') : f.uri,
+                type: f.type || 'image/jpeg',
+                name: f.name || `health_record_${Date.now()}_${i}.jpg`,
+              },
+              name: f.docName.trim(),
+            }),
+          ).unwrap();
+        }
       } catch (error) {
         failed.push({ name: f.docName || f.name, reason: String(error || '') });
       }
@@ -864,7 +928,7 @@ const HealthRecords = ({ navigation }) => {
                 <Text style={[styles.fileText, isCaregiver && styles.textDisabled]}>
                   {selectedFiles.length > 0
                     ? `${selectedFiles.length} file(s) selected`
-                    : `PNG, JPG, PDF up to ${MAX_FILE_SIZE_MB}MB, max ${MAX_FILES_PER_UPLOAD} files`}
+                    : `PNG, JPG, PDF up to ${MAX_FILE_SIZE_MB}MB · scans (.dcm/.zip) up to ${MAX_IMAGING_SIZE_MB / 1024}GB · max ${MAX_FILES_PER_UPLOAD} files`}
                 </Text>
               </TouchableOpacity>
 
