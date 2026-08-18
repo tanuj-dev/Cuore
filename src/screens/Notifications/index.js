@@ -8,17 +8,19 @@ import {
   RefreshControl,
   ActivityIndicator,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, BellOff } from 'lucide-react-native';
+import { ArrowLeft, BellOff, Trash2 } from 'lucide-react-native';
 import moment from 'moment';
 import { hp, wp, Fonts } from '../../utilities';
 import {
   fetchNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteNotification,
 } from '../../redux/Notifications/thunks';
 import { resolveScreen, navigateFromNotification } from '../../utils/notificationNavigation';
 import { navigationRef } from '../../navigation/navigationRef';
@@ -53,6 +55,32 @@ export default function Notifications({ navigation }) {
 
   const onMarkAllRead = () => {
     if (unreadCount > 0) dispatch(markAllNotificationsRead());
+  };
+
+  // Deleting is irreversible and the rows sit under a tappable area, so it asks first rather
+  // than acting on the tap. Only the inbox entry goes — the appointment, prescription or
+  // certificate it points at is untouched, which is what the confirm text says.
+  const onDeleteItem = item => {
+    Alert.alert(
+      'Delete notification',
+      'This removes it from your notifications. The appointment or document it refers to is not affected.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const res = await dispatch(deleteNotification(item._id));
+            if (res.meta.requestStatus === 'rejected') {
+              Alert.alert(
+                'Could not delete',
+                res.payload?.message || 'Please check your connection and try again.',
+              );
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -106,6 +134,16 @@ export default function Notifications({ navigation }) {
                 <Text style={styles.rowBody} numberOfLines={2}>{item.body}</Text>
                 <Text style={styles.rowTime}>{moment(item.createdAt).fromNow()}</Text>
               </View>
+              {/* Nested touchable: RN does not bubble a handled press to the parent, so this
+                  deletes without also firing the row's navigate-to-screen press. */}
+              <TouchableOpacity
+                onPress={() => onDeleteItem(item)}
+                style={styles.deleteBtn}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityLabel={`Delete notification: ${item.title}`}
+              >
+                <Trash2 size={17} color="#94A3B8" />
+              </TouchableOpacity>
             </TouchableOpacity>
           )}
         />
@@ -141,6 +179,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   rowUnread: { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' },
+  deleteBtn: { paddingLeft: wp(2.5), paddingTop: hp(0.2) },
   dot: {
     width: 8,
     height: 8,

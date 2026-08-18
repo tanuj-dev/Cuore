@@ -3,6 +3,7 @@ import {
   fetchNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteNotification,
 } from './thunks';
 
 const initialState = {
@@ -52,6 +53,18 @@ const notificationsSlice = createSlice({
       .addCase(markAllNotificationsRead.fulfilled, state => {
         state.items.forEach(n => { n.read = true; });
         state.unreadCount = 0;
+      })
+
+      .addCase(deleteNotification.fulfilled, (state, action) => {
+        const { id, wasUnread } = action.payload;
+        const before = state.items.length;
+        state.items = state.items.filter(n => n._id !== id);
+        // Only adjust the counters if the row was actually in this page of the list, so a
+        // double-delete (or a delete of something already gone) can't drive them negative.
+        if (state.items.length < before) {
+          if (wasUnread) state.unreadCount = Math.max(0, state.unreadCount - 1);
+          state.total = Math.max(0, state.total - 1);
+        }
       });
   },
 });
