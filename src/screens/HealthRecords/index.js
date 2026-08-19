@@ -700,6 +700,24 @@ const HealthRecords = ({ navigation }) => {
     );
   };
 
+  // A private record's fileUrl is a presigned URL that expires in ~5 minutes, so the one carried
+  // in the list is stale the moment the patient leaves the screen open. Re-ask the server for the
+  // single record right before opening or downloading it, and use the freshly signed URL.
+  //
+  // Falls back to whatever the list already had: a legacy public record's URL never expires, and a
+  // failed refresh should not block a link that still works.
+  const freshFileUrl = async record => {
+    if (!record?.recordId) return record?.fileUrl || '';
+    try {
+      const res = await getApiCall(`/api/health-records/${record.recordId}`, '');
+      const url = res?.data?.data?.fileUrl || res?.data?.fileUrl;
+      if (url) return url;
+    } catch (e) {
+      // Ignored on purpose — fall through to the URL we already have.
+    }
+    return record.fileUrl || '';
+  };
+
   const handleDownload = async record => {
     if (!record.fileUrl) {
       alert('Unavailable', 'This record has no file attached.');
@@ -709,6 +727,11 @@ const HealthRecords = ({ navigation }) => {
     const mime = record.fileType || (isPdf(record) ? 'application/pdf' : 'image/jpeg');
     try {
       setDownloadingRecordId(record.recordId);
+      const url = await freshFileUrl(record);
+      if (!url) {
+        alert('Unavailable', 'That link has expired. Pull to refresh and try again.');
+        return;
+      }
       if (Platform.OS === 'android') {
         const { dirs } = ReactNativeBlobUtil.fs;
         await ReactNativeBlobUtil.config({
@@ -721,14 +744,14 @@ const HealthRecords = ({ navigation }) => {
             mediaScannable: true,
             path: `${dirs.DownloadDir}/${fileName}`,
           },
-        }).fetch('GET', record.fileUrl);
+        }).fetch('GET', url);
         alert('Downloaded', `"${record.name}" has been saved to Downloads.`);
       } else {
         // iOS has no shared Downloads folder — route through the share sheet ("Save to Files").
         const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
         const resp = await ReactNativeBlobUtil.config({ fileCache: true, path }).fetch(
           'GET',
-          record.fileUrl,
+          url,
         );
         await Share.open({
           url: resp.path(),
@@ -746,14 +769,21 @@ const HealthRecords = ({ navigation }) => {
     }
   };
 
-  const openViewer = record => {
+  const openViewer = async record => {
     if (!record.fileUrl) {
       alert('Unavailable', 'This record has no file attached.');
       return;
     }
     setViewerError('');
     setIsViewerLoading(true);
+    // Open immediately with what we have so the sheet does not sit blank on a slow connection,
+    // then swap in a freshly signed URL. Without this a record opened a few minutes after the
+    // list loaded would render as a permanent spinner with no explanation.
     setViewerRecord(record);
+    const url = await freshFileUrl(record);
+    if (url && url !== record.fileUrl) {
+      setViewerRecord(prev => (prev && prev.recordId === record.recordId ? { ...prev, fileUrl: url } : prev));
+    }
   };
 
   /* -------------------------------- derived ------------------------------ */
