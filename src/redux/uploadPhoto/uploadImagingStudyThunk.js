@@ -41,7 +41,7 @@ export const uploadImagingStudy = createAsyncThunk(
           urlRes?.data?.error || 'Could not start the upload. Please try again.',
         );
       }
-      const { uploadUrl, s3Key, contentType } = urlRes.data;
+      const { uploadUrl, s3Key, contentType, requiredHeaders } = urlRes.data;
 
       // ---- 2. stream straight to S3 ----
       // `wrap` streams from the filesystem, so it needs a real file path. On Android the picker
@@ -63,12 +63,22 @@ export const uploadImagingStudy = createAsyncThunk(
       // blob-util wants the bare path, without the scheme.
       localPath = localPath.replace(/^file:\/\//, '');
 
+      // EXACTLY the headers the server signed — no more, no fewer.
+      //
+      // Adding an Authorization header here would break the signature (the presigned URL carries
+      // its own credentials), and OMITTING one is equally fatal: Content-Type and x-amz-tagging
+      // are both pinned into the signature, so a PUT missing either is rejected by S3 with a
+      // signature mismatch. The server returns `requiredHeaders` precisely so this list is not
+      // reconstructed here and quietly drifts; the literal is only a fallback for a backend that
+      // predates that field.
+      const putHeaders = requiredHeaders && typeof requiredHeaders === 'object'
+        ? requiredHeaders
+        : { 'Content-Type': contentType };
+
       const task = ReactNativeBlobUtil.fetch(
         'PUT',
         uploadUrl,
-        // ONLY Content-Type. Adding an Authorization header here would break the signature —
-        // the presigned URL carries its own credentials, and S3 rejects extra signed headers.
-        { 'Content-Type': contentType },
+        putHeaders,
         ReactNativeBlobUtil.wrap(localPath),
       );
 
