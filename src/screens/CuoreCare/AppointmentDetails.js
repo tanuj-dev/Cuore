@@ -30,6 +30,7 @@ import { CC, statusMeta, modeMeta, modeIcon } from './ccTheme';
 import { CCHeader, PrimaryButton, SecondaryButton, StatusPill, DoctorAvatar, Card } from './components';
 import { fmtDayLabel, fmtRange, fmtTime } from './ccFormat';
 import { useJoinWindow } from './joinWindow';
+import { useCancelWindow } from './cancelWindow';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import {
   getAppointment,
@@ -123,9 +124,18 @@ export default function AppointmentDetails({ navigation, route }) {
   // instead of staying greyed out until the screen happens to re-render.
   const { canJoin, opensAt: joinOpensAt, joinLabel } = useJoinWindow(appt);
 
+  // Cancellation cutoff (see cancelWindow.js). Also self-ticking, so the buttons disable
+  // themselves the moment the window closes rather than staying tappable until the next
+  // render — and the patient sees the deadline before it matters, not after.
+  const { canCancel, notice: cancelNotice, blockedMsg: cancelBlockedMsg } = useCancelWindow(appt);
+
   const canModify = ['requested', 'scheduled', 'accepted'].includes(status);
 
   const handleCancel = () => {
+    if (!canCancel) {
+      alert('Too late to cancel', cancelBlockedMsg);
+      return;
+    }
     alert('Cancel appointment?', 'This consultation will be cancelled. You can book again anytime.', [
       { text: 'Keep', style: 'cancel' },
       {
@@ -144,6 +154,10 @@ export default function AppointmentDetails({ navigation, route }) {
   };
 
   const openReschedule = () => {
+    if (!canCancel) {
+      alert('Too late to reschedule', cancelBlockedMsg);
+      return;
+    }
     setRDate(moment(appt?.scheduledStart).isAfter(moment()) ? new Date(appt.scheduledStart) : new Date(Date.now() + 15 * 60000));
     setRescheduleOpen(true);
     if (Platform.OS === 'android') setPicker('date');
@@ -322,21 +336,30 @@ export default function AppointmentDetails({ navigation, route }) {
 
         {/* Secondary actions */}
         {canModify && (
-          <View style={styles.secondaryActions}>
-            <SecondaryButton
-              label="Reschedule"
-              icon={<Reschedule size={17} color={CC.text} />}
-              onPress={openReschedule}
-              style={{ flex: 1 }}
-            />
-            <SecondaryButton
-              label="Cancel"
-              tone="danger"
-              icon={<XCircle size={17} color={CC.danger} />}
-              onPress={handleCancel}
-              style={{ flex: 1 }}
-            />
-          </View>
+          <>
+            <View style={styles.secondaryActions}>
+              <SecondaryButton
+                label="Reschedule"
+                icon={<Reschedule size={17} color={canCancel ? CC.text : CC.muted} />}
+                onPress={openReschedule}
+                disabled={!canCancel}
+                style={{ flex: 1 }}
+              />
+              <SecondaryButton
+                label="Cancel"
+                tone="danger"
+                icon={<XCircle size={17} color={canCancel ? CC.danger : CC.muted} />}
+                onPress={handleCancel}
+                disabled={!canCancel}
+                style={{ flex: 1 }}
+              />
+            </View>
+            {/* The note the reviewer asked for: the deadline is stated while it can still be
+                acted on, and replaced by the reason once it has passed. */}
+            {!!(cancelNotice || cancelBlockedMsg) && (
+              <Text style={styles.cancelPolicy}>{cancelNotice || cancelBlockedMsg}</Text>
+            )}
+          </>
         )}
 
         <View style={{ height: 40 }} />
@@ -540,6 +563,13 @@ const styles = StyleSheet.create({
   pendingText: { flex: 1, fontFamily: F.PoppinsMedium, fontSize: 13, color: CC.warning, marginLeft: 10, lineHeight: 19 },
 
   secondaryActions: { flexDirection: 'row', gap: 12, marginTop: 14 },
+  cancelPolicy: {
+    marginTop: 10,
+    fontSize: 12,
+    lineHeight: 17,
+    color: CC.subText,
+    fontFamily: F.PoppinsRegular,
+  },
 
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: CC.white, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingBottom: 24 },

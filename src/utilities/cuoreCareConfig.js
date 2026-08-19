@@ -76,6 +76,14 @@ export const CUORECARE_IAP_GST_RATE = 0.18;
 // 425 TOO_EARLY with `opensAt` if the client is ahead of it).
 export const JOIN_EARLY_MINUTES = 5;
 
+// Minutes before the scheduled start after which a patient can no longer cancel or reschedule
+// a CONFIRMED consultation. Mirrors flags.cancellation.patientCutoffMinutes on the backend
+// (config/cuoreCareFlags.js), which is the real enforcement — this copy exists only so the app
+// can warn ahead of time and grey the buttons out instead of letting the patient tap into a
+// 409. Change both together; the server replies with `cutoffMinutes` on rejection, so a drift
+// shows up as a mismatched number in the error rather than a silent wrong-answer.
+export const CANCEL_CUTOFF_MINUTES = 15;
+
 export default {
   CUORECARE_BASE_URL,
   ZEGO_APP_ID,
@@ -84,6 +92,7 @@ export default {
   CUORECARE_IAP_PLANS,
   CUORECARE_IAP_GST_RATE,
   JOIN_EARLY_MINUTES,
+  CANCEL_CUTOFF_MINUTES,
   zegoDoctorUserId,
   zegoPatientUserId,
 };
