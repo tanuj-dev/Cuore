@@ -9,6 +9,7 @@ import RenewSubscription from '../screens/RenewSubscription';
 import PaymentDetails from '../screens/PaymentDetails';
 import HealthRecords from '../screens/HealthRecords';
 import SelectPersona from '../screens/SelectPersona';
+import FamilyMembers from '../screens/FamilyMembers';
 
 const Stack = createStackNavigator();
 
@@ -24,5 +25,6 @@ export const ProfileStack = () => (
     <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
     <Stack.Screen name="HealthRecords" component={HealthRecords} />
     <Stack.Screen name="SelectPersona" component={SelectPersona} />
+    <Stack.Screen name="FamilyMembers" component={FamilyMembers} />
   </Stack.Navigator>
 );

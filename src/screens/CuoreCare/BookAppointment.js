@@ -26,6 +26,8 @@ import {
 import { resetBookingAvailability } from '../../redux/CuoreCare/slice';
 import { getSocket, subscribeSlots, unsubscribeSlots } from '../../realtime/socket';
 import EV from '../../realtime/events';
+import { fetchDependants } from '../../redux/Dependants/thunks';
+import { setActiveProfile } from '../../redux/Dependants/slice';
 
 const F = CC.fonts;
 
@@ -87,9 +89,22 @@ export default function BookAppointment({ navigation, route }) {
   const [selectedSlot, setSelectedSlot] = useState(null);
 
   const [reason, setReason] = useState('');
+  // Who is this consultation FOR? null = the account holder, otherwise a dependantId.
+  // Read from the shared slice rather than local state so the choice matches what the Records
+  // tab is showing — a booking made for a child while Records still shows the parent is exactly
+  // the confusion family profiles are meant to remove.
+  const dependants = useSelector(st => st.dependants?.items || []);
+  const activeProfileId = useSelector(st => st.dependants?.activeProfileId || null);
 
   const doctorId = doctor?._id;
   const channel = mode ? CHANNEL_FOR_MODE[mode] : null;
+
+  // The family list, so "Who is this for?" has something to offer. Fetched here rather than
+  // relied upon from a previous screen: this screen is reachable directly from a notification
+  // deep link, where nothing else would have loaded it.
+  useEffect(() => {
+    dispatch(fetchDependants());
+  }, [dispatch]);
 
   // Re-fetch bookable dates whenever the CHANNEL changes (walk-in vs teleconsult have
   // independent slot lists) — switching between video/voice/chat doesn't refetch, since
@@ -190,6 +205,10 @@ export default function BookAppointment({ navigation, route }) {
         scheduledStart: selectedSlot.start,
         reason: reason.trim(),
         timezone: deviceTimezone(),
+        // Omitted for the account holder — the server treats an absent patientId as "the
+        // caller", and it verifies the link for anything else, so this is a hint rather than
+        // an authorization decision.
+        ...(activeProfileId ? { patientId: activeProfileId } : {}),
       }),
     );
 
@@ -370,6 +389,39 @@ export default function BookAppointment({ navigation, route }) {
               </>
             )}
 
+            {/* Who is it for. Shown only once there is somebody to choose between — a patient
+                with no family members should not be asked to pick themselves out of a list
+                of one. */}
+            {dependants.length > 0 && (
+              <>
+                <Text style={styles.section}>Who is this for?</Text>
+                <View style={styles.profileRow}>
+                  <TouchableOpacity
+                    style={[styles.profileChip, !activeProfileId && styles.profileChipOn]}
+                    onPress={() => dispatch(setActiveProfile(null))}
+                  >
+                    <Text style={[styles.profileChipText, !activeProfileId && styles.profileChipTextOn]}>
+                      Myself
+                    </Text>
+                  </TouchableOpacity>
+                  {dependants.map(d => {
+                    const on = String(d.dependantId) === String(activeProfileId);
+                    return (
+                      <TouchableOpacity
+                        key={d.dependantId}
+                        style={[styles.profileChip, on && styles.profileChipOn]}
+                        onPress={() => dispatch(setActiveProfile(d.dependantId))}
+                      >
+                        <Text style={[styles.profileChipText, on && styles.profileChipTextOn]}>
+                          {d.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
             {/* Reason */}
             <Text style={styles.section}>Reason (optional)</Text>
             <TextInput
@@ -478,6 +530,18 @@ const styles = StyleSheet.create({
   },
   emptyText: { flex: 1, fontFamily: F.PoppinsRegular, fontSize: 13, color: CC.subText, lineHeight: 19 },
 
+  profileRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+  profileChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: CC.border,
+    backgroundColor: CC.card,
+  },
+  profileChipOn: { backgroundColor: CC.primary, borderColor: CC.primary },
+  profileChipText: { fontFamily: F.PoppinsMedium, fontSize: 13, color: CC.subText },
+  profileChipTextOn: { color: CC.white },
   reason: {
     backgroundColor: CC.white,
     borderWidth: 1,

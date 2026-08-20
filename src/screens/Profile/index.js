@@ -49,6 +49,13 @@ const profileOptions = [
     section: 'ACCOUNT & PRIVACY',
   },
   {
+    // Family members (dependants) — a child or elderly parent who needs consultations but has
+    // no phone of their own. Reuses the existing person icon rather than adding an asset.
+    title: 'Family Members',
+    icon: Images.PERSON1,
+    section: 'ACCOUNT & PRIVACY',
+  },
+  {
     title: 'Connected Health Sources',
     icon: Images.HEALTH_RECORD,
     section: 'ACCOUNT & PRIVACY',
@@ -135,6 +142,7 @@ const Profile = ({ navigation }) => {
     Caregiver: 'EditCaregiver',
     Doctor: 'EditDoctor',
     'Health Records': 'HealthRecords',
+    'Family Members': 'FamilyMembers',
     'Connected Health Sources': 'ConnectedHealth',
     // Opens a modal rather than navigating; intercepted in the row handler below.
     'Health Data': 'HealthDataModal',

@@ -57,6 +57,8 @@ import { editFilename } from '../../redux/uploadPhoto/editFilenameThunk';
 import { deleteRecord } from '../../redux/uploadPhoto/deleteRecordThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { getApiCall, putApiCall } from '../../utilities/Services';
+import { fetchDependants } from '../../redux/Dependants/thunks';
+import { setActiveProfile } from '../../redux/Dependants/slice';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -147,6 +149,12 @@ const HealthRecords = ({ navigation }) => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   const userId = useSelector(state => state.auth?.userId);
+  // Which family member's records are on screen. Shared with the booking flow so the two
+  // surfaces cannot disagree about who the app is acting for.
+  const dependants = useSelector(state => state.dependants?.items || []);
+  const activeProfileId = useSelector(state => state.dependants?.activeProfileId || null);
+  const activeDependant =
+    dependants.find(d => String(d.dependantId) === String(activeProfileId)) || null;
   const role = useSelector(state => state.auth?.role);
   const isCaregiver = role === 'caregiver';
 
@@ -597,7 +605,7 @@ const HealthRecords = ({ navigation }) => {
       try {
         if (!hasLoadedOnce.current) setIsFetching(true);
         setLoadError('');
-        const response = await dispatch(getPresRecordsThunk(q)).unwrap();
+        const response = await dispatch(getPresRecordsThunk({ q, patientId: activeProfileId || undefined })).unwrap();
         const list = response?.data?.data || [];
         setRecords(
           list.map((item, index) => ({
@@ -627,12 +635,26 @@ const HealthRecords = ({ navigation }) => {
         setIsFetching(false);
       }
     },
-    [dispatch],
+    // activeProfileId is a dependency, not an oversight to leave out: without it the callback
+    // captures whichever profile was selected when it was created and keeps fetching that one
+    // forever, so switching profile would change the header and not the list.
+    [dispatch, activeProfileId],
   );
 
   useEffect(() => {
     getRecords();
   }, [getRecords]);
+
+  useEffect(() => {
+    dispatch(fetchDependants());
+  }, [dispatch]);
+
+  // Switching profile shows a different person's documents, so the previous list must not sit
+  // on screen while the new one loads — it would read as the newly-selected person's records.
+  useEffect(() => {
+    setRecords([]);
+    hasLoadedOnce.current = false;
+  }, [activeProfileId]);
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -1031,13 +1053,44 @@ const HealthRecords = ({ navigation }) => {
 
             {/* ------------------------- Records ------------------------- */}
             <View style={styles.recordsHeaderRow}>
-              <Text style={styles.viewRecordsTitle}>My Health Records</Text>
+              <Text style={styles.viewRecordsTitle}>
+                {activeDependant ? `${activeDependant.name}'s Records` : 'My Health Records'}
+              </Text>
               {records.length > 0 && (
                 <Text style={styles.recordsCount}>
                   {records.length} {records.length === 1 ? 'file' : 'files'}
                 </Text>
               )}
             </View>
+
+            {/* Whose records. Hidden when there is nobody to switch to, so an account with no
+                family members looks exactly as it did before. */}
+            {dependants.length > 0 && (
+              <View style={styles.profileRow}>
+                <TouchableOpacity
+                  style={[styles.profileChip, !activeProfileId && styles.profileChipOn]}
+                  onPress={() => dispatch(setActiveProfile(null))}
+                >
+                  <Text style={[styles.profileChipText, !activeProfileId && styles.profileChipTextOn]}>
+                    Me
+                  </Text>
+                </TouchableOpacity>
+                {dependants.map(d => {
+                  const on = String(d.dependantId) === String(activeProfileId);
+                  return (
+                    <TouchableOpacity
+                      key={d.dependantId}
+                      style={[styles.profileChip, on && styles.profileChipOn]}
+                      onPress={() => dispatch(setActiveProfile(d.dependantId))}
+                    >
+                      <Text style={[styles.profileChipText, on && styles.profileChipTextOn]}>
+                        {d.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
 
             {showSearch && (
               <View style={styles.searchBox}>
@@ -1352,6 +1405,19 @@ const styles = StyleSheet.create({
   },
   viewRecordsTitle: { fontSize: hp(2.2), fontWeight: '700', color: '#0F172A' },
   recordsCount: { fontSize: hp(1.5), color: '#64748B' },
+
+  profileRow: { flexDirection: 'row', flexWrap: 'wrap', gap: wp(2), marginBottom: hp(1.4) },
+  profileChip: {
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(0.7),
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  profileChipOn: { backgroundColor: '#11418A', borderColor: '#11418A' },
+  profileChipText: { fontSize: hp(1.6), color: '#64748B', fontWeight: '600' },
+  profileChipTextOn: { color: '#FFFFFF' },
 
   searchBox: {
     flexDirection: 'row',
