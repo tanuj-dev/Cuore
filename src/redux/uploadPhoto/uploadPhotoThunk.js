@@ -7,7 +7,10 @@ import EndPoints from '../../utilities/Endpoints';
  * Files are uploaded one at a time so the screen can report honest
  * "Uploading 2 of 3" progress and a single bad file cannot fail the whole batch.
  *
- * @param {{ file: {uri,name,type}, name: string }} payload
+ * @param {{ file: {uri,name,type}, name: string, patientId?: string }} payload
+ *   `patientId` files the document under a family member on this account. Omit it for the
+ *   account holder — an absent patientId is what the server treats as the caller. The server
+ *   verifies the link, so this is a request rather than an authorization decision.
  */
 export const uploadPhoto = createAsyncThunk(
   'uploadPhoto/uploadPhoto',
@@ -16,10 +19,13 @@ export const uploadPhoto = createAsyncThunk(
       // Backwards compatible: callers may still pass a ready-made FormData.
       let body = payload;
       if (!(payload && payload._parts)) {
-        const { file, name } = payload || {};
+        const { file, name, patientId } = payload || {};
         body = new FormData();
         body.append('files', file);
         body.append('names', name || '');
+        // Multipart, so this rides in the body alongside the file rather than as a query
+        // param — the server reads req.body.patientId.
+        if (patientId) body.append('patientId', String(patientId));
       }
 
       const response = await postApiCall(EndPoints.HEALTH_RECORDS, body);

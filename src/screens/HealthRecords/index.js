@@ -155,6 +155,12 @@ const HealthRecords = ({ navigation }) => {
   const activeProfileId = useSelector(state => state.dependants?.activeProfileId || null);
   const activeDependant =
     dependants.find(d => String(d.dependantId) === String(activeProfileId)) || null;
+  // Whose record is being UPLOADED. Deliberately its own state rather than reusing
+  // activeProfileId: browsing your own records and then uploading your child's report is a
+  // completely ordinary thing to do, and silently filing it under whoever the list happened to
+  // be showing would put a child's document in the parent's record. Seeded from the active
+  // profile so the common case is one tap, but it is an explicit choice.
+  const [uploadForId, setUploadForId] = useState(null);
   const role = useSelector(state => state.auth?.role);
   const isCaregiver = role === 'caregiver';
 
@@ -557,6 +563,7 @@ const HealthRecords = ({ navigation }) => {
                 size: f.size || 0,
               },
               name: f.docName.trim(),
+              patientId: uploadForId || undefined,
               // Per-file byte progress, so a multi-hundred-megabyte upload is not a frozen
               // spinner. Reported as a fraction of THIS file within the batch counter.
               onProgress: fraction =>
@@ -572,6 +579,7 @@ const HealthRecords = ({ navigation }) => {
                 name: f.name || `health_record_${Date.now()}_${i}.jpg`,
               },
               name: f.docName.trim(),
+              patientId: uploadForId || undefined,
             }),
           ).unwrap();
         }
@@ -654,6 +662,12 @@ const HealthRecords = ({ navigation }) => {
   useEffect(() => {
     setRecords([]);
     hasLoadedOnce.current = false;
+  }, [activeProfileId]);
+
+  // Follow the browsing profile while nothing is staged. Once files are picked the choice is the
+  // user's and must not be moved under them.
+  useEffect(() => {
+    setUploadForId(activeProfileId);
   }, [activeProfileId]);
 
   const onRefresh = useCallback(async () => {
@@ -987,6 +1001,37 @@ const HealthRecords = ({ navigation }) => {
               {/* Name each selected document before saving */}
               {selectedFiles.length > 0 && !isCaregiver && (
                 <View style={styles.namingBlock}>
+                  {/* Whose record is this? Asked only when there is somebody to choose between,
+                      so an account with no family members sees exactly what it saw before. */}
+                  {dependants.length > 0 && (
+                    <>
+                      <Text style={styles.namingHint}>Whose record is this?</Text>
+                      <View style={styles.profileRow}>
+                        <TouchableOpacity
+                          style={[styles.profileChip, !uploadForId && styles.profileChipOn]}
+                          onPress={() => setUploadForId(null)}
+                        >
+                          <Text style={[styles.profileChipText, !uploadForId && styles.profileChipTextOn]}>
+                            Me
+                          </Text>
+                        </TouchableOpacity>
+                        {dependants.map(d => {
+                          const on = String(d.dependantId) === String(uploadForId);
+                          return (
+                            <TouchableOpacity
+                              key={`up-${d.dependantId}`}
+                              style={[styles.profileChip, on && styles.profileChipOn]}
+                              onPress={() => setUploadForId(d.dependantId)}
+                            >
+                              <Text style={[styles.profileChipText, on && styles.profileChipTextOn]}>
+                                {d.name}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </>
+                  )}
                   <Text style={styles.namingHint}>
                     Give each document a name you'll recognise later.
                   </Text>
@@ -1045,7 +1090,14 @@ const HealthRecords = ({ navigation }) => {
                       </Text>
                     </View>
                   ) : (
-                    <Text style={styles.submitBtnText}>Save to my records</Text>
+                    <Text style={styles.submitBtnText}>
+                      {uploadForId
+                        ? `Save to ${
+                            (dependants.find(d => String(d.dependantId) === String(uploadForId)) || {})
+                              .name || 'their'
+                          }'s records`
+                        : 'Save to my records'}
+                    </Text>
                   )}
                 </TouchableOpacity>
               )}

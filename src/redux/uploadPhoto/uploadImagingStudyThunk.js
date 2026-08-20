@@ -19,13 +19,18 @@ import { postApiCall } from '../../utilities/Services';
  * memory first and kill the app on most devices.
  *
  * @param {{ file: {uri, name, type, size}, name: string, documentDate?: string,
- *           studyDescription?: string, modality?: string,
+ *           studyDescription?: string, modality?: string, patientId?: string,
  *           onProgress?: (fraction:number) => void }} payload
+ *
+ * `patientId` files the study under a family member on this account. Omit it for the account
+ * holder. It must be sent on BOTH the upload-url and finalize calls: the server namespaces the
+ * S3 key by patient, and finalize re-checks that the key belongs to the patient named.
  */
 export const uploadImagingStudy = createAsyncThunk(
   'uploadPhoto/uploadImagingStudy',
   async (payload, { rejectWithValue }) => {
-    const { file, name, documentDate, studyDescription, modality, onProgress } = payload || {};
+    const { file, name, documentDate, studyDescription, modality, patientId, onProgress } =
+      payload || {};
     if (!file?.uri || !file?.name) {
       return rejectWithValue('No file was selected.');
     }
@@ -35,6 +40,10 @@ export const uploadImagingStudy = createAsyncThunk(
       const urlRes = await postApiCall('/api/health-records/imaging/upload-url', {
         fileName: file.name,
         fileSize: file.size || 0,
+        // Files the study under a family member. The server namespaces the S3 key by this
+        // patient, so it must be sent on BOTH calls or finalize rejects the key as not belonging
+        // to the patient it was minted for.
+        patientId: patientId || undefined,
       });
       if (urlRes?.status !== 200 || !urlRes.data?.uploadUrl) {
         return rejectWithValue(
@@ -106,6 +115,9 @@ export const uploadImagingStudy = createAsyncThunk(
         documentDate,
         studyDescription,
         modality,
+        // Must match the upload-url call — finalize re-checks that the key was minted for this
+        // patient, so a mismatch is rejected rather than silently filed under the wrong person.
+        patientId: patientId || undefined,
       });
       if (finRes?.status !== 201 && finRes?.status !== 200) {
         return rejectWithValue(
