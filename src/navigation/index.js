@@ -23,6 +23,7 @@ import Today from '../screens/Today';
 import Predict from '../screens/Predict';
 import Explore from '../screens/Explore';
 import Profile from '../screens/Profile';
+import FamilyMembers from '../screens/FamilyMembers';
 import Tobacco from '../screens/CuoreTobacco';
 import Mind from '../screens/CuoreMind';
 import Fitness from '../screens/Fitness';
@@ -246,6 +247,7 @@ function ProfileStack() {
       <Stack.Screen name="EditCaregiver" component={EditCaregive} />
       <Stack.Screen name="EditDoctor" component={EditDoctor} />
       <Stack.Screen name="SelectPersona" component={SelectPersona} />
+      <Stack.Screen name="FamilyMembers" component={FamilyMembers} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
       <Stack.Screen name="TermsAndConditions" component={TermsAndCondtion} />
       <Stack.Screen name="RenewSubscription" component={RenewSubscription} />

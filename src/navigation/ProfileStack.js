@@ -1,3 +1,13 @@
+// ⚠️ THIS FILE IS NOT USED. Nothing imports it.
+//
+// The navigator that actually runs is the `function ProfileStack()` defined inline in
+// navigation/index.js, and the same is true of every other file in this folder (ChatStack,
+// CuoreCareStack, ExploreStack, PredictStack, TodayStack) — all six are dead. Registering a
+// screen here does nothing: it produces "The action 'NAVIGATE' ... was not handled by any
+// navigator" at runtime, with no build error to warn you.
+//
+// Add screens to navigation/index.js. This file is kept in sync only so it is not actively
+// misleading; it is a candidate for deletion.
 import {createStackNavigator} from '@react-navigation/stack';
 import Profile from '../screens/Profile';
 import EditProfile from '../screens/EditProfile';
