@@ -9,6 +9,9 @@ import {
   ActivityIndicator,
   Modal,
   Platform,
+  ScrollView,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -217,9 +220,29 @@ export default function FamilyMembers({ navigation }) {
       </TouchableOpacity>
 
       <Modal visible={formOpen} transparent animationType="slide" onRequestClose={() => setFormOpen(false)}>
-        <View style={styles.backdrop}>
+        {/* React Native's Modal does nothing about the keyboard on its own, so the sheet has to
+            avoid it itself — otherwise the lower fields and the Add button sit underneath it with
+            no way to reach them. */}
+        <KeyboardAvoidingView
+          style={styles.backdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <View style={styles.sheet}>
             <Text style={styles.sheetTitle}>{editing ? 'Edit family member' : 'Add family member'}</Text>
+
+            {/* The fields scroll; the buttons below do not. Keeping Cancel/Add outside the scroll
+                view means they are always reachable, however tall the keyboard is or how far down
+                the form the user has typed.
+
+                keyboardShouldPersistTaps="handled" matters more than it looks: without it the
+                first tap anywhere in here only dismisses the keyboard, so choosing a relationship
+                chip or opening the date picker while typing would silently take two taps. */}
+            <ScrollView
+              style={styles.sheetScroll}
+              contentContainerStyle={styles.sheetScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
 
             <Text style={styles.fieldLabel}>Full name</Text>
             <TextInput
@@ -258,7 +281,15 @@ export default function FamilyMembers({ navigation }) {
             </View>
 
             <Text style={styles.fieldLabel}>Date of birth</Text>
-            <TouchableOpacity style={styles.input} onPress={() => setShowPicker(true)}>
+            <TouchableOpacity
+              style={styles.input}
+              onPress={() => {
+                // The iOS spinner is rendered inline; leaving the keyboard up would push it out
+                // of view the moment it appears.
+                Keyboard.dismiss();
+                setShowPicker(true);
+              }}
+            >
               <Text style={dob ? styles.dateText : styles.datePlaceholder}>
                 {dob ? moment(dob).format('D MMM YYYY') : 'Select a date (optional)'}
               </Text>
@@ -279,7 +310,8 @@ export default function FamilyMembers({ navigation }) {
               />
             )}
 
-            {!!formError && <Text style={styles.error}>{formError}</Text>}
+              {!!formError && <Text style={styles.error}>{formError}</Text>}
+            </ScrollView>
 
             <View style={styles.sheetActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setFormOpen(false)}>
@@ -294,7 +326,7 @@ export default function FamilyMembers({ navigation }) {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {AlertComponent}
@@ -362,7 +394,12 @@ const styles = StyleSheet.create({
     borderTopRightRadius: wp(5),
     padding: wp(5),
     paddingBottom: hp(4),
+    // Without a bound the sheet grows to fit its content and the ScrollView inside never has
+    // less room than it needs, so it never scrolls. Capping it is what makes the scroll real.
+    maxHeight: '88%',
   },
+  sheetScroll: { flexGrow: 0 },
+  sheetScrollContent: { paddingBottom: hp(1) },
   sheetTitle: { fontSize: hp(2.1), fontWeight: '700', color: '#0F172A', marginBottom: hp(2) },
   fieldLabel: { fontSize: hp(1.6), color: '#64748B', marginBottom: hp(0.7), marginTop: hp(1.2), fontWeight: '600' },
   input: {
