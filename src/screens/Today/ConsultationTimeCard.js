@@ -56,6 +56,11 @@ export default function ConsultationTimeCard({ appointment }) {
             <ModeIcon size={12} color={CC.subText} />
             <Text style={styles.metaText} numberOfLines={1}>
               {mode.label}
+              {/* Whose consultation. This is the card a parent glances at in the morning, so
+                  it goes on the meta line rather than below the fold — "10:30, Dr Jyoti" is
+                  not enough to know whether to bring the child. Absent for the account
+                  holder's own appointments, which look exactly as before. */}
+              {appointment?.forPatient?.name ? ` · for ${appointment.forPatient.name}` : ''}
             </Text>
           </View>
         </View>

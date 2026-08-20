@@ -23,6 +23,7 @@ import {
   CalendarClock as Reschedule,
   Clock,
   Info,
+  User,
   ClipboardList,
 } from 'lucide-react-native';
 
@@ -226,6 +227,20 @@ export default function AppointmentDetails({ navigation, route }) {
             <Info size={16} color={CC.primary} />
             <Text style={styles.bookedText}>
               Request sent. You will be notified when the doctor confirms.
+            </Text>
+          </View>
+        )}
+
+        {/* Who this consultation is FOR. Shown before anything else on the screen, because
+            every action below it — Join, Cancel, Reschedule — is about a specific person, and a
+            guardian managing two or three profiles must not have to infer which one from the
+            time. Rendered only for a family member; an ordinary appointment is unchanged. */}
+        {!!appt?.forPatient?.name && (
+          <View style={styles.forBanner}>
+            <User size={15} color={CC.primary} />
+            <Text style={styles.forBannerText}>
+              For <Text style={styles.forBannerName}>{appt.forPatient.name}</Text>
+              {appt.forPatient.relationship ? ` · ${appt.forPatient.relationship}` : ''}
             </Text>
           </View>
         )}
@@ -517,6 +532,24 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { padding: 20 },
 
+  forBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: CC.primarySoft,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  forBannerText: {
+    flex: 1,
+    marginLeft: 8,
+    fontFamily: F.PoppinsRegular,
+    fontSize: 12.5,
+    color: CC.primary,
+    textTransform: 'capitalize',
+  },
+  forBannerName: { fontFamily: F.PoppinsSemiBold },
   bookedBanner: {
     flexDirection: 'row',
     alignItems: 'center',
