@@ -30,6 +30,7 @@ import {
 import { getFitness, updateFitnessTime } from './Fitness/fitnessThunk';
 import { getPredict } from './Predict/predictThunk';
 import { checkReminderThunk } from './Home/checkReminderThunk';
+import { getPendingDoctorReminders, respondToDoctorReminder } from './Home/doctorReminderThunks';
 import { searchBuilderThunk } from './Nutrition/thunk';
 import { getNotification } from './Home/notificationThunk';
 import { shareData } from './Share/shareThunk';
@@ -73,6 +74,8 @@ export {
   getHealthRecord,
   getProfile,
   checkReminderThunk,
+  getPendingDoctorReminders,
+  respondToDoctorReminder,
   searchBuilderThunk,
   loginCaregiverThunk,
   getDoctors,

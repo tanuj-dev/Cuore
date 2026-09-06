@@ -39,7 +39,7 @@ import moment from 'moment';
 import { Fonts } from '../../utilities';
 import { logoutUser } from '../../redux/Auth/authThunk';
 import SessionExpiredModal from '../../components/SessionExpired';
-import { checkReminderThunk } from '../../redux/slices';
+import { checkReminderThunk, getPendingDoctorReminders, respondToDoctorReminder } from '../../redux/slices';
 import { getNotification } from '../../redux/Home/notificationThunk';
 import { dismissAlert, respondCheckin } from '../../redux/Home/homeThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
@@ -311,6 +311,14 @@ const Today = ({ navigation, route }) => {
   const [doctorImageLoadFailed, setDoctorImageLoadFailed] = useState(false);
   const [subscriptionExpiryVisible, setSubscriptionExpiryVisible] =
     useState(false);
+  // CuoreMD spec — doctor-issued medicine/follow-up/vaccine reminders need an accept/decline
+  // response. Matched against each dailySchedule item by `sourceId` (see backend
+  // timelineController.js getPendingDoctorReminders for why this isn't threaded through
+  // getHomeData's own response instead).
+  const [pendingDoctorReminderIds, setPendingDoctorReminderIds] = useState(
+    () => new Set(),
+  );
+  const [respondingReminderId, setRespondingReminderId] = useState(null);
 
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -524,6 +532,49 @@ const Today = ({ navigation, route }) => {
     }
   }, [homeData?.dailySchedule]);
 
+  // Which of today's reminder/medication cards are doctor-issued and still awaiting a
+  // response — fetched once per userId; refetched after a response below.
+  const loadPendingDoctorReminders = useCallback(() => {
+    if (!userId) return;
+    dispatch(getPendingDoctorReminders(userId)).then(res => {
+      if (getPendingDoctorReminders.fulfilled.match(res)) {
+        setPendingDoctorReminderIds(
+          new Set((res.payload || []).map(r => r._id?.toString())),
+        );
+      }
+    });
+  }, [dispatch, userId]);
+
+  useEffect(() => {
+    loadPendingDoctorReminders();
+  }, [loadPendingDoctorReminders]);
+
+  const handleReminderRespond = async (item, status) => {
+    if (!item?.sourceId || respondingReminderId) return;
+    setRespondingReminderId(item.sourceId);
+    try {
+      await dispatch(
+        respondToDoctorReminder({ userId, reminderId: item.sourceId, status }),
+      ).unwrap();
+      setPendingDoctorReminderIds(prev => {
+        const next = new Set(prev);
+        next.delete(item.sourceId);
+        return next;
+      });
+      setToastType('success');
+      setToast(
+        status === 'accepted' ? 'Reminder accepted' : 'Reminder declined',
+      );
+      // A decline removes today's card server-side — refresh so it disappears here too.
+      if (status === 'declined') dispatch(getHomeData(userId));
+    } catch (error) {
+      setToastType('error');
+      setToast('Could not update this reminder. Please try again.');
+    } finally {
+      setRespondingReminderId(null);
+    }
+  };
+
   // Notification scheduling is handled by the backend via Firebase push notifications.
   // The backend uses the stored fcm_token to send push at the correct time.
 
@@ -709,11 +760,34 @@ const Today = ({ navigation, route }) => {
       >
         <View style={styles.header}>
           <View style={styles.headerTopRow}>
-            <Text style={styles.username}>
-              {profileData?.display_name
-                ? `Hi, ${profileData.display_name.split(' ')[0]}`
-                : 'User'}
-            </Text>
+            <View>
+              <Text style={styles.username}>
+                {profileData?.display_name
+                  ? `Hi, ${profileData.display_name.split(' ')[0]}`
+                  : 'User'}
+              </Text>
+              {/* White-labeling (CuoreMD spec) — present only when the linked doctor
+                  belongs to a polyclinic; falls back to nothing (not "Cuore") otherwise,
+                  since the app's own branding is everywhere else already. */}
+              {!!doctorProfile?.clinic?.name && (
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}
+                >
+                  {doctorProfile.clinic.logoUrl && (
+                    <Image
+                      source={{ uri: doctorProfile.clinic.logoUrl }}
+                      style={{ width: 14, height: 14, borderRadius: 3, marginRight: 4 }}
+                    />
+                  )}
+                  <Text
+                    style={{ fontSize: 11, color: '#64748B', fontFamily: 'Poppins-Regular' }}
+                    numberOfLines={1}
+                  >
+                    {doctorProfile.clinic.name}
+                  </Text>
+                </View>
+              )}
+            </View>
             <TouchableOpacity
               onPress={() => navigation.navigate('Notifications')}
               style={styles.notificationButton}
@@ -1116,6 +1190,9 @@ const Today = ({ navigation, route }) => {
               const isEditable =
                 item?.editable === true &&
                 ['wake up', 'fitness'].includes(item.title?.toLowerCase());
+              const isPendingDoctorReminder =
+                item?.sourceId && pendingDoctorReminderIds.has(item.sourceId);
+              const respondingThis = respondingReminderId === item?.sourceId;
 
               return (
                 <View key={item?.id || itemIndex} style={styles.taskRow}>
@@ -1186,6 +1263,63 @@ const Today = ({ navigation, route }) => {
                         <Text style={styles.taskDescription} numberOfLines={2}>
                           {item.description}
                         </Text>
+                        {isPendingDoctorReminder && (
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              marginTop: hp(0.8),
+                              gap: wp(2),
+                            }}
+                          >
+                            <TouchableOpacity
+                              disabled={respondingThis}
+                              onPress={() =>
+                                handleReminderRespond(item, 'accepted')
+                              }
+                              style={{
+                                backgroundColor: '#11418A',
+                                paddingVertical: hp(0.5),
+                                paddingHorizontal: wp(3),
+                                borderRadius: 14,
+                                opacity: respondingThis ? 0.5 : 1,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  color: '#fff',
+                                  fontSize: 11,
+                                  fontFamily: Fonts.semiBold,
+                                }}
+                              >
+                                Accept
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              disabled={respondingThis}
+                              onPress={() =>
+                                handleReminderRespond(item, 'declined')
+                              }
+                              style={{
+                                borderWidth: 1,
+                                borderColor: '#D1D5DB',
+                                paddingVertical: hp(0.5),
+                                paddingHorizontal: wp(3),
+                                borderRadius: 14,
+                                opacity: respondingThis ? 0.5 : 1,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  color: '#6B7280',
+                                  fontSize: 11,
+                                  fontFamily: Fonts.semiBold,
+                                }}
+                              >
+                                Decline
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
                       </View>
                       {item?.completed && (
                         <Image source={Images.RIGHT} style={styles.checkIcon} />
@@ -1625,6 +1759,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontFamily: 'Poppins-Regular',
     lineHeight: 18,
+    
   },
   taskContent: {
     justifyContent: 'center',
