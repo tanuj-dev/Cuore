@@ -24,6 +24,7 @@ import {
 
 import { CC } from './ccTheme';
 import { PrimaryButton, EmptyState, Card } from './components';
+import ProfileSwitcher from '../../components/ProfileSwitcher';
 import AppointmentCard from './AppointmentCard';
 import {
   getCuoreCareStatus,
@@ -47,6 +48,7 @@ export default function CuoreCareHome({ navigation }) {
   const subscription = useSelector(state => state.cuoreCare.subscription);
   const access = useSelector(state => state.cuoreCare.access);
   const appointments = useSelector(state => state.cuoreCare.appointments);
+  const branding = useSelector(state => state.cuoreCare.access?.branding);
   const [segment, setSegment] = useState('upcoming'); // upcoming | completed
   const [refreshing, setRefreshing] = useState(false);
 
@@ -177,10 +179,20 @@ export default function CuoreCareHome({ navigation }) {
       <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
       {/* Header */}
       <View style={styles.topBar}>
-        <View>
-          <Text style={styles.topTitle}>CuoreCare</Text>
-          <Text style={styles.topSubtitle}>Your consultations</Text>
+        <View style={{ flex: 1 }}>
+          {/* White-labelling: the practice's name is the title when the patient has a linked
+              doctor, with "CuoreCare" demoted to the line beneath. A patient's relationship is
+              with their clinic, not with our product name. Falls back to the plain title when
+              there is no branding to show — never to a clinic name we invented. */}
+          <Text style={styles.topTitle} numberOfLines={1}>
+            {branding?.name || 'CuoreCare'}
+          </Text>
+          <Text style={styles.topSubtitle} numberOfLines={1}>
+            {branding?.name ? 'CuoreCare · Your consultations' : 'Your consultations'}
+          </Text>
         </View>
+        {/* Swap user — shown only when the account actually has family members. */}
+        <ProfileSwitcher compact style={{ marginRight: 8 }} />
         <TouchableOpacity
           style={styles.rxButton}
           onPress={() => navigation.navigate('CuoreCareHistory')}
