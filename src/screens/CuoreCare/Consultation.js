@@ -199,7 +199,17 @@ export default function Consultation({ navigation, route }) {
     const onLeft = p => {
       if (isThis(p) && p?.role === 'doctor') setRemoteEnded(true);
     };
-    const onConnect = () => setSocketOk(true);
+    // A Socket.IO room is a property of the CONNECTION, not of the client — so a reconnect
+    // (a lift blackout, a network handover, the app backgrounding) silently drops us out of
+    // the appointment room, and `appointment:subscribe` was a one-shot emit at mount. The
+    // socket comes back, `connected` is true again, and yet call:ended / participant:left for
+    // this consultation never arrive: the patient sits on a black call screen that nothing can
+    // ever end, which is exactly the "video keeps going but I can't do anything" report.
+    // Re-joining the room on every connect is idempotent server-side.
+    const onConnect = () => {
+      setSocketOk(true);
+      subscribeAppointment(appointmentId);
+    };
     const onDisconnect = () => setSocketOk(false);
 
     s.on(CC_EV.CALL_ENDED, onEnded);
