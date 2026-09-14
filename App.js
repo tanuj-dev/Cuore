@@ -238,6 +238,10 @@ const AppContent = () => {
               screen: resolveScreen(remoteMessage.data),
               appointmentId: remoteMessage.data?.appointmentId,
               prescriptionId: remoteMessage.data?.prescriptionId,
+              // Forward the inbox row id too. Without it an Android FOREGROUND tap was the
+              // only path that did not mark the notification read, because this re-built
+              // payload dropped it — background and quit taps get the FCM data verbatim.
+              notificationId: remoteMessage.data?.notificationId,
             },
             android: {
               channelId: 'health-schedule',
