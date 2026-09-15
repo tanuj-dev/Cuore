@@ -131,6 +131,9 @@ PODS:
     - Yoga
   - openiap (1.3.14)
   - PromisesObjC (2.4.0)
+  - razorpay-core-pod (1.0.7)
+  - razorpay-pod (1.5.7):
+    - razorpay-core-pod (= 1.0.7)
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -2015,6 +2018,35 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-razorpay (3.0.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - razorpay-pod
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-render-html (6.3.4):
     - React-Core
   - react-native-safe-area-context (5.6.1):
@@ -3416,6 +3448,7 @@ DEPENDENCIES:
   - "react-native-keep-awake (from `../node_modules/@sayem314/react-native-keep-awake`)"
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pdf (from `../node_modules/react-native-pdf`)
+  - react-native-razorpay (from `../node_modules/react-native-razorpay`)
   - react-native-render-html (from `../node_modules/react-native-render-html`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
@@ -3489,6 +3522,8 @@ SPEC REPOS:
     - nanopb
     - openiap
     - PromisesObjC
+    - razorpay-core-pod
+    - razorpay-pod
     - SocketRocket
     - ZegoExpressEngine
     - ZegoUIKitReport
@@ -3596,6 +3631,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-pdf:
     :path: "../node_modules/react-native-pdf"
+  react-native-razorpay:
+    :path: "../node_modules/react-native-razorpay"
   react-native-render-html:
     :path: "../node_modules/react-native-render-html"
   react-native-safe-area-context:
@@ -3735,6 +3772,8 @@ SPEC CHECKSUMS:
   NitroModules: 5bc319d441f4983894ea66b1d392c519536e6d23
   openiap: ab2a58a26223bf7167dd47d42e0532f97ed7dae4
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  razorpay-core-pod: c7f3ac3d214c1a7fac4e9a59c1de7eac02130573
+  razorpay-pod: 3c91ef4895d389968a5c56a6f1e9943e44b50fa0
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: c4b9e2fd0ab200e3af72b013ed6113187c607077
   RCTRequired: e97dd5dafc1db8094e63bc5031e0371f092ae92a
@@ -3775,6 +3814,7 @@ SPEC CHECKSUMS:
   react-native-keep-awake: 41098e970bd0867d645e9cd5a3f349e50d9178e5
   react-native-netinfo: cec9c4e86083cb5b6aba0e0711f563e2fbbff187
   react-native-pdf: edc236298f13f1609e42d41e45b8b6ea88ed10f9
+  react-native-razorpay: 32fd7bcf366a277fa14a82305279e825258008db
   react-native-render-html: 5afc4751f1a98621b3009432ef84c47019dcb2bd
   react-native-safe-area-context: c6e2edd1c1da07bdce287fa9d9e60c5f7b514616
   react-native-slider: 663776e5683e257de8df8091abc2d93ff6ec67db

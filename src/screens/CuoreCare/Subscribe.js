@@ -61,7 +61,10 @@ const planForProduct = productId =>
 export default function Subscribe({ navigation }) {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
-  const [selectedKey, setSelectedKey] = useState('annual');
+  // Default to whatever the catalog actually offers. Hard-coding 'annual' left the radio
+  // rendered UNSELECTED once the plan key changed to 'allaccess' — `selected` still resolved
+  // via the [0] fallback, so the button worked while the card looked unchosen.
+  const [selectedKey, setSelectedKey] = useState(CUORECARE_IAP_PLANS[0].key);
   const [processing, setProcessing] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const subscriptionsRef = useRef([]);

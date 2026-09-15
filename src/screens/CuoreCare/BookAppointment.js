@@ -213,7 +213,20 @@ export default function BookAppointment({ navigation, route }) {
     );
 
     if (bookAppointment.fulfilled.match(res)) {
-      const appt = res.payload;
+      /* §7.1 — the booking comes back UNPAID unless the patient is exempt. A payable booking goes
+       * to checkout; an exempt one has already reached the doctor and goes straight to the
+       * appointment, exactly as it did before payment existed.
+       *
+       * `payment` is passed through so checkout paints the breakdown immediately instead of
+       * re-fetching something this response already carried. */
+      const { appointment: appt, payment } = res.payload;
+      if (payment && payment.payable) {
+        navigation.replace('CuoreCareCheckout', {
+          appointmentId: appt.appointmentId,
+          payment,
+        });
+        return;
+      }
       navigation.replace('CuoreCareAppointment', {
         appointmentId: appt.appointmentId,
         justBooked: true,
@@ -362,6 +375,12 @@ export default function BookAppointment({ navigation, route }) {
               {MODES.map(m => {
                 const active = mode === m.key;
                 const Icon = m.icon;
+                /* The doctor's own price for THIS mode, resolved server-side through the same
+                 * ladder the charge uses (listDoctors → consultationFees.modePricesPaise), so the
+                 * number here is the number that gets billed. `null` means the doctor has not
+                 * priced this mode and has no fallback — shown as unavailable, never as free. */
+                const price = doctor.modePrices?.[m.key];
+                const priced = price && typeof price.rupees === 'number';
                 return (
                   <TouchableOpacity
                     key={m.key}
@@ -372,10 +391,23 @@ export default function BookAppointment({ navigation, route }) {
                     <Icon size={22} color={active ? CC.primary : CC.subText} />
                     <Text style={[styles.modeLabel, active && { color: CC.primary }]}>{m.label}</Text>
                     <Text style={styles.modeDesc}>{m.desc}</Text>
+                    {priced ? (
+                      <Text style={[styles.modePrice, active && { color: CC.primary }]}>
+                        {price.rupees === 0 ? 'Free' : `₹${price.rupees}`}
+                      </Text>
+                    ) : (
+                      <Text style={styles.modePriceMissing}>Not offered</Text>
+                    )}
                   </TouchableOpacity>
                 );
               })}
             </View>
+            {/* The consultation fee only. The ₹10 tele-consult fee and the 3% gateway fee are
+                itemised on the payment screen, which renders the server's breakdown verbatim —
+                computing a total here would be a second implementation of the same arithmetic. */}
+            <Text style={styles.modeFootnote}>
+              Consultation fee set by your doctor. Taxes and fees are shown before you pay.
+            </Text>
 
             {/* Date */}
             <Text style={styles.section}>Select a date</Text>
@@ -484,6 +516,9 @@ const styles = StyleSheet.create({
   },
   modeCardActive: { borderColor: CC.primary, backgroundColor: CC.primarySoft },
   modeLabel: { fontFamily: F.PoppinsSemiBold, fontSize: 13.5, color: CC.text, marginTop: 8 },
+  modePrice: { fontFamily: F.PoppinsSemiBold, fontSize: 13, color: CC.text, marginTop: 4 },
+  modePriceMissing: { fontFamily: F.PoppinsRegular, fontSize: 11, color: CC.subText, marginTop: 4 },
+  modeFootnote: { fontFamily: F.PoppinsRegular, fontSize: 11.5, color: CC.subText, marginTop: 8 },
   modeDesc: { fontFamily: F.PoppinsRegular, fontSize: 11, color: CC.muted, marginTop: 2 },
 
   // Date chips

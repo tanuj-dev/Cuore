@@ -29,6 +29,7 @@ const initialState = {
     startDate: null,
     expiryDate: null,
     platform: null, // ios | android | razorpay
+    productId: null, // which product paid for it — distinguishes All Access from a legacy tier
     error: null,
   },
   // Centralized permission object (subscription OR admin-granted entitlement, per
@@ -45,6 +46,10 @@ const initialState = {
     chat: false,
     emr: false,
     doctor: null, // { id, name } | null
+    /* White-labelling: the practice's identity for THIS patient's linked doctor, resolved
+     * server-side (utils/doctorBranding.js) as clinic → practice name → physician. Null when the
+     * doctor has none of those — the UI then shows its own title rather than inventing one. */
+    branding: null, // { name, logoUrl, doctorName, specialization, source } | null
     error: null,
   },
   doctors: { loading: false, list: [], total: 0, page: 1, error: null },
@@ -130,6 +135,7 @@ const cuoreCareSlice = createSlice({
         state.access.chat = !!a.chat;
         state.access.emr = !!a.emr;
         state.access.doctor = action.payload?.doctor || null;
+        state.access.branding = action.payload?.branding || null;
       })
       .addCase(getCuoreCareAccess.rejected, (state, action) => {
         state.access.loading = false;
@@ -274,8 +280,14 @@ const cuoreCareSlice = createSlice({
         .addCase(thunk.fulfilled, (state, action) => {
           state.action.loading = false;
           state.action.lastResult = 'ok';
-          if (action.payload?.appointmentId) {
-            state.current.data = action.payload;
+          /* bookAppointment returns `{ appointment, payment }` since §7.1 (the caller needs the
+           * payment state to decide whether to show checkout); cancel/reschedule still return the
+           * appointment directly. Both shapes are unwrapped here rather than at the call sites,
+           * because keying on `payload.appointmentId` alone silently stopped updating
+           * `current.data` after a booking — the screen then showed stale data with no error. */
+          const appt = action.payload?.appointment || action.payload;
+          if (appt?.appointmentId) {
+            state.current.data = appt;
           }
         })
         .addCase(thunk.rejected, (state, action) => {

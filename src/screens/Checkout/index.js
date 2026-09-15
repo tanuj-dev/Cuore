@@ -29,12 +29,11 @@ import { postApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
 import {
   IAP_SUBSCRIPTION_IDS,
-  IAP_GST_RATE,
   IAP_PLANS,
 } from '../../utilities/Constants';
 import {
   CUORECARE_IAP_PRODUCT_IDS,
-  CUORECARE_IAP_PLANS,
+  CUORECARE_LEGACY_IAP_PRODUCT_IDS,
 } from '../../utilities/cuoreCareConfig';
 import {
   verifyCuoreCareSubscription,
@@ -60,40 +59,38 @@ function getAndroidOfferToken(sub) {
   return null;
 }
 
-// ─── Unified two-tier catalog (Essentials + CuoreCare) ──────────────────────
-// CuoreEssentials = base premium (existing SKUs); CuoreCare = superset tier that
-// adds telemedicine. Both are shown on this one screen; the tiers are mutually
-// exclusive (a user holds one at a time — enforced by the backend effective-tier).
+// ─── Catalog ────────────────────────────────────────────────────────────────
+// ONE plan is sold: Cuore All Access (₹359/year), which includes everything the old
+// CuoreEssentials and CuoreCare tiers offered. The retired tier SKUs are still fetched and
+// still recognised on restore (see Constants.IAP_SUBSCRIPTION_IDS and
+// cuoreCareConfig.CUORECARE_LEGACY_IAP_PRODUCT_IDS) — they are just never offered for sale.
 const TIERS = [
   {
-    key: 'essentials',
-    label: 'CuoreEssentials',
-    caption: 'Health tracking, insights & records',
-    plans: IAP_PLANS.map(p => ({ ...p, tier: 'essentials' })),
-  },
-  {
-    key: 'cuorecare',
-    label: 'CuoreCare',
-    caption: 'Everything in Essentials + doctor consultations',
-    plans: CUORECARE_IAP_PLANS.map(p => ({ ...p, tier: 'cuorecare' })),
+    key: 'allaccess',
+    label: 'Cuore All Access',
+    caption: 'Everything in Cuore, plus doctor consultations',
+    plans: IAP_PLANS.map(p => ({ ...p, tier: 'allaccess' })),
   },
 ];
 const ALL_PLANS = TIERS.flatMap(t => t.plans);
-const ALL_SKUS = [...IAP_SUBSCRIPTION_IDS, ...CUORECARE_IAP_PRODUCT_IDS];
-const isCuoreCareProduct = pid => CUORECARE_IAP_PRODUCT_IDS.includes(pid);
-// Plan key the CuoreCare backend expects ('quarterly' | 'annual').
+// Deduped: the all-access id appears in both lists by design.
+const ALL_SKUS = [
+  ...new Set([...IAP_SUBSCRIPTION_IDS, ...CUORECARE_IAP_PRODUCT_IDS]),
+];
+// Which verify endpoint a purchase goes to. Only the RETIRED CuoreCare-only SKUs use the
+// CuoreCare endpoint; an All Access purchase goes through the base endpoint, which grants
+// both entitlements server-side. Testing against CUORECARE_IAP_PRODUCT_IDS here would be
+// wrong — that list now contains the all-access id too.
+const isCuoreCareProduct = pid => CUORECARE_LEGACY_IAP_PRODUCT_IDS.includes(pid);
+// Plan key the CuoreCare backend expects for a retired CuoreCare-only SKU.
 const cuoreCarePlanFor = pid =>
-  CUORECARE_IAP_PLANS.find(p => p.productId === pid)?.plan ||
-  (/annual|year/i.test(pid || '') ? 'annual' : 'quarterly');
-// Feature bullets shown for the selected plan, by tier.
+  /annual|year/i.test(pid || '') ? 'annual' : 'quarterly';
+// Feature bullets for the one plan on sale.
 const FEATURES = {
-  essentials: [
+  allaccess: [
     { title: 'Track & stay consistent', desc: 'Track BP, sugar, daily guidance' },
     { title: 'Understand your health clearly', desc: 'Clear trends, insights, simple summaries' },
     { title: 'Be prepared & stay ahead', desc: 'Doctor updates, alerts, records organized' },
-  ],
-  cuorecare: [
-    { title: 'Everything in CuoreEssentials', desc: 'All tracking, insights & records included' },
     { title: 'Video, voice & chat consultations', desc: 'Talk to verified CuoreCare doctors' },
     { title: 'Digital prescriptions', desc: 'Signed prescriptions after each consult' },
   ],
@@ -101,7 +98,8 @@ const FEATURES = {
 
 const Checkout = ({ navigation }) => {
   const dispatch = useDispatch();
-  const [selectedPlan, setSelectedPlan] = useState('Annual');
+  // Titles come from the catalog above; defaulting to the only plan on sale.
+  const [selectedPlan, setSelectedPlan] = useState(ALL_PLANS[0].title);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const { alert, AlertComponent } = useCustomAlert();
@@ -109,7 +107,6 @@ const Checkout = ({ navigation }) => {
 
   const selected =
     ALL_PLANS.find(p => p.title === selectedPlan) || ALL_PLANS[0];
-  const gstAmount = selected ? selected.newPrice * IAP_GST_RATE : 0;
   const loadedProductIds = useMemo(
     () => subscriptions?.map(s => s.productId || s.id).filter(Boolean) || [],
     [subscriptions],
@@ -769,7 +766,7 @@ const Checkout = ({ navigation }) => {
               {/* What's included */}
               <View style={styles.featuresDivider} />
               <Text style={styles.featuresHeading}>What you get</Text>
-              {(FEATURES[selected.tier] || FEATURES.essentials).map(item => (
+              {(FEATURES[selected.tier] || FEATURES.allaccess).map(item => (
                 <View key={item.title} style={styles.featureRow}>
                   <Text style={styles.featureCheck}>✓</Text>
 
@@ -816,30 +813,6 @@ const Checkout = ({ navigation }) => {
                 <View style={styles.radioUnselected} />
                 <Image source={Images.CREDIT_CARD} style={styles.paymentIcon} />
                 <Text style={styles.paymentMethodText}>Credit/Debit Card</Text>
-              </View>
-            </View> */}
-
-            {/* Order Summary */}
-            {/* <Text style={styles.sectionTitle}>Order Summary</Text> */}
-
-            {/* <View style={styles.summaryBox}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryText}>
-                  {selected?.title ?? 'Plan'} Plan
-                </Text>
-                <Text style={styles.summaryText}>
-                  ₹{(selected ? selected.newPrice - gstAmount : 0).toFixed(2)}
-                </Text>
-              </View>
-
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryText}>GST 18%</Text>
-                <Text style={styles.summaryText}>₹{gstAmount.toFixed(2)}</Text>
-              </View>
-
-              <View style={[styles.summaryRow, styles.totalRow]}>
-                <Text style={styles.totalText}>Total</Text>
-                <Text style={styles.totalText}>₹{totalAmount.toFixed(2)}</Text>
               </View>
             </View> */}
 

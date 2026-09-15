@@ -23,6 +23,7 @@ import { getProfile } from '../../redux/slices';
 import { getCuoreCareStatus } from '../../redux/CuoreCare/thunks';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { getNativeAppVersion } from '../../utilities/Constants';
+import { IAP_ALL_ACCESS_PRODUCT_IDS } from '../../utilities/iapPlans';
 import SubscriptionExpiringModal from '../../components/SubscriptionExpiringModal';
 import { getApiCall, putApiCall } from '../../utilities/Services';
 import HealthDataModal from '../../components/HealthDataModal';
@@ -118,6 +119,37 @@ const Profile = ({ navigation }) => {
   const [subscriptionExpiryVisible, setSubscriptionExpiryVisible] =
     useState(false);
   const subscriptionExpiryShownRef = useRef(false);
+
+  // Record-sharing consent: read on modal open, toggle grants/revokes. Same server-held
+  // flag as the one-time prompt in HealthRecords, so both screens stay in sync.
+  const loadRecordConsent = async () => {
+    try {
+      const res = await getApiCall('/api/health-records/consent', '');
+      if (res?.status === 200 && res.data?.consent) {
+        setRecordConsent({ ...res.data.consent, loaded: true });
+        return;
+      }
+      setRecordConsent(c => ({ ...c, loaded: true }));
+    } catch (_) {
+      setRecordConsent(c => ({ ...c, loaded: true }));
+    }
+  };
+
+  const toggleRecordConsent = async granted => {
+    setSavingRecordConsent(true);
+    try {
+      const res = await putApiCall('/api/health-records/consent', { granted });
+      if (res?.status === 200 && res.data?.consent) {
+        setRecordConsent({ ...res.data.consent, loaded: true });
+        return;
+      }
+      alert('Could not save', 'Please try again.');
+    } catch (_) {
+      alert('Could not save', 'Please try again.');
+    } finally {
+      setSavingRecordConsent(false);
+    }
+  };
 
   // Filter out items that caregivers shouldn't see
   const filteredOptions = profileOptions.filter(item => {
@@ -280,6 +312,13 @@ const Profile = ({ navigation }) => {
     quarterly: 'CuoreCare · 3 Months',
     annual: 'CuoreCare · 1 Year',
   };
+  // An All Access subscriber carries plan 'annual' exactly like a legacy CuoreCare-annual
+  // one, so the plan alone cannot name the card — the product id has to. Without this,
+  // everyone on the single ₹359 plan would see "CuoreCare · 1 Year".
+  const cuoreCarePlanLabel = sub =>
+    IAP_ALL_ACCESS_PRODUCT_IDS.includes(sub?.productId)
+      ? 'All Access'
+      : CUORECARE_PLAN_LABELS[sub?.plan] || 'CuoreCare';
   const CUORECARE_PLATFORM_LABELS = {
     ios: 'App Store',
     android: 'Google Play',
@@ -296,7 +335,7 @@ const Profile = ({ navigation }) => {
   };
   const payment = cuoreCareSub?.active
     ? {
-        productId: CUORECARE_PLAN_LABELS[cuoreCareSub.plan] || 'CuoreCare',
+        productId: cuoreCarePlanLabel(cuoreCareSub),
         status: 'active',
         platform:
           CUORECARE_PLATFORM_LABELS[cuoreCareSub.platform] || cuoreCareSub.platform,

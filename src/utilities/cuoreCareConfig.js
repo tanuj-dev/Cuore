@@ -1,4 +1,8 @@
-import { Platform } from 'react-native';
+import {
+  IAP_ALL_ACCESS_PLAN,
+  IAP_ALL_ACCESS_PRODUCT_ID,
+  CUORECARE_LEGACY_IAP_PRODUCT_IDS,
+} from './iapPlans';
 
 /**
  * CuoreCare — premium telemedicine tier configuration.
@@ -26,49 +30,31 @@ export const zegoPatientUserId = patientId => 'u_' + String(patientId);
 // Consultation modes supported by the backend Appointment.MODE enum.
 export const CUORECARE_MODES = ['video', 'voice', 'chat'];
 
-// ─── In-App Purchase (SEPARATE CuoreCare tier) ──────────────────────────────
-// Product IDs CREATED as auto-renewing subscriptions (2026-08-01):
-//   iOS (App Store Connect group "CuoreCare", status "Prepare for Submission" — sandbox-
-//     testable now; submit for review WITH the CuoreCare app build):
-//     com.cuore.cuorecare.quarterly (3 months, ₹999), com.cuore.cuorecare.annual (1 year, ₹1,999)
-//   Android (Play Console, auto-renewing base plans, ACTIVE):
-//     cuorecare_quarterly (3 months, ₹999), cuorecare_annual (1 year, ₹1,999)
-// Intentionally distinct from the base-premium SKUs so the tiers bill and verify independently.
-// The backend derives the plan from `plan` (sent explicitly) or the id.
-export const CUORECARE_IAP_PRODUCT_IDS =
-  Platform.OS === 'ios'
-    ? ['com.cuore.cuorecare.quarterly', 'com.cuore.cuorecare.annual']
-    : ['cuorecare_quarterly', 'cuorecare_annual'];
+// ─── In-App Purchase ────────────────────────────────────────────────────────
+// CuoreCare is NO LONGER SOLD AS ITS OWN TIER. Since 2026-09-14 there is exactly one
+// product — Cuore All Access (₹359/year, see Constants.IAP_ALL_ACCESS_PLAN) — and it grants
+// base premium and CuoreCare together. The backend grants both entitlements from EITHER
+// verify endpoint when it sees an all-access product id, so it does not matter whether the
+// user buys from this screen or from the base paywall.
+//
+// The old CuoreCare-only SKUs are RETIRED, not deleted:
+//   iOS      com.cuore.cuorecare.quarterly (3 months, ₹999), com.cuore.cuorecare.annual (₹1,999)
+//   Android  cuorecare_quarterly, cuorecare_annual
+// They stay live in both stores because people are still subscribed to them, and this list
+// is what `getAvailablePurchases` is filtered against — dropping an id here would make an
+// existing CuoreCare subscriber look unsubscribed. Never delete them.
+export { CUORECARE_LEGACY_IAP_PRODUCT_IDS };
 
-export const CUORECARE_IAP_PLANS = [
-  {
-    key: 'quarterly',
-    plan: 'quarterly',
-    title: 'CuoreCare 3 Months',
-    subtitle: 'Unlimited video, voice & chat consultations',
-    duration: '3 Months',
-    oldPrice: null,
-    newPrice: 999,
-    productId:
-      Platform.OS === 'ios'
-        ? 'com.cuore.cuorecare.quarterly'
-        : 'cuorecare_quarterly',
-    topPick: false,
-  },
-  {
-    key: 'annual',
-    plan: 'annual',
-    title: 'CuoreCare 1 Year',
-    subtitle: 'Best value — a full year of doctor access',
-    duration: '1 Year',
-    oldPrice: null,
-    newPrice: 1999,
-    productId:
-      Platform.OS === 'ios' ? 'com.cuore.cuorecare.annual' : 'cuorecare_annual',
-    topPick: true,
-  },
+// Sold + retired. Used for fetchProducts and for recognising an existing entitlement.
+export const CUORECARE_IAP_PRODUCT_IDS = [
+  IAP_ALL_ACCESS_PRODUCT_ID,
+  ...CUORECARE_LEGACY_IAP_PRODUCT_IDS,
 ];
 
+// The CuoreCare paywall now offers the same single All Access plan as the base paywall.
+export const CUORECARE_IAP_PLANS = [IAP_ALL_ACCESS_PLAN];
+
+// India store prices are tax-inclusive; nothing is added on top at display time.
 export const CUORECARE_IAP_GST_RATE = 0.18;
 
 // Minutes the room opens before the scheduled start (mirrors backend join-window early
