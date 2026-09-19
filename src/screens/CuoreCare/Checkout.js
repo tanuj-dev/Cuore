@@ -76,7 +76,13 @@ export default function Checkout({ route, navigation }) {
      * true no matter what the client does. */
     const co = payment?.checkout;
     let receipt = {};
-    if (co && co.provider === 'razorpay' && co.keyId && co.orderId) {
+    /* Can a real checkout actually open? The server sends `checkout` describing the order it
+     * created; when the gateway is not configured it falls back to a refusing stub, and that
+     * block arrives without a razorpay key. Recorded explicitly rather than inferred twice,
+     * because what happens AFTER a failed confirm depends on it: a patient who never saw a
+     * payment sheet must not be told their payment was declined. */
+    const canCheckout = !!(co && co.provider === 'razorpay' && co.keyId && co.orderId);
+    if (canCheckout) {
       try {
         const result = await RazorpayCheckout.open({
           key: co.keyId,
@@ -126,6 +132,18 @@ export default function Checkout({ route, navigation }) {
       alert('Booking expired', err.message || 'This booking’s payment window closed. Please book again.', [
         { text: 'Book again', onPress: () => navigation.replace('CuoreCareDoctors') },
       ]);
+      return;
+    }
+    /* The server's `message` is already written for a patient (see
+     * utils/consultationPaymentService.js — the gateway's own wording stays in the logs). The
+     * one thing it cannot know is whether this app ever managed to show a payment sheet, so
+     * that case is worded here: "we could not take your payment" is true and actionable, where
+     * anything implying an attempt was made and refused would not be. */
+    if (!canCheckout) {
+      setError(
+        err?.message ||
+          'Payments are unavailable right now, so your consultation has not been sent. Your slot is held — please try again shortly.',
+      );
       return;
     }
     setError(err?.message || 'Payment could not be confirmed. Your consultation has not been sent to the doctor yet.');
