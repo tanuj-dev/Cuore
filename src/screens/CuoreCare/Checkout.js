@@ -63,9 +63,23 @@ export default function Checkout({ route, navigation }) {
     else setError(res.payload?.message || 'Could not load the payment details.');
   }, [appointmentId, dispatch]);
 
+  /* Fetch when there is nothing to show — and ALSO when what was handed over cannot open a
+   * payment sheet.
+   *
+   * The booking response is passed straight here as route params so the breakdown paints with
+   * no spinner. That summary used to arrive without a `checkout` block, so the screen had the
+   * amount, the lines and the order id but no way to open Razorpay: it fell through to confirm
+   * with no evidence and the server answered "no payment id was supplied to verify" for an
+   * order that had been created perfectly. The server now sends `checkout` on both responses;
+   * this second condition is what makes the screen recover on its own against a build that
+   * does not, instead of presenting a dead Pay button. */
+  const needsCheckout = !!payment && payment.payable !== false && payment.amountPaise > 0 && !payment.checkout;
   useEffect(() => {
-    if (!payment) load();
-  }, [payment, load]);
+    if (!payment || needsCheckout) load();
+    // `needsCheckout` is false once a fetched payment carries its checkout block, so this
+    // cannot loop: a payment that genuinely has no gateway (bypassed, zero amount) never
+    // satisfies the condition in the first place.
+  }, [payment, needsCheckout, load]);
 
   const onPay = async () => {
     setError('');
