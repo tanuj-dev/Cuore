@@ -179,7 +179,10 @@ export default function CuoreCareHome({ navigation }) {
       <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
       {/* Header */}
       <View style={styles.topBar}>
-        <View style={{ flex: 1 }}>
+        {/* minWidth:0 matters: without it a flex child refuses to shrink below its text's
+            intrinsic width, so the title pushed the switcher and Records button sideways
+            instead of truncating. */}
+        <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
           {/* White-labelling: the practice's name is the title when the patient has a linked
               doctor, with "CuoreCare" demoted to the line beneath. A patient's relationship is
               with their clinic, not with our product name. Falls back to the plain title when
@@ -191,8 +194,6 @@ export default function CuoreCareHome({ navigation }) {
             {branding?.name ? 'CuoreCare · Your consultations' : 'Your consultations'}
           </Text>
         </View>
-        {/* Swap user — shown only when the account actually has family members. */}
-        <ProfileSwitcher compact style={{ marginRight: 8 }} />
         <TouchableOpacity
           style={styles.rxButton}
           onPress={() => navigation.navigate('CuoreCareHistory')}
@@ -201,6 +202,13 @@ export default function CuoreCareHome({ navigation }) {
           <Text style={styles.rxButtonText}>Records</Text>
         </TouchableOpacity>
       </View>
+      {/* Swap user, on its own line rather than as a third item in the bar above.
+          A 22pt clinic name, a family member's name and the Records button do not share one
+          402pt row: the title lost, and "Sunrise Multispecialty Clinic" rendered as "Sunrise…".
+          The switcher renders nothing at all for an account with no family members, so a
+          single-person account's header keeps exactly the layout it had — no empty row, because
+          this is the component itself and not a wrapper around it. */}
+      <ProfileSwitcher compact style={styles.switcherRow} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -348,6 +356,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     backgroundColor: CC.surface,
   },
+  switcherRow: { alignSelf: 'flex-start', marginLeft: 20, marginBottom: 10 },
   topTitle: { fontFamily: F.PoppinsBold, fontSize: 22, color: CC.text },
   topSubtitle: { fontFamily: F.PoppinsRegular, fontSize: 13, color: CC.subText, marginTop: 1 },
   rxButton: {

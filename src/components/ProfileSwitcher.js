@@ -75,7 +75,12 @@ export default function ProfileSwitcher({ style, compact = false }) {
       <TouchableOpacity
         onPress={() => setOpen(true)}
         activeOpacity={0.8}
-        style={[styles.chip, actingAsOther && styles.chipActive, style]}
+        style={[
+          styles.chip,
+          compact && styles.chipCompact,
+          actingAsOther && styles.chipActive,
+          style,
+        ]}
       >
         {actingAsOther ? (
           <Users size={13} color="#FFFFFF" />
@@ -154,7 +159,15 @@ const styles = StyleSheet.create({
     borderColor: '#DBE5F1',
     backgroundColor: '#F2F6FB',
     maxWidth: 170,
+    /* Never absorb the squeeze. The chip shares a header row with a title and a button, and a
+     * shrinking chip collapses to a bare chevron long before the title runs out of room — the
+     * text inside already truncates, which is the graceful way to lose space. */
+    flexShrink: 0,
   },
+  /* In a header the chip is the third thing competing for one line, so it is capped tighter
+   * there than when it stands alone. A family member's full name does not fit in either case —
+   * "ZZ Test Child Two" is 17 characters — so it ellipsises, and the sheet shows the full name. */
+  chipCompact: { maxWidth: 132 },
   chipActive: { backgroundColor: BRAND, borderColor: BRAND },
   chipText: { fontSize: 12, fontWeight: '600', color: BRAND, flexShrink: 1 },
   chipTextActive: { color: '#FFFFFF' },

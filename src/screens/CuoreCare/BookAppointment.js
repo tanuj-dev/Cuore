@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -86,6 +86,12 @@ export default function BookAppointment({ navigation, route }) {
 
   const [mode, setMode] = useState(() => MODES[0]?.key || null);
   const [selectedDate, setSelectedDate] = useState(null);
+  /* The day the doctor prescribed on a follow-up, handed over when the patient accepted it.
+   * A SUGGESTION, not a booking: it opens that day's slots and the patient is free to pick
+   * another, which is what the requirement asks for in as many words. Consumed once — see the
+   * effect below — so re-picking a different day is not undone by a later refetch. */
+  const initialDate = route.params?.initialDate || null;
+  const initialDateUsed = useRef(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
 
   const [reason, setReason] = useState('');
@@ -126,6 +132,20 @@ export default function BookAppointment({ navigation, route }) {
     },
     [dispatch, doctorId, channel],
   );
+
+  /* Open on the prescribed day once the bookable dates are known.
+   *
+   * It has to wait for `dates`, because opening a day the doctor does not work would show an
+   * empty slot list and read as "no appointments available". When the prescribed day is not
+   * bookable the patient is left on the normal unselected state with every real day in front of
+   * them — the suggestion is simply not available, which they can see for themselves. */
+  useEffect(() => {
+    if (!initialDate || initialDateUsed.current || selectedDate) return;
+    if (!dates || !dates.length) return;
+    initialDateUsed.current = true;
+    const bookable = dates.some(d => (typeof d === 'string' ? d : d?.date) === initialDate);
+    if (bookable) pickDate(initialDate);
+  }, [initialDate, dates, selectedDate, pickDate]);
 
   // ---- live slot updates ----
   // Watch this doctor's calendar for the channel on screen, so a slot someone else takes greys

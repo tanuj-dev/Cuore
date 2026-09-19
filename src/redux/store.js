@@ -25,6 +25,7 @@ import cuoreCareSlice from './CuoreCare/slice';
 import healthSyncSlice from './Health/slice';
 import notificationsSlice from './Notifications/slice';
 import dependantsReducer from './Dependants/slice';
+import cycleReducer from './Cycle/slice';
 
 const store = configureStore({
   reducer: {
@@ -53,6 +54,7 @@ const store = configureStore({
     notifications: notificationsSlice.reducer,
     // Family members on this account, plus which profile the app is currently acting for.
     dependants: dependantsReducer,
+    cycle: cycleReducer,
   },
   // Enable Redux DevTools in development
   devTools: __DEV__,

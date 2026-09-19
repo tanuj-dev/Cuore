@@ -37,7 +37,7 @@ export const getCuoreCareAccess = createAsyncThunk(
   async (doctorId, { rejectWithValue }) => {
     const res = await ccGet(withQuery('/api/cuorecare/access', { doctorId }));
     if (res.status === 200 && res.data?.status === 'success') {
-      return res.data; // { subscription, doctor, access }
+      return res.data; // { subscription, doctor, branding, access }
     }
     return rejectWithValue(fail(res, 'Could not load your CuoreCare access'));
   },
@@ -121,9 +121,39 @@ export const bookAppointment = createAsyncThunk(
   async (body, { rejectWithValue }) => {
     const res = await ccPost('/api/cuorecare/appointments', body);
     if (res.status === 201 && res.data?.status === 'success') {
-      return res.data.appointment;
+      /* §7.1 — the booking now comes back UNPAID unless the patient is exempt, so the caller
+       * needs the payment block to decide between checkout and the appointment screen. Returned
+       * alongside the appointment rather than fetched separately: two calls means a window where
+       * the app knows it booked but not whether money is owed. */
+      return { appointment: res.data.appointment, payment: res.data.payment || null };
     }
     return rejectWithValue(fail(res, 'Could not book this appointment'));
+  },
+);
+
+/* §8.2 — the itemised breakdown for a booked consultation. Reads the SNAPSHOTTED quote, so the
+ * figure shown here is the figure that will be charged even if the doctor's fee changes. */
+export const getConsultationPayment = createAsyncThunk(
+  'cuoreCare/getPayment',
+  async (appointmentId, { rejectWithValue }) => {
+    const res = await ccGet(`/api/cuorecare/appointments/${appointmentId}/payment`);
+    if (res.status === 200 && res.data?.status === 'success') return res.data.payment;
+    return rejectWithValue(fail(res, 'Could not load the payment details'));
+  },
+);
+
+/* §7.1 — asks the server to VERIFY the payment. The app never reports success itself: it hands
+ * over whatever the checkout SDK returned and the server checks it against the provider and
+ * re-checks the amount. A 402 back means still unpaid. */
+export const confirmConsultationPayment = createAsyncThunk(
+  'cuoreCare/confirmPayment',
+  async ({ appointmentId, paymentId, signature }, { rejectWithValue }) => {
+    const res = await ccPost(`/api/cuorecare/appointments/${appointmentId}/payment/confirm`, {
+      paymentId,
+      signature,
+    });
+    if (res.status === 200 && res.data?.status === 'success') return res.data;
+    return rejectWithValue(fail(res, 'Payment could not be confirmed'));
   },
 );
 

@@ -15,7 +15,9 @@ import { FileText, ChevronRight, FileX, BadgeCheck, Syringe, Receipt } from 'luc
 
 import { CC } from './ccTheme';
 import { CCHeader, Card, EmptyState } from './components';
+import ProfileSwitcher from '../../components/ProfileSwitcher';
 import { fmtDayLabel } from './ccFormat';
+import { documentsForProfile } from './documentOwner';
 import {
   getPrescriptions,
   getCertificates,
@@ -55,6 +57,8 @@ export default function History({ navigation }) {
   const { list: vaccinations, loading: vaxLoading } = useSelector(state => state.cuoreCare.vaccinations);
   const { list: bills, loading: billsLoading, totalDue } = useSelector(state => state.cuoreCare.bills);
   const completed = useSelector(state => state.cuoreCare.appointments.list);
+  // Whose documents are on screen. Null = the account holder's own.
+  const activeProfileId = useSelector(state => state.dependants?.activeProfileId) || null;
 
   const [tab, setTab] = useState('prescriptions');
   const [refreshing, setRefreshing] = useState(false);
@@ -94,11 +98,24 @@ export default function History({ navigation }) {
     return map;
   }, [completed]);
 
+  /* ONE PERSON'S DOCUMENTS AT A TIME.
+   *
+   * The API returns the whole household's documents — it has to, because a family member never
+   * signs in and the guardian is the only person who can open a child's prescription at all —
+   * and labels each row with `forPatient` when it is not the account holder's own. The screen
+   * then rendered the lot as one undifferentiated list, so a child's prescription sat in the
+   * parent's history looking exactly like the parent's: "prescription generated for that number
+   * should be separate under dependent and not clubbed under primary".
+   *
+   * So the list follows the ACTIVE PROFILE — the same one the switcher above sets and the
+   * booking flow already uses. `forPatient` absent means the row is the account holder's own;
+   * present means it belongs to the family member it names. Filtering on the label rather than
+   * on an id we would have to fetch keeps this a pure function of what the API already sent. */
   const LIST_BY_TAB = {
-    prescriptions: prescriptions || [],
-    certificates: certificates || [],
-    vaccinations: vaccinations || [],
-    bills: bills || [],
+    prescriptions: documentsForProfile(prescriptions, activeProfileId),
+    certificates: documentsForProfile(certificates, activeProfileId),
+    vaccinations: documentsForProfile(vaccinations, activeProfileId),
+    bills: documentsForProfile(bills, activeProfileId),
   };
   const LOADING_BY_TAB = {
     prescriptions: rxLoading,
@@ -203,6 +220,10 @@ export default function History({ navigation }) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <CCHeader title="My documents" onBack={() => navigation.goBack()} />
 
+      {/* Whose documents these are. Renders nothing for an account with no family members, so
+          a patient who has never used the family plan sees the screen exactly as before. */}
+      <ProfileSwitcher style={styles.switcher} />
+
       {tab === 'bills' && totalDue > 0 && (
         <View style={styles.dueBanner}>
           <Text style={styles.dueBannerText}>₹{totalDue.toLocaleString('en-IN')} total due</Text>
@@ -250,6 +271,7 @@ export default function History({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  switcher: { alignSelf: 'flex-start', marginHorizontal: 16, marginTop: 10 },
   safe: { flex: 1, backgroundColor: CC.surface },
   center: { paddingVertical: 48, alignItems: 'center' },
   scroll: { padding: 16 },

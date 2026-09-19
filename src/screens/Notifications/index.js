@@ -21,6 +21,7 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
   deleteNotification,
+  deleteAllNotifications,
 } from '../../redux/Notifications/thunks';
 import { resolveScreen, navigateFromNotification } from '../../utils/notificationNavigation';
 import { navigationRef } from '../../navigation/navigationRef';
@@ -83,6 +84,33 @@ export default function Notifications({ navigation }) {
     );
   };
 
+  /* DELETE ALL. Irreversible and it clears rows the user cannot see on screen (the inbox is
+   * paginated), so the confirmation says how many and says plainly that nothing the
+   * notifications point at is affected — the same promise the single delete makes. */
+  const onDeleteAll = () => {
+    if (!items.length) return;
+    Alert.alert(
+      'Delete all notifications',
+      'This empties your notifications. The appointments and documents they refer to are not affected.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete all',
+          style: 'destructive',
+          onPress: async () => {
+            const res = await dispatch(deleteAllNotifications());
+            if (res.meta.requestStatus === 'rejected') {
+              Alert.alert(
+                'Could not clear notifications',
+                res.payload?.message || 'Please check your connection and try again.',
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -95,13 +123,23 @@ export default function Notifications({ navigation }) {
           <ArrowLeft size={22} color="#1E293B" />
         </TouchableOpacity>
         <Text style={styles.title}>Notifications</Text>
-        {unreadCount > 0 ? (
-          <TouchableOpacity onPress={onMarkAllRead} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Text style={styles.markAllText}>Mark all read</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.headerSpacer} />
-        )}
+        <View style={styles.headerActions}>
+          {unreadCount > 0 && (
+            <TouchableOpacity onPress={onMarkAllRead} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
+              <Text style={styles.markAllText}>Mark all read</Text>
+            </TouchableOpacity>
+          )}
+          {items.length > 0 && (
+            <TouchableOpacity
+              onPress={onDeleteAll}
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              accessibilityLabel="Delete all notifications"
+            >
+              <Text style={styles.deleteAllText}>Delete all</Text>
+            </TouchableOpacity>
+          )}
+          {unreadCount === 0 && items.length === 0 && <View style={styles.headerSpacer} />}
+        </View>
       </View>
 
       {loading && items.length === 0 ? (
@@ -163,6 +201,10 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 17, fontFamily: F.PoppinsSemiBold, color: '#1E293B' },
   markAllText: { fontSize: 13, fontFamily: F.PoppinsMedium, color: '#11418A' },
+  // The two header actions sit together on the right. Destructive one last, so a tap aimed at
+  // "Mark all read" cannot land on "Delete all" by being a few pixels off.
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: wp(3) },
+  deleteAllText: { fontSize: 13, fontFamily: F.PoppinsMedium, color: '#DC2626' },
   headerSpacer: { width: wp(20) },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: wp(10) },
   emptyTitle: { fontSize: 15, fontFamily: F.PoppinsSemiBold, color: '#1E293B', marginTop: hp(1.5) },

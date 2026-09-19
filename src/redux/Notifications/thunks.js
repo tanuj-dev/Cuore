@@ -48,6 +48,22 @@ export const deleteNotification = createAsyncThunk(
   },
 );
 
+/**
+ * Empty the inbox. One call, not one per row: deleting thirty notifications one at a time is
+ * thirty requests, thirty chances to half-fail, and a list that empties in front of the user in
+ * stages.
+ */
+export const deleteAllNotifications = createAsyncThunk(
+  'notifications/deleteAll',
+  async (_arg, { rejectWithValue }) => {
+    const res = await deleteApiCall('/api/v1/notifications');
+    if (res?.status === 200 && res.data?.status === 'success') {
+      return { deleted: res.data.deleted || 0 };
+    }
+    return rejectWithValue(res?.data || { message: 'Could not clear notifications' });
+  },
+);
+
 export const markAllNotificationsRead = createAsyncThunk(
   'notifications/markAllRead',
   async (_arg, { rejectWithValue }) => {

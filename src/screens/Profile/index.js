@@ -50,9 +50,14 @@ const profileOptions = [
     section: 'ACCOUNT & PRIVACY',
   },
   {
-    // Family members (dependants) — a child or elderly parent who needs consultations but has
-    // no phone of their own. Reuses the existing person icon rather than adding an asset.
-    title: 'Family Members',
+    /* Family members (dependants) — a child or elderly parent who needs consultations but has
+     * no phone of their own. Reuses the existing person icon rather than adding an asset.
+     *
+     * Named "Family Members & Swap User" after the review reported "did not find the swap user
+     * option": switching profiles lives on this screen, and nothing in the app used the words
+     * anyone would scan for. The row also shows who the app is currently acting as — see
+     * renderSection below. */
+    title: 'Family Members & Swap User',
     icon: Images.PERSON1,
     section: 'ACCOUNT & PRIVACY',
   },
@@ -105,6 +110,14 @@ const Profile = ({ navigation }) => {
   const { alert, AlertComponent } = useCustomAlert();
   // Group the options by section
   const role = useSelector(state => state.auth.role);
+  /* Who the app is acting as, from the SAME slice the header chip writes to
+     (redux/Dependants/slice.js). Read-only here — Profile announces the mode, the Family
+     Members screen changes it. */
+  const activeProfileId = useSelector(state => state.dependants?.activeProfileId) || null;
+  const dependantList = useSelector(state => state.dependants?.items) || [];
+  const activeProfileName = activeProfileId
+    ? dependantList.find(d => String(d.dependantId) === String(activeProfileId))?.name || 'a family member'
+    : '';
   const isCaregiver = role === 'caregiver';
   const [refreshing, setRefreshing] = useState(false);
   const [showWebViewModal, setShowWebViewModal] = useState(false);
@@ -174,7 +187,7 @@ const Profile = ({ navigation }) => {
     Caregiver: 'EditCaregiver',
     Doctor: 'EditDoctor',
     'Health Records': 'HealthRecords',
-    'Family Members': 'FamilyMembers',
+    'Family Members & Swap User': 'FamilyMembers',
     'Connected Health Sources': 'ConnectedHealth',
     // Opens a modal rather than navigating; intercepted in the row handler below.
     'Health Data': 'HealthDataModal',
@@ -239,16 +252,25 @@ const Profile = ({ navigation }) => {
             ]}
             resizeMode="contain"
           />
-          <Text
-            style={[
-              styles.itemText,
-              {
-                color: item.title === 'Logout' ? '#EF4444' : '#1E293B',
-              },
-            ]}
-          >
-            {item?.title}
-          </Text>
+          <View style={styles.itemTextWrap}>
+            <Text
+              style={[
+                styles.itemText,
+                {
+                  color: item.title === 'Logout' ? '#EF4444' : '#1E293B',
+                },
+              ]}
+            >
+              {item?.title}
+            </Text>
+            {/* Acting as somebody else is a mode, and Profile is where a user comes to ask
+                "who am I signed in as". Shown only while it is true. */}
+            {item.title === 'Family Members & Swap User' && !!activeProfileName && (
+              <Text style={styles.itemSubText} numberOfLines={1}>
+                {`Using the app as ${activeProfileName}`}
+              </Text>
+            )}
+          </View>
           <Image
             source={Images.RIGHT_ARROW}
             style={[
@@ -820,13 +842,20 @@ const styles = StyleSheet.create({
     width: wp(5.5),
     height: wp(5.5),
   },
+  // The label and its optional subtitle share the row's flexible column; `itemText` keeps its
+  // own styling so every other row looks exactly as it did.
+  itemTextWrap: { flex: 1, marginLeft: wp(3.5), minWidth: 0 },
   itemText: {
-    marginLeft: wp(3.5),
     fontSize: 15,
     fontFamily: 'Poppins-Medium',
-    flex: 1,
     color: '#1E293B',
     letterSpacing: -0.2,
+  },
+  itemSubText: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Medium',
+    color: '#11418A',
+    marginTop: 2,
   },
   arrowIcon: {
     width: wp(4),

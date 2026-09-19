@@ -43,6 +43,44 @@ describe('resolveScreen', () => {
     expect(resolveScreen(undefined)).toBe('Today');
     expect(resolveScreen(null)).toBe('Today');
   });
+
+  // ── THE 21 AUG 2026 SPEC'S LINK COLUMN ───────────────────────────────────────────────────
+  // The spec names PRODUCTS ("Vitals", "Progress", "Assessment", "Cuore Health", "Records",
+  // "Consultation"), none of which were accepted `screen` values. Every one silently fell
+  // through the allowlist onto Today, so the notification "worked" while landing on the wrong
+  // screen — the exact failure this suite exists to catch, from the sender's side instead of
+  // the app's. Each row below is one spec row.
+  it.each([
+    ['P1 red alert -> Cuore Today', 'CuoreToday', 'Today'],
+    ['P2 vitals update -> Vitals', 'Vitals', 'Health'],
+    ['P3 health change -> Cuore Today', 'CuoreToday', 'Today'],
+    ['P4 consultation booked -> Consultation', 'Consultation', 'AppointmentDetails'],
+    ['P5 consultation reminder -> Consultation', 'Consultation', 'AppointmentDetails'],
+    ['P6 teleconsult reminder -> Join Consultation', 'JoinConsultation', 'AppointmentDetails'],
+    ['P7 cancelled/rescheduled -> Consultation', 'Consultation', 'AppointmentDetails'],
+    ['P8 prescription shared -> Records', 'Records', 'HealthRecords'],
+    ['P9 follow-up due -> Book Consultation', 'BookConsultation', 'BookConsultation'],
+    ['P10 weekly progress -> Progress', 'Progress', 'Score'],
+    ['P11 assessment incomplete -> Assessment', 'Assessment', 'OnBoarding'],
+    ['P12 records missing -> Cuore Health', 'CuoreHealth', 'Health'],
+  ])('resolves the spec link for %s', (_label, screen, expected) => {
+    expect(resolveScreen({ screen })).toBe(expected);
+  });
+
+  it('accepts the canonical route name as well as the spec alias', () => {
+    // The backend may send either; both must land in the same place or the two senders drift.
+    expect(resolveScreen({ screen: 'Health' })).toBe('Health');
+    expect(resolveScreen({ screen: 'Score' })).toBe('Score');
+    expect(resolveScreen({ screen: 'Vitals' })).toBe(resolveScreen({ screen: 'Health' }));
+    expect(resolveScreen({ screen: 'Progress' })).toBe(resolveScreen({ screen: 'Score' }));
+  });
+
+  it('does not let an alias smuggle in an unlisted destination', () => {
+    // An alias must resolve to something ON the allowlist, never bypass it.
+    expect(resolveScreen({ screen: 'Login' })).toBe('Today');
+    expect(resolveScreen({ screen: 'DeleteAccount' })).toBe('Today');
+    expect(resolveScreen({ screen: 'CuoreCareSubscribe' })).toBe('Today');
+  });
 });
 
 describe('navigateFromNotification', () => {
@@ -84,6 +122,63 @@ describe('navigateFromNotification', () => {
         screen: 'CuoreCareCertificate',
         params: { appointmentId: 'apt_9', certificateId: 'cert_9' },
       },
+    });
+  });
+
+  it('navigates a spec alias to its real route, not to the alias name', () => {
+    // Regression guard: aliasing in resolveScreen but NOT here would navigate to a route named
+    // "Progress", which does not exist, and React Navigation would warn and do nothing.
+    const { ref, navigate } = makeNavRef();
+    navigateFromNotification(ref, 'Progress', {});
+    expect(navigate).toHaveBeenCalledWith('Score');
+  });
+
+  it('navigates the Vitals alias to the Health screen', () => {
+    const { ref, navigate } = makeNavRef();
+    navigateFromNotification(ref, 'Vitals', {});
+    expect(navigate).toHaveBeenCalledWith('Health');
+  });
+
+  it('routes P9 Book Consultation into the CuoreCare doctor list', () => {
+    // The doctor LIST, deliberately: BookAppointment reads a whole doctor object off its
+    // params, which a notification payload cannot carry — it carries an ID and the list
+    // resolves it against its live data.
+    const { ref, navigate } = makeNavRef();
+    navigateFromNotification(ref, 'BookConsultation', {});
+    expect(navigate).toHaveBeenCalledWith('Home', {
+      screen: 'CuoreCare',
+      params: {
+        screen: 'CuoreCareDoctors',
+        params: { appointmentId: undefined, bookWithDoctorId: null, initialDate: null },
+      },
+    });
+  });
+
+  it('hands a named doctor straight to their booking screen', () => {
+    /* A declined consultation says "book another time" and names the doctor who declined, so
+       the patient lands on that doctor's calendar rather than on a list they have to search
+       again. The list does the hand-off (see DoctorList) once it has resolved the id. */
+    const { ref, navigate } = makeNavRef();
+    navigateFromNotification(ref, 'BookConsultation', {
+      appointmentId: 'apt_9',
+      doctorId: 'doc_1',
+      initialDate: '2026-10-02',
+    });
+    expect(navigate).toHaveBeenCalledWith('Home', {
+      screen: 'CuoreCare',
+      params: {
+        screen: 'CuoreCareDoctors',
+        params: { appointmentId: 'apt_9', bookWithDoctorId: 'doc_1', initialDate: '2026-10-02' },
+      },
+    });
+  });
+
+  it('routes the Consultation alias into the appointment screen with its id', () => {
+    const { ref, navigate } = makeNavRef();
+    navigateFromNotification(ref, 'Consultation', { appointmentId: 'apt_3' });
+    expect(navigate).toHaveBeenCalledWith('Home', {
+      screen: 'CuoreCare',
+      params: { screen: 'CuoreCareAppointment', params: { appointmentId: 'apt_3' } },
     });
   });
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,11 +18,33 @@ import { getCuoreCareDoctors } from '../../redux/CuoreCare/thunks';
 
 const F = CC.fonts;
 
-export default function DoctorList({ navigation }) {
+export default function DoctorList({ navigation, route }) {
   const dispatch = useDispatch();
   const { list, loading, error } = useSelector(state => state.cuoreCare.doctors);
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+
+  /* ACCEPTING A FOLLOW-UP LANDS HERE, not on the booking form.
+   *
+   * BookAppointment needs a whole doctor object — its channel list decides which consultation
+   * modes are even offered — and a snapshot carried from a reminder issued weeks ago can be
+   * stale. So the reminder hands over an ID, this screen resolves it against the LIVE list, and
+   * hands the real record on. If that doctor is no longer bookable the patient simply stays
+   * here with the list in front of them, which is the right outcome rather than an error.
+   */
+  const bookWithDoctorId = route?.params?.bookWithDoctorId || null;
+  const initialDate = route?.params?.initialDate || null;
+  const handedOff = useRef(false);
+
+  useEffect(() => {
+    if (!bookWithDoctorId || handedOff.current || loading) return;
+    const doc = (list || []).find(d => String(d._id) === String(bookWithDoctorId));
+    if (!doc) return;
+    handedOff.current = true;
+    // `replace`, not `navigate`: the patient asked to book, not to browse. Going back from the
+    // booking screen should return them to Today, not to a list they never chose to open.
+    navigation.replace('CuoreCareBook', { doctor: doc, initialDate });
+  }, [bookWithDoctorId, initialDate, list, loading, navigation]);
 
   const fetch = useCallback(
     q => dispatch(getCuoreCareDoctors({ search: q })),

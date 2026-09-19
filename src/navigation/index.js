@@ -24,6 +24,7 @@ import Predict from '../screens/Predict';
 import Explore from '../screens/Explore';
 import Profile from '../screens/Profile';
 import FamilyMembers from '../screens/FamilyMembers';
+import CycleTracker from '../screens/CycleTracker';
 import Tobacco from '../screens/CuoreTobacco';
 import Mind from '../screens/CuoreMind';
 import Fitness from '../screens/Fitness';
@@ -271,6 +272,9 @@ function TodayStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="TodayMain" component={Today} />
+      {/* Cycle calendar, opened from the button beside Update Readings. Lives in this stack
+          because that is its only entry point — Today is where the spec puts it. */}
+      <Stack.Screen name="CycleTracker" component={CycleTracker} />
       <Stack.Screen name="CalorieIgnite" component={CalorieIgnite} />
       <Stack.Screen name="MidMorningBoost" component={MidMorningBoost} />
       <Stack.Screen name="RefreshRefuel" component={RefreshRefuel} />

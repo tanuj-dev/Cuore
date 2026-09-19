@@ -4,6 +4,7 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
   deleteNotification,
+  deleteAllNotifications,
 } from './thunks';
 
 const initialState = {
@@ -65,6 +66,16 @@ const notificationsSlice = createSlice({
           if (wasUnread) state.unreadCount = Math.max(0, state.unreadCount - 1);
           state.total = Math.max(0, state.total - 1);
         }
+      })
+
+      /* "Delete all" empties the inbox outright, so the counters go to zero rather than being
+         decremented — the server deleted every row this user has, including any not on the
+         page currently loaded, and subtracting page-by-page would leave `total` non-zero above
+         an empty list. */
+      .addCase(deleteAllNotifications.fulfilled, state => {
+        state.items = [];
+        state.unreadCount = 0;
+        state.total = 0;
       });
   },
 });

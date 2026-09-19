@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ArrowLeft, UserPlus, Trash2, Pencil, Users } from 'lucide-react-native';
+import { ArrowLeft, UserPlus, Trash2, Pencil, Users, Repeat } from 'lucide-react-native';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -29,6 +29,7 @@ import {
   updateDependant,
   removeDependant,
 } from '../../redux/Dependants/thunks';
+import { setActiveProfile } from '../../redux/Dependants/slice';
 
 /**
  * Family members on this account — a child, an elderly parent: someone who needs consultations
@@ -49,6 +50,11 @@ export default function FamilyMembers({ navigation }) {
   const { alert, AlertComponent } = useCustomAlert();
 
   const items = useSelector(state => state.dependants?.items || []);
+  // Whose profile the app is currently acting as. Null is the account holder — the same state
+  // the header chip (components/ProfileSwitcher.js) reads and writes; this screen is a second
+  // DOOR to it, never a second copy of it.
+  const activeProfileId = useSelector(state => state.dependants?.activeProfileId) || null;
+  const isActive = m => String(m.dependantId) === String(activeProfileId);
   const loading = useSelector(state => state.dependants?.loading);
   const saving = useSelector(state => state.dependants?.saving);
 
@@ -142,10 +148,37 @@ export default function FamilyMembers({ navigation }) {
     );
   };
 
+  /* SWAP USER, where somebody actually looks for it.
+   *
+   * The switcher itself already existed as a chip in the Today and CuoreCare headers, and the
+   * review still reported "did not find the swap user option" — a chip in a header is not where
+   * anyone looks for "use the app as my child". This screen is: it is the one place in the app
+   * that lists the family, reached from Profile > Family Members.
+   *
+   * Nothing new is introduced. Tapping a row dispatches the SAME `setActiveProfile` the chip
+   * dispatches, so there is one piece of state and one meaning of "who am I acting for". */
+  const swapTo = item => {
+    const next = isActive(item) ? null : item.dependantId;
+    dispatch(setActiveProfile(next));
+    alert(
+      next ? `Now using the app as ${item.name}` : 'Back to your own profile',
+      next
+        ? 'Bookings and records you open will be theirs until you switch back.'
+        : 'You are viewing your own records again.',
+    );
+  };
+
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{(item.name || '?').charAt(0).toUpperCase()}</Text>
+    <TouchableOpacity
+      style={[styles.card, isActive(item) && styles.cardActive]}
+      activeOpacity={0.8}
+      onPress={() => swapTo(item)}
+      accessibilityLabel={isActive(item) ? `Stop using the app as ${item.name}` : `Use the app as ${item.name}`}
+    >
+      <View style={[styles.avatar, isActive(item) && styles.avatarActive]}>
+        <Text style={[styles.avatarText, isActive(item) && styles.avatarTextActive]}>
+          {(item.name || '?').charAt(0).toUpperCase()}
+        </Text>
       </View>
       <View style={styles.cardBody}>
         <Text style={styles.cardName} numberOfLines={1}>
@@ -159,6 +192,9 @@ export default function FamilyMembers({ navigation }) {
           ]
             .filter(Boolean)
             .join(' · ') || 'No details added'}
+        </Text>
+        <Text style={[styles.swapHint, isActive(item) && styles.swapHintActive]} numberOfLines={1}>
+          {isActive(item) ? 'Using the app as this person — tap to switch back' : 'Tap to use the app as this person'}
         </Text>
       </View>
       <TouchableOpacity
@@ -175,7 +211,7 @@ export default function FamilyMembers({ navigation }) {
       >
         <Trash2 size={17} color="#DC2626" />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -189,8 +225,29 @@ export default function FamilyMembers({ navigation }) {
 
       <Text style={styles.intro}>
         Add a child or another family member who needs consultations. Each person keeps their own
-        records and prescriptions, separate from yours.
+        records and prescriptions, separate from yours. Tap anyone to use the app as them.
       </Text>
+
+      {/* Says who the app is acting as RIGHT NOW, and offers the way back. Acting as someone
+          else is a mode, and a mode with no indicator is how a parent books their own
+          appointment into their child's record. */}
+      {!!activeProfileId && (
+        <TouchableOpacity
+          style={styles.actingBanner}
+          activeOpacity={0.8}
+          onPress={() => {
+            dispatch(setActiveProfile(null));
+            alert('Back to your own profile', 'You are viewing your own records again.');
+          }}
+        >
+          <Repeat size={15} color="#FFFFFF" />
+          <Text style={styles.actingText} numberOfLines={1}>
+            Using the app as{' '}
+            {items.find(d => String(d.dependantId) === String(activeProfileId))?.name || 'a family member'}
+          </Text>
+          <Text style={styles.actingAction}>Switch back</Text>
+        </TouchableOpacity>
+      )}
 
       {loading && !items.length ? (
         <View style={styles.center}>
@@ -367,6 +424,28 @@ const styles = StyleSheet.create({
   cardName: { fontSize: hp(1.9), fontWeight: '600', color: '#0F172A' },
   cardMeta: { fontSize: hp(1.5), color: '#64748B', marginTop: 2 },
   iconBtn: { padding: wp(2) },
+
+  /* The row the app is currently acting as. Outlined rather than filled: it sits in a list of
+     people and a solid block would read as a selected list item, not as an active mode. */
+  cardActive: { borderColor: '#11418A', backgroundColor: '#F2F6FB' },
+  avatarActive: { backgroundColor: '#11418A' },
+  avatarTextActive: { color: '#FFFFFF' },
+  swapHint: { fontSize: hp(1.4), color: '#94A3B8', marginTop: 3 },
+  swapHintActive: { color: '#11418A', fontWeight: '600' },
+
+  actingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(2),
+    marginHorizontal: wp(4),
+    marginBottom: hp(1.2),
+    backgroundColor: '#11418A',
+    borderRadius: wp(3),
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(3.5),
+  },
+  actingText: { flex: 1, fontSize: hp(1.6), fontWeight: '600', color: '#FFFFFF' },
+  actingAction: { fontSize: hp(1.5), fontWeight: '700', color: '#FFFFFF', textDecorationLine: 'underline' },
 
   empty: { alignItems: 'center', paddingTop: hp(8), paddingHorizontal: wp(10) },
   emptyTitle: { fontSize: hp(1.95), fontWeight: '600', color: '#334155', marginTop: hp(1.5) },

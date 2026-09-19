@@ -23,14 +23,16 @@ import {
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
-import { Info, Bell } from 'lucide-react-native';
+import { Info, Bell, Trash2, CalendarDays } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { fetchNotifications } from '../../redux/Notifications/thunks';
 import { getTodayConsultations } from '../../redux/CuoreCare/thunks';
 import ConsultationTimeCard from './ConsultationTimeCard';
 import ProgressBarWithImage from '../../components/ProgressBar';
+import PendingVisitCards from './PendingVisitCards';
 import Reminder from '../../components/Reminder';
 import { useDispatch, useSelector } from 'react-redux';
+import ProfileSwitcher from '../../components/ProfileSwitcher';
 import { getHomeData, getProfile } from '../../redux/slices';
 import ReminderEditor from '../../components/ReminderEditor';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,9 +41,10 @@ import moment from 'moment';
 import { Fonts } from '../../utilities';
 import { logoutUser } from '../../redux/Auth/authThunk';
 import SessionExpiredModal from '../../components/SessionExpired';
-import { checkReminderThunk, getPendingDoctorReminders, respondToDoctorReminder } from '../../redux/slices';
+import { checkReminderThunk, getPendingDoctorReminders, respondToDoctorReminder, deleteReminderThunk } from '../../redux/slices';
 import { getNotification } from '../../redux/Home/notificationThunk';
 import { dismissAlert, respondCheckin } from '../../redux/Home/homeThunk';
+import { fetchCycle } from '../../redux/Cycle/thunks';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import SubscriptionExpiringModal from '../../components/SubscriptionExpiringModal';
 import {
@@ -307,6 +310,8 @@ const Today = ({ navigation, route }) => {
   const [reminderList, setReminderList] = useState([]);
   const [toastType, setToastType] = useState('success');
   const [loadingTaskId, setLoadingTaskId] = useState(null);
+  // The reminder currently being deleted, so its row can show progress instead of the bin.
+  const [deletingSourceId, setDeletingSourceId] = useState(null);
   const [checkinResponseLoading, setCheckinResponseLoading] = useState({});
   const [doctorImageLoadFailed, setDoctorImageLoadFailed] = useState(false);
   const [subscriptionExpiryVisible, setSubscriptionExpiryVisible] =
@@ -318,6 +323,10 @@ const Today = ({ navigation, route }) => {
   const [pendingDoctorReminderIds, setPendingDoctorReminderIds] = useState(
     () => new Set(),
   );
+  /* The pending reminders themselves, not only their ids. The ids answer "does this schedule
+   * row need Accept/Decline"; the rows are needed for the pinned follow-up cards above the day,
+   * which exist precisely BECAUSE a follow-up months away generates no schedule row at all. */
+  const [pendingDoctorReminders, setPendingDoctorReminders] = useState([]);
   const [respondingReminderId, setRespondingReminderId] = useState(null);
 
   const dispatch = useDispatch();
@@ -329,6 +338,8 @@ const Today = ({ navigation, route }) => {
   const profileData = useSelector(state => state.profile.data?.data?.user);
   const payment = useSelector(state => state.profile?.data?.data?.payment);
   const doctorProfile = useSelector(state => state.home.data?.doctor);
+  // Resolved practice identity — see utils/doctorBranding.js on the backend.
+  const branding = useSelector(state => state.home.data?.doctor?.branding);
   const doctorImageUri = useMemo(
     () =>
       profileData?.doctor?.photoUrl ||
@@ -538,9 +549,9 @@ const Today = ({ navigation, route }) => {
     if (!userId) return;
     dispatch(getPendingDoctorReminders(userId)).then(res => {
       if (getPendingDoctorReminders.fulfilled.match(res)) {
-        setPendingDoctorReminderIds(
-          new Set((res.payload || []).map(r => r._id?.toString())),
-        );
+        const list = res.payload || [];
+        setPendingDoctorReminders(list);
+        setPendingDoctorReminderIds(new Set(list.map(r => r._id?.toString())));
       }
     });
   }, [dispatch, userId]);
@@ -548,6 +559,80 @@ const Today = ({ navigation, route }) => {
   useEffect(() => {
     loadPendingDoctorReminders();
   }, [loadPendingDoctorReminders]);
+
+  /* Whether to offer the cycle calendar. Fetched on its own rather than threaded through
+   * getHomeData: that aggregation is large and shared, and this is one boolean the server already
+   * derives (female, 11-51, periods regular or irregular). A failure here is silent by design —
+   * the slice does not set an error — because most accounts are simply not eligible, and a patient
+   * who was never offered the feature should not be told it failed to load. */
+  const cycleTrackingEnabled = useSelector(s => s.cycle?.data?.trackingEnabled) === true;
+  /* On FOCUS, not on mount. Today is a tab screen and stays mounted, so a mount-only fetch would
+   * miss the one moment this answer changes — finishing the health assessment, which is where the
+   * question is asked. The button would then not appear until the app was restarted. */
+  useFocusEffect(
+    useCallback(() => {
+      if (!userId || isCaregiver) return;
+      dispatch(fetchCycle());
+    }, [dispatch, userId, isCaregiver]),
+  );
+
+  /* ACCEPTING A FOLLOW-UP IS AN AGREEMENT TO BOOK, so it ends on the booking screen with the
+   * doctor and the prescribed date already chosen — the patient can still pick another day,
+   * because the date is the doctor's suggestion and not an appointment.
+   *
+   * The response is recorded FIRST and navigation only follows a successful one: landing on the
+   * booking screen while the reminder is still pending would leave the card waiting for an
+   * answer the patient has already given.
+   *
+   * The doctor is passed by id rather than as an object. BookAppointment needs the doctor's real
+   * channel list to show the right modes, and a snapshot taken from a reminder issued weeks ago
+   * could easily be stale — so the doctor list resolves it live and hands over the fresh record.
+   */
+  const handleVisitReminderAccept = async reminder => {
+    if (!reminder?._id || respondingReminderId) return;
+    const id = String(reminder._id);
+    setRespondingReminderId(id);
+    try {
+      await dispatch(
+        respondToDoctorReminder({ userId, reminderId: id, status: 'accepted' }),
+      ).unwrap();
+      loadPendingDoctorReminders();
+      navigation.navigate('CuoreCare', {
+        screen: 'CuoreCareDoctors',
+        params: {
+          // The doctor to book with, and the day to open on.
+          bookWithDoctorId: reminder.doctorId?._id || reminder.doctorId || null,
+          initialDate: reminder.startDate
+            ? moment(reminder.startDate).format('YYYY-MM-DD')
+            : null,
+        },
+      });
+    } catch (error) {
+      setToastType('error');
+      setToast('Could not accept this. Please try again.');
+    } finally {
+      setRespondingReminderId(null);
+    }
+  };
+
+  const handleVisitReminderDecline = async reminder => {
+    if (!reminder?._id || respondingReminderId) return;
+    const id = String(reminder._id);
+    setRespondingReminderId(id);
+    try {
+      await dispatch(
+        respondToDoctorReminder({ userId, reminderId: id, status: 'declined' }),
+      ).unwrap();
+      // The card goes as soon as the server has it — declining IS the removal.
+      loadPendingDoctorReminders();
+      await dispatch(getHomeData(userId));
+    } catch (error) {
+      setToastType('error');
+      setToast('Could not decline this. Please try again.');
+    } finally {
+      setRespondingReminderId(null);
+    }
+  };
 
   const handleReminderRespond = async (item, status) => {
     if (!item?.sourceId || respondingReminderId) return;
@@ -573,6 +658,63 @@ const Today = ({ navigation, route }) => {
     } finally {
       setRespondingReminderId(null);
     }
+  };
+
+  /* DELETE A REMINDER THE PATIENT OWNS.
+   *
+   * Declining a doctor's reminder already removes its card, but that is an answer to the doctor,
+   * not a way to clear something off your own day — and it only exists while a response is
+   * pending. A medication the patient set up, or one they accepted weeks ago and have since
+   * stopped taking, had no way off the schedule at all. This is that: the patient's own choice,
+   * not a side effect of responding to somebody else.
+   *
+   * It removes the reminder and EVERY card it generates, on every date — not just today's. That
+   * is what the backend's DELETE does (timelineController.deleteReminder drops the source
+   * document and all its TimelineCards), so the confirmation says so plainly rather than letting
+   * someone discover it tomorrow.
+   *
+   * A doctor-prescribed reminder gets different wording. Removing a prescription reminder is not
+   * the same act as removing "call the pharmacy", and the confirmation should not pretend it is —
+   * it also tells them the doctor is not notified, because they are not, and a patient who stops
+   * a medicine should know their doctor will not find out this way. */
+  const handleDeleteReminder = item => {
+    if (isCaregiver || !item?.sourceId || deletingSourceId) return;
+
+    const isMedication = item.type === 'USER_MEDICATION';
+    const fromDoctor = item.source === 'doctor' || item.source === 'partner';
+    const noun = isMedication ? 'medication reminder' : 'reminder';
+
+    alert(
+      `Remove ${item.title}?`,
+      fromDoctor
+        ? `This ${noun} was added by your doctor. Removing it deletes every future reminder for it, not just today's, and your doctor is not notified.`
+        : `This deletes every future reminder for it, not just today's.`,
+      [
+        { text: 'Keep', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingSourceId(item.sourceId);
+            try {
+              await dispatch(
+                deleteReminderThunk({ sourceId: item.sourceId, userId }),
+              ).unwrap();
+              // The day is rebuilt from the reminders themselves, so refetch rather than
+              // splicing locally — the same reason a decline refreshes above.
+              await dispatch(getHomeData(userId));
+              setToastType('success');
+              setToast(`${item.title} removed`);
+            } catch (error) {
+              setToastType('error');
+              setToast('Could not remove this reminder. Please try again.');
+            } finally {
+              setDeletingSourceId(null);
+            }
+          },
+        },
+      ],
+    );
   };
 
   // Notification scheduling is handled by the backend via Firebase push notifications.
@@ -760,51 +902,76 @@ const Today = ({ navigation, route }) => {
       >
         <View style={styles.header}>
           <View style={styles.headerTopRow}>
-            <View>
-              <Text style={styles.username}>
-                {profileData?.display_name
-                  ? `Hi, ${profileData.display_name.split(' ')[0]}`
-                  : 'User'}
-              </Text>
-              {/* White-labeling (CuoreMD spec) — present only when the linked doctor
-                  belongs to a polyclinic; falls back to nothing (not "Cuore") otherwise,
-                  since the app's own branding is everywhere else already. */}
-              {!!doctorProfile?.clinic?.name && (
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}
-                >
-                  {doctorProfile.clinic.logoUrl && (
-                    <Image
-                      source={{ uri: doctorProfile.clinic.logoUrl }}
-                      style={{ width: 14, height: 14, borderRadius: 3, marginRight: 4 }}
-                    />
-                  )}
-                  <Text
-                    style={{ fontSize: 11, color: '#64748B', fontFamily: 'Poppins-Regular' }}
-                    numberOfLines={1}
-                  >
-                    {doctorProfile.clinic.name}
-                  </Text>
-                </View>
-              )}
-            </View>
+            <Text style={styles.username} numberOfLines={1}>
+              {profileData?.display_name
+                ? `Hi, ${profileData.display_name.split(' ')[0]}`
+                : 'User'}
+            </Text>
+            {/* Swap user — the family-plan profile switcher. Renders nothing unless the
+                account actually has family members, so a single-person account's header is
+                unchanged. */}
+            <ProfileSwitcher compact style={styles.headerSwitcher} />
             <TouchableOpacity
               onPress={() => navigation.navigate('Notifications')}
               style={styles.notificationButton}
               activeOpacity={0.8}
             >
-              <View style={styles.buttonIconWrapper}>
+              {/* NOT `buttonIconWrapper`: that style sets overflow:'hidden' so the Add and
+                  My-Health buttons can clip their <Image> into a circle (the doctor avatar).
+                  Reusing it here clipped the unread badge's top off, and dropping overflow from
+                  the shared style would have rendered that avatar square. Visually identical,
+                  minus the clipping. */}
+              <View style={styles.bellIconWrapper}>
                 <Bell size={hp(2)} color="#11418A" />
-                {unreadNotificationCount > 0 && (
-                  <View style={styles.notificationBadge}>
-                    <Text style={styles.notificationBadgeText}>
-                      {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
-                    </Text>
-                  </View>
-                )}
               </View>
+              {/* The badge is a SIBLING of the circle, not a child.
+                  It is meant to overhang the circle's top-right corner, and a child cannot do
+                  that reliably: the circle clipped it on iOS (overflow:'hidden', needed by the
+                  sibling buttons for their avatars) and an elevated view clips overflowing
+                  children on some Android versions. As a sibling of the wrapper it is positioned
+                  against the untouched, unclipped TouchableOpacity instead. */}
+              {unreadNotificationCount > 0 && (
+                <View style={styles.notificationBadge} pointerEvents="none">
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
+          {/* The branding sits on its OWN full-width line, below the greeting row, rather than
+              sharing that row with the profile switcher and the bell. Three flexible things on
+              one line meant a real clinic name lost: "Sunrise Multispecialty Clinic" either
+              shoved the switcher off the right edge or was itself cut to "Sunris…". A full line
+              is also what the spec asked for — "show larger and better for branding". */}
+          {/* White-labelling (CuoreMD spec) — "show larger and better for branding".
+              Reads `branding`, resolved server-side as clinic → the doctor's own practice
+              name → the physician (utils/doctorBranding.js). It used to read `clinic`
+              alone, so a solo practitioner with a perfectly good practice name on their
+              prescriptions got nothing here at all. Still falls back to NOTHING rather than
+              to "Cuore": a line captioned with our own product name where a clinic's belongs
+              is not white-labelling. */}
+          {!!(branding?.name || doctorProfile?.clinic?.name) && (
+            <View style={styles.brandRow}>
+              {!!(branding?.logoUrl || doctorProfile?.clinic?.logoUrl) && (
+                <Image
+                  source={{ uri: branding?.logoUrl || doctorProfile.clinic.logoUrl }}
+                  style={styles.brandLogo}
+                />
+              )}
+              <View style={styles.brandTextWrap}>
+                <Text style={styles.brandName} numberOfLines={1}>
+                  {branding?.name || doctorProfile.clinic.name}
+                </Text>
+                {!!branding?.doctorName && branding.source !== 'physician' && (
+                  <Text style={styles.brandDoctor} numberOfLines={1}>
+                    {branding.doctorName}
+                    {branding.specialization ? ` · ${branding.specialization}` : ''}
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
           <View style={styles.headerBottomRow}>
             {dates.map(date => (
               <TouchableOpacity
@@ -899,7 +1066,38 @@ const Today = ({ navigation, route }) => {
           >
             <Text style={styles.biomarkerButtonText}>Update{'\n'}Readings</Text>
           </TouchableOpacity>
+
+          {/* CYCLE CALENDAR — "Show calendar in Today next to update readings, tapping leads to
+              questions."
+              Rendered only when the health assessment says this patient has periods and they are
+              regular or irregular (the server decides; see controllers/cycleController.js). For
+              everyone else the row is exactly as it was — this is not a control most of the app's
+              users should be shown and then told they cannot use. */}
+          {cycleTrackingEnabled && (
+            <TouchableOpacity
+              disabled={isCaregiver}
+              onPress={() => navigation.navigate('CycleTracker')}
+              style={styles.cycleButton}
+              activeOpacity={0.85}
+              accessibilityLabel="Cycle calendar"
+            >
+              <CalendarDays size={hp(2.6)} color="#BE123C" />
+              <Text style={styles.cycleButtonText}>Cycle</Text>
+            </TouchableOpacity>
+          )}
         </View>
+
+        {/* Pinned above the day, and above the progress bar: a follow-up the doctor asked for
+            is the one thing on this screen with a deadline, and it stays here until the patient
+            answers it. Renders nothing when there is nothing pending. */}
+        {!isCaregiver && (
+          <PendingVisitCards
+            reminders={pendingDoctorReminders}
+            respondingId={respondingReminderId}
+            onAccept={handleVisitReminderAccept}
+            onDecline={handleVisitReminderDecline}
+          />
+        )}
 
         <ProgressBarWithImage
           data={homeData?.progress}
@@ -1190,6 +1388,15 @@ const Today = ({ navigation, route }) => {
               const isEditable =
                 item?.editable === true &&
                 ['wake up', 'fitness'].includes(item.title?.toLowerCase());
+              /* Only cards backed by a reminder document the patient owns. SYSTEM cards
+               * (Breakfast, Fitness, Lunch) are generated from the plan and have no source
+               * document — the DELETE would 404, and a bin that cannot work is worse than no
+               * bin. A caregiver has read-only access, so they never see it either. */
+              const isDeletable =
+                !isCaregiver &&
+                !!item?.sourceId &&
+                (item.type === 'USER_MEDICATION' || item.type === 'USER_REMINDER');
+              const deletingThis = deletingSourceId === item?.sourceId;
               const isPendingDoctorReminder =
                 item?.sourceId && pendingDoctorReminderIds.has(item.sourceId);
               const respondingThis = respondingReminderId === item?.sourceId;
@@ -1222,6 +1429,23 @@ const Today = ({ navigation, route }) => {
                           onPress={handleEditPress}
                         >
                           <Image style={styles.editIcon} source={Images.EDIT} />
+                        </TouchableOpacity>
+                      )}
+
+                      {isDeletable && (
+                        <TouchableOpacity
+                          disabled={deletingThis}
+                          onPress={() => handleDeleteReminder(item)}
+                          // The bin is a small target next to the bell; this widens what the
+                          // finger has to hit without moving anything on screen.
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          style={styles.deleteIconButton}
+                        >
+                          {deletingThis ? (
+                            <ActivityIndicator size="small" color="#6B7280" />
+                          ) : (
+                            <Trash2 size={hp(1.9)} color="#94A3B8" />
+                          )}
                         </TouchableOpacity>
                       )}
                     </View>
@@ -1533,11 +1757,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  // No `marginLeft: 'auto'` — the greeting now carries flex:1, which does the pushing.
+  headerSwitcher: { marginRight: 10 },
+  // Its own full-width line under the greeting row, so a long clinic name has somewhere to go.
+  brandRow: { flexDirection: 'row', alignItems: 'center', marginBottom: hp(1.2) },
+  brandLogo: { width: 26, height: 26, borderRadius: 6, marginRight: 7, backgroundColor: '#F1F5F9' },
+  brandTextWrap: { flex: 1, minWidth: 0 },
+  brandName: { fontSize: 14, color: '#16283F', fontFamily: 'Poppins-SemiBold' },
+  brandDoctor: { fontSize: 11, color: '#64748B', fontFamily: 'Poppins-Regular', marginTop: -1 },
   username: {
     fontFamily: 'Poppins-Regular',
     fontSize: 18,
     color: '#1E293B',
     letterSpacing: -0.4,
+    /* Takes the slack in the header row, and gives it back first. Without this the greeting
+     * sized to its own text and pushed the profile switcher clean off the right edge. */
+    flex: 1,
+    minWidth: 0,
   },
   userIcon: {
     // elevation: 1,
@@ -1583,6 +1819,24 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     textAlign: 'center',
     letterSpacing: -0.4,
+  },
+  // Sits beside Update Readings and matches its shape, in the rose the calendar itself uses for
+  // period days — so the two buttons read as one row of actions rather than a bolted-on extra.
+  cycleButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF1F2',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: hp(1.8),
+    borderRadius: hp(1.2),
+    borderWidth: 1.5,
+    borderColor: '#FECDD3',
+  },
+  cycleButtonText: {
+    fontSize: hp(1.4),
+    color: '#BE123C',
+    fontFamily: Fonts.semiBold,
+    marginTop: hp(0.3),
   },
   biomarkerButton: {
     alignItems: 'flex-end',
@@ -1776,6 +2030,13 @@ const styles = StyleSheet.create({
     width: hp(2),
     resizeMode: 'contain',
   },
+  // Sized to match the bell and edit icons beside it, so the action column stays one rhythm.
+  deleteIconButton: {
+    height: hp(2),
+    width: hp(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyContainer: {
     alignItems: 'center',
     marginTop: 40,
@@ -1859,7 +2120,10 @@ const styles = StyleSheet.create({
   notificationBadge: {
     position: 'absolute',
     top: -2,
-    right: -2,
+    /* Offset by the wrapper's own marginRight, because this is now positioned against the
+       TouchableOpacity (whose width includes that margin) rather than against the circle. Without
+       it the badge drifts left and detaches from the bell's corner. */
+    right: wp(1.5) - 2,
     minWidth: hp(1.8),
     height: hp(1.8),
     borderRadius: hp(0.9),
@@ -1910,6 +2174,27 @@ const styles = StyleSheet.create({
       android: { elevation: 4 },
       ios: { elevation: 6 },
     }),
+  },
+  /* Same circle as buttonIconWrapper below, minus overflow:'hidden'.
+   *
+   * Kept as a separate style rather than dropping overflow from the shared one: the Add and
+   * My-Health buttons rely on that clipping to round off their <Image>, and the doctor avatar
+   * would render square without it. Nothing inside this wrapper needs clipping, and losing
+   * overflow also stops iOS clipping the shadow. The badge is NOT a child of this view — see
+   * the note at the call site. */
+  bellIconWrapper: {
+    width: hp(3.5),
+    height: hp(3.5),
+    borderRadius: hp(1.75),
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(1.5),
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 2,
   },
   buttonIconWrapper: {
     width: hp(3.5),
