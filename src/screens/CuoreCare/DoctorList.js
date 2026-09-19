@@ -51,14 +51,30 @@ export default function DoctorList({ navigation, route }) {
     [dispatch],
   );
 
-  // Initial load
+  /* ONE effect, not two. The initial load used to sit in its own effect while the debounced
+   * search below ALSO fired for the empty query 350ms after mount — so opening the doctor list
+   * always sent the same request twice. The first load now runs immediately and only a typed
+   * change is debounced.
+   *
+   * The sequence guard is here for the same reason as everywhere else in this flow: the
+   * debounce cancels timers, not requests already in flight, so a slow answer for an earlier
+   * prefix must not be allowed to replace a newer list. */
+  const seq = useRef(0);
+  const lastSearch = useRef('');
   useEffect(() => {
-    fetch('');
-  }, [fetch]);
-
-  // Debounced search
-  useEffect(() => {
-    const t = setTimeout(() => fetch(search.trim()), 350);
+    const q = search.trim();
+    const typed = lastSearch.current !== q;
+    lastSearch.current = q;
+    const mine = ++seq.current;
+    const run = () => {
+      if (mine !== seq.current) return;
+      fetch(q);
+    };
+    if (!typed) {
+      run();
+      return undefined;
+    }
+    const t = setTimeout(run, 350);
     return () => clearTimeout(t);
   }, [search, fetch]);
 

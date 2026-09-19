@@ -50,7 +50,7 @@ const F = CC.fonts;
 export default function AppointmentDetails({ navigation, route }) {
   const dispatch = useDispatch();
   const { appointmentId, justBooked } = route.params || {};
-  const { data: appt, loading } = useSelector(state => state.cuoreCare.current);
+  const { data: appt, loading, error: loadError } = useSelector(state => state.cuoreCare.current);
   const actionLoading = useSelector(state => state.cuoreCare.action.loading);
   const { alert, AlertComponent } = useCustomAlert();
 
@@ -200,12 +200,36 @@ export default function AppointmentDetails({ navigation, route }) {
     }
   };
 
-  if ((loading && !isThis) || !appt) {
+  /* `current` is a SHARED slot in the slice — it still holds whichever appointment was opened
+   * last. So the gate is `isThis`, not `appt`: without it, a failed load for this appointment
+   * leaves the previous one's doctor, time and mode on screen under this appointment's id, and
+   * the Join button then acts on an appointment the patient is not looking at.
+   *
+   * And a failure has to SAY so. The old condition fell through to the spinner whenever `appt`
+   * was null, so a 404 or a dropped connection left the patient watching it turn forever with
+   * nothing to tap. */
+  if (!isThis) {
+    const failed = !!loadError && !loading;
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <CCHeader title="Appointment" onBack={() => navigation.goBack()} />
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={CC.primary} />
+          {failed ? (
+            <>
+              <Info size={30} color={CC.subText} />
+              <Text style={styles.loadErrTitle}>Could not load this appointment</Text>
+              <Text style={styles.loadErrMsg}>{loadError}</Text>
+              <View style={styles.loadErrActions}>
+                <PrimaryButton
+                  label="Try again"
+                  onPress={() => dispatch(getAppointment(appointmentId))}
+                />
+                <SecondaryButton label="Go back" onPress={() => navigation.goBack()} />
+              </View>
+            </>
+          ) : (
+            <ActivityIndicator size="large" color={CC.primary} />
+          )}
         </View>
       </SafeAreaView>
     );
@@ -530,6 +554,9 @@ const styles = StyleSheet.create({
   },
   csBody: { fontFamily: F.PoppinsRegular, fontSize: 13.5, color: CC.text, lineHeight: 20 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loadErrTitle: { fontFamily: F.PoppinsSemiBold, fontSize: 15, color: CC.text, marginTop: 12 },
+  loadErrMsg: { fontFamily: F.PoppinsRegular, fontSize: 13, color: CC.subText, marginTop: 6, textAlign: 'center', paddingHorizontal: 32 },
+  loadErrActions: { marginTop: 18, gap: 10, alignSelf: 'stretch', paddingHorizontal: 32 },
   scroll: { padding: 20 },
 
   forBanner: {
