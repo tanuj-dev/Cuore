@@ -157,6 +157,23 @@ export const confirmConsultationPayment = createAsyncThunk(
   },
 );
 
+/* "I paid, but the app could not tell you."
+ *
+ * The confirm call carries evidence that exists only in this app's memory — Razorpay's payment
+ * id and signature. If that request is lost (dropped connection, server restarting, app killed)
+ * the money is gone and the booking still says unpaid, with no way to retry. This asks the
+ * server to look OUR order up with the gateway instead, which needs nothing from the client.
+ *
+ * Safe to call when nothing was paid: the server answers 402 NOT_PAID and nothing moves. */
+export const reconcileConsultationPayment = createAsyncThunk(
+  'cuoreCare/reconcilePayment',
+  async ({ appointmentId }, { rejectWithValue }) => {
+    const res = await ccPost(`/api/cuorecare/appointments/${appointmentId}/payment/reconcile`, {});
+    if (res.status === 200 && res.data?.status === 'success') return res.data;
+    return rejectWithValue(fail(res, 'Could not check that payment'));
+  },
+);
+
 export const getAppointments = createAsyncThunk(
   'cuoreCare/getAppointments',
   async (params = {}, { rejectWithValue }) => {

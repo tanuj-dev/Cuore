@@ -11,6 +11,7 @@ import { useCustomAlert } from '../../hooks/useCustomAlert';
 import {
   getConsultationPayment,
   confirmConsultationPayment,
+  reconcileConsultationPayment,
 } from '../../redux/CuoreCare/thunks';
 
 /**
@@ -140,7 +141,22 @@ export default function Checkout({ route, navigation }) {
       return;
     }
 
+    /* THE CONFIRM CALL ITSELF FAILED — not "the payment was refused", but "we never got an
+     * answer". That is the dangerous one: Razorpay may well have taken the money while this
+     * request was dropping. Before telling the patient their consultation was not sent, ask the
+     * server to look the order up with the gateway; it needs nothing from this app, so it works
+     * even though the payment id we were holding is now unverifiable. */
     const err = res.payload;
+    // No answer at all (httpStatus 0), a server error, or a failure the server did not give a
+    // code for — every one of those can sit on top of a payment that actually went through.
+    // A coded 402 ("that card was declined") is a real answer and is left alone.
+    if (err?.httpStatus === 0 || err?.httpStatus >= 500 || !err?.code) {
+      const rec = await dispatch(reconcileConsultationPayment({ appointmentId }));
+      if (reconcileConsultationPayment.fulfilled.match(rec) && rec.payload?.recovered) {
+        navigation.replace('CuoreCareAppointment', { appointmentId, justBooked: true });
+        return;
+      }
+    }
     if (err?.code === 'EXPIRED') {
       // The hold lapsed and the slot was released, so retrying here cannot work.
       alert('Booking expired', err.message || 'This booking’s payment window closed. Please book again.', [
@@ -160,7 +176,10 @@ export default function Checkout({ route, navigation }) {
       );
       return;
     }
-    setError(err?.message || 'Payment could not be confirmed. Your consultation has not been sent to the doctor yet.');
+    setError(
+      err?.message ||
+        'We could not confirm your payment. If money has left your account we will confirm it automatically — check your bookings in a few minutes before paying again.',
+    );
   };
 
   if (loading) {
