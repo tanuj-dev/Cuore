@@ -3,16 +3,16 @@
 // What the drawer shows. Kept separate from DrawerNavigator.js so the MENU can be
 // rewritten without touching the navigation wiring underneath it.
 //
-// ⚠️ THE ITEM LIST BELOW IS PROVISIONAL. It mirrors what the app already reaches from the
-// tabs and the Profile screen so the drawer is usable while the final list is decided.
-// Changing it should mean editing DRAWER_SECTIONS and nothing else: every entry is either
+// The menu is DRAWER_ITEMS — the owner's list: Records, Bookings, Prescriptions, and Logout.
+// Changing it should mean editing that array and nothing else: every entry is either
 //
-//   { tab: 'Explore' }                     → switch to that bottom tab
-//   { tab: 'Profile', screen: 'Support' }  → that tab, then that screen inside its stack
-//   { root: 'Notifications' }              → a screen on the ROOT stack, outside the tabs
+//   { tab: 'CuoreCare' }                        → switch to that bottom tab
+//   { tab: 'Profile', screen: 'HealthRecords' } → that tab, then that screen inside its stack
+//   { root: 'Notifications' }                   → a screen on the ROOT stack, outside the tabs
 //
 // and `go()` below is what turns any of those into the right nested navigate. Nothing else
-// in the drawer needs to know how the navigators are nested.
+// in the drawer needs to know how the navigators are nested. Logout is not one of these —
+// it ends the session rather than going anywhere, so it sits on its own at the bottom.
 // -----------------------------------------------------------------------------
 import React, { useCallback } from 'react';
 import {
@@ -25,51 +25,51 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DrawerActions } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
-import {
-  Bell,
-  FileText,
-  HeartPulse,
-  LifeBuoy,
-  ScrollText,
-  Stethoscope,
-  User,
-  Users,
-} from 'lucide-react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { CalendarDays, FileText, LogOut, Pill } from 'lucide-react-native';
 
 import images from '../utilities/Images';
 import { hp } from '../utilities';
+import { navigationRef } from './navigationRef';
+import { logoutUser } from '../redux/Auth/authThunk';
+import { teardownCalls } from '../call/callManager';
+import { useCustomAlert } from '../hooks/useCustomAlert';
 
 const BRAND = '#11418A';
 
-const DRAWER_SECTIONS = [
+const DRAWER_ITEMS = [
   {
-    title: null,
-    items: [
-      { key: 'today', label: 'Today', icon: HeartPulse, tab: 'Today' },
-      { key: 'records', label: 'Health records', icon: FileText, tab: 'Profile', screen: 'HealthRecords' },
-      { key: 'family', label: 'Family members', icon: Users, tab: 'Profile', screen: 'FamilyMembers' },
-      { key: 'notifications', label: 'Notifications', icon: Bell, root: 'Notifications' },
-    ],
+    key: 'records',
+    label: 'Records',
+    icon: FileText,
+    tab: 'Profile',
+    screen: 'HealthRecords',
+  },
+  // Bookings and Prescriptions both live in the CuoreCare tab, which only exists for an
+  // entitled account (see BottomTabNavigator) — `cuoreCare` marks them so they are hidden
+  // rather than left as dead taps for everyone else.
+  {
+    key: 'bookings',
+    label: 'Bookings',
+    icon: CalendarDays,
+    tab: 'CuoreCare',
+    screen: 'CuoreCareHome',
+    cuoreCare: true,
   },
   {
-    title: 'Care',
-    items: [
-      { key: 'cuorecare', label: 'CuoreCare', icon: Stethoscope, tab: 'CuoreCare' },
-      { key: 'doctor', label: 'My doctor', icon: User, tab: 'Profile', screen: 'Doctor' },
-    ],
-  },
-  {
-    title: 'Account',
-    items: [
-      { key: 'support', label: 'Support', icon: LifeBuoy, tab: 'Profile', screen: 'Support' },
-      { key: 'terms', label: 'Terms & conditions', icon: ScrollText, tab: 'Profile', screen: 'TermsAndConditions' },
-    ],
+    key: 'prescriptions',
+    label: 'Prescriptions',
+    icon: Pill,
+    tab: 'CuoreCare',
+    screen: 'CuoreCareHistory',
+    cuoreCare: true,
   },
 ];
 
 export default function AppDrawerContent({ navigation, state }) {
   const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
+  const { alert, AlertComponent } = useCustomAlert();
 
   const profile = useSelector(s => s?.profile?.data?.data?.user);
   const photo = profile?.photo_url || profile?.photoUrl;
@@ -104,6 +104,32 @@ export default function AppDrawerContent({ navigation, state }) {
     [navigation],
   );
 
+  /* Logout. Same two steps the Profile screen's own Logout does — clear the session, then send
+   * the ROOT navigator to Login — plus teardownCalls(), because a live consultation must not
+   * outlive the account that is in it. Reset goes through navigationRef rather than walking
+   * `getParent()` twice: the drawer sits one level deeper than Profile does, and a hard-coded
+   * number of parents is exactly the kind of thing that breaks the next time the tree changes.
+   */
+  const onLogout = useCallback(() => {
+    alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          navigation.dispatch(DrawerActions.closeDrawer());
+          try {
+            teardownCalls();
+          } catch (_) {
+            /* never let a call-teardown problem trap someone in a session they asked to leave */
+          }
+          await dispatch(logoutUser());
+          navigationRef.current?.reset({ index: 0, routes: [{ name: 'Login' }] });
+        },
+      },
+    ]);
+  }, [alert, dispatch, navigation]);
+
   // Which tab is showing, so the matching row reads as current. Read off the drawer's own
   // state rather than tracked separately — there is only one truth about where we are.
   const activeTab = (() => {
@@ -135,45 +161,40 @@ export default function AppDrawerContent({ navigation, state }) {
       </TouchableOpacity>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + hp(2) }}
+        contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       >
-        {DRAWER_SECTIONS.map(section => {
-          const items = section.items.filter(
-            i => i.tab !== 'CuoreCare' || cuoreCareActive,
-          );
-          if (!items.length) return null;
+        {DRAWER_ITEMS.filter(i => !i.cuoreCare || cuoreCareActive).map(item => {
+          const Icon = item.icon;
+          const current = !item.screen && item.tab === activeTab;
           return (
-            <View key={section.title || 'main'} style={styles.section}>
-              {!!section.title && (
-                <Text style={styles.sectionTitle}>{section.title}</Text>
-              )}
-              {items.map(item => {
-                const Icon = item.icon;
-                const current = !item.screen && !item.root && item.tab === activeTab;
-                return (
-                  <TouchableOpacity
-                    key={item.key}
-                    style={[styles.item, current && styles.itemActive]}
-                    activeOpacity={0.7}
-                    onPress={() => go(item)}
-                  >
-                    <Icon
-                      size={hp(2.2)}
-                      color={current ? BRAND : '#475569'}
-                    />
-                    <Text
-                      style={[styles.itemLabel, current && styles.itemLabelActive]}
-                    >
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            <TouchableOpacity
+              key={item.key}
+              style={[styles.item, current && styles.itemActive]}
+              activeOpacity={0.7}
+              onPress={() => go(item)}
+            >
+              <Icon size={hp(2.2)} color={current ? BRAND : '#475569'} />
+              <Text style={[styles.itemLabel, current && styles.itemLabelActive]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
           );
         })}
       </ScrollView>
+
+      {/* Pinned to the bottom, away from the navigation items: it is the one row here that
+          does something irreversible rather than taking you somewhere. */}
+      <TouchableOpacity
+        style={[styles.logout, { paddingBottom: insets.bottom + 14 }]}
+        activeOpacity={0.7}
+        onPress={onLogout}
+      >
+        <LogOut size={hp(2.2)} color="#DC2626" />
+        <Text style={styles.logoutLabel}>Logout</Text>
+      </TouchableOpacity>
+
+      {AlertComponent}
     </View>
   );
 }
@@ -192,15 +213,7 @@ const styles = StyleSheet.create({
   profileText: { flex: 1, marginLeft: 12 },
   name: { fontSize: 16, fontWeight: '600', color: '#0F172A' },
   subtle: { fontSize: 12, color: '#64748B', marginTop: 2 },
-  section: { paddingTop: 14 },
-  sectionTitle: {
-    fontSize: 11,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: '#94A3B8',
-    paddingHorizontal: 18,
-    paddingBottom: 6,
-  },
+  list: { paddingTop: 10 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -211,4 +224,14 @@ const styles = StyleSheet.create({
   itemActive: { backgroundColor: '#EEF3FC' },
   itemLabel: { fontSize: 15, color: '#334155' },
   itemLabelActive: { color: BRAND, fontWeight: '600' },
+  logout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#EEF2F7',
+  },
+  logoutLabel: { fontSize: 15, color: '#DC2626', fontWeight: '600' },
 });
