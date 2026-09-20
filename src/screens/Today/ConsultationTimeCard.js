@@ -31,10 +31,13 @@ export default function ConsultationTimeCard({ appointment }) {
   // Both the card body and the action land on the same screen — one owns the consultation.
   const openDetails = useCallback(() => {
     navigation.navigate('Home', {
-      screen: 'CuoreCare',
+      screen: 'Tabs', // the drawer level around the bottom tabs
       params: {
-        screen: 'CuoreCareAppointment',
-        params: { appointmentId: appointment?.appointmentId },
+        screen: 'CuoreCare',
+        params: {
+          screen: 'CuoreCareAppointment',
+          params: { appointmentId: appointment?.appointmentId },
+        },
       },
     });
   }, [navigation, appointment?.appointmentId]);

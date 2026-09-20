@@ -96,8 +96,11 @@ describe('navigateFromNotification', () => {
     const { ref, navigate } = makeNavRef();
     navigateFromNotification(ref, 'AppointmentDetails', { appointmentId: 'apt_9' });
     expect(navigate).toHaveBeenCalledWith('Home', {
-      screen: 'CuoreCare',
-      params: { screen: 'CuoreCareAppointment', params: { appointmentId: 'apt_9' } },
+      screen: 'Tabs',
+      params: {
+        screen: 'CuoreCare',
+        params: { screen: 'CuoreCareAppointment', params: { appointmentId: 'apt_9' } },
+      },
     });
   });
 
@@ -105,10 +108,13 @@ describe('navigateFromNotification', () => {
     const { ref, navigate } = makeNavRef();
     navigateFromNotification(ref, 'PrescriptionView', { appointmentId: 'apt_9', prescriptionId: 'rx_9' });
     expect(navigate).toHaveBeenCalledWith('Home', {
-      screen: 'CuoreCare',
+      screen: 'Tabs',
       params: {
-        screen: 'CuoreCarePrescription',
-        params: { appointmentId: 'apt_9', prescriptionId: 'rx_9' },
+        screen: 'CuoreCare',
+        params: {
+          screen: 'CuoreCarePrescription',
+          params: { appointmentId: 'apt_9', prescriptionId: 'rx_9' },
+        },
       },
     });
   });
@@ -117,10 +123,13 @@ describe('navigateFromNotification', () => {
     const { ref, navigate } = makeNavRef();
     navigateFromNotification(ref, 'CertificateView', { appointmentId: 'apt_9', certificateId: 'cert_9' });
     expect(navigate).toHaveBeenCalledWith('Home', {
-      screen: 'CuoreCare',
+      screen: 'Tabs',
       params: {
-        screen: 'CuoreCareCertificate',
-        params: { appointmentId: 'apt_9', certificateId: 'cert_9' },
+        screen: 'CuoreCare',
+        params: {
+          screen: 'CuoreCareCertificate',
+          params: { appointmentId: 'apt_9', certificateId: 'cert_9' },
+        },
       },
     });
   });
@@ -146,10 +155,13 @@ describe('navigateFromNotification', () => {
     const { ref, navigate } = makeNavRef();
     navigateFromNotification(ref, 'BookConsultation', {});
     expect(navigate).toHaveBeenCalledWith('Home', {
-      screen: 'CuoreCare',
+      screen: 'Tabs',
       params: {
-        screen: 'CuoreCareDoctors',
-        params: { appointmentId: undefined, bookWithDoctorId: null, initialDate: null },
+        screen: 'CuoreCare',
+        params: {
+          screen: 'CuoreCareDoctors',
+          params: { appointmentId: undefined, bookWithDoctorId: null, initialDate: null },
+        },
       },
     });
   });
@@ -165,10 +177,13 @@ describe('navigateFromNotification', () => {
       initialDate: '2026-10-02',
     });
     expect(navigate).toHaveBeenCalledWith('Home', {
-      screen: 'CuoreCare',
+      screen: 'Tabs',
       params: {
-        screen: 'CuoreCareDoctors',
-        params: { appointmentId: 'apt_9', bookWithDoctorId: 'doc_1', initialDate: '2026-10-02' },
+        screen: 'CuoreCare',
+        params: {
+          screen: 'CuoreCareDoctors',
+          params: { appointmentId: 'apt_9', bookWithDoctorId: 'doc_1', initialDate: '2026-10-02' },
+        },
       },
     });
   });
@@ -177,8 +192,11 @@ describe('navigateFromNotification', () => {
     const { ref, navigate } = makeNavRef();
     navigateFromNotification(ref, 'Consultation', { appointmentId: 'apt_3' });
     expect(navigate).toHaveBeenCalledWith('Home', {
-      screen: 'CuoreCare',
-      params: { screen: 'CuoreCareAppointment', params: { appointmentId: 'apt_3' } },
+      screen: 'Tabs',
+      params: {
+        screen: 'CuoreCare',
+        params: { screen: 'CuoreCareAppointment', params: { appointmentId: 'apt_3' } },
+      },
     });
   });
 

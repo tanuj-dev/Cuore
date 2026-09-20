@@ -3,6 +3,10 @@ import { View, StyleSheet, Platform, AppState } from 'react-native';
 import axios from 'axios';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
+// Required once, at the root, for the drawer's edge swipe to receive touches. Without it the
+// drawer still opens from the hamburger but never from a gesture — and on Android nothing in
+// the gesture-handler tree works at all.
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import store from './src/redux/store';
 import Navigator from './src/navigation';
 import { initializeNotifee } from './src/notifications/NotificationService';
@@ -464,7 +468,7 @@ const AppContent = () => {
   }, [checkConnectivity]);
 
   return (
-    <View style={styles.appContainer}>
+    <GestureHandlerRootView style={styles.appContainer}>
       <NavigationContainer ref={navigationRef}>
         <Navigator />
       </NavigationContainer>
@@ -480,7 +484,7 @@ const AppContent = () => {
       {/* Redux Store Debugger - Remove in production */}
       {/* {__DEV__ && <ReduxDebugger />} */}
       {__DEV__ && <ApiDebugger />}
-    </View>
+    </GestureHandlerRootView>
   );
 };
 

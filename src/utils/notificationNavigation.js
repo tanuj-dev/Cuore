@@ -109,9 +109,15 @@ export function navigateFromNotification(navigationRef, screen = 'Today', data =
             initialDate: data?.initialDate || null,
           };
         }
+        /* "Tabs" is the drawer's screen that holds the bottom tabs (see
+           navigation/DrawerNavigator.js). It has to be named on the way through, or the
+           notification lands on Home and goes no further. */
         navigationRef.current.navigate('Home', {
-          screen: 'CuoreCare',
-          params: { screen: innerScreen, params },
+          screen: 'Tabs',
+          params: {
+            screen: 'CuoreCare',
+            params: { screen: innerScreen, params },
+          },
         });
       } else {
         navigationRef.current.navigate(resolved);

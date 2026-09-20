@@ -278,8 +278,11 @@ export default function Consultation({ navigation, route }) {
         label: 'View plans',
         onPress: () =>
           navigation.replace('Home', {
-            screen: 'CuoreCare',
-            params: { screen: 'CuoreCareSubscribe' },
+            screen: 'Tabs', // the drawer level around the bottom tabs
+            params: {
+              screen: 'CuoreCare',
+              params: { screen: 'CuoreCareSubscribe' },
+            },
           }),
       };
     } else if (code === 'CUORECARE_ACCESS_REQUIRED') {

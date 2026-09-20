@@ -58,6 +58,7 @@ import Search from '../screens/Search/search';
 import Notes from '../screens/Notes';
 import Notifications from '../screens/Notifications';
 
+import DrawerNavigator from './DrawerNavigator';
 import { ExploreStack } from './ExploreStack';
 import { CuoreCareStack } from './CuoreCareStack';
 import CuoreCareConsultation from '../screens/CuoreCare/Consultation';
@@ -296,6 +297,17 @@ function TodayStack() {
   );
 }
 
+/* -------------------- DRAWER AROUND THE TABS -------------------- */
+
+/* The tabs are handed to the drawer rather than imported by it: DrawerNavigator would
+ * otherwise have to import this file, which imports DrawerNavigator. Defined at module scope so
+ * the "Home" route keeps the SAME component identity across renders — an inline arrow here would
+ * remount the whole tab tree, and with it every stack inside it, on each render of the root
+ * navigator. */
+function HomeDrawer() {
+  return <DrawerNavigator tabs={BottomTabNavigator} />;
+}
+
 /* -------------------- ROOT NAVIGATOR -------------------- */
 
 export default function Navigator() {
@@ -311,7 +323,9 @@ export default function Navigator() {
         <Stack.Screen name="NewAccount" component={NewAccount} />
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="OnBoarding" component={OnBoarding} />
-        <Stack.Screen name="Home" component={BottomTabNavigator} />
+        {/* "Home" is now the drawer; the bottom tabs live inside it as "Tabs". Anything
+            deep-linking into a tab has to name that level — see DrawerNavigator.js. */}
+        <Stack.Screen name="Home" component={HomeDrawer} />
         <Stack.Screen name="Score" component={Score} />
         <Stack.Screen name="ScoreMeter" component={ScoreMeter} />
         <Stack.Screen name="PaymentDetails" component={PaymentDetails} />

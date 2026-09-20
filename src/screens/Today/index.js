@@ -33,6 +33,7 @@ import PendingVisitCards from './PendingVisitCards';
 import Reminder from '../../components/Reminder';
 import { useDispatch, useSelector } from 'react-redux';
 import ProfileSwitcher from '../../components/ProfileSwitcher';
+import DrawerMenuButton from '../../components/DrawerMenuButton';
 import { getHomeData, getProfile } from '../../redux/slices';
 import ReminderEditor from '../../components/ReminderEditor';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -902,6 +903,8 @@ const Today = ({ navigation, route }) => {
       >
         <View style={styles.header}>
           <View style={styles.headerTopRow}>
+            {/* Opens the app drawer. First thing in the row, where a menu is looked for. */}
+            <DrawerMenuButton />
             <Text style={styles.username} numberOfLines={1}>
               {profileData?.display_name
                 ? `Hi, ${profileData.display_name.split(' ')[0]}`
