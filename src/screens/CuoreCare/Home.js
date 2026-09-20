@@ -25,6 +25,7 @@ import {
 import { CC } from './ccTheme';
 import { PrimaryButton, EmptyState, Card } from './components';
 import ProfileSwitcher from '../../components/ProfileSwitcher';
+import DrawerMenuButton from '../../components/DrawerMenuButton';
 import AppointmentCard from './AppointmentCard';
 import {
   getCuoreCareStatus,
@@ -179,15 +180,21 @@ export default function CuoreCareHome({ navigation }) {
       <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
       {/* Header */}
       <View style={styles.topBar}>
+        <DrawerMenuButton style={styles.menuButton} />
         {/* minWidth:0 matters: without it a flex child refuses to shrink below its text's
-            intrinsic width, so the title pushed the switcher and Records button sideways
-            instead of truncating. */}
+            intrinsic width, so the title pushed the Records button sideways instead of
+            wrapping. */}
         <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
           {/* White-labelling: the practice's name is the title when the patient has a linked
               doctor, with "CuoreCare" demoted to the line beneath. A patient's relationship is
               with their clinic, not with our product name. Falls back to the plain title when
-              there is no branding to show — never to a clinic name we invented. */}
-          <Text style={styles.topTitle} numberOfLines={1}>
+              there is no branding to show — never to a clinic name we invented.
+
+              TWO lines, not one: a real clinic name ("Sunrise Multispecialty Clinic") does not
+              fit a phone's width beside a button, and truncating the practice's own name to
+              "Sunrise Multispecial…" is a poor way to show whose care this is. The type is a
+              step smaller for the same reason — it buys the second line back. */}
+          <Text style={styles.topTitle} numberOfLines={2}>
             {branding?.name || 'CuoreCare'}
           </Text>
           <Text style={styles.topSubtitle} numberOfLines={1}>
@@ -197,8 +204,9 @@ export default function CuoreCareHome({ navigation }) {
         <TouchableOpacity
           style={styles.rxButton}
           onPress={() => navigation.navigate('CuoreCareHistory')}
+          activeOpacity={0.8}
         >
-          <FileText size={18} color={CC.primary} />
+          <FileText size={16} color={CC.primary} />
           <Text style={styles.rxButtonText}>Records</Text>
         </TouchableOpacity>
       </View>
@@ -349,25 +357,31 @@ const styles = StyleSheet.create({
   /* scheduler */
   topBar: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
+    /* Top-aligned, not centred: the title can now run to two lines, and a centred Records
+       button would drift down the taller header with it. */
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 14,
     backgroundColor: CC.surface,
   },
+  menuButton: { paddingRight: 12, paddingTop: 2 },
   switcherRow: { alignSelf: 'flex-start', marginLeft: 20, marginBottom: 10 },
-  topTitle: { fontFamily: F.PoppinsBold, fontSize: 22, color: CC.text },
-  topSubtitle: { fontFamily: F.PoppinsRegular, fontSize: 13, color: CC.subText, marginTop: 1 },
+  topTitle: { fontFamily: F.PoppinsBold, fontSize: 19, color: CC.text, lineHeight: 25 },
+  topSubtitle: { fontFamily: F.PoppinsRegular, fontSize: 12.5, color: CC.subText, marginTop: 2 },
   rxButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: CC.primarySoft,
+    /* A border as well as the tint: on the very light surface the soft-blue fill alone barely
+       reads as a control, which is why it looked like a label rather than a button. */
+    borderWidth: 1,
+    borderColor: '#DBE7FA',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 999,
   },
-  rxButtonText: { fontFamily: F.PoppinsMedium, fontSize: 13, color: CC.primary, marginLeft: 6 },
+  rxButtonText: { fontFamily: F.PoppinsMedium, fontSize: 12.5, color: CC.primary, marginLeft: 6 },
   scroll: { paddingHorizontal: 20, paddingBottom: 20 },
   bookCard: {
     flexDirection: 'row',

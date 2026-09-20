@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { ChevronRight, User } from 'lucide-react-native';
+import { CalendarDays, ChevronRight, User } from 'lucide-react-native';
 import { CC, modeMeta, modeIcon } from './ccTheme';
 import { fmtDateTime, fmtRange } from './ccFormat';
 import { Card, StatusPill, DoctorAvatar } from './components';
@@ -17,6 +17,15 @@ const F = CC.fonts;
  * not the account holder's own has to say whose it is, or a parent cannot tell their 3pm from
  * their child's.
  */
+/* Doctors are stored as a plain name ("rakesh yadavv"), which is how it used to render — no
+ * title, no capitals. Patients address a doctor as "Dr.", so the card says so. Skipped when the
+ * stored name already carries a title, so nobody becomes "Dr. Dr. Rakesh". */
+const doctorName = raw => {
+  const name = String(raw || '').trim();
+  if (!name) return 'CuoreCare doctor';
+  return /^(dr\.?|prof\.?)\s/i.test(name) ? name : `Dr. ${name}`;
+};
+
 export default function AppointmentCard({ appointment, onPress }) {
   const doc = appointment?.doctorId || {};
   const forPatient = appointment?.forPatient;
@@ -29,15 +38,18 @@ export default function AppointmentCard({ appointment, onPress }) {
         <DoctorAvatar uri={doc.photoUrl} name={doc.displayName} size={46} />
         <View style={styles.mid}>
           <Text style={styles.name} numberOfLines={1}>
-            {doc.displayName || 'CuoreCare doctor'}
+            {doctorName(doc.displayName)}
           </Text>
           {!!doc.specialization && (
             <Text style={styles.spec} numberOfLines={1}>
               {doc.specialization}
             </Text>
           )}
-          <View style={styles.modeRow}>
-            <ModeIcon size={13} color={CC.subText} />
+          {/* A chip rather than loose text: it is a fact about the consultation (how it
+              happens), and it now reads as one at a glance instead of blending into the
+              specialisation line above it. */}
+          <View style={styles.modeChip}>
+            <ModeIcon size={12} color={CC.primary} />
             <Text style={styles.modeText}>{meta.label.replace(' consult', '')}</Text>
           </View>
         </View>
@@ -55,6 +67,9 @@ export default function AppointmentCard({ appointment, onPress }) {
       )}
 
       <View style={styles.footer}>
+        <View style={styles.whenIcon}>
+          <CalendarDays size={15} color={CC.primary} />
+        </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.when}>{fmtDateTime(appointment?.scheduledStart)}</Text>
           <Text style={styles.range}>
@@ -71,10 +86,30 @@ const styles = StyleSheet.create({
   card: { marginBottom: 12 },
   row: { flexDirection: 'row', alignItems: 'center' },
   mid: { flex: 1, marginLeft: 12 },
-  name: { fontFamily: F.PoppinsSemiBold, fontSize: 15, color: CC.text },
-  spec: { fontFamily: F.PoppinsRegular, fontSize: 12, color: CC.subText, marginTop: 1 },
-  modeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 5 },
-  modeText: { fontFamily: F.PoppinsMedium, fontSize: 11, color: CC.subText, marginLeft: 5 },
+  name: {
+    fontFamily: F.PoppinsSemiBold,
+    fontSize: 15,
+    color: CC.text,
+    textTransform: 'capitalize',
+  },
+  spec: {
+    fontFamily: F.PoppinsRegular,
+    fontSize: 12,
+    color: CC.subText,
+    marginTop: 1,
+    textTransform: 'capitalize',
+  },
+  modeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: CC.primarySoft,
+  },
+  modeText: { fontFamily: F.PoppinsMedium, fontSize: 11, color: CC.primary, marginLeft: 5 },
   forRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -100,6 +135,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: CC.border,
   },
-  when: { fontFamily: F.PoppinsMedium, fontSize: 13, color: CC.text },
+  whenIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: CC.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  when: { fontFamily: F.PoppinsSemiBold, fontSize: 13, color: CC.text },
   range: { fontFamily: F.PoppinsRegular, fontSize: 12, color: CC.subText, marginTop: 1 },
 });

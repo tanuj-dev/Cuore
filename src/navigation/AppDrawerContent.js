@@ -93,7 +93,12 @@ export default function AppDrawerContent({ navigation, state }) {
       }
       navigation.navigate('Tabs', {
         screen: item.tab,
-        ...(item.screen ? { params: { screen: item.screen } } : {}),
+        /* `initial: false` is load-bearing. Without it, a drawer jump straight to a screen
+           inside a tab's stack makes THAT screen the stack's first route: back then leaves the
+           tab entirely (you land on Today), and the tab keeps reopening on it afterwards. With
+           it, the tab's own root sits underneath, so back goes where it reads like it should —
+           Health records → Profile — and the tab is left where the user left it. */
+        ...(item.screen ? { params: { screen: item.screen, initial: false } } : {}),
       });
     },
     [navigation],
