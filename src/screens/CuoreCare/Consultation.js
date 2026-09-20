@@ -138,6 +138,16 @@ export default function Consultation({ navigation, route }) {
   );
 
   const effectiveMode = joinData?.mode || paramMode || 'video';
+
+  /* THE APP ID COMES FROM THE SERVER, with the bundled constant only as a fallback.
+   *
+   * /join already returns the appId the token was minted under, and the two MUST match — a
+   * client on one AppID cannot use a token issued for another. Reading the constant meant that
+   * moving to a different ZEGO project (as on 21 Sept 2026, when the old project ran out of
+   * credit) needed a new app release before anyone on the old build could call again. Taking it
+   * from the same response as the token means the backend can move projects on its own and every
+   * installed build follows on its next join. */
+  const appId = Number(joinData?.appId) || ZEGO_APP_ID;
   const isAvCall = effectiveMode === 'video' || effectiveMode === 'voice';
 
   // Once the room is up: publish the connected state (starts the Android foreground
@@ -336,7 +346,7 @@ export default function Consultation({ navigation, route }) {
   if (effectiveMode === 'chat') {
     return (
       <ChatConsultation
-        appID={ZEGO_APP_ID}
+        appID={appId}
         userId={joinData.userId}
         userName={patientName}
         zimToken={joinData.zimToken}
@@ -359,7 +369,7 @@ export default function Consultation({ navigation, route }) {
     <View style={styles.callContainer}>
       <ZegoUIKitPrebuiltCall
         ref={callRef}
-        appID={ZEGO_APP_ID}
+        appID={appId}
         appSign={''}
         userID={joinData.userId}
         userName={patientName}

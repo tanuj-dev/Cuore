@@ -20,7 +20,11 @@ export const CUORECARE_BASE_URL = 'https://cuore-backend-staging.onrender.com';
 
 // Public ZEGOCloud AppID (safe to ship in the client — the server-signed token is the
 // capability). Region + AppID must match the doctor portal and the backend.
-export const ZEGO_APP_ID = 1632393921;
+/* FALLBACK ONLY. The live value comes from /join, alongside the token it was minted with (see
+ * screens/CuoreCare/Consultation.js) — the two have to match, so the server is the source of
+ * truth and this is what an older build falls back to before its first join. Updated 21 Sept
+ * 2026 when the previous ZEGO project ran out of credit. */
+export const ZEGO_APP_ID = 1249378672;
 
 // ZEGO / ZIM stable identities. The backend mints tokens for `u_<patientId>` (this app)
 // and `d_<doctorId>` (doctor portal); the room spine is `cuorecare_<appointmentId>`.
