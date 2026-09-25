@@ -616,23 +616,32 @@ const HealthRecords = ({ navigation }) => {
         const response = await dispatch(getPresRecordsThunk({ q, patientId: activeProfileId || undefined })).unwrap();
         const list = response?.data?.data || [];
         setRecords(
-          list.map((item, index) => ({
-            recordId: item?.recordId || String(index),
-            name: item?.name || item?.fileName || 'Untitled record',
-            originalFileName: item?.originalFileName || '',
-            fileUrl: item?.fileUrl || '',
-            fileType: item?.fileType || '',
-            fileSize: item?.fileSize || 0,
-            uploadedAt: item?.uploadedAt || item?.uploadDate || null,
-            // The date the document is ABOUT (a prescription's issue date, or the date the
-            // patient filed a scan under) — falls back to the upload time for older records.
-            documentDate: item?.documentDate || item?.uploadedAt || item?.uploadDate || null,
-            // Doctor-issued documents (prescriptions, case sheets) are mirrored into Records
-            // read-only: the backend refuses rename/delete on them because the authoritative
-            // document lives elsewhere and the S3 object is shared with the doctor's copy.
-            isClinical: !!item?.isClinical,
-            source: item?.source || 'upload',
-          })),
+          list
+            // Drop a genuinely empty row — no name, no original filename, no file, no type.
+            // A handful of pre-launch test records were exactly this (created, then never
+            // finished), and opening one only ever produces "This record has no file
+            // attached" — there is nothing useful behind the tile, so don't show the tile.
+            .filter(
+              item =>
+                item?.name || item?.fileName || item?.originalFileName || item?.fileUrl || item?.fileType,
+            )
+            .map((item, index) => ({
+              recordId: item?.recordId || String(index),
+              name: item?.name || item?.fileName || 'Untitled record',
+              originalFileName: item?.originalFileName || '',
+              fileUrl: item?.fileUrl || '',
+              fileType: item?.fileType || '',
+              fileSize: item?.fileSize || 0,
+              uploadedAt: item?.uploadedAt || item?.uploadDate || null,
+              // The date the document is ABOUT (a prescription's issue date, or the date the
+              // patient filed a scan under) — falls back to the upload time for older records.
+              documentDate: item?.documentDate || item?.uploadedAt || item?.uploadDate || null,
+              // Doctor-issued documents (prescriptions, case sheets) are mirrored into Records
+              // read-only: the backend refuses rename/delete on them because the authoritative
+              // document lives elsewhere and the S3 object is shared with the doctor's copy.
+              isClinical: !!item?.isClinical,
+              source: item?.source || 'upload',
+            })),
         );
       } catch (error) {
         setLoadError(
