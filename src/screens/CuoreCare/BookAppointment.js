@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -72,7 +72,7 @@ export default function BookAppointment({ navigation, route }) {
   const { alert, AlertComponent } = useCustomAlert();
 
   const actionLoading = useSelector(state => state.cuoreCare.action.loading);
-  const { datesLoading, dates, configured, slotsLoading, slots, slotsDate } = useSelector(
+  const { datesLoading, dates, configured, slotsLoading, slots, slotsDate, error: availabilityError } = useSelector(
     state => state.cuoreCare.availability,
   );
 
@@ -88,10 +88,13 @@ export default function BookAppointment({ navigation, route }) {
   const [selectedDate, setSelectedDate] = useState(null);
   /* The day the doctor prescribed on a follow-up, handed over when the patient accepted it.
    * A SUGGESTION, not a booking: it opens that day's slots and the patient is free to pick
-   * another, which is what the requirement asks for in as many words. Consumed once — see the
-   * effect below — so re-picking a different day is not undone by a later refetch. */
+   * another, which is what the requirement asks for in as many words. Applied through
+   * `selectedDate` being empty rather than a one-shot ref — a channel switch resets
+   * `selectedDate` to null (below) precisely so this can be re-attempted against the NEW
+   * channel's dates. Without that, a doctor advising a teleconsult follow-up while walk-in
+   * happens to be the default tab would burn the suggestion on walk-in's date list (which
+   * doesn't contain it) and never re-check once the patient switched to teleconsult. */
   const initialDate = route.params?.initialDate || null;
-  const initialDateUsed = useRef(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
 
   const [reason, setReason] = useState('');
@@ -140,9 +143,8 @@ export default function BookAppointment({ navigation, route }) {
    * bookable the patient is left on the normal unselected state with every real day in front of
    * them — the suggestion is simply not available, which they can see for themselves. */
   useEffect(() => {
-    if (!initialDate || initialDateUsed.current || selectedDate) return;
+    if (!initialDate || selectedDate) return;
     if (!dates || !dates.length) return;
-    initialDateUsed.current = true;
     const bookable = dates.some(d => (typeof d === 'string' ? d : d?.date) === initialDate);
     if (bookable) pickDate(initialDate);
   }, [initialDate, dates, selectedDate, pickDate]);
@@ -275,6 +277,20 @@ export default function BookAppointment({ navigation, route }) {
       return (
         <View style={styles.inlineLoading}>
           <ActivityIndicator color={CC.primary} />
+        </View>
+      );
+    }
+    if (availabilityError) {
+      // Discovery is open to everyone now (search shows every doctor, not just an existing
+      // relationship), so a doctor who requires an admin-granted invite (SELECTED scope) is
+      // now something a patient can find and open without holding one. Distinguishing this
+      // from "no slots configured" below matters more than it used to: an empty calendar
+      // reads as "come back later", but a 402 is "you don't have access here at all" — the
+      // server's own message already says which and doesn't need re-deriving here.
+      return (
+        <View style={styles.emptyBox}>
+          <CalendarX size={22} color={CC.muted} />
+          <Text style={styles.emptyText}>{availabilityError}</Text>
         </View>
       );
     }
