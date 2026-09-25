@@ -1,23 +1,36 @@
 /* eslint-disable no-mixed-operators */
 import {Dimensions, PixelRatio} from 'react-native';
-import {
-  widthPercentageToDP,
-  heightPercentageToDP,
-} from 'react-native-responsive-screen';
-const screenWidth = Dimensions.get('window').width;
-const screenHeight = Dimensions.get('window').height;
 const DesignHeight = 812;
 const DesignWidth = 375;
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
-// It is based on the screen width of your design layouts e.g Height 600 x Width 375
-const scale = SCREEN_WIDTH / 375;
 
+/* Every size below reads Dimensions.get('window') FRESH on each call rather than once at
+ * module load (react-native-responsive-screen's own widthPercentageToDP/heightPercentageToDP,
+ * previously re-exported as wp/hp here, cache screenWidth/screenHeight in a module-scope
+ * variable — see its index.js). On a slower device the native bridge can still be reporting a
+ * 0x0 window when this module first evaluates, which froze every hp()/wp()/vw()/vh() value at
+ * 0 for the rest of the app's life — a screen built entirely from these (e.g. CycleTracker)
+ * renders with zero-size elements: structurally present, invisible, no crash. `Dimensions.get`
+ * itself is not a snapshot; only capturing its result in a top-level const was. */
 export function normalize(size: any) {
+  const {width: screenWidth} = Dimensions.get('window');
+  const scale = screenWidth / 375;
   return PixelRatio.roundToNearestPixel(size * scale);
 }
-export const wp = widthPercentageToDP;
-export const hp = heightPercentageToDP;
+
+export const wp = (widthPercent: any) => {
+  const {width: screenWidth} = Dimensions.get('window');
+  const elemWidth = typeof widthPercent === 'number' ? widthPercent : parseFloat(widthPercent);
+  return PixelRatio.roundToNearestPixel((screenWidth * elemWidth) / 100);
+};
+
+export const hp = (heightPercent: any) => {
+  const {height: screenHeight} = Dimensions.get('window');
+  const elemHeight = typeof heightPercent === 'number' ? heightPercent : parseFloat(heightPercent);
+  return PixelRatio.roundToNearestPixel((screenHeight * elemHeight) / 100);
+};
+
 export const vw = (width: number) => {
+  const {width: screenWidth} = Dimensions.get('window');
   // Parse string percentage input and convert it to number.
   const percent = (width / DesignWidth) * 100;
   const elemWidth = parseFloat(`${percent}%`);
@@ -27,6 +40,7 @@ export const vw = (width: number) => {
 };
 
 export const vh = (height: number) => {
+  const {height: screenHeight} = Dimensions.get('window');
   // Parse string percentage input and convert it to number.
   const percent = (height / DesignHeight) * 100;
   const elemHeight = parseFloat(`${percent}%`);
@@ -35,22 +49,3 @@ export const vh = (height: number) => {
   // size (dp) to the nearest one that corresponds to an integer number of pixels.
   return PixelRatio.roundToNearestPixel((screenHeight * elemHeight) / 100);
 };
-
-// https://medium.com/building-with-react-native/how-to-develop-responsive-uis-with-react-native-1x03-a448097c9503
-// import {Dimensions, PixelRatio} from 'react-native';
-// const widthPercentageToDP = widthPercent => {
-//   const screenWidth = Dimensions.get('window').width;
-//   // Convert string input to decimal number
-//   const elemWidth = parseFloat(widthPercent);
-//   return PixelRatio.roundToNearestPixel(screenWidth * elemWidth / 100);
-// };
-// const heightPercentageToDP = heightPercent => {
-//   const screenHeight = Dimensions.get('window').height;
-//   // Convert string input to decimal number
-//   const elemHeight = parseFloat(heightPercent);
-// return PixelRatio.roundToNearestPixel(screenHeight * elemHeight / 100);
-// };
-// export {
-//   widthPercentageToDP,
-//   heightPercentageToDP
-// };
