@@ -263,15 +263,22 @@ export default function Checkout({ route, navigation }) {
           style={{ marginTop: 18 }}
           onPress={onPay}
         />
-        <SecondaryButton
-          label="Pay later"
-          style={{ marginTop: 10 }}
-          onPress={() => navigation.replace('CuoreCareAppointment', { appointmentId })}
-        />
-        {/* "Pay later" is honest about the consequence rather than implying the booking is safe. */}
-        <Text style={styles.footnote}>
-          If you leave without paying, your slot is released and the request is not sent.
-        </Text>
+        {/* Teleconsult (video/voice/chat) has no "leave it for later" option — the doctor's slot
+            for that channel is gone the moment it is released unpaid, so an escape hatch here
+            only invites a wasted hold. Walk-in keeps it: a patient who books ahead for an
+            in-person visit reasonably wants to decide payment at the desk. */}
+        {payment?.channel !== 'teleconsult' && (
+          <>
+            <SecondaryButton
+              label="Pay later"
+              style={{ marginTop: 10 }}
+              onPress={() => navigation.replace('CuoreCareAppointment', { appointmentId })}
+            />
+            <Text style={styles.footnote}>
+              If you leave without paying, your slot is released and the request is not sent.
+            </Text>
+          </>
+        )}
 
         <View style={styles.secure}>
           <Lock size={12} color={CC.muted} />
