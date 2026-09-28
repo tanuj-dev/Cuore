@@ -1388,9 +1388,30 @@ const Today = ({ navigation, route }) => {
                 }
               };
 
+              const isPendingDoctorReminder =
+                item?.sourceId && pendingDoctorReminderIds.has(item.sourceId);
+              /* WHICH CARDS OFFER THE PENCIL.
+               *
+               * This used to be `editable === true && title is "wake up" or "fitness"`, which in
+               * practice meant ONLY Wake Up: the backend sets `editable` on a SYSTEM card just
+               * for the wake-up one (timelineController `editable: t.includes("wake")`), so the
+               * "fitness" half never matched anything. Every reminder and every medication the
+               * patient owns — including the ones a doctor added off a prescription — carries
+               * `editable: true` from the backend and a `sourceId` whose Reminder document the
+               * PUT endpoint already knows how to update, and none of them could be edited.
+               *
+               * A reminder still AWAITING the patient's accept/decline is left out on purpose:
+               * that card's job is to ask a question, and offering "edit" beside Accept/Decline
+               * invites changing a doctor's instruction before agreeing to it. Once accepted it
+               * is the patient's own schedule and edits like any other. */
               const isEditable =
+                !isCaregiver &&
                 item?.editable === true &&
-                ['wake up', 'fitness'].includes(item.title?.toLowerCase());
+                !isPendingDoctorReminder &&
+                (['wake up', 'fitness'].includes(item.title?.toLowerCase()) ||
+                  (!!item?.sourceId &&
+                    (item.type === 'USER_MEDICATION' ||
+                      item.type === 'USER_REMINDER')));
               /* Only cards backed by a reminder document the patient owns. SYSTEM cards
                * (Breakfast, Fitness, Lunch) are generated from the plan and have no source
                * document — the DELETE would 404, and a bin that cannot work is worse than no
@@ -1400,8 +1421,6 @@ const Today = ({ navigation, route }) => {
                 !!item?.sourceId &&
                 (item.type === 'USER_MEDICATION' || item.type === 'USER_REMINDER');
               const deletingThis = deletingSourceId === item?.sourceId;
-              const isPendingDoctorReminder =
-                item?.sourceId && pendingDoctorReminderIds.has(item.sourceId);
               const respondingThis = respondingReminderId === item?.sourceId;
 
               return (
