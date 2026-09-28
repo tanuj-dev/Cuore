@@ -238,6 +238,45 @@ export default function Consultation({ navigation, route }) {
     };
   }, [appointmentId]);
 
+  /* THE DOCTOR OPENS THE ROOM, SO THE PATIENT HAS TO BE TOLD WHEN THEY DO.
+   *
+   * A live consultation can no longer be started by the patient — the server answers
+   * DOCTOR_NOT_JOINED until the doctor is in, so that an early arrival cannot ring a doctor who
+   * is still with the previous patient. That makes "you'll be called" the only way in, and it
+   * therefore has to actually happen while the app is open. It did not: the backend has emitted
+   * `call:incoming` to the patient's own room since this feature shipped and nothing in the app
+   * ever subscribed to it — the name was declared in realtime/events.js and used nowhere. Only
+   * the FCM push was wired, and that reaches a BACKGROUNDED app; a patient sitting on this
+   * waiting screen was told nothing at all.
+   *
+   * Both signals are accepted because they travel differently: `call:incoming` goes to the
+   * patient's personal room, so it survives a reconnect that silently dropped the appointment
+   * subscription (see the note above), while `participant:joined` goes to the appointment room.
+   * Either means the same thing, and re-joining is idempotent.
+   *
+   * Only ever armed while we are actually blocked on the doctor, and only fired by a socket
+   * event — never on a timer — so a join that keeps failing cannot turn into a retry loop. */
+  useEffect(() => {
+    if (phase !== 'error' || err?.code !== 'DOCTOR_NOT_JOINED') return undefined;
+    const s = getSocket();
+    if (!s) return undefined;
+
+    const isThis = p => !p || !p.appointmentId || p.appointmentId === appointmentId;
+    const onCalled = p => {
+      if (isThis(p)) join();
+    };
+    const onParticipant = p => {
+      if (isThis(p) && p?.role === 'doctor') join();
+    };
+
+    s.on(CC_EV.CALL_INCOMING, onCalled);
+    s.on(CC_EV.PARTICIPANT_JOINED, onParticipant);
+    return () => {
+      s.off(CC_EV.CALL_INCOMING, onCalled);
+      s.off(CC_EV.PARTICIPANT_JOINED, onParticipant);
+    };
+  }, [phase, err?.code, appointmentId, join]);
+
   // When the other side ends the call, show a brief notice then leave — never stuck (§5).
   useEffect(() => {
     if (!remoteEnded) return undefined;
@@ -274,6 +313,17 @@ export default function Consultation({ navigation, route }) {
       message = err?.opensAt
         ? `You can join from ${fmtDayLabel(err.opensAt)} at ${fmtTime(err.opensAt)}.`
         : 'The consultation room is not open yet.';
+    } else if (code === 'DOCTOR_NOT_JOINED') {
+      /* Not a failure — the consultation simply has not been opened yet. A live call is the
+         doctor's to start, so that a patient arriving early cannot ring a doctor who is still
+         with the previous one. Retry stays available because the doctor may join at any moment
+         and a patient watching this screen should not have to back out and come in again; the
+         incoming-call notification will also reach them the instant the doctor does. */
+      Icon = Clock;
+      title = 'Waiting for your doctor';
+      message =
+        err?.message ||
+        "Your doctor hasn't started the consultation yet. You'll be called as soon as they do.";
     } else if (code === 'WINDOW_CLOSED') {
       Icon = CalendarX;
       title = 'Consultation ended';
