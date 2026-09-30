@@ -32,7 +32,7 @@ import {
 } from '../notifications/incomingCall';
 import { startOngoingCallNotification, stopOngoingCallNotification } from './ongoingCall';
 import { setNativeCallActive } from './pip';
-import { clearRouteParams, destroyMinimizedZegoCall, isZegoMinimized } from './zegoMinimize';
+import { leaveRoom } from './zegoRoom';
 import {
   navigationRef,
   navigateWhenReady,
@@ -292,11 +292,15 @@ export function endCall(reason = 'ended', { fromFloating = false } = {}) {
   stopOngoingCallNotification();
   setNativeCallActive(false);
 
-  if (fromFloating || isZegoMinimized()) {
-    if (id) recordConsultationEvent(id, 'left');
-    destroyMinimizedZegoCall();
-  }
-  clearRouteParams();
+  /* The room now outlives every screen (call/zegoRoom.js), so ending the call is
+     the ONE place that must tear it down — there is no component unmount left to
+     do it. Safe when there is no room: leaveRoom() is a no-op then. */
+  leaveRoom();
+  /* The consultation screen records "left" on its own unmount. A call ended from
+     the floating bubble, from PiP, or from a notification never had a screen
+     mounted to do it, so it is recorded here instead — and only there, or the
+     same consultation would be audited as left twice. */
+  if ((fromFloating || s.minimized || s.pip) && id) recordConsultationEvent(id, 'left');
   releaseIncomingCall(id);
   resetCallState(reason);
 }

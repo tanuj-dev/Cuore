@@ -10,12 +10,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
-import {
-  ZegoUIKitPrebuiltCall,
-  ZegoMenuBarButtonName,
-  ONE_ON_ONE_VIDEO_CALL_CONFIG,
-  ONE_ON_ONE_VOICE_CALL_CONFIG,
-} from '@zegocloud/zego-uikit-prebuilt-call-rn';
 import { Clock, CalendarX, CreditCard, WifiOff, RefreshCw, ChevronLeft } from 'lucide-react-native';
 
 import { CC } from './ccTheme';
@@ -38,10 +32,10 @@ import {
   callConnecting,
   callConnected,
   callMinimized,
-  restoreCall,
   endCall,
 } from '../../call/callManager';
-import { minimizeZegoCall, primeRouteParams } from '../../call/zegoMinimize';
+import CallScreen from '../../call/CallScreen';
+import { forceRenderVideoView } from '../../call/zegoRoom';
 
 const F = CC.fonts;
 
@@ -65,11 +59,17 @@ export default function Consultation({ navigation, route }) {
   const [err, setErr] = useState(null);
   const [remoteEnded, setRemoteEnded] = useState(false); // doctor/system ended the call
   const [socketOk, setSocketOk] = useState(true); // false → show "Reconnecting…"
+  /* Chat during a video/voice consultation. `chatEverOpened` exists because
+     ChatConsultation owns a ZIM session: mounting logs in, unmounting logs out and
+     destroys it. So it is mounted on first open and then only HIDDEN — the same
+     rule the call itself follows. Not mounted up front, because a consultation
+     where chat is never opened should not pay for a ZIM login. */
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatEverOpened, setChatEverOpened] = useState(false);
   const leftRef = useRef(false);
   // Set while we are handing the call over to the floating window, so the unmount
   // cleanup below does NOT report the patient as having left the consultation.
   const minimizingRef = useRef(false);
-  const callRef = useRef(null);
 
   // Resolve the doctor id for the ZIM chat peer (d_<doctorId>) from whatever we have.
   const doctorRaw = paramDoctorId || currentAppt?.doctorId;
@@ -150,9 +150,8 @@ export default function Consultation({ navigation, route }) {
   const appId = Number(joinData?.appId) || ZEGO_APP_ID;
   const isAvCall = effectiveMode === 'video' || effectiveMode === 'voice';
 
-  // Once the room is up: publish the connected state (starts the Android foreground
-  // service + arms PiP) and hand ZEGO the params it needs to restore this call from the
-  // floating window.
+  // Once the room is up, publish the connected state — that is what starts the
+  // Android foreground service and arms PiP.
   useEffect(() => {
     if (phase !== 'ready' || !isAvCall) return;
     callConnected({
@@ -161,29 +160,22 @@ export default function Consultation({ navigation, route }) {
       doctorName,
       joinData,
     });
-    primeRouteParams({
-      roomID: joinData?.roomId,
-      onCallEnd: () => {
-        // Remote hang-up while minimized — ZEGO tells us through this callback.
-        recordLeft();
-        endCall('remote_ended');
-      },
-    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, isAvCall, appointmentId, effectiveMode, joinData]);
 
-  /* ------------------------- Minimize (back press) ------------------------- */
+  /* ------------------------- Minimize ------------------------------------- */
+  /* Now a plain navigation. The room lives in call/zegoRoom.js and does not care
+     that this screen has gone, so there is nothing to tell the SDK and nothing to
+     keep mounted — which is the whole reason zegoMinimize.js could be retired. */
   const minimize = useCallback(() => {
     if (phase !== 'ready' || !isAvCall) return false;
     minimizingRef.current = true;
-    const ok = minimizeZegoCall(callRef);
-    if (!ok) minimizingRef.current = false;
-    return ok;
-  }, [phase, isAvCall]);
+    callMinimized();
+    if (navigation.canGoBack()) navigation.goBack();
+    return true;
+  }, [phase, isAvCall, navigation]);
 
-  // Android hardware back → minimize into the floating window, never hang up.
-  // Registered here (after ZEGO's own back handler, which swallows the event) so RN's
-  // last-registered-first dispatch reaches us first.
+  // Android hardware back → minimize into the floating bubble, never hang up.
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (phase === 'ready' && isAvCall) {
@@ -411,49 +403,64 @@ export default function Consultation({ navigation, route }) {
     );
   }
 
-  // video / voice → ZEGO Prebuilt Call Kit (token auth via server-minted rtcToken)
-  const baseConfig =
-    effectiveMode === 'voice' ? ONE_ON_ONE_VOICE_CALL_CONFIG : ONE_ON_ONE_VIDEO_CALL_CONFIG;
-
+  /* video / voice → our own call screen, on the room in call/zegoRoom.js.
+   *
+   * What used to be here was `<ZegoUIKitPrebuiltCall>` plus a config object: the
+   * SDK painted the whole call and the only things we could reach were a
+   * minimise button in its top bar and two overlays laid on top. The room's life
+   * was also tied to this component being mounted, which is why minimising had
+   * to be smuggled past the SDK (see the comment at the top of call/zegoRoom.js).
+   * Now the room outlives the screen, so minimising is just navigating away. */
   return (
     <View style={styles.callContainer}>
-      <ZegoUIKitPrebuiltCall
-        ref={callRef}
+      <View style={[styles.pane, chatOpen && styles.hidden]}>
+      <CallScreen
         appID={appId}
-        appSign={''}
         userID={joinData.userId}
         userName={patientName}
-        callID={joinData.roomId}
+        roomID={joinData.roomId}
         token={joinData.rtcToken}
+        mode={effectiveMode}
+        doctorName={doctorName}
+        connectedAt={getCallState().connectedAt}
+        /* The app socket, not the media link. Losing it does not interrupt the
+           video but does mean we would miss the doctor ending the consultation,
+           so it counts toward "unstable" alongside the room's own state. */
+        signalOk={socketOk}
         onRequireNewToken={handleRequireNewToken}
-        config={{
-          ...baseConfig,
-          // A visible minimize control, in addition to the hardware back button.
-          topMenuBarConfig: {
-            ...(baseConfig.topMenuBarConfig || {}),
-            isVisible: true,
-            buttons: [ZegoMenuBarButtonName.minimizingButton],
-          },
-          onHangUp: leave,
-          onHangUpConfirmation: undefined,
-          // Fired by the SDK's floating window once it has taken over the room. The room
-          // stays connected; we just leave this screen.
-          onWindowMinimized: () => {
-            minimizingRef.current = true;
-            callMinimized();
-            if (navigation.canGoBack()) navigation.goBack();
-          },
-          // Fired when the user taps the floating window.
-          onWindowMaximized: () => {
-            restoreCall();
-          },
+        onJoinFailed={() => endCall('join_failed')}
+        onMinimize={minimize}
+        onEnd={leave}
+        onOpenChat={() => {
+          setChatEverOpened(true);
+          setChatOpen(true);
         }}
       />
+      </View>
 
-      {!socketOk && !remoteEnded && (
-        <View style={styles.reconnectBanner} pointerEvents="none">
-          <ActivityIndicator size="small" color={CC.white} />
-          <Text style={styles.reconnectText}>Reconnecting…</Text>
+      {/* Chat over the call. There is no chat ROUTE to navigate to — chat-mode
+          consultations render this component as the whole screen — and navigating
+          away would take the call screen with it anyway. */}
+      {chatEverOpened && (
+        <View style={[styles.pane, !chatOpen && styles.hidden]}>
+          <ChatConsultation
+            appID={appId}
+            userId={joinData.userId}
+            userName={patientName}
+            zimToken={joinData.zimToken}
+            peerId={doctorId ? zegoDoctorUserId(doctorId) : null}
+            doctorName={doctorName}
+            onLeave={() => {
+              setChatOpen(false);
+              // The call's video views were display:none while chat was up, so the
+              // streams need pointing back at them — same rebind as on restore.
+              setTimeout(forceRenderVideoView, 120);
+            }}
+            onRenewToken={async () => {
+              const r = await refreshConsultationToken(appointmentId);
+              return r.ok ? r.data.zimToken : '';
+            }}
+          />
         </View>
       )}
 
@@ -469,6 +476,12 @@ export default function Consultation({ navigation, route }) {
 
 const styles = StyleSheet.create({
   callContainer: { flex: 1, backgroundColor: '#000' },
+  /* Call and chat are siblings that take turns holding the frame, rather than one
+     being laid over the other: an absolutely-positioned chat left its
+     KeyboardAvoidingView measuring a frame the keyboard is not sized against, and
+     the composer ended up half behind the keyboard. */
+  pane: { flex: 1 },
+  hidden: { display: 'none' },
   reconnectBanner: {
     position: 'absolute',
     top: 52,
@@ -484,6 +497,9 @@ const styles = StyleSheet.create({
   reconnectText: { fontFamily: F.PoppinsMedium, fontSize: 13, color: CC.white },
   endedOverlay: {
     ...StyleSheet.absoluteFillObject,
+    // Same reasoning as the chrome layers in call/CallScreen.js: the ZEGO video
+    // view stacks itself with zIndex, so anything meant to cover it must say so.
+    zIndex: 30,
     backgroundColor: 'rgba(0,0,0,0.82)',
     alignItems: 'center',
     justifyContent: 'center',

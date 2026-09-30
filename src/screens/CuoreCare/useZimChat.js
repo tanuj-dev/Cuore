@@ -61,7 +61,14 @@ export function useZimChat({ appID, userId, userName, token, peerId, onRenewToke
         // re-registering on remount is safe and never stacks handlers.
         zim.on('peerMessageReceived', (_z, data) => {
           if (cancelledRef.current) return;
-          if (data?.info?.conversationID !== peerId) return;
+          /* `fromConversationID` is where the sender is — top level on the event.
+           * `info` is a ZIMMessageReceivedInfo (offline flag, receipt status) and
+           * has no conversationID at all, so reading it gave undefined, which
+           * never equals peerId: EVERY incoming message was silently dropped.
+           * Sending worked throughout, which is what made it look like the
+           * doctor's replies were not arriving at all. */
+          const from = data?.fromConversationID ?? data?.info?.conversationID;
+          if (from !== peerId) return;
           merge((data.messageList || []).map(m => toItem(false, m)));
         });
         zim.on('tokenWillExpire', async () => {

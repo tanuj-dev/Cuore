@@ -1,29 +1,27 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // The minimized ("PiP-style") call window that floats above the whole app.
 //
-// The video itself is ZEGO's own `ZegoUIKitPrebuiltCallFloatingMinimizedView`: it is the
-// component the SDK's minimize mechanism drives, it renders the ACTIVE REMOTE
-// participant's stream, it is draggable, and tapping it maximizes the call. Mounting it
-// persistently is what keeps the room alive while the consultation screen is unmounted.
+// The video is our own `CallBubble`: draggable anywhere, springing to the nearest
+// corner, carrying BOTH faces. It replaced ZEGO's
+// `ZegoUIKitPrebuiltCallFloatingMinimizedView`, which showed the remote participant
+// only, placed itself, and was the anchor of the minimize mechanism this feature no
+// longer needs — the room lives in call/zegoRoom.js and outlives every screen, so
+// nothing has to stay mounted to keep it alive.
 //
-// On top of it we add the chrome the SDK does not provide: a call pill with the doctor's
-// name, a live timer, an explicit "Return to call" target and an End button — so there is
-// always an obvious, non-gestural way back to the full-screen call.
+// Above it sits the call bar: the doctor's name, a live timer, "return to call" and
+// End. It never moves. The bubble roams; the way BACK is always in the same place.
 // ─────────────────────────────────────────────────────────────────────────────
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from 'react-native';
-import { ZegoUIKitPrebuiltCallFloatingMinimizedView } from '@zegocloud/zego-uikit-prebuilt-call-rn';
 import { Maximize2, PhoneOff, Video, Phone } from 'lucide-react-native';
 
 import { CC } from '../screens/CuoreCare/ccTheme';
 import { useCallState } from './useCallState';
 import { CallStatus } from './callState';
 import { restoreCall, endCall } from './callManager';
+import CallBubble from './CallBubble';
 
 const F = CC.fonts;
-
-const MINI_WIDTH = 104;
-const MINI_HEIGHT = 168;
 
 function fmtDuration(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -77,21 +75,18 @@ function CallPill({ doctorName, mode, connectedAt }) {
 export default function CallFloatingWindow() {
   const { status, minimized, pip, doctorName, mode, connectedAt } = useCallState();
 
-  // In system PiP the whole window IS the call, so no in-app chrome.
-  const showChrome = minimized && !pip && status !== CallStatus.IDLE;
+  // In system PiP the whole window IS the call, so no in-app chrome at all.
+  const show = minimized && !pip && status !== CallStatus.IDLE;
+  if (!show) return null;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {/* Persistent by design — the SDK drives its own visibility. */}
-      <ZegoUIKitPrebuiltCallFloatingMinimizedView
-        width={MINI_WIDTH}
-        height={MINI_HEIGHT}
-        borderRadius={14}
-        showSoundWaveInAudioMode
+      <CallPill doctorName={doctorName} mode={mode} connectedAt={connectedAt} />
+      <CallBubble
+        doctorName={doctorName}
+        onRestore={restoreCall}
+        onEnd={() => endCall('local_hangup', { fromFloating: true })}
       />
-      {showChrome && (
-        <CallPill doctorName={doctorName} mode={mode} connectedAt={connectedAt} />
-      )}
     </View>
   );
 }
