@@ -12,6 +12,7 @@ import {
   getConsultationPayment,
   confirmConsultationPayment,
   reconcileConsultationPayment,
+  deferConsultationPayment,
 } from '../../redux/CuoreCare/thunks';
 
 /**
@@ -53,6 +54,7 @@ export default function Checkout({ route, navigation }) {
   const [payment, setPayment] = useState(route?.params?.payment || null);
   const [loading, setLoading] = useState(!route?.params?.payment);
   const [paying, setPaying] = useState(false);
+  const [deferring, setDeferring] = useState(false);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -81,6 +83,25 @@ export default function Checkout({ route, navigation }) {
     // cannot loop: a payment that genuinely has no gateway (bypassed, zero amount) never
     // satisfies the condition in the first place.
   }, [payment, needsCheckout, load]);
+
+  /* The walk-in escape hatch, and the reason it is no longer an escape hatch. It used to just
+     navigate away, which left the booking in `pending_payment` — held, invisible to the doctor,
+     and quietly released by a cron. The patient believed they had an appointment; nobody did.
+     Now it books for real and the fee travels to the doctor's bill as outstanding. */
+  const onPayAtClinic = async () => {
+    setDeferring(true);
+    try {
+      await dispatch(deferConsultationPayment({ appointmentId })).unwrap();
+      navigation.replace('CuoreCareAppointment', { appointmentId, justBooked: true });
+    } catch (e) {
+      alert(
+        'Could not confirm your booking',
+        e?.message || 'Please try again, or pay now to secure the slot.',
+      );
+    } finally {
+      setDeferring(false);
+    }
+  };
 
   const onPay = async () => {
     setError('');
@@ -270,12 +291,14 @@ export default function Checkout({ route, navigation }) {
         {payment?.channel !== 'teleconsult' && (
           <>
             <SecondaryButton
-              label="Pay later"
+              label="Pay at the clinic"
+              loading={deferring}
+              disabled={paying || deferring}
               style={{ marginTop: 10 }}
-              onPress={() => navigation.replace('CuoreCareAppointment', { appointmentId })}
+              onPress={onPayAtClinic}
             />
             <Text style={styles.footnote}>
-              If you leave without paying, your slot is released and the request is not sent.
+              Your booking is sent to the doctor and you pay the fee at reception.
             </Text>
           </>
         )}

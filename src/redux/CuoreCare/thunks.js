@@ -174,6 +174,21 @@ export const reconcileConsultationPayment = createAsyncThunk(
   },
 );
 
+/* "I'll pay at the clinic" — walk-in only, enforced server-side.
+ *
+ * Until this existed, "Pay later" on a walk-in only navigated away: the booking stayed in
+ * `pending_payment`, the doctor never saw it, and a cron quietly released the slot. The patient
+ * left believing they had an appointment and nobody had one. This promotes the booking the way
+ * a paid one is promoted, with the fee recorded as owed and collected at reception. */
+export const deferConsultationPayment = createAsyncThunk(
+  'cuoreCare/deferPayment',
+  async ({ appointmentId }, { rejectWithValue }) => {
+    const res = await ccPost(`/api/cuorecare/appointments/${appointmentId}/payment/defer`, {});
+    if (res.status === 200 && res.data?.status === 'success') return res.data;
+    return rejectWithValue(fail(res, 'Could not confirm your booking'));
+  },
+);
+
 export const getAppointments = createAsyncThunk(
   'cuoreCare/getAppointments',
   async (params = {}, { rejectWithValue }) => {
