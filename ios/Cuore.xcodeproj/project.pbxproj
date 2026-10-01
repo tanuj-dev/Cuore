@@ -340,7 +340,7 @@
 				CODE_SIGN_ENTITLEMENTS = Cuore/Cuore.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_TEAM = JMS43MWJJW;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Cuore/Info.plist;
@@ -349,7 +349,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.6;
+				MARKETING_VERSION = 6.7;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -373,7 +373,7 @@
 				CODE_SIGN_ENTITLEMENTS = Cuore/Cuore.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_TEAM = JMS43MWJJW;
 				INFOPLIST_FILE = Cuore/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -381,7 +381,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.6;
+				MARKETING_VERSION = 6.7;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

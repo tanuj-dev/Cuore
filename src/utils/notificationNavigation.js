@@ -116,7 +116,12 @@ export function navigateFromNotification(navigationRef, screen = 'Today', data =
           screen: 'Tabs',
           params: {
             screen: 'CuoreCare',
-            params: { screen: innerScreen, params },
+            /* `initial: false` is load-bearing (same trap as AppDrawerContent). Without it
+               the notification's target becomes the CuoreCare stack's ONLY route: its back
+               chevron is a silent no-op, and re-tapping the CuoreCare tab pops to a top that
+               is already the top. The patient is stuck on the screen until they restart the
+               app. With it, CuoreCareHome sits underneath and both work. */
+            params: { screen: innerScreen, params, initial: false },
           },
         });
       } else {

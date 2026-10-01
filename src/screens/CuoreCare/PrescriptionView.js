@@ -19,6 +19,7 @@ import { CCHeader } from './components';
 import { fmtDayLabel } from './ccFormat';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { fetchPrescriptionUrl, fetchCertificateUrl } from '../../redux/CuoreCare/thunks';
+import { useCCBack } from './ccBack';
 
 const F = CC.fonts;
 
@@ -39,6 +40,8 @@ const CERT_LABEL = {
  */
 export default function PrescriptionView({ navigation, route }) {
   const { prescriptionId, certificateId } = route.params || {};
+  // Back that works even when this screen was deep-linked in as the stack's only route.
+  const onBack = useCCBack(navigation);
   const isCertificate = !!certificateId && !prescriptionId;
   const docId = isCertificate ? certificateId : prescriptionId;
   const docLabel = isCertificate ? 'Certificate' : 'Prescription';
@@ -147,7 +150,7 @@ export default function PrescriptionView({ navigation, route }) {
       <CCHeader
         title={isCertificate ? CERT_LABEL[state.meta?.type] || 'Certificate' : 'Prescription'}
         subtitle={state.meta?.issuedAt ? `Issued ${fmtDayLabel(state.meta.issuedAt)}` : undefined}
-        onBack={() => navigation.goBack()}
+        onBack={onBack}
       />
 
       <View style={styles.body}>

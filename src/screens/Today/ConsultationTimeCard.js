@@ -37,6 +37,10 @@ export default function ConsultationTimeCard({ appointment }) {
         params: {
           screen: 'CuoreCareAppointment',
           params: { appointmentId: appointment?.appointmentId },
+          /* Keeps CuoreCareHome underneath the appointment. Without it this card drops the
+             patient onto a screen whose back chevron does nothing and whose tab cannot be
+             popped — a dead end until the app restarts. */
+          initial: false,
         },
       },
     });

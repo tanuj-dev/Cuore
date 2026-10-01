@@ -333,7 +333,7 @@ export default function Consultation({ navigation, route }) {
             screen: 'Tabs', // the drawer level around the bottom tabs
             params: {
               screen: 'CuoreCare',
-              params: { screen: 'CuoreCareSubscribe' },
+              params: { screen: 'CuoreCareSubscribe', initial: false },
             },
           }),
       };

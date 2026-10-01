@@ -17,6 +17,7 @@ import { ShieldCheck, Video, Phone, MessageSquare, FileText, Lock } from 'lucide
 import { CC } from './ccTheme';
 import { CCHeader, PrimaryButton } from './components';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
+import { useCCBack } from './ccBack';
 import {
   CUORECARE_IAP_PRODUCT_IDS,
   CUORECARE_IAP_PLANS,
@@ -60,6 +61,8 @@ const planForProduct = productId =>
 
 export default function Subscribe({ navigation }) {
   const dispatch = useDispatch();
+  // Back that works even when this screen was deep-linked in as the stack's only route.
+  const onBack = useCCBack(navigation);
   const { alert, AlertComponent } = useCustomAlert();
   // Default to whatever the catalog actually offers. Hard-coding 'annual' left the radio
   // rendered UNSELECTED once the plan key changed to 'allaccess' — `selected` still resolved
@@ -87,7 +90,7 @@ export default function Subscribe({ navigation }) {
         await dispatch(getCuoreCareStatus());
         setProcessing(false);
         alert('You are all set', 'Your CuoreCare subscription is now active.', [
-          { text: 'Start', onPress: () => navigation.goBack() },
+          { text: 'Start', onPress: onBack },
         ]);
         return true;
       }
@@ -100,7 +103,7 @@ export default function Subscribe({ navigation }) {
       );
       return false;
     },
-    [dispatch, alert, navigation],
+    [dispatch, alert, onBack],
   );
 
   const {
@@ -223,7 +226,7 @@ export default function Subscribe({ navigation }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {AlertComponent}
-      <CCHeader title="CuoreCare" onBack={() => navigation.goBack()} />
+      <CCHeader title="CuoreCare" onBack={onBack} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.heroIcon}>

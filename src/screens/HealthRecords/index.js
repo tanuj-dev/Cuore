@@ -375,6 +375,11 @@ const HealthRecords = ({ navigation }) => {
         }
       }
 
+      // Same as pickImageFromCamera/pickDocumentForUpload: presenting a native picker in
+      // the same tick as dismissing the upload modal races iOS's dismissal animation, and
+      // the picker silently fails to present — no error, no callback, it just never opens.
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       const result = await launchImageLibrary({
         mediaType: 'photo',
         quality: 0.8,

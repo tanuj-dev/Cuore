@@ -15,11 +15,14 @@ import { Search, MapPin, Stethoscope, Video, ChevronRight } from 'lucide-react-n
 import { CC } from './ccTheme';
 import { CCHeader, Card, DoctorAvatar, EmptyState } from './components';
 import { getCuoreCareDoctors } from '../../redux/CuoreCare/thunks';
+import { useCCBack } from './ccBack';
 
 const F = CC.fonts;
 
 export default function DoctorList({ navigation, route }) {
   const dispatch = useDispatch();
+  // Back that works even when this screen was deep-linked in as the stack's only route.
+  const onBack = useCCBack(navigation);
   const { list, loading, error } = useSelector(state => state.cuoreCare.doctors);
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -86,7 +89,7 @@ export default function DoctorList({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <CCHeader title="Choose a doctor" onBack={() => navigation.goBack()} />
+      <CCHeader title="Choose a doctor" onBack={onBack} />
 
       <View style={styles.searchWrap}>
         <Search size={18} color={CC.muted} />

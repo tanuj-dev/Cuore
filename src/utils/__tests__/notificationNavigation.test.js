@@ -99,7 +99,11 @@ describe('navigateFromNotification', () => {
       screen: 'Tabs',
       params: {
         screen: 'CuoreCare',
-        params: { screen: 'CuoreCareAppointment', params: { appointmentId: 'apt_9' } },
+        params: {
+          screen: 'CuoreCareAppointment',
+          params: { appointmentId: 'apt_9' },
+          initial: false,
+        },
       },
     });
   });
@@ -114,6 +118,7 @@ describe('navigateFromNotification', () => {
         params: {
           screen: 'CuoreCarePrescription',
           params: { appointmentId: 'apt_9', prescriptionId: 'rx_9' },
+          initial: false,
         },
       },
     });
@@ -129,6 +134,7 @@ describe('navigateFromNotification', () => {
         params: {
           screen: 'CuoreCareCertificate',
           params: { appointmentId: 'apt_9', certificateId: 'cert_9' },
+          initial: false,
         },
       },
     });
@@ -161,6 +167,7 @@ describe('navigateFromNotification', () => {
         params: {
           screen: 'CuoreCareDoctors',
           params: { appointmentId: undefined, bookWithDoctorId: null, initialDate: null },
+          initial: false,
         },
       },
     });
@@ -183,6 +190,7 @@ describe('navigateFromNotification', () => {
         params: {
           screen: 'CuoreCareDoctors',
           params: { appointmentId: 'apt_9', bookWithDoctorId: 'doc_1', initialDate: '2026-10-02' },
+          initial: false,
         },
       },
     });
@@ -195,7 +203,11 @@ describe('navigateFromNotification', () => {
       screen: 'Tabs',
       params: {
         screen: 'CuoreCare',
-        params: { screen: 'CuoreCareAppointment', params: { appointmentId: 'apt_3' } },
+        params: {
+          screen: 'CuoreCareAppointment',
+          params: { appointmentId: 'apt_3' },
+          initial: false,
+        },
       },
     });
   });

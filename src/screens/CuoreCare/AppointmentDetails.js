@@ -44,6 +44,7 @@ import { getSocket } from '../../realtime/socket';
 import { EV as CC_EV } from '../../realtime/events';
 import { getCallState, isCallConnected } from '../../call/callState';
 import { restoreCall } from '../../call/callManager';
+import { useCCBack } from './ccBack';
 
 const F = CC.fonts;
 
@@ -53,6 +54,8 @@ export default function AppointmentDetails({ navigation, route }) {
   const { data: appt, loading, error: loadError } = useSelector(state => state.cuoreCare.current);
   const actionLoading = useSelector(state => state.cuoreCare.action.loading);
   const { alert, AlertComponent } = useCustomAlert();
+  // Back that works even when this screen was deep-linked in as the stack's only route.
+  const onBack = useCCBack(navigation);
 
   // The reschedule sheet is otherwise forced white, which hides the (light) native iOS wheel
   // text in dark mode. Adapt the sheet + picker to the current appearance so it's always legible.
@@ -212,7 +215,7 @@ export default function AppointmentDetails({ navigation, route }) {
     const failed = !!loadError && !loading;
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <CCHeader title="Appointment" onBack={() => navigation.goBack()} />
+        <CCHeader title="Appointment" onBack={onBack} />
         <View style={styles.center}>
           {failed ? (
             <>
@@ -224,7 +227,7 @@ export default function AppointmentDetails({ navigation, route }) {
                   label="Try again"
                   onPress={() => dispatch(getAppointment(appointmentId))}
                 />
-                <SecondaryButton label="Go back" onPress={() => navigation.goBack()} />
+                <SecondaryButton label="Go back" onPress={onBack} />
               </View>
             </>
           ) : (
@@ -240,7 +243,7 @@ export default function AppointmentDetails({ navigation, route }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {AlertComponent}
-      <CCHeader title="Appointment" onBack={() => navigation.goBack()} />
+      <CCHeader title="Appointment" onBack={onBack} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
