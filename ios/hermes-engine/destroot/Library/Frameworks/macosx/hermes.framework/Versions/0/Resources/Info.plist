@@ -26,5 +26,7 @@
 	<true/>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.15</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 </dict>
 </plist>

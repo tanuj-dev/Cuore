@@ -26,5 +26,7 @@
 	<true/>
 	<key>MinimumOSVersion</key>
 	<string>15.1</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 </dict>
 </plist>

@@ -11,7 +11,6 @@ import { createAccountThunk } from './Auth/authThunk';
 import { getOnboardingThunk } from './OnBoardng/onBoardingThunk';
 import { createReassessment } from './OnBoardng/onBoardingThunk';
 import { getHomeData, getHealthRecord } from './Home/homeThunk';
-import { updateAISummary } from './Home/updateSummaryThunk';
 import { setReminder } from './Home/setReminderThunk';
 // import { updateReminderTime } from './Home/updateTime';
 import { getCuoreScoreThunk } from './OnBoardng/onBoardingThunk';
@@ -31,11 +30,20 @@ import {
 import { getFitness, updateFitnessTime } from './Fitness/fitnessThunk';
 import { getPredict } from './Predict/predictThunk';
 import { checkReminderThunk } from './Home/checkReminderThunk';
+import { getPendingDoctorReminders, respondToDoctorReminder } from './Home/doctorReminderThunks';
 import { searchBuilderThunk } from './Nutrition/thunk';
 import { getNotification } from './Home/notificationThunk';
 import { shareData } from './Share/shareThunk';
 import { editFilename } from './uploadPhoto/editFilenameThunk';
 import { deleteRecord } from './uploadPhoto/deleteRecordThunk';
+import {
+  connectHealthThunk,
+  syncHealthThunk,
+  getHealthStatusThunk,
+  disconnectHealthThunk,
+  getHealthLatestThunk,
+  getHealthSeriesThunk,
+} from './Health/healthThunks';
 
 export {
   sendOtp,
@@ -66,13 +74,20 @@ export {
   getHealthRecord,
   getProfile,
   checkReminderThunk,
+  getPendingDoctorReminders,
+  respondToDoctorReminder,
   searchBuilderThunk,
   loginCaregiverThunk,
   getDoctors,
   searchDoctors,
   getNotification,
   shareData,
-  updateAISummary,
   editFilename,
   deleteRecord,
+  connectHealthThunk,
+  syncHealthThunk,
+  getHealthStatusThunk,
+  disconnectHealthThunk,
+  getHealthLatestThunk,
+  getHealthSeriesThunk,
 };

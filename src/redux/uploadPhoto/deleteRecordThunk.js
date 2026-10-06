@@ -3,27 +3,28 @@ import { deleteApiCall } from '../../utilities/Services';
 import EndPoints from '../../utilities/Endpoints';
 
 /**
- * Delete an uploaded record.
- * @param {string} recordId - Record ID to delete
- * @returns Thunk result with success or error
+ * Delete a health record (removes the stored file too).
+ * @param {string} recordId
  */
 export const deleteRecord = createAsyncThunk(
   'uploadPhoto/deleteRecord',
   async (recordId, { rejectWithValue }) => {
     try {
-      const endpoint = `${EndPoints.DELETE_RECORD}/${recordId}`;
+      const endpoint = `${EndPoints.HEALTH_RECORDS}/${recordId}`;
       const response = await deleteApiCall(endpoint);
 
       if (response?.status === 200) {
         return { recordId, success: true };
-      } else {
-        return rejectWithValue(
-          response?.data?.message || 'Failed to delete record',
-        );
       }
+      return rejectWithValue(
+        response?.data?.error ||
+          response?.data?.message ||
+          'Failed to delete record',
+      );
     } catch (error) {
       return rejectWithValue(
-        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+          error?.response?.data?.message ||
           error?.message ||
           'Failed to delete record',
       );

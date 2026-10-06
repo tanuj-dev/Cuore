@@ -517,6 +517,17 @@ const OnBoarding = ({ navigation, route }) => {
                   ? onboarding3Data
                   : onBoardingData?.data?.o3Data
               }
+              /* Step 3 asks about periods only for a female patient aged 11-51, and both of those
+                 facts were answered back in step 2.
+                 Saved answers UNDERNEATH, this run's edits ON TOP. Not one or the other: on a
+                 first run only the local answers exist, and during a reassessment somebody who
+                 corrects their gender or age in step 2 must see step 3 react to the correction —
+                 reading the stored value alone would keep asking, or keep not asking, based on a
+                 fact they just changed. */
+              o2Data={{
+                ...(onBoardingData?.data?.o2Data || {}),
+                ...(onboarding2Data || {}),
+              }}
               onFormChange={handleFormChange}
             />
           )}

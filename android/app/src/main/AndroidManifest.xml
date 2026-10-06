@@ -6,6 +6,22 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- CuoreCare consultations (ZEGO audio/video) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <!-- CuoreCare VoIP ringing (ZEGO ZPNs offline call invitation). Only needed once the
+         Call Invitation service is enabled; harmless while it is off. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Android 15+: needed to wake the display for an incoming call. Ignored on older
+         versions; the call UI still shows over the keyguard via setShowWhenLocked(). -->
+    <uses-permission android:name="android.permission.TURN_SCREEN_ON" />
+
     <!-- Android 12 and below only -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
@@ -21,8 +37,27 @@
 
     <uses-permission android:name="com.android.vending.BILLING" />
 
+    <!-- Health Connect (READ ONLY). Every type here must also be justified, type by type,
+         in the Play Console "Health apps declaration" or the release is rejected.
+         Note Health Connect itself needs Android 9+: it ships in the OS on Android 14+ and
+         is a Play Store app on 9-13. Android 8.x devices install the app fine but have no
+         provider, so the feature must degrade rather than assume availability. -->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_BLOOD_PRESSURE" />
+    <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE" />
+    <uses-permission android:name="android.permission.health.READ_WEIGHT" />
+    <!-- No READ_HEIGHT: BMI is derived server-side from the height captured at
+         onboarding, and height does not change often enough to be worth syncing.
+         Declaring a permission with no corresponding feature fails Play review. -->
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />
+
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <!-- Package visibility (Android 11+): lets the app open the Play Store via market:// -->
     <queries>
@@ -34,6 +69,9 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
+        <!-- Without this we cannot detect whether Health Connect is installed on
+             Android 9-13, where it is a normal Play Store app rather than part of the OS. -->
+        <package android:name="com.google.android.apps.healthdata" />
     </queries>
 
     <application
@@ -56,12 +94,18 @@
         android:name="com.google.firebase.messaging.default_notification_icon"
         android:resource="@mipmap/ic_launcher" />
 
+      <!-- CuoreCare: `supportsPictureInPicture` lets an active consultation slide into a
+           system PiP window when the user leaves the app; `resizeableActivity` is required
+           for it. `density`/`layoutDirection` are added to configChanges so the PiP
+           transition does not recreate the activity (which would drop the ZEGO room). -->
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
-        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|density|layoutDirection|navigation"
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
+        android:supportsPictureInPicture="true"
+        android:resizeableActivity="true"
         android:exported="true">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
@@ -72,7 +116,28 @@
             <action android:name="OPEN_APP" />
             <category android:name="android.intent.category.DEFAULT" />
         </intent-filter>
+
+        <!-- Health Connect permission rationale, Android 13 and below. Health Connect's own
+             settings screen links here so the user can see WHY we asked. MainActivity is
+             singleTask, so this arrives through onNewIntent rather than a cold start. -->
+        <intent-filter>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        </intent-filter>
       </activity>
+
+      <!-- Same rationale screen for Android 14+, which replaced the action above with a
+           permission-usage intent. BOTH declarations are required: ship only one and the
+           rationale link is dead on half the fleet. -->
+      <activity-alias
+        android:name="ViewPermissionUsageActivity"
+        android:exported="true"
+        android:targetActivity=".MainActivity"
+        android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+            <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+        </intent-filter>
+      </activity-alias>
 
       <receiver
   android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationBootEventReceiver"
@@ -85,6 +150,15 @@
 <receiver
   android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationPublisher"
   android:exported="false" />
+
+      <!-- CuoreCare ongoing-consultation foreground service.
+           Notifee declares this service; from Android 14 (API 34) a service that keeps the
+           camera/microphone alive in the background MUST declare those types, otherwise the
+           OS revokes capture the moment the app leaves the foreground and the call dies. -->
+      <service
+        android:name="app.notifee.core.ForegroundService"
+        android:foregroundServiceType="camera|microphone"
+        tools:replace="android:foregroundServiceType" />
 
     </application>
 </manifest>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Image, Platform } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -6,7 +6,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 import images from '../utilities/Images';
 
@@ -23,6 +23,8 @@ import Today from '../screens/Today';
 import Predict from '../screens/Predict';
 import Explore from '../screens/Explore';
 import Profile from '../screens/Profile';
+import FamilyMembers from '../screens/FamilyMembers';
+import CycleTracker from '../screens/CycleTracker';
 import Tobacco from '../screens/CuoreTobacco';
 import Mind from '../screens/CuoreMind';
 import Fitness from '../screens/Fitness';
@@ -34,6 +36,7 @@ import SelectPersona from '../screens/SelectPersona';
 import HealthRecords from '../screens/HealthRecords';
 import Support from '../screens/Support';
 import DeleteAccount from '../screens/DeleteAccount';
+import ConnectedHealth from '../screens/ConnectedHealth';
 import TermsAndCondtion from '../screens/TermsAndCondtion';
 import RenewSubscription from '../screens/RenewSubscription';
 import EditProfile from '../screens/EditProfile';
@@ -53,8 +56,15 @@ import Doctor from '../screens/Doctor';
 import Health from '../screens/Health';
 import Search from '../screens/Search/search';
 import Notes from '../screens/Notes';
+import Notifications from '../screens/Notifications';
 
+import DrawerNavigator from './DrawerNavigator';
 import { ExploreStack } from './ExploreStack';
+import { CuoreCareStack } from './CuoreCareStack';
+import CuoreCareConsultation from '../screens/CuoreCare/Consultation';
+import CuoreCareIncomingCall from '../screens/CuoreCare/IncomingCall';
+import { Stethoscope } from 'lucide-react-native';
+import { getCuoreCareStatus, getCuoreCareAccess } from '../redux/CuoreCare/thunks';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -62,6 +72,24 @@ const Tab = createBottomTabNavigator();
 /* -------------------- BOTTOM TABS -------------------- */
 function BottomTabNavigator() {
   const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
+
+  // CuoreCare tab is gated on the centralized access object — true for a real CuoreCare
+  // subscription (superset), an admin-granted per-doctor entitlement for an
+  // Essential-tier user, OR a walk-in patient whose doctor has EMR enabled for them
+  // (access.emr). The tab now hosts both telemedicine (booking/video/voice/chat) and
+  // EMR (prescriptions/vaccinations/bills) content — CuoreCareHome decides which of those
+  // to actually show based on which specific feature keys are true, so showing the tab
+  // itself only needs "does this patient have ANY reason to be in here at all". Load both
+  // on entry so the tab shows/hides correctly even before the user opens it; `subscription`
+  // still separately drives the paywall/Profile card.
+  const cuoreCareActive = useSelector(
+    state => state?.cuoreCare?.access?.cuoreCare || state?.cuoreCare?.access?.emr,
+  );
+  useEffect(() => {
+    dispatch(getCuoreCareStatus());
+    dispatch(getCuoreCareAccess());
+  }, [dispatch]);
 
   // ✅ PROFILE IMAGE FROM REDUX
   const profileImage = useSelector(
@@ -143,23 +171,39 @@ function BottomTabNavigator() {
           }}
         />
 
-        <Tab.Screen
-          name="Notes"
-          component={Notes}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Image
-                source={images.CHAT}
-                style={{
-                  width: size,
-                  height: size,
-                  tintColor: color,
-                  resizeMode: 'contain',
-                }}
-              />
-            ),
-          }}
-        />
+        {/* Notes is an Essentials-tier feature. CuoreCare subscribers get the
+            CuoreCare tab instead, so hide Notes when CuoreCare is active. */}
+        {!cuoreCareActive && (
+          <Tab.Screen
+            name="Notes"
+            component={Notes}
+            options={{
+              tabBarIcon: ({ color, size }) => (
+                <Image
+                  source={images.CHAT}
+                  style={{
+                    width: size,
+                    height: size,
+                    tintColor: color,
+                    resizeMode: 'contain',
+                  }}
+                />
+              ),
+            }}
+          />
+        )}
+
+        {cuoreCareActive && (
+          <Tab.Screen
+            name="CuoreCare"
+            component={CuoreCareStack}
+            options={{
+              tabBarIcon: ({ color, size }) => (
+                <Stethoscope size={size} color={color} />
+              ),
+            }}
+          />
+        )}
 
         {/* ✅ PROFILE TAB WITH USER IMAGE */}
         <Tab.Screen
@@ -200,10 +244,12 @@ function ProfileStack() {
       <Stack.Screen name="ProfileMain" component={Profile} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="HealthRecords" component={HealthRecords} />
+      <Stack.Screen name="ConnectedHealth" component={ConnectedHealth} />
       <Stack.Screen name="Support" component={Support} />
       <Stack.Screen name="EditCaregiver" component={EditCaregive} />
       <Stack.Screen name="EditDoctor" component={EditDoctor} />
       <Stack.Screen name="SelectPersona" component={SelectPersona} />
+      <Stack.Screen name="FamilyMembers" component={FamilyMembers} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
       <Stack.Screen name="TermsAndConditions" component={TermsAndCondtion} />
       <Stack.Screen name="RenewSubscription" component={RenewSubscription} />
@@ -227,6 +273,9 @@ function TodayStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="TodayMain" component={Today} />
+      {/* Cycle calendar, opened from the button beside Update Readings. Lives in this stack
+          because that is its only entry point — Today is where the spec puts it. */}
+      <Stack.Screen name="CycleTracker" component={CycleTracker} />
       <Stack.Screen name="CalorieIgnite" component={CalorieIgnite} />
       <Stack.Screen name="MidMorningBoost" component={MidMorningBoost} />
       <Stack.Screen name="RefreshRefuel" component={RefreshRefuel} />
@@ -248,6 +297,17 @@ function TodayStack() {
   );
 }
 
+/* -------------------- DRAWER AROUND THE TABS -------------------- */
+
+/* The tabs are handed to the drawer rather than imported by it: DrawerNavigator would
+ * otherwise have to import this file, which imports DrawerNavigator. Defined at module scope so
+ * the "Home" route keeps the SAME component identity across renders — an inline arrow here would
+ * remount the whole tab tree, and with it every stack inside it, on each render of the root
+ * navigator. */
+function HomeDrawer() {
+  return <DrawerNavigator tabs={BottomTabNavigator} />;
+}
+
 /* -------------------- ROOT NAVIGATOR -------------------- */
 
 export default function Navigator() {
@@ -263,11 +323,27 @@ export default function Navigator() {
         <Stack.Screen name="NewAccount" component={NewAccount} />
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="OnBoarding" component={OnBoarding} />
-        <Stack.Screen name="Home" component={BottomTabNavigator} />
+        {/* "Home" is now the drawer; the bottom tabs live inside it as "Tabs". Anything
+            deep-linking into a tab has to name that level — see DrawerNavigator.js. */}
+        <Stack.Screen name="Home" component={HomeDrawer} />
         <Stack.Screen name="Score" component={Score} />
         <Stack.Screen name="ScoreMeter" component={ScoreMeter} />
         <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
         <Stack.Screen name="Checkout" component={Checkout} />
+        <Stack.Screen
+          name="CuoreCareConsultation"
+          component={CuoreCareConsultation}
+          options={{ gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="CuoreCareIncomingCall"
+          component={CuoreCareIncomingCall}
+          options={{
+            gestureEnabled: false,
+            presentation: 'transparentModal',
+            animationEnabled: true,
+          }}
+        />
         <Stack.Screen name="Tobacco" component={Tobacco} />
         <Stack.Screen name="Mind" component={Mind} />
         <Stack.Screen name="Fitness" component={Fitness} />
@@ -277,6 +353,7 @@ export default function Navigator() {
         <Stack.Screen name="KnowledgeDetails" component={KnowledgeDetails} />
         <Stack.Screen name="Doctor" component={Doctor} />
         <Stack.Screen name="Health" component={Health} />
+        <Stack.Screen name="Notifications" component={Notifications} />
       </Stack.Navigator>
     </SafeAreaView>
   );

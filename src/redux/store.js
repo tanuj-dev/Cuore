@@ -21,6 +21,11 @@ import {
 } from './Explore/slice';
 import { predictSlice } from './Predict/slice';
 import notesSlice from './Notes/slice';
+import cuoreCareSlice from './CuoreCare/slice';
+import healthSyncSlice from './Health/slice';
+import notificationsSlice from './Notifications/slice';
+import dependantsReducer from './Dependants/slice';
+import cycleReducer from './Cycle/slice';
 
 const store = configureStore({
   reducer: {
@@ -40,8 +45,16 @@ const store = configureStore({
     tobacco: tobaccoSlice.reducer,
     predictData: predictSlice.reducer,
     health: getHealth.reducer,
+    // `health` above is the My Health screen payload. Apple Health / Health Connect sync
+    // state lives under `healthSync` so the two do not collide.
+    healthSync: healthSyncSlice,
     doctors: doctorsSlice.reducer,
     notes: notesSlice.reducer,
+    cuoreCare: cuoreCareSlice.reducer,
+    notifications: notificationsSlice.reducer,
+    // Family members on this account, plus which profile the app is currently acting for.
+    dependants: dependantsReducer,
+    cycle: cycleReducer,
   },
   // Enable Redux DevTools in development
   devTools: __DEV__,

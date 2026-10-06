@@ -8,6 +8,8 @@
 	<string>Cuore</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleGetInfoString</key>
+	<string></string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -23,7 +25,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSApplicationCategoryType</key>
-	<string/>
+	<string></string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -34,18 +36,35 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>This app requires access to the camera to capture health records and documents.</string>
+	<string>This app requires access to the camera for video consultations and to capture health records and documents.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Cuore reads your heart rate, blood pressure, blood glucose, weight, height, waist, date of birth, biological sex, steps, exercise and sleep from Apple Health so your health dashboard and Cuore Score stay up to date, and so you do not have to retype details your phone already has when setting up. This data is never used for advertising and is never sold.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>We use Health data to record your workouts and activity in the app.</string>
 	<key>NSLocalNotificationUsageDescription</key>
 	<string>This app uses notifications to remind you about your daily health schedule.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires access to your microphone for voice and video consultations with your doctor.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app requires access to save photos of health records to your library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app requires access to your photo library to select health records and documents.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Poppins-Light.ttf</string>
+		<string>Poppins-Medium.ttf</string>
+		<string>Poppins-Regular.ttf</string>
+		<string>Poppins-Bold.ttf</string>
+		<string>Poppins-SemiBold.ttf</string>
+		<string>Poppins-ExtraBold.ttf</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
+		<string>audio</string>
+		<string>voip</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -61,14 +80,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>UIAppFonts</key>
-	<array>
-		<string>Poppins-Light.ttf</string>
-		<string>Poppins-Medium.ttf</string>
-		<string>Poppins-Regular.ttf</string>
-		<string>Poppins-Bold.ttf</string>
-		<string>Poppins-SemiBold.ttf</string>
-		<string>Poppins-ExtraBold.ttf</string>
-	</array>
 </dict>
 </plist>

@@ -3,6 +3,10 @@ import { View, StyleSheet, Platform, AppState } from 'react-native';
 import axios from 'axios';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
+// Required once, at the root, for the drawer's edge swipe to receive touches. Without it the
+// drawer still opens from the hamburger but never from a gesture — and on Android nothing in
+// the gesture-handler tree works at all.
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import store from './src/redux/store';
 import Navigator from './src/navigation';
 import { initializeNotifee } from './src/notifications/NotificationService';
@@ -20,7 +24,29 @@ import Constants, {
 import Endpoints from './src/utilities/Endpoints';
 import { setSessionExpired, setFCMToken } from './src/redux/Auth/slice';
 import { logoutUser, sendHeartbeatThunk } from './src/redux/Auth/authThunk';
+import {
+  syncHealthThunk,
+  getHealthStatusThunk,
+} from './src/redux/Health/healthThunks';
 import notifee, { EventType } from '@notifee/react-native';
+import { connectSocket, disconnectSocket, getSocket } from './src/realtime/socket';
+import { EV as CC_EV } from './src/realtime/events';
+import { cancelIncomingCallNotification } from './src/notifications/incomingCall';
+import { navigationRef as rootNavigationRef } from './src/navigation/navigationRef';
+import CallFloatingWindow from './src/call/CallFloatingWindow';
+import {
+  handleIncomingCall as onIncomingCall,
+  acceptCall,
+  declineCall,
+  dismissIncomingCall,
+  remoteEndedCall,
+  restoreCall,
+  setPipMode,
+  teardownCalls,
+} from './src/call/callManager';
+import { onPipModeChanged } from './src/call/pip';
+import { resolveScreen, navigateFromNotification as navigateFromNotificationData } from './src/utils/notificationNavigation';
+import { markNotificationRead } from './src/redux/Notifications/thunks';
 
 const isOutdated = (current, minimum) => {
   const c = current.split('.').map(Number);
@@ -32,8 +58,10 @@ const isOutdated = (current, minimum) => {
   return false;
 };
 
-// Navigation ref to access navigation from outside components
-export const navigationRef = React.createRef();
+// Navigation ref to access navigation from outside components.
+// Defined in src/navigation/navigationRef.js so notification handlers and the call
+// manager can navigate without importing App.js; re-exported here for compatibility.
+export const navigationRef = rootNavigationRef;
 
 // Inner component that has access to Redux
 const AppContent = () => {
@@ -45,33 +73,33 @@ const AppContent = () => {
   const userId = useSelector(state => state.auth?.userId);
   const appStateRef = useRef(AppState.currentState);
 
-  const navigateFromNotification = useCallback((screen = 'Today') => {
-    const tryNavigate = attempt => {
-      if (navigationRef.current?.isReady?.()) {
-        navigationRef.current.navigate(screen);
-        return;
-      }
+  // Deep-link resolution + nested-navigate logic lives in src/utils/notificationNavigation.js
+  // now, shared verbatim with the in-app Notifications screen so a tap on the OS banner and
+  // a tap on the in-app list can never drift apart. This wrapper just binds navigationRef and,
+  // when the payload carries a notificationId (attached server-side by
+  // utils/notificationService.js), marks that row read — so opening a notification either
+  // way converges on the same read state.
+  const navigateFromNotification = useCallback((screen = 'Today', data = {}) => {
+    if (data?.notificationId) {
+      dispatch(markNotificationRead(data.notificationId));
+    }
+    navigateFromNotificationData(navigationRef, screen, data);
+  }, [dispatch]);
 
-      if (attempt < 10) {
-        setTimeout(() => tryNavigate(attempt + 1), 200);
-      }
-    };
-
-    tryNavigate(0);
+  // A realtime `call:incoming` (the doctor started the consultation). The call manager
+  // owns the ring, the notification and the navigation so every entry point — socket,
+  // FCM, notification tap — behaves identically and never rings twice.
+  const handleIncomingCall = useCallback(payload => {
+    onIncomingCall(payload, 'socket');
   }, []);
 
-  // Resolve the deep-link target from a notification's data payload.
-  // The backend sends data.screen (e.g. 'OnBoarding', 'HealthRecords',
-  // 'RenewSubscription', 'Today'); anything unknown falls back to Today.
-  const resolveScreen = useCallback(data => {
-    const allowed = [
-      'Today',
-      'OnBoarding',
-      'HealthRecords',
-      'RenewSubscription',
-    ];
-    const target = data?.screen;
-    return allowed.includes(target) ? target : 'Today';
+  // Accept from a background/lock-screen call notification → straight into the consultation.
+  const openConsultationDirect = useCallback((data = {}) => {
+    acceptCall({
+      appointmentId: data.appointmentId,
+      mode: data.mode || 'video',
+      doctorName: data.doctorName,
+    });
   }, []);
 
   // Keep the launcher badge in sync with the notification tray: the badge count
@@ -153,6 +181,8 @@ const AppContent = () => {
 
   const handleSessionExpired = useCallback(async () => {
     console.log('Session expired - clearing tokens and navigating to login');
+    // A call must never outlive the session (ring, foreground service, ZEGO room).
+    teardownCalls();
     await dispatch(logoutUser({ skipRemote: true }));
     dispatch(setSessionExpired(false));
 
@@ -186,6 +216,17 @@ const AppContent = () => {
       onForeground: async remoteMessage => {
         if (cancelled) return;
         console.log('📩 FCM Foreground:', remoteMessage);
+        // Incoming call: ring immediately from whichever transport arrives first. The
+        // manager de-duplicates against the socket event, so the ringtone starts once.
+        if (remoteMessage.data?.type === 'incoming_call') {
+          onIncomingCall(remoteMessage.data, 'fcm');
+          return;
+        }
+        // Caller hung up before we answered.
+        if (remoteMessage.data?.type === 'call_cancelled') {
+          dismissIncomingCall(remoteMessage.data.appointmentId, 'remote_cancelled');
+          return;
+        }
         // iOS: willPresent in AppDelegate shows the banner automatically.
         // Android: FCM does not show foreground notifications — use Notifee.
         if (Platform.OS === 'android') {
@@ -196,8 +237,16 @@ const AppContent = () => {
             id,
             title: remoteMessage.notification?.title || 'Notification',
             body: remoteMessage.notification?.body || '',
-            // Carry the deep-link target so the press handler can route
-            data: { screen: resolveScreen(remoteMessage.data) },
+            // Carry the deep-link target (and CuoreCare ids) so the press handler can route
+            data: {
+              screen: resolveScreen(remoteMessage.data),
+              appointmentId: remoteMessage.data?.appointmentId,
+              prescriptionId: remoteMessage.data?.prescriptionId,
+              // Forward the inbox row id too. Without it an Android FOREGROUND tap was the
+              // only path that did not mark the notification read, because this re-built
+              // payload dropped it — background and quit taps get the FCM data verbatim.
+              notificationId: remoteMessage.data?.notificationId,
+            },
             android: {
               channelId: 'health-schedule',
               smallIcon: 'ic_launcher',
@@ -209,12 +258,18 @@ const AppContent = () => {
       onOpenedFromBg: remoteMessage => {
         if (cancelled) return;
         console.log('🔔 FCM opened from background:', remoteMessage);
-        navigateFromNotification(resolveScreen(remoteMessage?.data));
+        navigateFromNotification(
+          resolveScreen(remoteMessage?.data),
+          remoteMessage?.data,
+        );
       },
       onOpenedFromQuit: remoteMessage => {
         if (cancelled) return;
         console.log('🚀 FCM opened from quit:', remoteMessage);
-        navigateFromNotification(resolveScreen(remoteMessage?.data));
+        navigateFromNotification(
+          resolveScreen(remoteMessage?.data),
+          remoteMessage?.data,
+        );
       },
       onRefreshToken: newToken => {
         if (cancelled) return;
@@ -244,12 +299,37 @@ const AppContent = () => {
     // Handle notification press events (foreground)
     const unsubscribeNotification = notifee.onForegroundEvent(
       ({ type, detail }) => {
+        const nData = detail?.notification?.data || {};
+        const actionId = detail?.pressAction?.id;
+
+        // Incoming-call notification actions (foreground).
+        if (nData.type === 'incoming_call') {
+          if (type === EventType.ACTION_PRESS && actionId === 'call-decline') {
+            declineCall(nData.appointmentId);
+          } else if (type === EventType.ACTION_PRESS && actionId === 'call-accept') {
+            openConsultationDirect(nData);
+          } else if (type === EventType.PRESS) {
+            cancelIncomingCallNotification(nData.appointmentId);
+            navigateFromNotification('IncomingCall', nData);
+          }
+          return;
+        }
+
+        // Ongoing-call notification → back to the full-screen call.
+        if (nData.type === 'ongoing_call') {
+          if (type === EventType.PRESS) restoreCall();
+          return;
+        }
+
         if (type === EventType.PRESS) {
           console.log(
             '📱 Notification pressed (foreground):',
             detail.notification,
           );
-          navigateFromNotification(resolveScreen(detail.notification?.data));
+          navigateFromNotification(
+            resolveScreen(detail.notification?.data),
+            detail.notification?.data,
+          );
         }
         if (type === EventType.DISMISSED || type === EventType.DELIVERED) {
           // A notification was added or swiped away — re-sync the badge.
@@ -262,8 +342,25 @@ const AppContent = () => {
     notifee.getInitialNotification().then(initialNotification => {
       if (initialNotification) {
         console.log('📱 App opened from notification:', initialNotification);
+        const nData = initialNotification.notification?.data || {};
+        const actionId = initialNotification.pressAction?.id;
+        if (nData.type === 'incoming_call') {
+          cancelIncomingCallNotification(nData.appointmentId);
+          if (actionId === 'call-accept') {
+            // Answered straight from the lock screen / tray: join the room directly.
+            openConsultationDirect(nData);
+          } else {
+            navigateFromNotification('IncomingCall', nData);
+          }
+          return;
+        }
+        if (nData.type === 'ongoing_call') {
+          restoreCall();
+          return;
+        }
         navigateFromNotification(
           resolveScreen(initialNotification.notification?.data),
+          initialNotification.notification?.data,
         );
       }
     });
@@ -278,6 +375,7 @@ const AppContent = () => {
     checkConnectivity,
     dispatch,
     navigateFromNotification,
+    openConsultationDirect,
     resolveScreen,
     syncBadgeToTray,
   ]);
@@ -285,13 +383,27 @@ const AppContent = () => {
   useEffect(() => {
     if (!userId) return;
 
-    const sendHeartbeat = () => {
+    const onForeground = async () => {
       dispatch(sendHeartbeatThunk());
+
+      // Apple Health / Health Connect sync. Deliberately shares this listener rather than
+      // adding its own: appStateRef is mutated here, so a second listener would race this
+      // one and whichever ran first would swallow the background -> active transition.
+      //
+      // Status FIRST. On a cold start the slice defaults to connected:false, and
+      // syncHealthThunk refuses to run when it believes the user is not connected -- so
+      // without this the sync would only ever happen after a visit to the settings screen.
+      await dispatch(getHealthStatusThunk());
+
+      // Then sync unconditionally: the thunk owns every guard. It rejects silently when
+      // the user is not connected, when a sync is already in flight, and when the last one
+      // was under 4h ago. Nothing here needs to know any of that.
+      dispatch(syncHealthThunk({}));
     };
 
-    // Send heartbeat when app is already active (cold start or login flow complete).
+    // Run when the app is already active (cold start or login flow complete).
     if (AppState.currentState === 'active') {
-      sendHeartbeat();
+      onForeground();
     }
 
     const appStateSubscription = AppState.addEventListener(
@@ -301,7 +413,7 @@ const AppContent = () => {
           appStateRef.current === 'background' ||
           appStateRef.current === 'inactive';
         if (wasBackgrounded && nextAppState === 'active') {
-          sendHeartbeat();
+          onForeground();
         }
         appStateRef.current = nextAppState;
       },
@@ -312,15 +424,57 @@ const AppContent = () => {
     };
   }, [dispatch, userId]);
 
+  // ── CuoreCare realtime socket ──────────────────────────────────────────────
+  // Connect on login, disconnect on logout. A `call:incoming` (doctor started the call)
+  // launches the full-screen incoming-call screen even if the app is foregrounded elsewhere.
+  useEffect(() => {
+    if (!userId) {
+      disconnectSocket();
+      return undefined;
+    }
+    let cancelled = false;
+    // App-wide call teardown: these must be handled even when the consultation screen is
+    // unmounted (call minimized into the floating window, or app in the background).
+    const onRemoteEnd = p => remoteEndedCall(p?.appointmentId);
+    const onCallCancelled = p => dismissIncomingCall(p?.appointmentId, 'remote_cancelled');
+    (async () => {
+      const s = await connectSocket();
+      if (!s || cancelled) return;
+      s.on(CC_EV.CALL_INCOMING, handleIncomingCall);
+      s.on(CC_EV.CALL_ENDED, onRemoteEnd);
+      s.on(CC_EV.CALL_MISSED, onCallCancelled);
+      s.on(CC_EV.CALL_DECLINED, onCallCancelled);
+    })();
+    return () => {
+      cancelled = true;
+      const s = getSocket();
+      if (s) {
+        s.off(CC_EV.CALL_INCOMING, handleIncomingCall);
+        s.off(CC_EV.CALL_ENDED, onRemoteEnd);
+        s.off(CC_EV.CALL_MISSED, onCallCancelled);
+        s.off(CC_EV.CALL_DECLINED, onCallCancelled);
+      }
+      disconnectSocket();
+    };
+  }, [userId, handleIncomingCall]);
+
+  // ── Android Picture-in-Picture ─────────────────────────────────────────────
+  // MainActivity enters PiP on Home/recents while a call is live; this keeps the call
+  // state (and the in-app chrome) in sync with the system window.
+  useEffect(() => onPipModeChanged(setPipMode), []);
+
   const handleRetry = useCallback(async () => {
     await checkConnectivity();
   }, [checkConnectivity]);
 
   return (
-    <View style={styles.appContainer}>
+    <GestureHandlerRootView style={styles.appContainer}>
       <NavigationContainer ref={navigationRef}>
         <Navigator />
       </NavigationContainer>
+      {/* Minimized call window — lives above the whole app so the consultation keeps
+          running while the user browses the rest of Cuore. */}
+      <CallFloatingWindow />
       {!isConnected && <NetworkError onRetry={handleRetry} />}
       <SessionExpiredModal
         visible={sessionExpired}
@@ -330,7 +484,7 @@ const AppContent = () => {
       {/* Redux Store Debugger - Remove in production */}
       {/* {__DEV__ && <ReduxDebugger />} */}
       {__DEV__ && <ApiDebugger />}
-    </View>
+    </GestureHandlerRootView>
   );
 };
 

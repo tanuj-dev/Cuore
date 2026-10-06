@@ -38,6 +38,7 @@ let API_VERSION_2 = 'api/2.0';
 
 let MAIN_URL = MAIN_URL_QA_A2;
 
+// Staging (CuoreCare QA): https://cuore-backend-staging.onrender.com
 let BASE_URL = 'https://cuore-backend-995g.onrender.com';
 let BASE_URL_V2 = MAIN_URL + API_VERSION_2;
 
@@ -66,40 +67,33 @@ const Constants = {
 export default Constants;
 
 // ─── In-App Purchase ────────────────────────────────────────────────────────
+// The catalog itself lives in ./iapPlans so it can be imported without dragging
+// react-native-device-info (above) into modules and tests that have no use for it.
+// Re-exported here because these names are imported from Constants across the app.
+export {
+  IAP_ALL_ACCESS_PRODUCT_ID,
+  IAP_ALL_ACCESS_PRODUCT_IDS,
+  IAP_ALL_ACCESS_PLAN,
+  IAP_LEGACY_SUBSCRIPTION_IDS,
+  isAllAccessProductId,
+} from './iapPlans';
 
-export const IAP_SUBSCRIPTION_IDS =
-  Platform.OS === 'ios'
-    ? ['com.cuore.monthly99', 'com.cuore.annual1499']
-    : ['cuore_monthly_99', 'pro_membership_annual'];
+import {
+  IAP_ALL_ACCESS_PLAN as ALL_ACCESS_PLAN,
+  IAP_ALL_ACCESS_PRODUCT_ID as ALL_ACCESS_ID,
+  IAP_LEGACY_SUBSCRIPTION_IDS as LEGACY_BASE_IDS,
+} from './iapPlans';
 
-// Keep primary annual ID for backward compatibility where single ID is expected.
-export const IAP_SUBSCRIPTION_ID =
-  Platform.OS === 'ios' ? 'com.cuore.annual1499' : 'pro_membership_annual';
+// Everything the app knows about — sold + retired. Used for fetchProducts and, critically,
+// for filtering restored purchases.
+export const IAP_SUBSCRIPTION_IDS = [ALL_ACCESS_ID, ...LEGACY_BASE_IDS];
 
+// Kept for the places that expect a single primary id.
+export const IAP_SUBSCRIPTION_ID = ALL_ACCESS_ID;
+
+// Store prices in India are tax-inclusive (Apple and Google collect GST), so ₹359 is the
+// final amount charged and nothing is added on top at display time.
 export const IAP_GST_RATE = 0.18;
 
-export const IAP_PLANS = [
-  {
-    title: 'Cuore Monthly',
-    subtitle: 'Flexible monthly access to all premium features',
-    duration: '1 Month',
-    oldPrice: 199,
-    newPrice: 99,
-    daily: '₹3.3/day',
-    discount: '50%',
-    productId:
-      Platform.OS === 'ios' ? 'com.cuore.monthly99' : 'cuore_monthly_99',
-    topPick: false,
-  },
-  {
-    title: 'Thrive',
-    subtitle: 'Commit to lasting health and sustained results',
-    duration: '12 Months',
-    oldPrice: 2999,
-    newPrice: 999,
-    daily: '₹2.7/day',
-    discount: '67%',
-    productId: IAP_SUBSCRIPTION_ID,
-    topPick: true,
-  },
-];
+// What the paywall renders. One entry by design — retired SKUs are intentionally absent.
+export const IAP_PLANS = [ALL_ACCESS_PLAN];

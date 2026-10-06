@@ -21,15 +21,19 @@ const Endpoints = {
   LOGINCAREGIVER: '/api/v1/auth/caregiver/otp/request',
   SHARE_DATA: '/api/v1/share/report',
   DELETEACCOUNT: '/api/v1/users',
-  UPLOAD_PHOTO: '/api/analyze-records', // AI summary endpoint - FormData: userId (text), files (file)
-  EDIT_AI_SUMMARY: '/api/update-analysis',
-  GET_PRESCRIPTION: '/api/get-prescriptions',
-  EDIT_FILENAME: '/api/edit-filename', // PUT /api/edit-filename/:recordId - body: { fileName }
-  DELETE_RECORD: '/api/delete-record', // DELETE /api/delete-record/:recordId
+  // Health records — plain, named document storage (no OCR/AI summarization).
+  // POST   FormData: files (file), names (custom document name, one per file)
+  // GET    ?q=<search on the custom document name>
+  // PUT    /:recordId  body: { name }
+  // DELETE /:recordId
+  HEALTH_RECORDS: '/api/health-records',
+  UPLOAD_PHOTO: '/api/health-records',
+  GET_PRESCRIPTION: '/api/health-records',
+  EDIT_FILENAME: '/api/health-records',
+  DELETE_RECORD: '/api/health-records',
   REFRESH_TOKEN: '/api/v1/auth/refresh-token',
   LOGOUT: '/api/v1/auth/logout',
   DISMISS_ALERT: '/api/v1/timeline', // PUT /api/v1/timeline/:userId/dismiss-alert/:alertId
-  REPORT_SUMMARY: '/api/summary/report',
   VERIFY_SUBSCRIPTION: '/api/subscription/verify',
   RESTORE_PURCHASES: '/api/subscription/restore',
   NOTES: '/api/v1/notes',
@@ -37,6 +41,14 @@ const Endpoints = {
   REQUEST_SUPERVISION: '/api/v1/users/request/supervision',
   RESPOND_CHECKIN: '/api/v1/users/respond-checkin',
   HEARTBEAT: '/api/v1/users/heartbeat',
+
+  // Apple Health / Health Connect sync. No :userId anywhere — the server takes the id
+  // from the bearer token. All of these 503 while HEALTH_SYNC_ENABLED is off.
+  HEALTH_SYNC: '/api/v1/health-metrics/sync',
+  HEALTH_STATUS: '/api/v1/health-metrics/status',
+  HEALTH_LATEST: '/api/v1/health-metrics/latest',
+  HEALTH_SERIES: '/api/v1/health-metrics/series',
+  HEALTH_DISCONNECT: '/api/v1/health-metrics',
 };
 
 export default Endpoints;

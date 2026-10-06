@@ -1,4 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+/**
+ * Health Records — the patient's own document library.
+ *
+ * Flow: Upload → Name → Save → View in Records → Manage.
+ *
+ * This screen used to push every upload through an OCR/AI summarizer and show the
+ * generated summary. That is gone: a record is now simply a file the patient uploaded,
+ * under a name the patient chose, organised by date and manageable (open, rename,
+ * download, delete).
+ */
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +22,7 @@ import {
   ActivityIndicator,
   PermissionsAndroid,
   Linking,
+  RefreshControl,
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import {
@@ -21,45 +32,171 @@ import {
   errorCodes as docErrorCodes,
 } from '@react-native-documents/picker';
 import { useDispatch, useSelector } from 'react-redux';
-import EncryptedStorage from 'react-native-encrypted-storage';
+import Pdf from 'react-native-pdf';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import Share from 'react-native-share';
+import {
+  FileText,
+  Image as ImageIcon,
+  Search,
+  Eye,
+  Pencil,
+  Download,
+  Trash2,
+  X,
+  Check,
+  FolderOpen,
+} from 'lucide-react-native';
+
 import { hp, wp, Images } from '../../utilities';
 import ProfileHeader from '../../components/ProfileHeader';
 import { uploadPhoto } from '../../redux/uploadPhoto/uploadPhotoThunk';
+import { uploadImagingStudy } from '../../redux/uploadPhoto/uploadImagingStudyThunk';
 import { getPresRecordsThunk } from '../../redux/uploadPhoto/getPresRecordsThunk';
 import { editFilename } from '../../redux/uploadPhoto/editFilenameThunk';
 import { deleteRecord } from '../../redux/uploadPhoto/deleteRecordThunk';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
+import { getApiCall, putApiCall } from '../../utilities/Services';
+import { fetchDependants } from '../../redux/Dependants/thunks';
+import { setActiveProfile } from '../../redux/Dependants/slice';
+
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const MAX_FILES_PER_UPLOAD = 10;
+// Imaging has its own, far larger ceiling — it streams straight to S3 rather than through
+// our server. Must match MAX_BYTES in backend/controllers/imagingUploadController.js; the
+// server re-checks the real object size, so this is only to fail fast before a long upload.
+const MAX_IMAGING_SIZE_MB = 2048;
+const MAX_IMAGING_SIZE_BYTES = MAX_IMAGING_SIZE_MB * 1024 * 1024;
+const MAX_NAME_LENGTH = 120;
+const SEARCH_MIN_RECORDS = 5; // below this a search box is just noise
+
+const MONTHS_LONG = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+const MONTHS_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+/* -------------------------------- helpers -------------------------------- */
+
+// Which upload path a picked file takes. Extension-based on purpose: pickers report DICOM
+// inconsistently (Android commonly says application/octet-stream for a .dcm), and the server
+// decides by extension too, so the two agree. Keep in step with ALLOWED_EXTENSIONS in
+// backend/controllers/imagingUploadController.js.
+const IMAGING_EXTENSIONS = ['dcm', 'dicom', 'zip'];
+const isImagingFile = fileName => {
+  const ext = String(fileName || '').split('.').pop().toLowerCase();
+  return IMAGING_EXTENSIONS.includes(ext);
+};
+
+const isPdf = record =>
+  /pdf/i.test(record?.fileType || '') ||
+  /\.pdf($|\?)/i.test(record?.fileUrl || '') ||
+  /\.pdf$/i.test(record?.originalFileName || '');
+
+/** "IMG_20260808.jpg" → "IMG_20260808" — a starting point the user can edit. */
+const defaultNameFor = filename => {
+  const base = String(filename || '').split('/').pop();
+  return base.replace(/\.[^.]+$/, '').slice(0, MAX_NAME_LENGTH) || 'Health record';
+};
+
+const formatDate = value => {
+  if (!value) return '';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return '';
+  return `${String(d.getDate()).padStart(2, '0')} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+};
+
+const formatTime = value => {
+  if (!value) return '';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return '';
+  let h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, '0');
+  const suffix = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return `${h}:${m} ${suffix}`;
+};
+
+const monthGroupOf = value => {
+  const d = new Date(value);
+  if (!value || isNaN(d.getTime())) return 'Earlier';
+  return `${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`;
+};
+
+const formatSize = bytes => {
+  const n = Number(bytes) || 0;
+  if (n <= 0) return '';
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const safeFileName = (name, record) => {
+  const ext =
+    (record?.originalFileName || '').split('.').pop() ||
+    (isPdf(record) ? 'pdf' : 'jpg');
+  const base = String(name || 'health-record').replace(/[^a-zA-Z0-9_ -]/g, '').trim() || 'health-record';
+  return `${base}.${ext}`;
+};
+
+/* ================================= screen ================================= */
 
 const HealthRecords = ({ navigation }) => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   const userId = useSelector(state => state.auth?.userId);
+  // Which family member's records are on screen. Shared with the booking flow so the two
+  // surfaces cannot disagree about who the app is acting for.
+  const dependants = useSelector(state => state.dependants?.items || []);
+  const activeProfileId = useSelector(state => state.dependants?.activeProfileId || null);
+  const activeDependant =
+    dependants.find(d => String(d.dependantId) === String(activeProfileId)) || null;
+  // Whose record is being UPLOADED. Deliberately its own state rather than reusing
+  // activeProfileId: browsing your own records and then uploading your child's report is a
+  // completely ordinary thing to do, and silently filing it under whoever the list happened to
+  // be showing would put a child's document in the parent's record. Seeded from the active
+  // profile so the common case is one tap, but it is an explicit choice.
+  const [uploadForId, setUploadForId] = useState(null);
   const role = useSelector(state => state.auth?.role);
   const isCaregiver = role === 'caregiver';
 
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [isPrescription, setIsPrescription] = useState(false);
-  const [selectedTab] = useState('Prescriptions'); // Used when tabs are enabled; empty state shows "No records yet" when tabs hidden
+  // Upload flow
+  const [selectedFiles, setSelectedFiles] = useState([]); // {uri,name,type,size,docName}
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
-  const [showViewImageModal, setShowViewImageModal] = useState(false);
-  const [currentViewImageUrl, setCurrentViewImageUrl] = useState('');
-  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
 
+  // Records
   const [records, setRecords] = useState([]);
+  // Record-sharing consent. `required` comes from the server so the prompt follows the
+  // account, not the device — reinstalling must not re-ask, and revoking must re-ask.
+  const [consent, setConsent] = useState({ granted: false, required: false, loaded: false });
+  const [showConsent, setShowConsent] = useState(false);
+  const [savingConsent, setSavingConsent] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [search, setSearch] = useState('');
+
+  // Row management
   const [editingRecordId, setEditingRecordId] = useState(null);
-  const [editFileNameValue, setEditFileNameValue] = useState('');
-  const [isEditingFilename, setIsEditingFilename] = useState(false);
+  const [editNameValue, setEditNameValue] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
   const [deletingRecordId, setDeletingRecordId] = useState(null);
+  const [downloadingRecordId, setDownloadingRecordId] = useState(null);
 
-  const [showConsentModal, setShowConsentModal] = useState(false);
-  const [consentToggle, setConsentToggle] = useState(false);
-  const [hasConsented, setHasConsented] = useState(false);
+  // Viewer
+  const [viewerRecord, setViewerRecord] = useState(null);
+  const [isViewerLoading, setIsViewerLoading] = useState(false);
+  const [viewerError, setViewerError] = useState('');
 
-  const MAX_FILE_SIZE_MB = 10;
-  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-  const MAX_FILES_PER_UPLOAD = 10;
+  const hasLoadedOnce = useRef(false);
+
+  /* ----------------------------- permissions ----------------------------- */
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -83,11 +220,64 @@ const HealthRecords = ({ navigation }) => {
     return true; // iOS handles permissions automatically via Info.plist
   };
 
-  const pickImageFromCamera = async () => {
-    console.log('📷 Opening camera...');
+  const requestStoragePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        // Android 13+ (API 33+): manifest uses the system Photo Picker — READ_MEDIA_IMAGES
+        // is intentionally not declared (tools:node="remove"). Do not request it here or
+        // launchImageLibrary will never run.
+        if (Platform.Version >= 33) return true;
 
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          {
+            title: 'Gallery Permission',
+            message:
+              'Allow this app to access your photos to select health records.',
+            buttonPositive: 'Allow',
+            buttonNegative: 'Deny',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.error('Storage permission error:', err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  /* ------------------------------- pickers ------------------------------- */
+
+  const addFiles = useCallback(
+    newFiles => {
+      setSelectedFiles(prev => {
+        const room = MAX_FILES_PER_UPLOAD - prev.length;
+        if (room <= 0) {
+          alert(
+            'Limit reached',
+            `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload.`,
+          );
+          return prev;
+        }
+        const accepted = newFiles.slice(0, room).map(f => ({
+          ...f,
+          docName: defaultNameFor(f.name),
+        }));
+        if (newFiles.length > room) {
+          alert(
+            'Limit reached',
+            `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload. Added the first ${room} of ${newFiles.length}.`,
+          );
+        }
+        return [...prev, ...accepted];
+      });
+    },
+    [alert],
+  );
+
+  const pickImageFromCamera = async () => {
     try {
-      // Request permission for Android
       if (Platform.OS === 'android') {
         const hasPermission = await requestCameraPermission();
         if (!hasPermission) {
@@ -104,37 +294,20 @@ const HealthRecords = ({ navigation }) => {
         }
       }
 
-      // Close modal AFTER permission is granted but BEFORE launching camera
       setShowUploadModal(false);
-
-      // Small delay to ensure modal is fully closed before camera opens
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      const options = {
+      const result = await launchCamera({
         mediaType: 'photo',
         quality: 0.8,
         saveToPhotos: false,
         includeBase64: false,
         cameraType: 'back',
-      };
+      });
 
-      console.log('📷 Launching camera...');
-      const result = await launchCamera(options);
-
-      console.log('📷 Camera result:', JSON.stringify(result, null, 2));
-
-      if (result.didCancel) {
-        console.log('📷 User cancelled camera');
-        return;
-      }
+      if (result.didCancel) return;
 
       if (result.errorCode) {
-        console.error(
-          '📷 Camera error:',
-          result.errorCode,
-          result.errorMessage,
-        );
-
         if (result.errorCode === 'camera_unavailable') {
           alert(
             'Camera Unavailable',
@@ -143,9 +316,7 @@ const HealthRecords = ({ navigation }) => {
               { text: 'OK' },
               {
                 text: 'Open Gallery',
-                onPress: () => {
-                  setTimeout(() => pickImageFromGallery(), 300);
-                },
+                onPress: () => setTimeout(() => pickImageFromGallery(), 300),
               },
             ],
           );
@@ -164,85 +335,31 @@ const HealthRecords = ({ navigation }) => {
         return;
       }
 
-      if (result.assets && result.assets.length > 0) {
+      if (result.assets?.length) {
         const photo = result.assets[0];
-        const newFile = {
-          uri: photo.uri,
-          name: photo.fileName || `photo_${Date.now()}.jpg`,
-          type: photo.type || 'image/jpeg',
-          size: photo.fileSize || 0,
-        };
-        setSelectedFiles(prev => {
-          if (prev.length >= MAX_FILES_PER_UPLOAD) {
-            alert(
-              'Limit reached',
-              `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload.`,
-            );
-            return prev;
-          }
-          return [...prev, newFile];
-        });
-        alert('Success', 'Photo captured successfully!');
+        addFiles([
+          {
+            uri: photo.uri,
+            name: photo.fileName || `photo_${Date.now()}.jpg`,
+            type: photo.type || 'image/jpeg',
+            size: photo.fileSize || 0,
+          },
+        ]);
       } else {
-        console.log('📷 No assets in result');
         alert('Error', 'No photo was captured. Please try again.');
       }
     } catch (error) {
-      console.error('📷 Camera exception:', error);
-      console.error('📷 Error details:', error.message, error.stack);
+      console.error('Camera exception:', error);
       alert(
         'Camera Error',
         'Failed to open camera. Please try using the Gallery option instead.',
-        [
-          { text: 'OK' },
-          {
-            text: 'Open Gallery',
-            onPress: () => {
-              setTimeout(() => pickImageFromGallery(), 300);
-            },
-          },
-        ],
       );
     }
   };
 
-  const requestStoragePermission = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const androidVersion = Platform.Version;
-
-        // Android 13+ (API 33+): manifest uses the system Photo Picker — READ_MEDIA_IMAGES
-        // is intentionally not declared (tools:node="remove"). Do not request it here or
-        // launchImageLibrary will never run.
-        if (androidVersion >= 33) {
-          return true;
-        }
-
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-          {
-            title: 'Gallery Permission',
-            message:
-              'Allow this app to access your photos to select health records.',
-            buttonPositive: 'Allow',
-            buttonNegative: 'Deny',
-          },
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) {
-        console.error('Storage permission error:', err);
-        return false;
-      }
-    }
-    return true; // iOS handles permissions automatically via Info.plist
-  };
-
   const pickImageFromGallery = async () => {
-    console.log('🖼️ Opening gallery...');
-    setShowUploadModal(false); // Close modal first
-
+    setShowUploadModal(false);
     try {
-      // Request permission for Android
       if (Platform.OS === 'android') {
         const hasPermission = await requestStoragePermission();
         if (!hasPermission) {
@@ -258,56 +375,36 @@ const HealthRecords = ({ navigation }) => {
         }
       }
 
-      const options = {
+      // Same as pickImageFromCamera/pickDocumentForUpload: presenting a native picker in
+      // the same tick as dismissing the upload modal races iOS's dismissal animation, and
+      // the picker silently fails to present — no error, no callback, it just never opens.
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const result = await launchImageLibrary({
         mediaType: 'photo',
         quality: 0.8,
-        selectionLimit: 0, // 0 = unlimited selection
+        selectionLimit: 0,
         includeBase64: false,
-      };
+      });
 
-      console.log('🖼️ Launching gallery...');
-      const result = await launchImageLibrary(options);
-
-      console.log('🖼️ Gallery result:', result);
-
-      if (result.didCancel) {
-        console.log('🖼️ User cancelled gallery');
-        return;
-      }
-
+      if (result.didCancel) return;
       if (result.errorCode) {
-        console.error(
-          '🖼️ Gallery error:',
-          result.errorCode,
-          result.errorMessage,
-        );
         alert('Error', result.errorMessage || 'Failed to open gallery');
         return;
       }
 
-      if (result.assets && result.assets.length > 0) {
-        const newFiles = result.assets.map((photo, index) => ({
-          uri: photo.uri,
-          name: photo.fileName || `image_${Date.now()}_${index}.jpg`,
-          type: photo.type || 'image/jpeg',
-          size: photo.fileSize || 0,
-        }));
-        setSelectedFiles(prev => {
-          const total = prev.length + newFiles.length;
-          if (total > MAX_FILES_PER_UPLOAD) {
-            const allowed = MAX_FILES_PER_UPLOAD - prev.length;
-            alert(
-              'Limit reached',
-              `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload. Adding first ${allowed} of ${newFiles.length} selected.`,
-            );
-            return [...prev, ...newFiles.slice(0, allowed)];
-          }
-          return [...prev, ...newFiles];
-        });
-        alert('Success', `${newFiles.length} image(s) selected successfully!`);
+      if (result.assets?.length) {
+        addFiles(
+          result.assets.map((photo, index) => ({
+            uri: photo.uri,
+            name: photo.fileName || `image_${Date.now()}_${index}.jpg`,
+            type: photo.type || 'image/jpeg',
+            size: photo.fileSize || 0,
+          })),
+        );
       }
     } catch (error) {
-      console.error('🖼️ Gallery exception:', error);
+      console.error('Gallery exception:', error);
       alert('Error', 'Failed to open gallery. Please try again.');
     }
   };
@@ -317,63 +414,112 @@ const HealthRecords = ({ navigation }) => {
     await new Promise(resolve => setTimeout(resolve, 300));
     try {
       const result = await pickDocument({
-        type: [docTypes.pdf],
+        // PDFs, plus imaging: DICOM (.dcm) and a zipped study, which is how an imaging centre
+        // usually hands one over.
+        //
+        // `allFiles` rather than a DICOM type on purpose. DICOM has a registered MIME type, but
+        // `type` is MIME on Android and a UTI on iOS, and there is no DICOM UTI in this picker's
+        // table — passing a raw MIME string would break the iOS picker rather than widen it.
+        // Meanwhile Android pickers commonly report a .dcm as application/octet-stream anyway.
+        // So the picker is permissive and the SERVER decides, by extension: the ordinary upload
+        // route accepts PDF/images, the imaging route accepts .dcm/.zip, and anything else is
+        // refused with a clear message.
+        type: [docTypes.allFiles],
         allowMultiSelection: true,
       });
-      if (result && result.length > 0) {
-        const newFiles = result.map(doc => ({
-          uri: doc.uri,
-          name: doc.name || `document_${Date.now()}.pdf`,
-          type: doc.type || 'application/pdf',
-          size: doc.size || 0,
-        }));
-        setSelectedFiles(prev => {
-          const total = prev.length + newFiles.length;
-          if (total > MAX_FILES_PER_UPLOAD) {
-            const allowed = MAX_FILES_PER_UPLOAD - prev.length;
-            alert(
-              'Limit reached',
-              `You can add up to ${MAX_FILES_PER_UPLOAD} files per upload. Adding first ${allowed} of ${newFiles.length} selected.`,
-            );
-            return [...prev, ...newFiles.slice(0, allowed)];
-          }
-          return [...prev, ...newFiles];
-        });
-        alert('Success', `${newFiles.length} PDF(s) selected successfully!`);
+      if (result?.length) {
+        addFiles(
+          result.map(doc => ({
+            uri: doc.uri,
+            name: doc.name || `document_${Date.now()}.pdf`,
+            type: doc.type || 'application/pdf',
+            size: doc.size || 0,
+          })),
+        );
       }
     } catch (err) {
-      if (
-        isErrorWithCode(err) &&
-        err.code === docErrorCodes.OPERATION_CANCELED
-      ) {
+      if (isErrorWithCode(err) && err.code === docErrorCodes.OPERATION_CANCELED) {
         return;
       }
       console.error('Document picker error:', err);
-      alert(
-        'Error',
-        err?.message || 'Failed to pick document. Please try again.',
-      );
+      alert('Error', err?.message || 'Failed to pick document. Please try again.');
+    }
+  };
+
+  /* -------------------------------- upload ------------------------------- */
+
+  const setDocName = (index, value) => {
+    setSelectedFiles(prev =>
+      prev.map((f, i) => (i === index ? { ...f, docName: value } : f)),
+    );
+  };
+
+  const removeSelectedFile = index => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Read consent state once on mount. Kept on the server so it follows the account rather
+  // than the device.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getApiCall('/api/health-records/consent', '');
+        if (!cancelled && res?.status === 200 && res.data?.consent) {
+          setConsent({ ...res.data.consent, loaded: true });
+        }
+      } catch (_) {
+        // Non-fatal: the server enforces the gate regardless, so a failed read just means
+        // the prompt may appear once more than strictly necessary.
+        if (!cancelled) setConsent(c => ({ ...c, loaded: true }));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const grantConsent = async () => {
+    setSavingConsent(true);
+    try {
+      const res = await putApiCall('/api/health-records/consent', { granted: true });
+      if (res?.status === 200 && res.data?.consent) {
+        setConsent({ ...res.data.consent, loaded: true });
+        setShowConsent(false);
+        // Continue straight into the upload the patient already asked for.
+        setTimeout(() => handleSubmit(), 0);
+        return;
+      }
+      alert('Could not save', 'Please try again.');
+    } catch (_) {
+      alert('Could not save', 'Please try again.');
+    } finally {
+      setSavingConsent(false);
     }
   };
 
   const handleSubmit = async () => {
     if (selectedFiles.length === 0) {
-      alert('Incomplete', 'Please upload at least one file');
+      alert('Nothing to upload', 'Select a file or photo first.');
+      return;
+    }
+    if (!userId) {
+      alert('Error', 'User ID not found. Please login again.');
       return;
     }
 
-    if (selectedFiles.length > MAX_FILES_PER_UPLOAD) {
-      alert(
-        'Too many files',
-        `You can upload up to ${MAX_FILES_PER_UPLOAD} files at a time.`,
-      );
+    const unnamed = selectedFiles.findIndex(f => !f.docName?.trim());
+    if (unnamed !== -1) {
+      alert('Name required', 'Give every document a name before saving.');
       return;
     }
 
-    const oversizedFiles = selectedFiles.filter(
-      file => file.size > MAX_FILE_SIZE_BYTES,
+    // The 10 MB cap belongs to the ORDINARY upload path, which posts a FormData through our own
+    // server. Imaging is exempt: it streams straight to S3 and has its own, much larger limit
+    // enforced server-side. Without this exemption a scan would be refused here and never reach
+    // the path built for it.
+    const oversized = selectedFiles.filter(
+      f => !isImagingFile(f.name) && f.size > MAX_FILE_SIZE_BYTES,
     );
-    if (oversizedFiles.length > 0) {
+    if (oversized.length > 0) {
       alert(
         'File too large',
         `Some files exceed ${MAX_FILE_SIZE_MB}MB. Please choose smaller files.`,
@@ -381,451 +527,691 @@ const HealthRecords = ({ navigation }) => {
       return;
     }
 
-    if (!userId) {
-      alert('Error', 'User ID not found. Please login again.');
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-
-      const formData = new FormData();
-      formData.append('userId', userId);
-      formData.append('isPrescription', isPrescription ? 'true' : 'false');
-
-      selectedFiles.forEach((file, index) => {
-        const isPdf = file.type === 'application/pdf';
-        const defaultName = isPdf
-          ? `health_record_${Date.now()}_${index}.pdf`
-          : `health_record_${Date.now()}_${index}.jpg`;
-        const fileData = {
-          uri:
-            Platform.OS === 'ios' ? file.uri.replace('file://', '') : file.uri,
-          type: file.type || 'image/jpeg',
-          name: file.name || defaultName,
-        };
-        formData.append('files', fileData);
-      });
-
-      const response = await dispatch(uploadPhoto(formData)).unwrap();
-
-      if (response?.success || response?.data?.success) {
-        alert('Success', 'Health record uploaded and analyzed successfully!');
-
-        // Reset form
-        setSelectedFiles([]);
-        setIsPrescription(false);
-
-        // Refresh records list so UI updates with new upload
-        getRecords();
-
-        // Navigate to Health screen
-        navigation.navigate('Health');
-      } else {
-        const errorMsg =
-          response?.data?.message ||
-          response?.data?.error ||
-          response?.message ||
-          'Failed to upload health record. Please try again.';
-        alert('Upload Failed', errorMsg);
-      }
-    } catch (error) {
-      const errorMsg =
-        error?.data?.message ||
-        error?.data?.error ||
-        error?.message ||
-        'Failed to upload health record. Please try again.';
-      alert('Upload Failed', errorMsg);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDelete = id => {
-    alert('Delete record', 'Are you sure you want to delete this record?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            setDeletingRecordId(id);
-            await dispatch(deleteRecord(id)).unwrap();
-            setRecords(prev => prev.filter(item => item.recordId !== id));
-          } catch (error) {
-            const msg =
-              error?.message ||
-              error?.data?.message ||
-              'Failed to delete record.';
-            alert('Error', msg);
-          } finally {
-            setDeletingRecordId(null);
-          }
-        },
-      },
-    ]);
-  };
-
-  const startEditFileName = item => {
-    setEditingRecordId(item.recordId);
-    setEditFileNameValue(item.fileName);
-  };
-
-  const cancelEditFileName = () => {
-    setEditingRecordId(null);
-    setEditFileNameValue('');
-  };
-
-  const handleSaveEditFileName = async () => {
-    if (!editingRecordId || !editFileNameValue?.trim()) {
-      cancelEditFileName();
-      return;
-    }
-    try {
-      setIsEditingFilename(true);
-      await dispatch(
-        editFilename({
-          recordId: editingRecordId,
-          fileName: editFileNameValue.trim(),
-        }),
-      ).unwrap();
-      setRecords(prev =>
-        prev.map(r =>
-          r.recordId === editingRecordId
-            ? { ...r, fileName: editFileNameValue.trim() }
-            : r,
-        ),
+    const oversizedImaging = selectedFiles.filter(
+      f => isImagingFile(f.name) && f.size > MAX_IMAGING_SIZE_BYTES,
+    );
+    if (oversizedImaging.length > 0) {
+      alert(
+        'Scan too large',
+        `Scans must be under ${MAX_IMAGING_SIZE_MB / 1024}GB. Please ask the imaging centre for a smaller export.`,
       );
-      cancelEditFileName();
-    } catch (error) {
-      const msg =
-        error?.message || error?.data?.message || 'Failed to update name.';
-      alert('Error', msg);
-    } finally {
-      setIsEditingFilename(false);
+      return;
     }
-  };
 
-  const formatDate = dateString => {
-    if (!dateString) return 'No Date';
-    try {
-      const date = new Date(dateString);
-      const day = String(date.getDate()).padStart(2, '0');
-      const months = [
-        'jan',
-        'feb',
-        'mar',
-        'apr',
-        'may',
-        'jun',
-        'jul',
-        'aug',
-        'sep',
-        'oct',
-        'nov',
-        'dec',
-      ];
-      const month = months[date.getMonth()];
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    } catch (e) {
-      return dateString;
+    // One-time consent. Asked before the FIRST upload only; once granted the prompt never
+    // appears again (the server tracks it, not this screen). The backend enforces the same
+    // rule, so this modal is the explanation — not the protection.
+    if (consent.required) {
+      setShowConsent(true);
+      return;
     }
-  };
 
-  const getRecords = useCallback(async () => {
-    try {
-      setIsFetching(true);
-      const response = await dispatch(getPresRecordsThunk()).unwrap();
-      if (response?.success && response?.data) {
-        const apiRecords = response.data.data
-          .map((item, index) => {
-            const rawDate = item?.uploadDate || '';
-            const parsedTime = rawDate ? new Date(rawDate).getTime() : NaN;
-            return {
-              fileName: item?.fileName || 'Unnamed Record',
-              fileUrl: item?.fileUrl || '',
-              recordId: item?.recordId || index.toString(),
-              type:
-                item?.summarySnippet === 'prescription' ||
-                item?.type === 'Prescription'
-                  ? 'Prescriptions'
-                  : 'Diagnostics',
-              uploadDate: formatDate(rawDate),
-              sortTime: isNaN(parsedTime) ? 0 : parsedTime,
-            };
-          })
-          // Auto-arrange sequentially by date — most recent first
-          .sort((a, b) => b.sortTime - a.sortTime);
-        setRecords(apiRecords);
+    setIsUploading(true);
+    setUploadProgress({ done: 0, total: selectedFiles.length });
+
+    const failed = [];
+    // Sequential: gives honest per-file progress and stops one bad file from
+    // taking the whole batch down with it.
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const f = selectedFiles[i];
+      try {
+        if (isImagingFile(f.name)) {
+          // Imaging goes a different way entirely: presigned URL, streamed straight to S3,
+          // then finalized. It cannot use the thunk below, which posts a FormData to our own
+          // server and is capped at 15 MB — a study is 100 MB-2 GB.
+          await dispatch(
+            uploadImagingStudy({
+              file: {
+                uri: f.uri,
+                type: f.type || 'application/octet-stream',
+                name: f.name,
+                size: f.size || 0,
+              },
+              name: f.docName.trim(),
+              patientId: uploadForId || undefined,
+              // Per-file byte progress, so a multi-hundred-megabyte upload is not a frozen
+              // spinner. Reported as a fraction of THIS file within the batch counter.
+              onProgress: fraction =>
+                setUploadProgress({ done: i + fraction, total: selectedFiles.length }),
+            }),
+          ).unwrap();
+        } else {
+          await dispatch(
+            uploadPhoto({
+              file: {
+                uri: Platform.OS === 'ios' ? f.uri.replace('file://', '') : f.uri,
+                type: f.type || 'image/jpeg',
+                name: f.name || `health_record_${Date.now()}_${i}.jpg`,
+              },
+              name: f.docName.trim(),
+              patientId: uploadForId || undefined,
+            }),
+          ).unwrap();
+        }
+      } catch (error) {
+        failed.push({ name: f.docName || f.name, reason: String(error || '') });
       }
-    } catch (error) {
-      console.error('Error fetching prescriptions:', error);
-    } finally {
-      setIsFetching(false);
+      setUploadProgress({ done: i + 1, total: selectedFiles.length });
     }
-  }, [dispatch]);
+
+    setIsUploading(false);
+    setUploadProgress({ done: 0, total: 0 });
+
+    const saved = selectedFiles.length - failed.length;
+    setSelectedFiles(failed.length ? selectedFiles.filter(f => failed.some(x => x.name === (f.docName || f.name))) : []);
+    await getRecords();
+
+    if (failed.length === 0) {
+      alert('Saved', saved === 1 ? 'Your record has been saved.' : `${saved} records have been saved.`);
+    } else {
+      alert(
+        'Some uploads failed',
+        `${saved} saved, ${failed.length} failed.\n\n${failed[0].reason || 'Please try again.'}`,
+      );
+    }
+  };
+
+  /* ------------------------------- fetching ------------------------------ */
+
+  const getRecords = useCallback(
+    async (q = '') => {
+      try {
+        if (!hasLoadedOnce.current) setIsFetching(true);
+        setLoadError('');
+        const response = await dispatch(getPresRecordsThunk({ q, patientId: activeProfileId || undefined })).unwrap();
+        const list = response?.data?.data || [];
+        setRecords(
+          list
+            // Drop a genuinely empty row — no name, no original filename, no file, no type.
+            // A handful of pre-launch test records were exactly this (created, then never
+            // finished), and opening one only ever produces "This record has no file
+            // attached" — there is nothing useful behind the tile, so don't show the tile.
+            .filter(
+              item =>
+                item?.name || item?.fileName || item?.originalFileName || item?.fileUrl || item?.fileType,
+            )
+            .map((item, index) => ({
+              recordId: item?.recordId || String(index),
+              name: item?.name || item?.fileName || 'Untitled record',
+              originalFileName: item?.originalFileName || '',
+              fileUrl: item?.fileUrl || '',
+              fileType: item?.fileType || '',
+              fileSize: item?.fileSize || 0,
+              uploadedAt: item?.uploadedAt || item?.uploadDate || null,
+              // The date the document is ABOUT (a prescription's issue date, or the date the
+              // patient filed a scan under) — falls back to the upload time for older records.
+              documentDate: item?.documentDate || item?.uploadedAt || item?.uploadDate || null,
+              // Doctor-issued documents (prescriptions, case sheets) are mirrored into Records
+              // read-only: the backend refuses rename/delete on them because the authoritative
+              // document lives elsewhere and the S3 object is shared with the doctor's copy.
+              isClinical: !!item?.isClinical,
+              source: item?.source || 'upload',
+            })),
+        );
+      } catch (error) {
+        setLoadError(
+          typeof error === 'string' ? error : 'Could not load your records.',
+        );
+      } finally {
+        hasLoadedOnce.current = true;
+        setIsFetching(false);
+      }
+    },
+    // activeProfileId is a dependency, not an oversight to leave out: without it the callback
+    // captures whichever profile was selected when it was created and keeps fetching that one
+    // forever, so switching profile would change the header and not the list.
+    [dispatch, activeProfileId],
+  );
 
   useEffect(() => {
     getRecords();
   }, [getRecords]);
 
-  // Load previously stored AI-processing consent so the user is asked only once
   useEffect(() => {
-    (async () => {
-      try {
-        const storedConsent = await EncryptedStorage.getItem(
-          'ai_data_processing_consent',
-        );
-        if (storedConsent === 'true') {
-          setHasConsented(true);
-        }
-      } catch (e) {
-        // No stored consent (or read failed) — user will be prompted on upload
+    dispatch(fetchDependants());
+  }, [dispatch]);
+
+  // Switching profile shows a different person's documents, so the previous list must not sit
+  // on screen while the new one loads — it would read as the newly-selected person's records.
+  useEffect(() => {
+    setRecords([]);
+    hasLoadedOnce.current = false;
+  }, [activeProfileId]);
+
+  // Follow the browsing profile while nothing is staged. Once files are picked the choice is the
+  // user's and must not be moved under them.
+  useEffect(() => {
+    setUploadForId(activeProfileId);
+  }, [activeProfileId]);
+
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await getRecords(search);
+    setIsRefreshing(false);
+  }, [getRecords, search]);
+
+  /* ------------------------------ management ----------------------------- */
+
+  const startRename = record => {
+    setEditingRecordId(record.recordId);
+    setEditNameValue(record.name);
+  };
+
+  const cancelRename = () => {
+    setEditingRecordId(null);
+    setEditNameValue('');
+  };
+
+  const saveRename = async () => {
+    const name = editNameValue.trim();
+    if (!editingRecordId || !name) {
+      cancelRename();
+      return;
+    }
+    try {
+      setIsSavingName(true);
+      await dispatch(editFilename({ recordId: editingRecordId, name })).unwrap();
+      setRecords(prev =>
+        prev.map(r => (r.recordId === editingRecordId ? { ...r, name } : r)),
+      );
+      cancelRename();
+    } catch (error) {
+      alert('Could not rename', typeof error === 'string' ? error : 'Please try again.');
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  const handleDelete = record => {
+    alert(
+      'Delete record',
+      `Are you sure you want to delete "${record.name}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeletingRecordId(record.recordId);
+              await dispatch(deleteRecord(record.recordId)).unwrap();
+              setRecords(prev => prev.filter(r => r.recordId !== record.recordId));
+            } catch (error) {
+              alert(
+                'Could not delete',
+                typeof error === 'string' ? error : 'Please try again.',
+              );
+            } finally {
+              setDeletingRecordId(null);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  // A private record's fileUrl is a presigned URL that expires in ~5 minutes, so the one carried
+  // in the list is stale the moment the patient leaves the screen open. Re-ask the server for the
+  // single record right before opening or downloading it, and use the freshly signed URL.
+  //
+  // Falls back to whatever the list already had: a legacy public record's URL never expires, and a
+  // failed refresh should not block a link that still works.
+  const freshFileUrl = async record => {
+    if (!record?.recordId) return record?.fileUrl || '';
+    try {
+      const res = await getApiCall(`/api/health-records/${record.recordId}`, '');
+      const url = res?.data?.data?.fileUrl || res?.data?.fileUrl;
+      if (url) return url;
+    } catch (e) {
+      // Ignored on purpose — fall through to the URL we already have.
+    }
+    return record.fileUrl || '';
+  };
+
+  const handleDownload = async record => {
+    if (!record.fileUrl) {
+      alert('Unavailable', 'This record has no file attached.');
+      return;
+    }
+    const fileName = safeFileName(record.name, record);
+    const mime = record.fileType || (isPdf(record) ? 'application/pdf' : 'image/jpeg');
+    try {
+      setDownloadingRecordId(record.recordId);
+      const url = await freshFileUrl(record);
+      if (!url) {
+        alert('Unavailable', 'That link has expired. Pull to refresh and try again.');
+        return;
       }
-    })();
-  }, []);
+      if (Platform.OS === 'android') {
+        const { dirs } = ReactNativeBlobUtil.fs;
+        await ReactNativeBlobUtil.config({
+          addAndroidDownloads: {
+            useDownloadManager: true,
+            notification: true,
+            title: fileName,
+            description: 'Cuore health record',
+            mime,
+            mediaScannable: true,
+            path: `${dirs.DownloadDir}/${fileName}`,
+          },
+        }).fetch('GET', url);
+        alert('Downloaded', `"${record.name}" has been saved to Downloads.`);
+      } else {
+        // iOS has no shared Downloads folder — route through the share sheet ("Save to Files").
+        const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
+        const resp = await ReactNativeBlobUtil.config({ fileCache: true, path }).fetch(
+          'GET',
+          url,
+        );
+        await Share.open({
+          url: resp.path(),
+          type: mime,
+          filename: fileName,
+          failOnCancel: false,
+        }).catch(e => {
+          if (!/cancel/i.test(e?.message || '')) throw e;
+        });
+      }
+    } catch (error) {
+      alert('Download failed', error?.message || 'Please try again.');
+    } finally {
+      setDownloadingRecordId(null);
+    }
+  };
+
+  const openViewer = async record => {
+    if (!record.fileUrl) {
+      alert('Unavailable', 'This record has no file attached.');
+      return;
+    }
+    setViewerError('');
+    setIsViewerLoading(true);
+    // Open immediately with what we have so the sheet does not sit blank on a slow connection,
+    // then swap in a freshly signed URL. Without this a record opened a few minutes after the
+    // list loaded would render as a permanent spinner with no explanation.
+    setViewerRecord(record);
+    const url = await freshFileUrl(record);
+    if (url && url !== record.fileUrl) {
+      setViewerRecord(prev => (prev && prev.recordId === record.recordId ? { ...prev, fileUrl: url } : prev));
+    }
+  };
+
+  /* -------------------------------- derived ------------------------------ */
+
+  const filteredRecords = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return records;
+    return records.filter(r => r.name.toLowerCase().includes(q));
+  }, [records, search]);
+
+  // Newest first, split into month headings.
+  const groupedRecords = useMemo(() => {
+    const sorted = [...filteredRecords].sort((a, b) => {
+      const ta = a.documentDate ? new Date(a.documentDate).getTime() : 0;
+      const tb = b.documentDate ? new Date(b.documentDate).getTime() : 0;
+      return tb - ta;
+    });
+    const groups = [];
+    sorted.forEach(record => {
+      const label = monthGroupOf(record.documentDate);
+      const last = groups[groups.length - 1];
+      if (last && last.label === label) last.items.push(record);
+      else groups.push({ label, items: [record] });
+    });
+    return groups;
+  }, [filteredRecords]);
+
+  const showSearch = records.length >= SEARCH_MIN_RECORDS || !!search;
+
+  /* --------------------------------- render ------------------------------ */
+
+  const renderRecord = record => {
+    const editing = editingRecordId === record.recordId && !isCaregiver;
+    const TypeIcon = isPdf(record) ? FileText : ImageIcon;
+
+    return (
+      <View key={record.recordId} style={styles.recordItem}>
+        <View style={styles.recordIcon}>
+          <TypeIcon size={18} color="#11418A" />
+        </View>
+
+        <View style={styles.recordItemContent}>
+          {editing ? (
+            <View style={styles.editRow}>
+              <TextInput
+                style={styles.editNameInput}
+                value={editNameValue}
+                onChangeText={setEditNameValue}
+                editable={!isSavingName}
+                placeholder="Document name"
+                placeholderTextColor="#94A3B8"
+                maxLength={MAX_NAME_LENGTH}
+                autoFocus
+              />
+              <TouchableOpacity
+                onPress={saveRename}
+                disabled={isSavingName}
+                style={styles.iconBtn}
+                accessibilityLabel="Save name"
+              >
+                {isSavingName ? (
+                  <ActivityIndicator size="small" color="#11418A" />
+                ) : (
+                  <Check size={18} color="#059669" />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={cancelRename}
+                style={styles.iconBtn}
+                accessibilityLabel="Cancel rename"
+              >
+                <X size={18} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.recordTitle} numberOfLines={2}>
+                {record.name}
+              </Text>
+              <Text style={styles.recordMeta}>
+                {[
+                  formatDate(record.documentDate),
+                  formatTime(record.documentDate),
+                  formatSize(record.fileSize),
+                ]
+                  .filter(Boolean)
+                  .join('  ·  ')}
+              </Text>
+            </>
+          )}
+        </View>
+
+        {!editing && (
+          <View style={styles.recordActions}>
+            <TouchableOpacity
+              onPress={() => openViewer(record)}
+              style={styles.iconBtn}
+              accessibilityLabel={`Open ${record.name}`}
+            >
+              <Eye size={18} color="#11418A" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleDownload(record)}
+              style={styles.iconBtn}
+              disabled={downloadingRecordId === record.recordId}
+              accessibilityLabel={`Download ${record.name}`}
+            >
+              {downloadingRecordId === record.recordId ? (
+                <ActivityIndicator size="small" color="#11418A" />
+              ) : (
+                <Download size={18} color="#11418A" />
+              )}
+            </TouchableOpacity>
+            {!isCaregiver && !record.isClinical && (
+              <TouchableOpacity
+                onPress={() => startRename(record)}
+                style={styles.iconBtn}
+                accessibilityLabel={`Rename ${record.name}`}
+              >
+                <Pencil size={17} color="#11418A" />
+              </TouchableOpacity>
+            )}
+            {!isCaregiver && !record.isClinical && (
+              <TouchableOpacity
+                onPress={() => handleDelete(record)}
+                style={styles.iconBtn}
+                disabled={deletingRecordId !== null}
+                accessibilityLabel={`Delete ${record.name}`}
+              >
+                {deletingRecordId === record.recordId ? (
+                  <ActivityIndicator size="small" color="#DC2626" />
+                ) : (
+                  <Trash2 size={17} color="#DC2626" />
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <>
       {AlertComponent}
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+        }
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.screen}>
           <ProfileHeader navigation={navigation} title="Health Records" />
+
           <View style={styles.container}>
+            {/* ------------------------- Upload ------------------------- */}
             <Text style={styles.header}>Upload Records</Text>
             <View style={styles.uploadCard}>
               <TouchableOpacity
-                style={[
-                  styles.uploadBox,
-                  isCaregiver && styles.uploadBoxDisabled,
-                ]}
-                onPress={() => {
-                  if (isCaregiver) return;
-                  if (!hasConsented) {
-                    setShowConsentModal(true);
-                  } else {
-                    setShowUploadModal(true);
-                  }
-                }}
+                style={[styles.uploadBox, isCaregiver && styles.uploadBoxDisabled]}
+                onPress={() => !isCaregiver && setShowUploadModal(true)}
                 disabled={isCaregiver}
                 activeOpacity={isCaregiver ? 1 : 0.7}
               >
                 <Image
                   source={Images.UPLOAD}
-                  style={[
-                    styles.uploadIcon,
-                    isCaregiver && styles.uploadIconDisabled,
-                  ]}
+                  style={[styles.uploadIcon, isCaregiver && styles.uploadIconDisabled]}
                 />
-                <Text
-                  style={[
-                    styles.uploadLabel,
-                    isCaregiver && styles.textDisabled,
-                  ]}
-                >
+                <Text style={[styles.uploadLabel, isCaregiver && styles.textDisabled]}>
                   Upload Record
                 </Text>
-                <Text
-                  style={[styles.fileText, isCaregiver && styles.textDisabled]}
-                >
+                <Text style={[styles.fileText, isCaregiver && styles.textDisabled]}>
                   {selectedFiles.length > 0
                     ? `${selectedFiles.length} file(s) selected`
-                    : `PNG, JPG, PDF up to ${MAX_FILE_SIZE_MB}MB, max ${MAX_FILES_PER_UPLOAD} files`}
+                    : `PNG, JPG, PDF up to ${MAX_FILE_SIZE_MB}MB · scans (.dcm/.zip) up to ${MAX_IMAGING_SIZE_MB / 1024}GB · max ${MAX_FILES_PER_UPLOAD} files`}
                 </Text>
               </TouchableOpacity>
 
-              {/* Display Selected Files */}
+              {/* Name each selected document before saving */}
               {selectedFiles.length > 0 && !isCaregiver && (
-                <View style={styles.selectedFilesContainer}>
-                  {selectedFiles.map((file, index) => (
-                    <View key={index} style={styles.fileItem}>
-                      <Text style={styles.fileName} numberOfLines={1}>
-                        {file.name}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setSelectedFiles(prev =>
-                            prev.filter((_, i) => i !== index),
+                <View style={styles.namingBlock}>
+                  {/* Whose record is this? Asked only when there is somebody to choose between,
+                      so an account with no family members sees exactly what it saw before. */}
+                  {dependants.length > 0 && (
+                    <>
+                      <Text style={styles.namingHint}>Whose record is this?</Text>
+                      <View style={styles.profileRow}>
+                        <TouchableOpacity
+                          style={[styles.profileChip, !uploadForId && styles.profileChipOn]}
+                          onPress={() => setUploadForId(null)}
+                        >
+                          <Text style={[styles.profileChipText, !uploadForId && styles.profileChipTextOn]}>
+                            Me
+                          </Text>
+                        </TouchableOpacity>
+                        {dependants.map(d => {
+                          const on = String(d.dependantId) === String(uploadForId);
+                          return (
+                            <TouchableOpacity
+                              key={`up-${d.dependantId}`}
+                              style={[styles.profileChip, on && styles.profileChipOn]}
+                              onPress={() => setUploadForId(d.dependantId)}
+                            >
+                              <Text style={[styles.profileChipText, on && styles.profileChipTextOn]}>
+                                {d.name}
+                              </Text>
+                            </TouchableOpacity>
                           );
-                        }}
+                        })}
+                      </View>
+                    </>
+                  )}
+                  <Text style={styles.namingHint}>
+                    Give each document a name you'll recognise later.
+                  </Text>
+                  {selectedFiles.map((file, index) => (
+                    <View key={`${file.uri}-${index}`} style={styles.namingRow}>
+                      <View style={styles.namingIcon}>
+                        {/pdf/i.test(file.type) ? (
+                          <FileText size={16} color="#11418A" />
+                        ) : (
+                          <ImageIcon size={16} color="#11418A" />
+                        )}
+                      </View>
+                      <View style={styles.namingFields}>
+                        <TextInput
+                          style={styles.nameInput}
+                          value={file.docName}
+                          onChangeText={value => setDocName(index, value)}
+                          placeholder="e.g. Blood Test Report"
+                          placeholderTextColor="#94A3B8"
+                          maxLength={MAX_NAME_LENGTH}
+                          editable={!isUploading}
+                        />
+                        <Text style={styles.namingOriginal} numberOfLines={1}>
+                          {file.name}
+                          {formatSize(file.size) ? `  ·  ${formatSize(file.size)}` : ''}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => removeSelectedFile(index)}
                         style={styles.removeButton}
+                        disabled={isUploading}
+                        accessibilityLabel={`Remove ${file.name}`}
                       >
-                        <Text style={styles.removeButtonText}>✕</Text>
+                        <X size={16} color="#FFFFFF" />
                       </TouchableOpacity>
                     </View>
                   ))}
                 </View>
               )}
 
-              <View style={styles.checkboxRowWrapper}>
-                <TouchableOpacity
-                  onPress={() =>
-                    !isCaregiver && setIsPrescription(!isPrescription)
-                  }
-                  disabled={isCaregiver}
-                >
-                  <View
-                    style={[
-                      styles.checkboxBox,
-                      isPrescription && styles.checkboxBoxUnchecked,
-                    ]}
-                  />
-                </TouchableOpacity>
-                <View style={styles.checkboxRow}>
-                  <Text style={styles.checkboxLabel}>
-                    Mark as Prescription or Doctor’s Note
-                  </Text>
-                </View>
-              </View>
-
               {!isCaregiver && (
                 <TouchableOpacity
                   style={[
                     styles.submitBtn,
-                    isUploading && styles.submitBtnDisabled,
+                    (isUploading || selectedFiles.length === 0) && styles.submitBtnDisabled,
                   ]}
                   onPress={handleSubmit}
-                  disabled={isUploading}
+                  disabled={isUploading || selectedFiles.length === 0}
                 >
                   {isUploading ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <View style={styles.uploadingRow}>
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                      <Text style={styles.submitBtnText}>
+                        Uploading {Math.min(uploadProgress.done + 1, uploadProgress.total)} of{' '}
+                        {uploadProgress.total}…
+                      </Text>
+                    </View>
                   ) : (
-                    <Text style={styles.submitBtnText}>Submit</Text>
+                    <Text style={styles.submitBtnText}>
+                      {uploadForId
+                        ? `Save to ${
+                            (dependants.find(d => String(d.dependantId) === String(uploadForId)) || {})
+                              .name || 'their'
+                          }'s records`
+                        : 'Save to my records'}
+                    </Text>
                   )}
                 </TouchableOpacity>
               )}
             </View>
 
-            {/* Tabs */}
-            <Text style={styles.viewRecordsTitle}>View Records</Text>
-            {/* <View style={styles.tabs}>
-            {['Prescriptions', 'Diagnostics'].map(tab => (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.tab, selectedTab === tab && styles.activeTab]}
-                onPress={() => setSelectedTab(tab)}
-              >
-                <Text
-                  style={
-                    selectedTab === tab ? styles.activeText : styles.tabText
-                  }
-                >
-                  {tab}
+            {/* ------------------------- Records ------------------------- */}
+            <View style={styles.recordsHeaderRow}>
+              <Text style={styles.viewRecordsTitle}>
+                {activeDependant ? `${activeDependant.name}'s Records` : 'My Health Records'}
+              </Text>
+              {records.length > 0 && (
+                <Text style={styles.recordsCount}>
+                  {records.length} {records.length === 1 ? 'file' : 'files'}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View> */}
+              )}
+            </View>
 
-            {/* Record List */}
-            {isFetching ? (
-              <ActivityIndicator
-                size="large"
-                color="#11418A"
-                style={styles.fetchLoader}
-              />
-            ) : records.length > 0 ? (
-              records.map((item, index) => (
-                <View key={item.recordId || index} style={styles.recordItem}>
-                  <View style={styles.recordItemContent}>
-                    {editingRecordId === item.recordId && !isCaregiver ? (
-                      <View style={styles.editRow}>
-                        <TextInput
-                          style={styles.editFileNameInput}
-                          value={editFileNameValue}
-                          onChangeText={setEditFileNameValue}
-                          editable={!isEditingFilename}
-                          placeholder="File name"
-                          placeholderTextColor="#94A3B8"
-                        />
-                        <TouchableOpacity
-                          onPress={handleSaveEditFileName}
-                          disabled={isEditingFilename}
-                          style={styles.saveEditBtn}
-                        >
-                          {isEditingFilename ? (
-                            <ActivityIndicator size="small" color="#11418A" />
-                          ) : (
-                            <Text style={styles.saveEditText}>Save</Text>
-                          )}
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={cancelEditFileName}
-                          style={styles.cancelEditBtn}
-                        >
-                          <Text style={styles.cancelEditText}>Cancel</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <Text style={styles.recordTitle}>{item.fileName}</Text>
-                    )}
-                    <Text style={styles.recordDate}>{item.uploadDate}</Text>
-                  </View>
-                  <View style={styles.recordActions}>
-                    {!isCaregiver && (
-                      <TouchableOpacity
-                        onPress={() => startEditFileName(item)}
-                        disabled={
-                          editingRecordId !== null &&
-                          editingRecordId !== item.recordId
-                        }
-                      >
-                        <Image
-                          style={styles.recordActionIcon}
-                          source={Images.EDIT}
-                        />
-                      </TouchableOpacity>
-                    )}
+            {/* Whose records. Hidden when there is nobody to switch to, so an account with no
+                family members looks exactly as it did before. */}
+            {dependants.length > 0 && (
+              <View style={styles.profileRow}>
+                <TouchableOpacity
+                  style={[styles.profileChip, !activeProfileId && styles.profileChipOn]}
+                  onPress={() => dispatch(setActiveProfile(null))}
+                >
+                  <Text style={[styles.profileChipText, !activeProfileId && styles.profileChipTextOn]}>
+                    Me
+                  </Text>
+                </TouchableOpacity>
+                {dependants.map(d => {
+                  const on = String(d.dependantId) === String(activeProfileId);
+                  return (
                     <TouchableOpacity
-                      onPress={() => {
-                        if (item.fileUrl) {
-                          setCurrentViewImageUrl(item.fileUrl);
-                          setShowViewImageModal(true);
-                        } else {
-                          alert('Error', 'Image URL not found');
-                        }
-                      }}
+                      key={d.dependantId}
+                      style={[styles.profileChip, on && styles.profileChipOn]}
+                      onPress={() => dispatch(setActiveProfile(d.dependantId))}
                     >
-                      <Image
-                        style={[styles.recordActionIcon, styles.eyeIcon]}
-                        source={Images.EYE}
-                      />
+                      <Text style={[styles.profileChipText, on && styles.profileChipTextOn]}>
+                        {d.name}
+                      </Text>
                     </TouchableOpacity>
-                    {!isCaregiver && (
-                      <TouchableOpacity
-                        onPress={() => handleDelete(item.recordId)}
-                        disabled={deletingRecordId !== null}
-                      >
-                        {deletingRecordId === item.recordId ? (
-                          <ActivityIndicator
-                            size="small"
-                            color="#11418A"
-                            style={styles.recordActionIcon}
-                          />
-                        ) : (
-                          <Image
-                            style={styles.recordActionIcon}
-                            source={Images.DELETE}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    )}
-                  </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {showSearch && (
+              <View style={styles.searchBox}>
+                <Search size={17} color="#64748B" />
+                <TextInput
+                  style={styles.searchInput}
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder="Search by document name"
+                  placeholderTextColor="#94A3B8"
+                  returnKeyType="search"
+                />
+                {!!search && (
+                  <TouchableOpacity onPress={() => setSearch('')} accessibilityLabel="Clear search">
+                    <X size={16} color="#64748B" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {isFetching ? (
+              <ActivityIndicator size="large" color="#11418A" style={styles.fetchLoader} />
+            ) : loadError ? (
+              <View style={styles.emptyRecords}>
+                <Text style={styles.emptyRecordsText}>{loadError}</Text>
+                <TouchableOpacity onPress={() => getRecords(search)} style={styles.retryBtn}>
+                  <Text style={styles.retryText}>Try again</Text>
+                </TouchableOpacity>
+              </View>
+            ) : groupedRecords.length > 0 ? (
+              groupedRecords.map(group => (
+                <View key={group.label}>
+                  <Text style={styles.monthHeading}>{group.label}</Text>
+                  {group.items.map(renderRecord)}
                 </View>
               ))
             ) : (
               <View style={styles.emptyRecords}>
+                <FolderOpen size={30} color="#94A3B8" />
+                <Text style={styles.emptyRecordsTitle}>
+                  {search ? 'No matching records' : 'No records yet'}
+                </Text>
                 <Text style={styles.emptyRecordsText}>
-                  No records found for {selectedTab}
+                  {search
+                    ? `Nothing matches "${search}".`
+                    : 'Upload a report, prescription or scan to keep it safe here.'}
                 </Text>
               </View>
             )}
           </View>
 
-          {/* Upload Options Modal */}
+          {/* --------------------- Upload source modal --------------------- */}
           <Modal
             visible={showUploadModal}
-            transparent={true}
+            transparent
             animationType="fade"
             onRequestClose={() => setShowUploadModal(false)}
           >
@@ -837,28 +1223,17 @@ const HealthRecords = ({ navigation }) => {
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>Choose Upload Method</Text>
 
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={pickImageFromCamera}
-                >
+                <TouchableOpacity style={styles.modalButton} onPress={pickImageFromCamera}>
                   <Image source={Images.CAMERA} style={styles.modalIcon} />
                   <Text style={styles.modalButtonText}>Take Photo</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={pickImageFromGallery}
-                >
+                <TouchableOpacity style={styles.modalButton} onPress={pickImageFromGallery}>
                   <Image source={Images.UPLOAD} style={styles.modalIcon} />
-                  <Text style={styles.modalButtonText}>
-                    Choose from Gallery
-                  </Text>
+                  <Text style={styles.modalButtonText}>Choose from Gallery</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={pickDocumentForUpload}
-                >
+                <TouchableOpacity style={styles.modalButton} onPress={pickDocumentForUpload}>
                   <Image source={Images.UPLOAD} style={styles.modalIcon} />
                   <Text style={styles.modalButtonText}>Choose PDF</Text>
                 </TouchableOpacity>
@@ -873,762 +1248,396 @@ const HealthRecords = ({ navigation }) => {
             </TouchableOpacity>
           </Modal>
 
-          {/* View Image Modal */}
+          {/* ------------------------ Record viewer ------------------------ */}
           <Modal
-            visible={showViewImageModal}
-            transparent={true}
+            visible={!!viewerRecord}
+            transparent
             animationType="fade"
-            onRequestClose={() => setShowViewImageModal(false)}
+            onRequestClose={() => setViewerRecord(null)}
           >
-            <View style={styles.viewImageOverlay}>
-              <View style={styles.viewImageContainer}>
+            <View style={styles.viewerOverlay}>
+              <View style={styles.viewerHeader}>
+                <Text style={styles.viewerTitle} numberOfLines={1}>
+                  {viewerRecord?.name}
+                </Text>
                 <TouchableOpacity
-                  style={styles.closeViewImage}
-                  onPress={() => {
-                    setShowViewImageModal(false);
-                    setIsImageLoading(false);
-                  }}
+                  onPress={() => setViewerRecord(null)}
+                  style={styles.viewerClose}
+                  accessibilityLabel="Close"
                 >
-                  <Text style={styles.closeViewImageText}>✕</Text>
+                  <X size={20} color="#FFFFFF" />
                 </TouchableOpacity>
-                {isImageLoading && (
-                  <ActivityIndicator
-                    size="large"
-                    color="#FFFFFF"
-                    style={styles.imageLoader}
-                  />
+              </View>
+
+              <View style={styles.viewerBody}>
+                {isViewerLoading && !viewerError && (
+                  <ActivityIndicator size="large" color="#FFFFFF" style={styles.viewerLoader} />
                 )}
-                <Image
-                  source={{ uri: currentViewImageUrl }}
-                  style={styles.fullImage}
-                  resizeMode="contain"
-                  onLoadStart={() => setIsImageLoading(true)}
-                  onLoadEnd={() => setIsImageLoading(false)}
-                />
-              </View>
-            </View>
-          </Modal>
 
-          {/* AI Data Processing Consent Modal */}
-          <Modal
-            visible={showConsentModal}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => {
-              setShowConsentModal(false);
-              setConsentToggle(false);
-            }}
-          >
-            <View style={styles.consentOverlay}>
-              <View style={styles.consentContainer}>
-                <ScrollView
-                  style={styles.consentScroll}
-                  showsVerticalScrollIndicator={true}
-                >
-                  <Text style={styles.consentTitle}>
-                    AI Data Processing Consent
-                  </Text>
-
-                  <Text style={styles.consentBody}>
-                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
-                      How it works:{' '}
-                    </Text>
-                    {`We use AI to read your document and generate a summary for easy review.`}
-                  </Text>
-                  <Text style={styles.consentBody}>
-                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
-                      What is shared:{' '}
-                    </Text>
-                    {`Only the document you upload is processed — no name, phone, email, device ID, or health logs are shared.`}
-                  </Text>
-                  <Text style={styles.consentBody}>
-                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
-                      Privacy & security:{' '}
-                    </Text>
-                    {`Processed securely by a trusted provider (Groq, US servers) on our behalf, only to create your summary. Your data is encrypted and stored in your Cuore account. You can delete it anytime.`}
-                  </Text>
-                  <Text style={styles.consentBody}>
-                    <Text style={{ fontFamily: 'Poppins-Medium' }}>
-                      Important:{' '}
-                    </Text>
-                    {`This summary is for information only — not medical advice. Please verify with your doctor.`}
-                  </Text>
-
-                  <View style={styles.consentDivider} />
-
-                  <TouchableOpacity
-                    style={styles.consentToggleRow}
-                    activeOpacity={0.7}
-                    onPress={() => setConsentToggle(!consentToggle)}
-                  >
-                    <View
-                      style={[
-                        styles.consentToggleTrack,
-                        consentToggle && styles.consentToggleTrackActive,
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.consentToggleThumb,
-                          consentToggle && styles.consentToggleThumbActive,
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.consentToggleLabel}>
-                      I understand and consent
-                    </Text>
-                  </TouchableOpacity>
-
-                  <Text style={styles.consentAgreementText}>
-                    {`I agree that my uploaded document will be processed by a secure third-party AI service for summarization. No personal identifiers are shared.`}
-                  </Text>
-
-                  <View style={styles.consentLinksRow}>
-                    <TouchableOpacity
-                      onPress={() =>
-                        Linking.openURL('https://cuore.health/privacy')
-                      }
-                    >
-                      <Text style={styles.consentLink}>Privacy Policy</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() =>
-                        Linking.openURL('https://groq.com/terms-of-use')
-                      }
-                    >
-                      <Text style={styles.consentLink}>Groq Terms of Use</Text>
-                    </TouchableOpacity>
+                {viewerError ? (
+                  <View style={styles.viewerErrorBox}>
+                    <Text style={styles.viewerErrorText}>{viewerError}</Text>
                   </View>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.consentAgreeBtn,
-                      !consentToggle && styles.consentAgreeBtnDisabled,
-                    ]}
-                    disabled={!consentToggle}
-                    onPress={async () => {
-                      try {
-                        await EncryptedStorage.setItem(
-                          'ai_data_processing_consent',
-                          'true',
-                        );
-                      } catch (e) {
-                        // Persisting failed — consent still applies this session
-                      }
-                      setHasConsented(true);
-                      setShowConsentModal(false);
-                      setShowUploadModal(true);
+                ) : viewerRecord && isPdf(viewerRecord) ? (
+                  <Pdf
+                    source={{ uri: viewerRecord.fileUrl, cache: true }}
+                    style={styles.viewerPdf}
+                    trustAllCerts={false}
+                    onLoadComplete={() => setIsViewerLoading(false)}
+                    onError={() => {
+                      setIsViewerLoading(false);
+                      setViewerError('This document could not be opened.');
                     }}
-                  >
-                    <Text
-                      style={[
-                        styles.consentAgreeBtnText,
-                        !consentToggle && styles.consentAgreeBtnTextDisabled,
-                      ]}
-                    >
-                      Agree & Continue
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.consentCancelBtn}
-                    onPress={() => {
-                      setShowConsentModal(false);
-                      setConsentToggle(false);
+                  />
+                ) : viewerRecord ? (
+                  <Image
+                    source={{ uri: viewerRecord.fileUrl }}
+                    style={styles.viewerImage}
+                    resizeMode="contain"
+                    onLoadEnd={() => setIsViewerLoading(false)}
+                    onError={() => {
+                      setIsViewerLoading(false);
+                      setViewerError('This image could not be opened.');
                     }}
-                  >
-                    <Text style={styles.consentCancelText}>
-                      Cancel — Don't Upload
-                    </Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.consentBottomSpacer} />
-                </ScrollView>
+                  />
+                ) : null}
               </View>
+
+              {viewerRecord && (
+                <TouchableOpacity
+                  style={styles.viewerDownload}
+                  onPress={() => handleDownload(viewerRecord)}
+                  disabled={downloadingRecordId === viewerRecord.recordId}
+                >
+                  {downloadingRecordId === viewerRecord.recordId ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Download size={17} color="#FFFFFF" />
+                  )}
+                  <Text style={styles.viewerDownloadText}>Download</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </Modal>
         </View>
       </ScrollView>
+
+      {/* One-time record-sharing consent. Shown before the FIRST upload only — once granted
+          the server remembers, so it never reappears (and reappears if consent is revoked). */}
+      <Modal visible={showConsent} transparent animationType="fade" onRequestClose={() => setShowConsent(false)}>
+        <View style={styles.consentBackdrop}>
+          <View style={styles.consentCard}>
+            <Text style={styles.consentTitle}>Share records with your doctor?</Text>
+            <Text style={styles.consentBody}>
+              The documents you upload will be visible to the doctor treating you, so they can
+              see your reports during a consultation.
+            </Text>
+            <Text style={styles.consentBody}>
+              You can turn this off at any time from your Profile. Turning it off hides your
+              uploads from doctors — nothing is deleted, and they stay in your own records.
+            </Text>
+            <View style={styles.consentActions}>
+              <TouchableOpacity onPress={() => setShowConsent(false)} style={styles.consentCancel}>
+                <Text style={styles.consentCancelText}>Not now</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={grantConsent}
+                disabled={savingConsent}
+                style={[styles.consentAgree, savingConsent && { opacity: 0.6 }]}
+              >
+                {savingConsent ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.consentAgreeText}>Agree &amp; upload</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };
 
-export default HealthRecords;
-
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  container: {
-    padding: 16,
-    backgroundColor: '#F8FAFC',
-    flex: 1,
-  },
-  fetchLoader: {
-    marginTop: 20,
-  },
+  screen: { flex: 1, backgroundColor: '#F8FAFC', paddingBottom: hp(4) },
+  container: { paddingHorizontal: wp(4) },
+
   header: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    color: '#1E293B',
-    marginBottom: 12,
-    letterSpacing: -0.3,
+    fontSize: hp(2.2),
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: hp(2),
+    marginBottom: hp(1.4),
   },
-  input: {
-    fontFamily: 'Poppins-Regular',
-    borderWidth: 1.5,
-    fontSize: 15,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
+
   uploadCard: {
-    padding: hp(1),
     backgroundColor: '#FFFFFF',
-    ...(Platform.OS === 'android' && { elevation: 0.5 }),
+    borderRadius: 14,
+    padding: wp(4),
   },
   uploadBox: {
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
     borderStyle: 'dashed',
     borderRadius: 12,
-    padding: 18,
+    paddingVertical: hp(3),
     alignItems: 'center',
-    marginBottom: 12,
-    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
   },
-  uploadIcon: {
-    // tintColor: '#047857',
-    height: hp(4),
-    width: wp(7),
-    resizeMode: 'contain',
-  },
+  uploadBoxDisabled: { opacity: 0.5 },
+  uploadIcon: { width: wp(9), height: wp(9), resizeMode: 'contain' },
+  uploadIconDisabled: { opacity: 0.5 },
   uploadLabel: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#047857',
-    letterSpacing: 0.2,
-  },
-  uploadDisclaimer: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 12.5,
-    color: '#047857',
     marginTop: hp(1),
-    textAlign: 'center',
-    letterSpacing: 0.2,
+    fontSize: hp(1.9),
+    fontWeight: '600',
+    color: '#11418A',
   },
   fileText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 12,
-    color: '#047857',
-    marginTop: 5,
-    letterSpacing: 0.2,
+    marginTop: hp(0.5),
+    fontSize: hp(1.5),
+    color: '#64748B',
+    textAlign: 'center',
+    paddingHorizontal: wp(6),
   },
-  checkboxRowWrapper: {
+  textDisabled: { color: '#94A3B8' },
+
+  namingBlock: { marginTop: hp(2) },
+  namingHint: { fontSize: hp(1.5), color: '#64748B', marginBottom: hp(1) },
+  namingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: hp(1),
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  uploadBoxDisabled: {
-    opacity: 0.6,
     backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    padding: wp(2.5),
+    marginBottom: hp(1),
   },
-  uploadIconDisabled: {
-    opacity: 0.5,
+  namingIcon: {
+    width: wp(8),
+    height: wp(8),
+    borderRadius: 8,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  textDisabled: {
-    color: '#94A3B8',
-  },
-  checkboxBox: {
-    borderWidth: 1,
-    borderColor: '#9CA3AF',
-    backgroundColor: '#11418A',
-    height: hp(3),
-    width: wp(6),
-    borderRadius: hp(0.9),
-  },
-  checkboxBoxUnchecked: {
+  namingFields: { flex: 1, marginHorizontal: wp(2.5) },
+  nameInput: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingHorizontal: wp(3),
+    paddingVertical: Platform.OS === 'ios' ? hp(1.1) : hp(0.6),
+    fontSize: hp(1.7),
+    color: '#0F172A',
   },
-  checkboxLabel: {
-    fontFamily: 'Poppins-Regular',
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#4B5563',
-    letterSpacing: 0.2,
+  namingOriginal: { fontSize: hp(1.3), color: '#94A3B8', marginTop: hp(0.4) },
+  removeButton: {
+    width: wp(7),
+    height: wp(7),
+    borderRadius: wp(3.5),
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+
   submitBtn: {
     backgroundColor: '#11418A',
-    padding: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginVertical: 16,
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-  },
-  submitBtnDisabled: {
-    backgroundColor: '#94A3B8',
-    opacity: 0.7,
-  },
-  submitBtnText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  viewRecordsTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    color: '#000',
-    marginTop: hp(2),
-    marginBottom: hp(1),
-    letterSpacing: 0.2,
-  },
-  tabs: {
-    marginTop: hp(2),
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: hp(1.5),
     borderRadius: 10,
-    backgroundColor: '#94A3B8',
-    marginHorizontal: 4,
+    paddingVertical: hp(1.8),
     alignItems: 'center',
+    marginTop: hp(2),
   },
-  activeTab: { fontFamily: 'Poppins-Regular', backgroundColor: '#11418A' },
-  tabText: {
-    fontFamily: 'Poppins-Regular',
-    color: '#FFFFFF',
-    fontSize: 14,
-    letterSpacing: 0.2,
+  submitBtnDisabled: { opacity: 0.6 },
+  submitBtnText: { color: '#FFFFFF', fontSize: hp(1.9), fontWeight: '600' },
+  uploadingRow: { flexDirection: 'row', alignItems: 'center', gap: wp(2) },
+
+  consentBackdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.45)', justifyContent: 'center', paddingHorizontal: wp(6) },
+  consentCard: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: wp(5) },
+  consentTitle: { fontSize: hp(2), fontWeight: '700', color: '#0F172A', marginBottom: hp(1) },
+  consentBody: { fontSize: hp(1.6), color: '#475569', lineHeight: hp(2.3), marginBottom: hp(1) },
+  consentActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: hp(1) },
+  consentCancel: { paddingVertical: hp(1.2), paddingHorizontal: wp(4) },
+  consentCancelText: { color: '#64748B', fontSize: hp(1.7), fontWeight: '600' },
+  consentAgree: { backgroundColor: '#11418A', borderRadius: 10, paddingVertical: hp(1.2), paddingHorizontal: wp(5), minWidth: wp(34), alignItems: 'center' },
+  consentAgreeText: { color: '#FFFFFF', fontSize: hp(1.7), fontWeight: '700' },
+  recordsHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: hp(3),
+    marginBottom: hp(1),
   },
-  activeText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    fontSize: 14,
-    letterSpacing: 0.3,
+  viewRecordsTitle: { fontSize: hp(2.2), fontWeight: '700', color: '#0F172A' },
+  recordsCount: { fontSize: hp(1.5), color: '#64748B' },
+
+  profileRow: { flexDirection: 'row', flexWrap: 'wrap', gap: wp(2), marginBottom: hp(1.4) },
+  profileChip: {
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(0.7),
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
   },
+  profileChipOn: { backgroundColor: '#11418A', borderColor: '#11418A' },
+  profileChipText: { fontSize: hp(1.6), color: '#64748B', fontWeight: '600' },
+  profileChipTextOn: { color: '#FFFFFF' },
+
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(2),
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    paddingHorizontal: wp(3),
+    marginBottom: hp(1.5),
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: hp(1.7),
+    color: '#0F172A',
+    paddingVertical: Platform.OS === 'ios' ? hp(1.3) : hp(0.9),
+  },
+
+  monthHeading: {
+    fontSize: hp(1.6),
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginTop: hp(1.6),
+    marginBottom: hp(0.8),
+  },
+
   recordItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: hp(2),
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    padding: wp(3),
+    marginBottom: hp(1),
   },
-  recordItemContent: {
-    flex: 1,
-    minWidth: 0,
-  },
-  editRow: {
-    flexDirection: 'row',
+  recordIcon: {
+    width: wp(10),
+    height: wp(10),
+    borderRadius: 10,
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  recordActions: {
-    flexDirection: 'row',
+  recordItemContent: { flex: 1, marginLeft: wp(3) },
+  recordTitle: { fontSize: hp(1.8), fontWeight: '600', color: '#0F172A' },
+  recordMeta: { fontSize: hp(1.4), color: '#64748B', marginTop: hp(0.4) },
+  recordActions: { flexDirection: 'row', alignItems: 'center' },
+  iconBtn: {
+    paddingHorizontal: wp(1.6),
+    paddingVertical: hp(0.8),
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  recordActionIcon: {
-    width: wp(4),
-    height: hp(3),
-    resizeMode: 'contain',
-  },
-  eyeIcon: {
-    width: wp(13),
-    marginLeft: hp(3),
-  },
-  recordTitle: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#1E293B',
-    fontWeight: 'bold',
-    letterSpacing: 0.2,
-  },
-  recordDate: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 13,
-    color: '#64748B',
-    letterSpacing: 0.2,
-  },
-  editFileNameInput: {
-    fontFamily: 'Poppins-Regular',
+
+  editRow: { flexDirection: 'row', alignItems: 'center' },
+  editNameInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#11418A',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    fontSize: 14,
-    color: '#1E293B',
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    paddingHorizontal: wp(2.5),
+    paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(0.5),
+    fontSize: hp(1.7),
+    color: '#0F172A',
   },
-  saveEditBtn: {
-    padding: 4,
-    marginLeft: 8,
-  },
-  saveEditText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#11418A',
-    letterSpacing: 0.2,
-  },
-  cancelEditBtn: {
-    padding: 4,
-    marginLeft: 4,
-  },
-  cancelEditText: {
-    fontFamily: 'Poppins-Regular',
-    color: '#6B7280',
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
+
+  fetchLoader: { marginTop: hp(4) },
   emptyRecords: {
     alignItems: 'center',
-    marginTop: 20,
+    paddingVertical: hp(5),
+    paddingHorizontal: wp(6),
+  },
+  emptyRecordsTitle: {
+    fontSize: hp(1.9),
+    fontWeight: '600',
+    color: '#334155',
+    marginTop: hp(1.4),
   },
   emptyRecordsText: {
-    fontFamily: 'Poppins-Regular',
+    fontSize: hp(1.6),
     color: '#64748B',
-    fontSize: 14,
-    letterSpacing: 0.2,
+    textAlign: 'center',
+    marginTop: hp(0.6),
   },
-  upperInputText: {
-    fontFamily: 'Poppins-Regular',
-    marginBottom: hp(1),
-    fontSize: 14,
-    color: '#475569',
-    letterSpacing: 0.2,
-  },
+  retryBtn: { marginTop: hp(1.6) },
+  retryText: { fontSize: hp(1.7), fontWeight: '600', color: '#11418A' },
+
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
+    width: wp(82),
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    width: wp(85),
-    maxWidth: 400,
+    borderRadius: 14,
+    padding: wp(5),
   },
   modalTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    color: '#1E293B',
-    marginBottom: 20,
+    fontSize: hp(2),
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: hp(2),
     textAlign: 'center',
-    letterSpacing: -0.3,
   },
   modalButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  modalIcon: {
-    width: wp(6),
-    height: hp(3),
-    resizeMode: 'contain',
-    marginRight: 12,
-  },
-  modalButtonText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 15,
-    color: '#475569',
-    letterSpacing: 0.2,
-  },
-  cancelButton: {
-    backgroundColor: '#EF4444',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  cancelButtonText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 15,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    letterSpacing: 0.3,
-  },
-  selectedFilesContainer: {
-    marginTop: hp(1),
-    marginBottom: hp(1),
-  },
-  fileItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F1F5F9',
-    padding: 12,
+    paddingVertical: hp(1.6),
+    paddingHorizontal: wp(3),
     borderRadius: 10,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    backgroundColor: '#F1F5F9',
+    marginBottom: hp(1.2),
   },
-  fileName: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#475569',
-    flex: 1,
-    marginRight: 10,
-    letterSpacing: 0.2,
+  modalIcon: { width: wp(5.5), height: wp(5.5), resizeMode: 'contain' },
+  modalButtonText: {
+    marginLeft: wp(3),
+    fontSize: hp(1.8),
+    color: '#0F172A',
+    fontWeight: '500',
   },
-  removeButton: {
-    backgroundColor: '#EF4444',
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    letterSpacing: 0.2,
-  },
-  viewImageOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  viewImageContainer: {
-    width: wp(100),
-    height: hp(100),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeViewImage: {
-    position: 'absolute',
-    top: hp(6),
-    right: wp(5),
-    zIndex: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeViewImageText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontFamily: 'Poppins-Medium',
-  },
-  fullImage: {
-    width: wp(95),
-    height: hp(80),
-  },
-  imageLoader: {
-    position: 'absolute',
-    zIndex: 5,
-  },
-  consentOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  consentContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    width: wp(92),
-    maxHeight: hp(88),
-    overflow: 'hidden',
-  },
-  consentScroll: {
-    paddingHorizontal: 24,
-    paddingTop: 28,
-  },
-  consentTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 20,
-    color: '#1E293B',
-    textAlign: 'center',
-    letterSpacing: -0.3,
-  },
-  consentBrainIcon: {
-    fontSize: 36,
-    textAlign: 'center',
-    marginVertical: 12,
-  },
-  consentSubtitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 16,
-    color: '#1E293B',
-    textAlign: 'center',
-    marginBottom: 8,
-    letterSpacing: -0.2,
-  },
-  consentBody: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 13.5,
-    color: '#475569',
-    lineHeight: 21,
-    marginBottom: 12,
-    letterSpacing: 0.1,
-  },
-  consentDivider: {
-    height: 1,
-    backgroundColor: '#E2E8F0',
-    marginVertical: 16,
-  },
-  consentSectionTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 15,
-    color: '#1E293B',
-    marginBottom: 8,
-    marginTop: 4,
-    letterSpacing: -0.1,
-  },
-  consentListItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 6,
-    paddingLeft: 4,
-  },
-  consentCheckMark: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#047857',
-    marginRight: 10,
-    marginTop: 2,
-  },
-  consentCrossMark: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#EF4444',
-    marginRight: 10,
-    marginTop: 2,
-  },
-  consentListText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 13.5,
-    color: '#475569',
-    flex: 1,
-    lineHeight: 21,
-    letterSpacing: 0.1,
-  },
-  consentBulletItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-    paddingLeft: 4,
-  },
-  consentBullet: {
-    fontSize: 14,
-    color: '#475569',
-    marginRight: 10,
-    marginTop: 1,
-  },
-  consentToggleRow: {
+  cancelButton: { backgroundColor: 'transparent', justifyContent: 'center' },
+  cancelButtonText: { fontSize: hp(1.8), color: '#64748B', fontWeight: '600' },
+
+  viewerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)' },
+  viewerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingTop: hp(6),
+    paddingHorizontal: wp(4),
+    paddingBottom: hp(1.5),
   },
-  consentToggleTrack: {
-    width: 48,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#CBD5E1',
+  viewerTitle: { flex: 1, color: '#FFFFFF', fontSize: hp(1.9), fontWeight: '600' },
+  viewerClose: { padding: wp(2) },
+  viewerBody: { flex: 1, justifyContent: 'center' },
+  viewerLoader: { position: 'absolute', alignSelf: 'center' },
+  viewerPdf: { flex: 1, backgroundColor: 'transparent' },
+  viewerImage: { flex: 1, width: '100%' },
+  viewerErrorBox: { alignItems: 'center', padding: wp(8) },
+  viewerErrorText: { color: '#FCA5A5', fontSize: hp(1.8), textAlign: 'center' },
+  viewerDownload: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  consentToggleTrackActive: {
+    gap: wp(2),
+    margin: wp(4),
+    paddingVertical: hp(1.6),
+    borderRadius: 10,
     backgroundColor: '#11418A',
   },
-  consentToggleThumb: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  consentToggleThumbActive: {
-    alignSelf: 'flex-end',
-  },
-  consentToggleLabel: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 15,
-    color: '#1E293B',
-    marginLeft: 12,
-    letterSpacing: -0.1,
-  },
-  consentAgreementText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 12.5,
-    color: '#64748B',
-    lineHeight: 19,
-    marginBottom: 16,
-    letterSpacing: 0.1,
-  },
-  consentLinksRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  consentLink: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#11418A',
-    textDecorationLine: 'underline',
-    letterSpacing: 0.1,
-  },
-  consentAgreeBtn: {
-    backgroundColor: '#11418A',
-    padding: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-  },
-  consentAgreeBtnDisabled: {
-    backgroundColor: '#CBD5E1',
-    shadowOpacity: 0,
-  },
-  consentAgreeBtnText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 16,
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  consentAgreeBtnTextDisabled: {
-    color: '#94A3B8',
-  },
-  consentCancelBtn: {
-    alignItems: 'center',
-    paddingVertical: 10,
-    marginBottom: 8,
-  },
-  consentCancelText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#EF4444',
-    letterSpacing: 0.2,
-  },
-  consentBottomSpacer: {
-    height: 20,
-  },
+  viewerDownloadText: { color: '#FFFFFF', fontSize: hp(1.8), fontWeight: '600' },
 });
+
+export default HealthRecords;

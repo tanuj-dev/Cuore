@@ -1,6 +1,7 @@
 package com.cuore
 
 import android.app.Application
+import com.cuore.call.CuoreCallPackage
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
@@ -18,6 +19,9 @@ class MainApplication : Application(), ReactApplication {
             PackageList(this).packages.apply {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               // add(MyReactNativePackage())
+              // CuoreCare call support: Picture-in-Picture, lock-screen call UI and the
+              // Android 14+ full-screen-intent permission check.
+              add(CuoreCallPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

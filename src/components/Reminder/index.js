@@ -34,8 +34,10 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [repeat, setRepeat] = useState('Every Day');
   const [endRepeat, setEndRepeat] = useState('Never');
+  const [endRepeatDate, setEndRepeatDate] = useState(null); // only meaningful when endRepeat === 'On Date'
   const [showPicker, setShowPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [flagAsMedication, setFlagAsMedication] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [requestId, setRequestId] = useState(null);
@@ -65,6 +67,22 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
         selectedDate.getTime() + selectedDate.getTimezoneOffset() * 60000,
       );
       setDate(localDate); // ✅ keep it as Date object
+    }
+  };
+
+  // ✅ Handle End-Repeat "On Date" picker (same pattern as handleDateChange)
+  const handleEndRepeatDateChange = (event, selectedDate) => {
+    if (Platform.OS === 'android') {
+      setShowEndDatePicker(false);
+    }
+    if (event?.type === 'dismissed') {
+      return;
+    }
+    if (selectedDate) {
+      const localDate = new Date(
+        selectedDate.getTime() + selectedDate.getTimezoneOffset() * 60000,
+      );
+      setEndRepeatDate(localDate);
     }
   };
 
@@ -117,6 +135,14 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
       return;
     }
 
+    // "On Date" needs an actual date picked — there's no sensible default to fall back to,
+    // and sending the raw "On Date" label as if it were a date breaks reminder creation.
+    if (endRepeat === 'On Date' && !endRepeatDate) {
+      setToastMessage('Please choose an end date for "End Repeat".');
+      setToastType('error');
+      return;
+    }
+
     const currentTime = new Date();
 
     // Ensure valid date (default: today)
@@ -130,10 +156,20 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
     const selectedTime = time ? time : currentTime;
     const formattedTime = formatTime(selectedTime);
 
+    // endDate must be an actual parseable date string (or the literal "Never" sentinel the
+    // backend recognizes) — never the raw "End Repeat" dropdown label.
+    let formattedEndDate = 'Never';
+    if (endRepeat === 'On Date' && endRepeatDate) {
+      const localEndDate = new Date(
+        endRepeatDate.getTime() - endRepeatDate.getTimezoneOffset() * 60000,
+      );
+      formattedEndDate = localEndDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
+    }
+
     const reminderData = {
       title: reminderText || 'Untitled Reminder',
       startDate: formattedDate,
-      endDate: endRepeat || 'Never',
+      endDate: formattedEndDate,
       time: formattedTime,
       repeatFrequency: repeat || 'Every Day',
       isMedication: flagAsMedication,
@@ -432,7 +468,57 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               </Picker>
             )}
           </View>
-          {/* ... (keep your Picker logic same here) */}
+          {/* End Repeat: "On Date" needs an actual date — same tappable-field +
+              inline-spinner pattern as Start Date above. */}
+          {endRepeat === 'On Date' && (
+            <>
+              <TouchableOpacity
+                style={styles.dateTimeInputFull}
+                onPress={() => setShowEndDatePicker(!showEndDatePicker)}
+              >
+                <Text
+                  style={[
+                    styles.dateTimeLabel,
+                    !endRepeatDate && styles.dateTimePlaceholder,
+                  ]}
+                >
+                  {endRepeatDate ? formatDisplayDate(endRepeatDate) : 'Select end date'}
+                </Text>
+                <Image source={Images.CALANDER} style={styles.dateTimeIcon} />
+              </TouchableOpacity>
+              {showEndDatePicker && (
+                <View style={styles.datePickerWrapper}>
+                  <DateTimePicker
+                    value={endRepeatDate || new Date()}
+                    mode="date"
+                    display="spinner"
+                    minimumDate={date || new Date()}
+                    onChange={handleEndRepeatDateChange}
+                    textColor="#000000"
+                    themeVariant="light"
+                  />
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity
+                      style={styles.pickerDoneButton}
+                      onPress={() => {
+                        if (!endRepeatDate) {
+                          const now = new Date();
+                          setEndRepeatDate(
+                            new Date(
+                              now.getTime() + now.getTimezoneOffset() * 60000,
+                            ),
+                          );
+                        }
+                        setShowEndDatePicker(false);
+                      }}
+                    >
+                      <Text style={styles.pickerDoneText}>Done</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </>
+          )}
           {/* Medication Switch */}
           <View style={styles.switchRow}>
             <Switch
@@ -563,6 +649,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     marginRight: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateTimeInputFull: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

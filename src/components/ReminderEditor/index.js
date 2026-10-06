@@ -46,6 +46,20 @@ const ReminderEditor = ({
           ? requestId?.description
           : requestId?.title || '';
       setReminderText(initialText);
+
+      /* SEED THE PICKER FROM THE CARD, NOT FROM THE CLOCK.
+       *
+       * `time` was initialised to `new Date()` and never touched again, so opening the editor
+       * always showed the current time — and since handleChange sends whatever is in the picker,
+       * simply opening a reminder and pressing Save silently MOVED it to whenever you happened to
+       * be looking. That was survivable while only Wake Up could be edited; now that every
+       * medication card offers the pencil, it would quietly reschedule a prescribed dose.
+       *
+       * The card's time arrives as "h:mm A" (timelineController formats it that way). Parsed
+       * strictly so a value in some other shape falls back to now rather than to an Invalid Date,
+       * which the picker renders as a blank wheel. */
+      const parsed = moment(requestId?.time, ['h:mm A', 'H:mm', 'HH:mm'], true);
+      if (parsed.isValid()) setTime(parsed.toDate());
     }
   }, [requestId]);
 
