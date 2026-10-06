@@ -16,7 +16,9 @@ import {
  * point CUORECARE_BASE_URL at the production API (Constants.BASEURL —
  * https://cuore-backend-995g.onrender.com) or reuse the main axios instance.
  */
-export const CUORECARE_BASE_URL = 'https://cuore-backend-staging.onrender.com';
+// Production. Staging (CuoreCare QA) is https://cuore-backend-staging.onrender.com —
+// that host is the only one with CuoreCare routes until feature/cuorecare merges to master.
+export const CUORECARE_BASE_URL = 'https://cuore-backend-995g.onrender.com';
 
 // Public ZEGOCloud AppID (safe to ship in the client — the server-signed token is the
 // capability). Region + AppID must match the doctor portal and the backend.
