@@ -6,13 +6,12 @@ import { ShieldCheck, Clock, AlertTriangle, Lock } from 'lucide-react-native';
 import RazorpayCheckout from 'react-native-razorpay';
 
 import { CC } from './ccTheme';
-import { CCHeader, PrimaryButton, SecondaryButton, Card } from './components';
+import { CCHeader, PrimaryButton, Card } from './components';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import {
   getConsultationPayment,
   confirmConsultationPayment,
   reconcileConsultationPayment,
-  deferConsultationPayment,
 } from '../../redux/CuoreCare/thunks';
 
 /**
@@ -54,7 +53,6 @@ export default function Checkout({ route, navigation }) {
   const [payment, setPayment] = useState(route?.params?.payment || null);
   const [loading, setLoading] = useState(!route?.params?.payment);
   const [paying, setPaying] = useState(false);
-  const [deferring, setDeferring] = useState(false);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -84,24 +82,8 @@ export default function Checkout({ route, navigation }) {
     // satisfies the condition in the first place.
   }, [payment, needsCheckout, load]);
 
-  /* The walk-in escape hatch, and the reason it is no longer an escape hatch. It used to just
-     navigate away, which left the booking in `pending_payment` — held, invisible to the doctor,
-     and quietly released by a cron. The patient believed they had an appointment; nobody did.
-     Now it books for real and the fee travels to the doctor's bill as outstanding. */
-  const onPayAtClinic = async () => {
-    setDeferring(true);
-    try {
-      await dispatch(deferConsultationPayment({ appointmentId })).unwrap();
-      navigation.replace('CuoreCareAppointment', { appointmentId, justBooked: true });
-    } catch (e) {
-      alert(
-        'Could not confirm your booking',
-        e?.message || 'Please try again, or pay now to secure the slot.',
-      );
-    } finally {
-      setDeferring(false);
-    }
-  };
+  /* No "Pay at the clinic" option (removed on client request, Oct 2026): every booking is paid
+     upfront before it is confirmed, walk-in included. The server refuses deferral too. */
 
   const onPay = async () => {
     setError('');
@@ -284,25 +266,6 @@ export default function Checkout({ route, navigation }) {
           style={{ marginTop: 18 }}
           onPress={onPay}
         />
-        {/* Teleconsult (video/voice/chat) has no "leave it for later" option — the doctor's slot
-            for that channel is gone the moment it is released unpaid, so an escape hatch here
-            only invites a wasted hold. Walk-in keeps it: a patient who books ahead for an
-            in-person visit reasonably wants to decide payment at the desk. */}
-        {payment?.channel !== 'teleconsult' && (
-          <>
-            <SecondaryButton
-              label="Pay at the clinic"
-              loading={deferring}
-              disabled={paying || deferring}
-              style={{ marginTop: 10 }}
-              onPress={onPayAtClinic}
-            />
-            <Text style={styles.footnote}>
-              Your booking is sent to the doctor and you pay the fee at reception.
-            </Text>
-          </>
-        )}
-
         <View style={styles.secure}>
           <Lock size={12} color={CC.muted} />
           <Text style={styles.secureText}>Payment is verified securely by Cuore.</Text>
@@ -342,7 +305,6 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   errorText: { flex: 1, fontSize: 12, lineHeight: 17, color: CC.danger, fontFamily: CC.fonts.Regular },
-  footnote: { fontSize: 11, color: CC.muted, textAlign: 'center', marginTop: 12, fontFamily: CC.fonts.Regular },
   secure: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 18 },
   secureText: { fontSize: 11, color: CC.muted, fontFamily: CC.fonts.Regular },
   coveredTitle: { fontSize: 17, color: CC.text, fontFamily: CC.fonts.SemiBold, marginTop: 14 },

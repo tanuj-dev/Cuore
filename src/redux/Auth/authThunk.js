@@ -267,6 +267,7 @@ export const logoutUser = createAsyncThunk('auth/logoutUser', async (options = {
   } finally {
     try {
       await EncryptedStorage.removeItem('auth_tokens');
+      await EncryptedStorage.removeItem('cuorecare_access_cache');
     } catch (e) {
       console.warn('[logoutUser] EncryptedStorage:', e?.message || e);
     }

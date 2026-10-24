@@ -232,9 +232,9 @@ export default function CycleTracker({ navigation }) {
     );
   }
 
-  /* Tracking is off for this account — a patient whose periods are recorded as stopped, or who was
-   * never asked. Reached only by navigating here directly, since Today hides the button, but it
-   * must say something truthful rather than showing an empty calendar. */
+  /* Tracking is off for this account — offered to female profiles only. Reached only by
+   * navigating here directly, since Today hides the card, but it must say something truthful
+   * rather than showing an empty calendar. */
   if (data && !data.trackingEnabled) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
@@ -242,9 +242,7 @@ export default function CycleTracker({ navigation }) {
         <View style={styles.centred}>
           <Text style={styles.emptyTitle}>Cycle tracking is not on</Text>
           <Text style={styles.emptyBody}>
-            {data.status === 'stopped'
-              ? 'Your periods are recorded as stopped. You can change this when you next update your health assessment.'
-              : 'This is available once your health assessment records that you have periods.'}
+            Cycle tracking is available for female profiles.
           </Text>
         </View>
       </SafeAreaView>
@@ -442,7 +440,7 @@ function Header({ navigation }) {
       >
         <ArrowLeft size={hp(2.6)} color="#16283F" />
       </TouchableOpacity>
-      <Text style={styles.headerTitle}>Cycle</Text>
+      <Text style={styles.headerTitle}>My Cycle</Text>
     </View>
   );
 }

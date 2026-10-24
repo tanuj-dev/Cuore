@@ -22,12 +22,20 @@ const ReminderEditor = ({
   requestId,
   setVisible,
   setExistingReminder,
+  onSaved,
 }) => {
   const [reminderText, setReminderText] = useState('');
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Course fields — shown only for a reminder that has one (card.schedule: a medicine from a
+  // prescription, or any reminder with an end date). Saved as "start on X, for N days"; the
+  // server works out the end date and moves the medicine's other dose times with it.
+  const course = requestId?.schedule || null;
+  const [courseStart, setCourseStart] = useState(new Date());
+  const [courseDays, setCourseDays] = useState('1');
+  const [showStartPicker, setShowStartPicker] = useState(false);
 
   const dispatch = useDispatch();
   const userId = useSelector(state => state?.auth?.userId);
@@ -60,6 +68,10 @@ const ReminderEditor = ({
        * which the picker renders as a blank wheel. */
       const parsed = moment(requestId?.time, ['h:mm A', 'H:mm', 'HH:mm'], true);
       if (parsed.isValid()) setTime(parsed.toDate());
+      if (requestId?.schedule) {
+        setCourseStart(moment(requestId.schedule.startDate, 'YYYY-MM-DD').toDate());
+        setCourseDays(String(requestId.schedule.totalDays));
+      }
     }
   }, [requestId]);
 
@@ -89,6 +101,20 @@ const ReminderEditor = ({
       return;
     }
 
+    const payload2 = { time: formattedTime, title: trimmedTitle };
+    if (course) {
+      const days = Number(courseDays);
+      if (!Number.isInteger(days) || days < 1 || days > 365) {
+        setError('Number of days must be between 1 and 365');
+        return;
+      }
+      const startStr = moment(courseStart).format('YYYY-MM-DD');
+      if (startStr !== course.startDate || days !== course.totalDays) {
+        payload2.courseStartDate = startStr;
+        payload2.durationDays = days;
+      }
+    }
+
     try {
       setLoading(true);
       updateLocalReminder(formattedTime, trimmedTitle);
@@ -97,14 +123,16 @@ const ReminderEditor = ({
         editReminderThunk({
           sourceId: getReminderId(),
           userId,
-          payload2: { time: formattedTime, title: trimmedTitle },
+          payload2,
         }),
       ).unwrap();
 
       if (res?.success) {
         setShowModal(false);
+        // A course change adds or removes whole days of cards, which only a reload shows.
+        if (typeof onSaved === 'function') onSaved();
       } else {
-        alert('Error', 'Failed to update reminder. Please try again.');
+        alert('Error', res?.data?.error || 'Failed to update reminder. Please try again.');
         safeSetVisible(false);
       }
     } catch (err) {
@@ -168,6 +196,64 @@ const ReminderEditor = ({
                   <TouchableOpacity
                     style={styles.pickerDoneButton}
                     onPress={() => setShowTimePicker(false)}
+                  >
+                    <Text style={styles.pickerDoneText}>Done</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {course && (
+              <View style={styles.courseRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>Start date</Text>
+                  <TouchableOpacity
+                    style={[styles.input, { marginBottom: 0 }]}
+                    onPress={() => setShowStartPicker(true)}
+                  >
+                    <Text style={styles.timeText}>{moment(courseStart).format('D MMM YYYY')}</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={{ width: 110 }}>
+                  <Text style={styles.fieldLabel}>Days</Text>
+                  <TextInput
+                    value={courseDays}
+                    onChangeText={t => {
+                      setCourseDays(t.replace(/[^0-9]/g, '').slice(0, 3));
+                      setError('');
+                    }}
+                    keyboardType="number-pad"
+                    style={[styles.input, { marginBottom: 0 }]}
+                  />
+                </View>
+              </View>
+            )}
+            {course && (
+              <Text style={styles.courseHint}>
+                Ends{' '}
+                {Number(courseDays) >= 1
+                  ? moment(courseStart).add(Number(courseDays) - 1, 'days').format('D MMM YYYY')
+                  : '—'}
+              </Text>
+            )}
+            {showStartPicker && (
+              <View style={styles.datePickerWrapper}>
+                <DateTimePicker
+                  value={courseStart}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, selected) => {
+                    if (Platform.OS === 'android') setShowStartPicker(false);
+                    if (event?.type === 'dismissed') return;
+                    if (selected) setCourseStart(selected);
+                  }}
+                  textColor="#000000"
+                  themeVariant="light"
+                />
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity
+                    style={styles.pickerDoneButton}
+                    onPress={() => setShowStartPicker(false)}
                   >
                     <Text style={styles.pickerDoneText}>Done</Text>
                   </TouchableOpacity>
@@ -251,6 +337,9 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 16 },
   errorText: { fontSize: 12, color: '#EF4444', marginBottom: 10 },
+  courseRow: { flexDirection: 'row', gap: 12, marginBottom: 6 },
+  fieldLabel: { fontSize: 12, color: '#6B7280', marginBottom: 6 },
+  courseHint: { fontSize: 12, color: '#6B7280', marginBottom: 16 },
   datePickerWrapper: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,

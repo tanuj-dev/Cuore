@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   BackHandler,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { hp, wp, Images } from '../../utilities';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -352,7 +353,18 @@ const OtpScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    /* Scrollable with the keypad open, so Submit can be reached without closing it first.
+       extraScrollHeight keeps the area below the OTP boxes (Submit, resend) in view when a box
+       is focused, and "handled" lets the first tap on Submit press it rather than only
+       dismissing the keyboard. */
+    <KeyboardAwareScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      enableOnAndroid
+      extraScrollHeight={hp(22)}
+      showsVerticalScrollIndicator={false}
+    >
       {AlertComponent}
       <TouchableOpacity
         hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
@@ -463,13 +475,15 @@ const OtpScreen = () => {
           )}
         </View>
       </TouchableOpacity>
-    </View>
+    </KeyboardAwareScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1, backgroundColor: '#FFFFFF' },
   container: {
-    flex: 1,
+    flexGrow: 1,
+    paddingBottom: hp(4),
     backgroundColor: '#FFFFFF',
     paddingHorizontal: wp(6),
     paddingTop: hp(3),

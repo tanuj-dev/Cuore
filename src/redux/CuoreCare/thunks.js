@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ccGet, ccPost, ccPatch, withQuery } from '../../utilities/cuoreCareApi';
+import { saveCachedAccess } from '../../utilities/cuoreCareAccessCache';
 
 /**
  * CuoreCare redux thunks (patient app). Endpoints + shapes verified against the backend
@@ -37,6 +38,9 @@ export const getCuoreCareAccess = createAsyncThunk(
   async (doctorId, { rejectWithValue }) => {
     const res = await ccGet(withQuery('/api/cuorecare/access', { doctorId }));
     if (res.status === 200 && res.data?.status === 'success') {
+      // Remember the tab gate for the next cold start (see cuoreCareAccessCache.js). Only the
+      // patient-wide answer is cached — a doctor-scoped lookup isn't what the tab bar reads.
+      if (!doctorId) saveCachedAccess(res.data.access);
       return res.data; // { subscription, doctor, branding, access }
     }
     return rejectWithValue(fail(res, 'Could not load your CuoreCare access'));
@@ -236,7 +240,10 @@ export const cancelAppointment = createAsyncThunk(
   async ({ appointmentId, reason = '' }, { rejectWithValue }) => {
     const res = await ccPatch(`/api/cuorecare/appointments/${appointmentId}/cancel`, { reason });
     if (res.status === 200 && res.data?.status === 'success') {
-      return res.data.appointment;
+      // `refund` is set when the patient cancelled: { status, amountPaise } — completed,
+      // processing, failed, or NOTHING_TO_REFUND / ALREADY_REFUNDED / NO_PAYMENT. The slice
+      // unwraps `appointment` from this shape (same as bookAppointment's).
+      return { appointment: res.data.appointment, refund: res.data.refund || null };
     }
     return rejectWithValue(fail(res, 'Could not cancel this appointment'));
   },

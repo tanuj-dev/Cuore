@@ -53,11 +53,10 @@ const profileOptions = [
     /* Family members (dependants) — a child or elderly parent who needs consultations but has
      * no phone of their own. Reuses the existing person icon rather than adding an asset.
      *
-     * Named "Family Members & Swap User" after the review reported "did not find the swap user
-     * option": switching profiles lives on this screen, and nothing in the app used the words
-     * anyone would scan for. The row also shows who the app is currently acting as — see
-     * renderSection below. */
-    title: 'Family Members & Swap User',
+     * Switching profiles lives on this screen (it was briefly titled "Family Members & Swap
+     * User"; renamed back on client request, Oct 2026). The row also shows who the app is
+     * currently acting as — see renderSection below. */
+    title: 'Family Members',
     icon: Images.PERSON1,
     section: 'ACCOUNT & PRIVACY',
   },
@@ -187,7 +186,7 @@ const Profile = ({ navigation }) => {
     Caregiver: 'EditCaregiver',
     Doctor: 'EditDoctor',
     'Health Records': 'HealthRecords',
-    'Family Members & Swap User': 'FamilyMembers',
+    'Family Members': 'FamilyMembers',
     'Connected Health Sources': 'ConnectedHealth',
     // Opens a modal rather than navigating; intercepted in the row handler below.
     'Health Data': 'HealthDataModal',
@@ -265,7 +264,7 @@ const Profile = ({ navigation }) => {
             </Text>
             {/* Acting as somebody else is a mode, and Profile is where a user comes to ask
                 "who am I signed in as". Shown only while it is true. */}
-            {item.title === 'Family Members & Swap User' && !!activeProfileName && (
+            {item.title === 'Family Members' && !!activeProfileName && (
               <Text style={styles.itemSubText} numberOfLines={1}>
                 {`Using the app as ${activeProfileName}`}
               </Text>

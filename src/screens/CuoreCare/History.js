@@ -18,6 +18,8 @@ import { CCHeader, Card, EmptyState } from './components';
 import ProfileSwitcher from '../../components/ProfileSwitcher';
 import { fmtDayLabel } from './ccFormat';
 import { documentsForProfile } from './documentOwner';
+import DiagnosticsTab from './DiagnosticsTab';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 import {
   getPrescriptions,
   getCertificates,
@@ -48,6 +50,8 @@ const TABS = [
   { key: 'certificates', label: 'Certificates' },
   { key: 'vaccinations', label: 'Vaccinations' },
   { key: 'bills', label: 'Bills' },
+  // Patient-uploaded lab / test reports, shown to the doctor in CuoreMD (see DiagnosticsTab).
+  { key: 'diagnostics', label: 'Diagnostics' },
 ];
 
 export default function History({ navigation }) {
@@ -62,6 +66,9 @@ export default function History({ navigation }) {
 
   const [tab, setTab] = useState('prescriptions');
   const [refreshing, setRefreshing] = useState(false);
+  // Bumped on pull-to-refresh so the Diagnostics tab (which owns its own list) reloads too.
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { alert, AlertComponent } = useCustomAlert();
 
   const loadAll = useCallback(() => {
     dispatch(getPrescriptions());
@@ -79,6 +86,7 @@ export default function History({ navigation }) {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setRefreshKey(k => k + 1);
     await Promise.all([
       dispatch(getPrescriptions()),
       dispatch(getCertificates()),
@@ -116,12 +124,14 @@ export default function History({ navigation }) {
     certificates: documentsForProfile(certificates, activeProfileId),
     vaccinations: documentsForProfile(vaccinations, activeProfileId),
     bills: documentsForProfile(bills, activeProfileId),
+    diagnostics: [],
   };
   const LOADING_BY_TAB = {
     prescriptions: rxLoading,
     certificates: certLoading,
     vaccinations: vaxLoading,
     bills: billsLoading,
+    diagnostics: false,
   };
   const items = LIST_BY_TAB[tab];
   const loading = LOADING_BY_TAB[tab];
@@ -218,6 +228,7 @@ export default function History({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      {AlertComponent}
       <CCHeader title="My documents" onBack={() => navigation.goBack()} />
 
       {/* Whose documents these are. Renders nothing for an account with no family members, so
@@ -251,7 +262,9 @@ export default function History({ navigation }) {
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {loading && items.length === 0 ? (
+        {tab === 'diagnostics' ? (
+          <DiagnosticsTab activeProfileId={activeProfileId} alert={alert} refreshKey={refreshKey} />
+        ) : loading && items.length === 0 ? (
           <View style={styles.center}>
             <ActivityIndicator color={CC.primary} />
           </View>
@@ -293,9 +306,25 @@ const styles = StyleSheet.create({
     padding: 4,
     gap: 4,
   },
-  tab: { alignItems: 'center', paddingVertical: 9, paddingHorizontal: 16, borderRadius: 9 },
+  tab: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 40,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 9,
+  },
   tabActive: { backgroundColor: CC.white },
-  tabText: { fontFamily: F.PoppinsMedium, fontSize: 13.5, color: CC.subText },
+  // Explicit lineHeight: Poppins' metrics otherwise clip descenders ("p" in Prescriptions,
+  // "g" in Diagnostics) on Android — the only labels that have them.
+  tabText: {
+    fontFamily: F.PoppinsMedium,
+    fontSize: 13.5,
+    lineHeight: 21,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    color: CC.subText,
+  },
   tabTextActive: { fontFamily: F.PoppinsSemiBold, color: CC.primary },
   rxCard: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   billCard: { marginBottom: 12, alignItems: 'stretch' },

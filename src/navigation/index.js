@@ -65,6 +65,8 @@ import CuoreCareConsultation from '../screens/CuoreCare/Consultation';
 import CuoreCareIncomingCall from '../screens/CuoreCare/IncomingCall';
 import { Stethoscope } from 'lucide-react-native';
 import { getCuoreCareStatus, getCuoreCareAccess } from '../redux/CuoreCare/thunks';
+import { hydrateCuoreCareAccess } from '../redux/CuoreCare/slice';
+import { loadCachedAccess } from '../utilities/cuoreCareAccessCache';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -86,7 +88,15 @@ function BottomTabNavigator() {
   const cuoreCareActive = useSelector(
     state => state?.cuoreCare?.access?.cuoreCare || state?.cuoreCare?.access?.emr,
   );
+  // Until either the cached or the live answer is in, render neither Notes nor CuoreCare —
+  // defaulting to "no access" is what made Notes flash before swapping to CuoreCare.
+  const cuoreCareResolved = useSelector(
+    state => state?.cuoreCare?.access?.checked || state?.cuoreCare?.access?.fromCache,
+  );
   useEffect(() => {
+    loadCachedAccess().then(cached => {
+      if (cached) dispatch(hydrateCuoreCareAccess(cached));
+    });
     dispatch(getCuoreCareStatus());
     dispatch(getCuoreCareAccess());
   }, [dispatch]);
@@ -173,7 +183,7 @@ function BottomTabNavigator() {
 
         {/* Notes is an Essentials-tier feature. CuoreCare subscribers get the
             CuoreCare tab instead, so hide Notes when CuoreCare is active. */}
-        {!cuoreCareActive && (
+        {cuoreCareResolved && !cuoreCareActive && (
           <Tab.Screen
             name="Notes"
             component={Notes}
@@ -193,7 +203,7 @@ function BottomTabNavigator() {
           />
         )}
 
-        {cuoreCareActive && (
+        {cuoreCareResolved && cuoreCareActive && (
           <Tab.Screen
             name="CuoreCare"
             component={CuoreCareStack}

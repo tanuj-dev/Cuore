@@ -48,6 +48,24 @@ import { useCCBack } from './ccBack';
 
 const F = CC.fonts;
 
+// What to tell the patient about their money after a cancel, from the server's refund outcome.
+function refundMessage(refund) {
+  const amount =
+    refund?.amountPaise != null ? `₹${(refund.amountPaise / 100).toLocaleString('en-IN')}` : 'Your payment';
+  switch (refund?.status) {
+    case 'completed':
+      return `${amount} has been refunded to your original payment method. It can take 5–7 working days to show in your account.`;
+    case 'processing':
+      return `${amount} refund has been started and will reach your original payment method in 5–7 working days.`;
+    case 'failed':
+      return 'Your appointment is cancelled, but the refund could not be sent automatically. It is recorded and will be processed by our team — contact support if it has not reached you in 7 working days.';
+    case 'ALREADY_REFUNDED':
+      return 'This booking has already been refunded.';
+    default:
+      return 'Your appointment has been cancelled and the slot released.';
+  }
+}
+
 export default function AppointmentDetails({ navigation, route }) {
   const dispatch = useDispatch();
   const { appointmentId, justBooked } = route.params || {};
@@ -135,26 +153,33 @@ export default function AppointmentDetails({ navigation, route }) {
 
   const canModify = ['requested', 'scheduled', 'accepted'].includes(status);
 
+  /* Cancelling offers to reschedule first — most patients who cancel only need another time.
+   * If they still cancel, a paid booking is refunded in full by the server (the cutoff above
+   * is the only notice rule), and the slot is released to everyone's booking screen at once. */
   const handleCancel = () => {
     if (!canCancel) {
       alert('Too late to cancel', cancelBlockedMsg);
       return;
     }
-    alert('Cancel appointment?', 'This consultation will be cancelled. You can book again anytime.', [
-      { text: 'Keep', style: 'cancel' },
-      {
-        text: 'Cancel appointment',
-        style: 'destructive',
-        onPress: async () => {
-          const res = await dispatch(cancelAppointment({ appointmentId, reason: '' }));
-          if (cancelAppointment.fulfilled.match(res)) {
-            dispatch(getAppointments({ scope: 'upcoming' }));
-          } else {
-            alert('Could not cancel', res.payload?.message || 'Please try again.');
-          }
-        },
-      },
-    ]);
+    alert(
+      'Cancel appointment?',
+      'You can move it to another time instead. If you cancel, any amount you paid online is refunded in full to your original payment method.',
+      [
+        { text: 'Reschedule instead', onPress: openReschedule },
+        { text: 'Cancel appointment', style: 'destructive', onPress: confirmCancel },
+        { text: 'Keep', style: 'cancel' },
+      ],
+    );
+  };
+
+  const confirmCancel = async () => {
+    const res = await dispatch(cancelAppointment({ appointmentId, reason: '' }));
+    if (!cancelAppointment.fulfilled.match(res)) {
+      alert('Could not cancel', res.payload?.message || 'Please try again.');
+      return;
+    }
+    dispatch(getAppointments({ scope: 'upcoming' }));
+    alert('Appointment cancelled', refundMessage(res.payload?.refund));
   };
 
   const openReschedule = () => {

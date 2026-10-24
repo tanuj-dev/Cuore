@@ -39,6 +39,9 @@ const initialState = {
   access: {
     loading: false,
     checked: false,
+    // True once cuoreCare/emr were seeded from the last-known cache, before `checked`. Lets
+    // the tab bar render the right tab immediately instead of guessing "no access".
+    fromCache: false,
     cuoreCare: false,
     appointmentBooking: false,
     videoCall: false,
@@ -91,6 +94,14 @@ const cuoreCareSlice = createSlice({
     // Clear the slot-picker state (e.g. when leaving the booking screen).
     resetBookingAvailability: state => {
       state.availability = initialState.availability;
+    },
+    // Seed the tab gate from cuoreCareAccessCache. Ignored once the live answer has landed,
+    // so a slow storage read can never overwrite fresher server state.
+    hydrateCuoreCareAccess: (state, action) => {
+      if (state.access.checked || !action.payload) return;
+      state.access.cuoreCare = !!action.payload.cuoreCare;
+      state.access.emr = !!action.payload.emr;
+      state.access.fromCache = true;
     },
     resetCuoreCare: () => initialState,
   },
@@ -281,8 +292,8 @@ const cuoreCareSlice = createSlice({
           state.action.loading = false;
           state.action.lastResult = 'ok';
           /* bookAppointment returns `{ appointment, payment }` since §7.1 (the caller needs the
-           * payment state to decide whether to show checkout); cancel/reschedule still return the
-           * appointment directly. Both shapes are unwrapped here rather than at the call sites,
+           * payment state to decide whether to show checkout), cancel returns `{ appointment, refund }`,
+           * reschedule still returns the appointment directly. Both shapes are unwrapped here rather than at the call sites,
            * because keying on `payload.appointmentId` alone silently stopped updating
            * `current.data` after a booking — the screen then showed stale data with no error. */
           const appt = action.payload?.appointment || action.payload;
@@ -363,6 +374,7 @@ export const {
   clearCuoreCareAction,
   setCurrentAppointment,
   resetBookingAvailability,
+  hydrateCuoreCareAccess,
   resetCuoreCare,
 } = cuoreCareSlice.actions;
 

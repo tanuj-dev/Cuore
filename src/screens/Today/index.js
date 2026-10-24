@@ -23,7 +23,7 @@ import {
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
-import { Info, Bell, Trash2, CalendarDays } from 'lucide-react-native';
+import { Info, Bell, Trash2, CalendarDays, Plus } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { fetchNotifications } from '../../redux/Notifications/thunks';
 import { getTodayConsultations } from '../../redux/CuoreCare/thunks';
@@ -32,7 +32,6 @@ import ProgressBarWithImage from '../../components/ProgressBar';
 import PendingVisitCards from './PendingVisitCards';
 import Reminder from '../../components/Reminder';
 import { useDispatch, useSelector } from 'react-redux';
-import ProfileSwitcher from '../../components/ProfileSwitcher';
 import DrawerMenuButton from '../../components/DrawerMenuButton';
 import { getHomeData, getProfile } from '../../redux/slices';
 import ReminderEditor from '../../components/ReminderEditor';
@@ -563,7 +562,7 @@ const Today = ({ navigation, route }) => {
 
   /* Whether to offer the cycle calendar. Fetched on its own rather than threaded through
    * getHomeData: that aggregation is large and shared, and this is one boolean the server already
-   * derives (female, 11-51, periods regular or irregular). A failure here is silent by design —
+   * derives (any female profile). A failure here is silent by design —
    * the slice does not set an error — because most accounts are simply not eligible, and a patient
    * who was never offered the feature should not be told it failed to load. */
   const cycleTrackingEnabled = useSelector(s => s.cycle?.data?.trackingEnabled) === true;
@@ -910,10 +909,6 @@ const Today = ({ navigation, route }) => {
                 ? `Hi, ${profileData.display_name.split(' ')[0]}`
                 : 'User'}
             </Text>
-            {/* Swap user — the family-plan profile switcher. Renders nothing unless the
-                account actually has family members, so a single-person account's header is
-                unchanged. */}
-            <ProfileSwitcher compact style={styles.headerSwitcher} />
             <TouchableOpacity
               onPress={() => navigation.navigate('Notifications')}
               style={styles.notificationButton}
@@ -993,17 +988,6 @@ const Today = ({ navigation, route }) => {
             ))}
             <View style={styles.headerButtonsContainer}>
               <TouchableOpacity
-                disabled={isCaregiver}
-                onPress={() => setIsVisible(true)}
-                style={styles.addReminderButton}
-                activeOpacity={0.8}
-              >
-                <View style={styles.buttonIconWrapper}>
-                  <Image source={Images.ADD} style={styles.addIcon} />
-                </View>
-                <Text style={styles.addReminderText}>Add{'\n'}Reminder</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
                 style={styles.healthButton}
                 onPress={() => navigation.navigate('Health')}
                 activeOpacity={0.8}
@@ -1070,24 +1054,32 @@ const Today = ({ navigation, route }) => {
             <Text style={styles.biomarkerButtonText}>Update{'\n'}Readings</Text>
           </TouchableOpacity>
 
-          {/* CYCLE CALENDAR — "Show calendar in Today next to update readings, tapping leads to
-              questions."
-              Rendered only when the health assessment says this patient has periods and they are
-              regular or irregular (the server decides; see controllers/cycleController.js). For
-              everyone else the row is exactly as it was — this is not a control most of the app's
-              users should be shown and then told they cannot use. */}
-          {cycleTrackingEnabled && (
+          {/* MY CYCLE — every female profile (the server decides; see backend
+              utils/cyclePredictions.js isTrackingEnabled). Hidden for everyone else rather than
+              shown and then refused. */}
+          {cycleTrackingEnabled && !isCaregiver && (
             <TouchableOpacity
-              disabled={isCaregiver}
               onPress={() => navigation.navigate('CycleTracker')}
               style={styles.cycleButton}
               activeOpacity={0.85}
-              accessibilityLabel="Cycle calendar"
+              accessibilityRole="button"
+              accessibilityLabel="My Cycle"
             >
-              <CalendarDays size={hp(2.6)} color="#BE123C" />
-              <Text style={styles.cycleButtonText}>Cycle</Text>
+              <CalendarDays size={hp(2.2)} color="#BE123C" />
+              <Text style={styles.cycleButtonText}>My Cycle</Text>
             </TouchableOpacity>
           )}
+
+          <TouchableOpacity
+            disabled={isCaregiver}
+            onPress={() => setIsVisible(true)}
+            style={styles.addReminderButton}
+            activeOpacity={0.8}
+            accessibilityLabel="Add reminder"
+          >
+            <Plus size={hp(2)} color="#1E40AF" />
+            <Text style={styles.addReminderText}>Reminder</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Pinned above the day, and above the progress bar: a follow-up the doctor asked for
@@ -1115,7 +1107,14 @@ const Today = ({ navigation, route }) => {
 
         {/* Alerts Horizontal Scroll */}
         <View style={styles.warnings}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {/* Every block is the same fixed width, and `stretch` makes them all as tall as the
+              tallest, so the row reads as a set of equal cards. Text wraps inside the block
+              instead of widening it to fit one long line. */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ alignItems: 'stretch' }}
+          >
             {localAlerts.map((item, index) => {
               const alertKey = item.alertId || item.id || String(index);
               const isRespondable = isDoctorCheckinAlert(item?.text);
@@ -1126,6 +1125,8 @@ const Today = ({ navigation, route }) => {
                   style={{
                     flexDirection: 'column',
                     alignItems: 'flex-start',
+                    width: wp(70),
+                    minHeight: hp(9),
                     borderRadius: hp(1),
                     padding: hp(2),
                     marginRight: hp(1),
@@ -1138,7 +1139,7 @@ const Today = ({ navigation, route }) => {
                     position: 'relative',
                   }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingRight: hp(1.5) }}>
                     <Image
                       style={{
                         resizeMode: 'contain',
@@ -1151,6 +1152,7 @@ const Today = ({ navigation, route }) => {
                             ? '#FFCE1B'
                             : '#A16207',
                         marginRight: hp(0.5),
+                        marginTop: hp(0.15),
                       }}
                       source={Images.WARNING}
                     />
@@ -1162,7 +1164,9 @@ const Today = ({ navigation, route }) => {
                             : item?.type === 'yellow'
                             ? '#A16207'
                             : '#A16207',
-                        marginRight: hp(2),
+                        flex: 1,
+                        flexShrink: 1,
+                        lineHeight: hp(2.3),
                       }}
                     >
                       {item?.text}
@@ -1509,6 +1513,22 @@ const Today = ({ navigation, route }) => {
                         <Text style={styles.taskDescription} numberOfLines={2}>
                           {item.description}
                         </Text>
+                        {/* A course (medicine from a prescription, or any reminder with an end
+                            date): which day of it this is, and when it runs. */}
+                        {!!item.schedule && (
+                          <Text style={styles.taskCourse} numberOfLines={1}>
+                            {`Day ${Math.min(
+                              Math.max(item.schedule.dayNumber, 1),
+                              item.schedule.totalDays,
+                            )} of ${item.schedule.totalDays} · ${moment(
+                              item.schedule.startDate,
+                              'YYYY-MM-DD',
+                            ).format('D MMM')} – ${moment(
+                              item.schedule.endDate,
+                              'YYYY-MM-DD',
+                            ).format('D MMM')}`}
+                          </Text>
+                        )}
                         {isPendingDoctorReminder && (
                           <View
                             style={{
@@ -1687,6 +1707,7 @@ const Today = ({ navigation, route }) => {
           showModal={showModal}
           setShowModal={setShowModal}
           setExistingReminder={setReminderList}
+          onSaved={() => userId && dispatch(getHomeData(userId))}
         />
       </ScrollView>
       {toast && (
@@ -1780,7 +1801,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   // No `marginLeft: 'auto'` — the greeting now carries flex:1, which does the pushing.
-  headerSwitcher: { marginRight: 10 },
   // Its own full-width line under the greeting row, so a long clinic name has somewhere to go.
   brandRow: { flexDirection: 'row', alignItems: 'center', marginBottom: hp(1.2) },
   brandLogo: { width: 26, height: 26, borderRadius: 6, marginRight: 7, backgroundColor: '#F1F5F9' },
@@ -1820,6 +1840,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.8),
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: hp(1),
     alignItems: 'center',
     marginVertical: hp(1.5),
     marginHorizontal: hp(2),
@@ -1842,26 +1863,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: -0.4,
   },
-  // Sits beside Update Readings and matches its shape, in the rose the calendar itself uses for
-  // period days — so the two buttons read as one row of actions rather than a bolted-on extra.
+  // Rose matches the period days on the tracker's own calendar. Same footprint as its
+  // neighbours so Update Readings / My Cycle / + Reminder read as one row of actions.
   cycleButton: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: hp(0.6),
     backgroundColor: '#FFF1F2',
     paddingVertical: hp(1.2),
-    paddingHorizontal: hp(1.8),
+    paddingHorizontal: hp(1),
     borderRadius: hp(1.2),
     borderWidth: 1.5,
     borderColor: '#FECDD3',
   },
   cycleButtonText: {
-    fontSize: hp(1.4),
+    fontFamily: 'Poppins-Medium',
+    fontSize: 11.5,
     color: '#BE123C',
-    fontFamily: Fonts.semiBold,
-    marginTop: hp(0.3),
   },
   biomarkerButton: {
-    alignItems: 'flex-end',
+    flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ECFDF5',
     paddingVertical: hp(1.2),
@@ -2029,6 +2053,12 @@ const styles = StyleSheet.create({
     color: '#334155',
     letterSpacing: -0.2,
   },
+  taskCourse: {
+    marginTop: 3,
+    fontSize: 12,
+    color: '#11418A',
+    fontFamily: 'Poppins-Medium',
+  },
   taskDescription: {
     marginTop: 5,
     fontSize: 13,
@@ -2162,11 +2192,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   addReminderButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: hp(0.4),
     backgroundColor: '#EFF6FF',
     paddingVertical: hp(1.2),
-    paddingHorizontal: wp(2.5),
+    paddingHorizontal: hp(1),
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#BFDBFE',
@@ -2182,19 +2215,19 @@ const styles = StyleSheet.create({
   healthButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DC2626',
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(3.5),
-    borderRadius: 14,
+    backgroundColor: '#FEF2F2',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(2.5),
+    borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#DC2626',
+    borderColor: '#FECACA',
     shadowColor: '#DC2626',
-    shadowOpacity: 0.35,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
     ...Platform.select({
-      android: { elevation: 4 },
-      ios: { elevation: 6 },
+      android: { elevation: 0.5 },
+      ios: { elevation: 3 },
     }),
   },
   /* Same circle as buttonIconWrapper below, minus overflow:'hidden'.
@@ -2260,11 +2293,11 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   healthButtonText: {
-    fontSize: 13,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#FFFFFF',
+    fontSize: 11.5,
+    fontFamily: 'Poppins-Medium',
+    color: '#DC2626',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 14,
     letterSpacing: -0.2,
   },
   updateButton: {
