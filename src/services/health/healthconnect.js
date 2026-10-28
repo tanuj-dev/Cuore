@@ -30,7 +30,6 @@ import {
 // single BloodPressure record.
 const RECORD_FOR = {
   [METRIC.heartRate]: 'HeartRate',
-  [METRIC.restingHeartRate]: 'RestingHeartRate',
   [METRIC.bloodPressureSystolic]: 'BloodPressure',
   [METRIC.bloodPressureDiastolic]: 'BloodPressure',
   [METRIC.bloodGlucose]: 'BloodGlucose',
@@ -128,13 +127,8 @@ export async function readMetrics({ metricTypes, since, until }) {
     jobs.push(read('HeartRate', since, until).then(hcHeartRate));
   }
 
-  if (want.has(METRIC.restingHeartRate)) {
-    jobs.push(
-      read('RestingHeartRate', since, until).then(r =>
-        hcSimple(METRIC.restingHeartRate, r, x => x.beatsPerMinute)
-      )
-    );
-  }
+  // No RestingHeartRate on Android: Play rejected it (Oct 2026) as "Minimum Scope" because
+  // the reviewer could not see it in use. iOS still reads it from HealthKit.
 
   if (want.has(METRIC.bloodPressureSystolic) || want.has(METRIC.bloodPressureDiastolic)) {
     jobs.push(read('BloodPressure', since, until).then(hcBloodPressure));

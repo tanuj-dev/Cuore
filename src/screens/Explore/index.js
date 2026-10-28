@@ -41,8 +41,8 @@ const MODULES = [
   },
   {
     id: '5',
-    title: 'Cuore Tobacco',
-    subtitle: 'Smoke free living',
+    title: 'Cuore Habits',
+    subtitle: 'Habit free living',
     image: Images.MEAL5,
   },
   {
@@ -54,7 +54,7 @@ const MODULES = [
 ];
 
 const ROUTE_MAP = {
-  'Cuore Tobacco': 'Tobacco',
+  'Cuore Habits': 'Tobacco',
   'Cuore Mind': 'Mind',
   'Cuore Fitness': 'Fitness',
   'Cuore Insight': 'CuoreKnowledge',

@@ -107,20 +107,20 @@ const TobaccoSkeleton = () => (
 );
 
 const NUDGES = [
-  'Pay attention to every puff. Is the experience as enjoyable as the anticipation?',
+  'Pay attention to each moment. Is the experience as enjoyable as the anticipation?',
   'Noticing a trigger is the first step to changing it.',
-  'Stress and smoking are connected by habit, not by need.',
-  'Smoking relieves withdrawal, not stress.',
-  "The cigarette didn't create relief. It ended a craving.",
+  'Stress and habit are connected by routine, not by need.',
+  'The habit relieves withdrawal, not stress.',
+  "The habit didn't create relief. It ended a craving.",
   'Notice the difference between wanting and needing.',
-  'The urge will pass whether you smoke or not.',
+  'The urge will pass whether you act on it or not.',
   'Most cravings pass in minutes, not hours.',
   'Cravings become easier to manage when they are understood.',
   'The pause is where freedom begins.',
   'Freedom grows with every conscious choice.',
   'Every habit starts with a thought.',
-  'Notice how many people enjoy the moment without smoking.',
-  'Social confidence comes from you, not the cigarette.',
+  'Notice how many people enjoy the moment without it.',
+  'Social confidence comes from you, not the habit.',
   "The goal isn't resisting forever. It's not needing it anymore.",
 ];
 
@@ -202,7 +202,7 @@ const Tobacco = ({ navigation }) => {
     const res = await dispatch(logTobaccoUsage({ userId, count })).unwrap();
     console.log('logTobaccoUsage response:', res);
     if (res.status === 'success') {
-      setToast('Tobacco usage logged successfully');
+      setToast('Usage logged successfully');
       dispatch(getTobacco(userId));
     }
     setLoading(false);
@@ -223,7 +223,7 @@ const Tobacco = ({ navigation }) => {
   return (
     <>
       <View style={styles.screen}>
-        <Header title="Cuore Tobacco" navigation={navigation} />
+        <Header title="Cuore Habits" navigation={navigation} />
 
         <ScrollView
           contentContainerStyle={styles.container}
@@ -235,13 +235,13 @@ const Tobacco = ({ navigation }) => {
             <View style={styles.rowCenter}>
               <Image style={styles.iconWatch} source={Images.WATCH} />
               <Text style={styles.daysText}>
-                {profileData?.tobaccoFreeDays} days tobacco-free
+                {profileData?.tobaccoFreeDays} habit-free days
               </Text>
             </View>
 
             <View style={styles.inputRow}>
               <Text style={styles.label}>
-                Enter number of tobacco products or cigarettes used yesterday
+                Enter the number of units used yesterday
               </Text>
               <TextInput
                 style={styles.inputSmall}
@@ -288,9 +288,9 @@ const Tobacco = ({ navigation }) => {
           </View>
 
           <View style={styles.profileBox}>
-            <Text style={styles.sectionTitleDark}>Your Smoking Profile</Text>
+            <Text style={styles.sectionTitleDark}>Your Habit Profile</Text>
 
-            <Text style={styles.inputLabel}>Cigarettes per day</Text>
+            <Text style={styles.inputLabel}>Units per day</Text>
             <TextInput
               placeholderTextColor="#64748B"
               placeholder="Enter the count"
@@ -301,7 +301,7 @@ const Tobacco = ({ navigation }) => {
             />
 
             <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>
-              Years of smoking
+              Years of use
             </Text>
             <TextInput
               placeholder="Num of years"
@@ -347,7 +347,7 @@ const Tobacco = ({ navigation }) => {
             </View>
           </View>
 
-          <Text style={styles.sectionTitle}>Benefits of Quitting Now</Text>
+          <Text style={styles.sectionTitle}>Benefits of Stopping Now</Text>
 
           <View style={styles.gridContainer}>
             <View style={styles.gridBox}>

@@ -251,6 +251,28 @@ const Checkout = ({ navigation }) => {
     },
   });
 
+  // App Review runs on the US storefront, so a hardcoded "₹359" contradicts the amount on
+  // Apple's own purchase sheet — guideline 3.1.2(c) requires the price we SHOW to be the
+  // price actually charged. `displayPrice` is StoreKit's already-localised string
+  // (currency symbol and formatting included). The ₹ literal survives only as the
+  // pre-load fallback, before fetchProducts resolves. Declared below useIAP on purpose:
+  // `subscriptions` does not exist above it.
+  const storePrice = useCallback(
+    (productId, fallback) => {
+      const product = subscriptions?.find(
+        sub => (sub.productId || sub.id) === productId,
+      );
+      return product?.displayPrice || `₹${fallback}`;
+    },
+    [subscriptions],
+  );
+
+  const hasStorePrice = useCallback(
+    productId =>
+      !!subscriptions?.find(sub => (sub.productId || sub.id) === productId)?.displayPrice,
+    [subscriptions],
+  );
+
   // Keep ref in sync with latest subscriptions state
   useEffect(() => {
     subscriptionsRef.current = subscriptions;
@@ -570,7 +592,7 @@ const Checkout = ({ navigation }) => {
           setIsProcessingPayment(false);
           alert(
             'Unavailable',
-            'No valid subscription offer from Google Play for this plan. Check the product is active with a base plan and price, then try again.',
+            'No valid subscription offer for this plan. Check the product is active with a base plan and price, then try again.',
           );
           return;
         }
@@ -729,7 +751,7 @@ const Checkout = ({ navigation }) => {
                               active && styles.planSelectorPriceActive,
                             ]}
                           >
-                            ₹{plan.newPrice}
+                            {storePrice(plan.productId, plan.newPrice)}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -755,12 +777,14 @@ const Checkout = ({ navigation }) => {
               </Text>
 
               <View style={styles.priceRow}>
-                {selected.oldPrice ? (
+                {selected.oldPrice && !hasStorePrice(selected.productId) ? (
                   <Text style={styles.priceOld}>₹{selected.oldPrice}</Text>
                 ) : (
                   <View />
                 )}
-                <Text style={styles.priceNew}>₹{selected.newPrice}</Text>
+                <Text style={styles.priceNew}>
+                  {storePrice(selected.productId, selected.newPrice)}
+                </Text>
               </View>
 
               {/* What's included */}

@@ -21,8 +21,10 @@
  *      doctor starts the consultation (the web portal currently only joins the room).
  *   3. ZEGO CONSOLE: enable ZPNs; upload an APNs VoIP certificate (iOS) and configure
  *      FCM (Android) so offline pushes can ring the device.
- *   4. NATIVE iOS: PushKit + CallKit wiring in AppDelegate; the `voip` background mode is
- *      already declared in Info.plist by this change.
+ *   4. NATIVE iOS: PushKit + CallKit wiring in AppDelegate, AND re-add the `voip`
+ *      UIBackgroundMode to Info.plist. It was REMOVED (2026-10-09) after App Review cited
+ *      guideline 2.5.4 on background modes: declaring `voip` while this file stays gated
+ *      off is an unused declaration, so the key only goes back when the feature ships.
  *   5. NATIVE ANDROID: ConnectionService + a full-screen-intent incoming-call Activity;
  *      the foreground-service / full-screen-intent permissions are already declared.
  *

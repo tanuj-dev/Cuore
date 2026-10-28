@@ -160,6 +160,29 @@ export default function Subscribe({ navigation }) {
     () => (subscriptions || []).map(s => s.productId || s.id).filter(Boolean),
     [subscriptions],
   );
+
+  // App Review runs on the US storefront, so a hardcoded "₹359" contradicts the amount on
+  // Apple's own purchase sheet — guideline 3.1.2(c) requires the price we SHOW to be the
+  // price actually charged. `displayPrice` is StoreKit's already-localised string
+  // (currency symbol and formatting included). The ₹ literal survives only as the
+  // pre-load fallback, before fetchProducts resolves.
+  const storePrice = useCallback(
+    (productId, fallback) => {
+      const product = (subscriptions || []).find(
+        sub => (sub.productId || sub.id) === productId,
+      );
+      return product?.displayPrice || `₹${fallback}`;
+    },
+    [subscriptions],
+  );
+
+  const hasStorePrice = useCallback(
+    productId =>
+      !!(subscriptions || []).find(
+        sub => (sub.productId || sub.id) === productId,
+      )?.displayPrice,
+    [subscriptions],
+  );
   const selectedAvailable = loadedIds.length === 0 || loadedIds.includes(selected.productId);
 
   const handleSubscribe = async () => {
@@ -179,7 +202,7 @@ export default function Subscribe({ navigation }) {
           setProcessing(false);
           alert(
             'Unavailable',
-            'No Google Play offer for this plan yet. Ensure the product is active with a base plan and price.',
+            'No store offer for this plan yet. Ensure the product is active with a base plan and price.',
           );
           return;
         }
@@ -275,10 +298,15 @@ export default function Subscribe({ navigation }) {
                   )}
                 </View>
                 <Text style={styles.planSubtitle}>{plan.subtitle}</Text>
+                <Text style={styles.planDuration}>
+                  {plan.duration} · auto-renews until cancelled
+                </Text>
               </View>
               <View style={styles.priceCol}>
-                <Text style={styles.priceNew}>₹{plan.newPrice}</Text>
-                {plan.oldPrice ? (
+                <Text style={styles.priceNew}>
+                  {storePrice(plan.productId, plan.newPrice)}
+                </Text>
+                {plan.oldPrice && !hasStorePrice(plan.productId) ? (
                   <Text style={styles.priceOld}>₹{plan.oldPrice}</Text>
                 ) : null}
               </View>
@@ -291,7 +319,11 @@ export default function Subscribe({ navigation }) {
         )}
 
         <PrimaryButton
-          label={processing ? 'Processing…' : `Subscribe · ₹${selected.newPrice}`}
+          label={
+            processing
+              ? 'Processing…'
+              : `Subscribe · ${storePrice(selected.productId, selected.newPrice)}`
+          }
           icon={!processing ? <Lock size={16} color={CC.white} /> : null}
           onPress={handleSubscribe}
           loading={processing}
@@ -395,6 +427,7 @@ const styles = StyleSheet.create({
   badge: { backgroundColor: CC.success, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
   badgeText: { fontFamily: F.PoppinsMedium, fontSize: 10, color: CC.white },
   planSubtitle: { fontFamily: F.PoppinsRegular, fontSize: 12, color: CC.subText, marginTop: 2 },
+  planDuration: { fontFamily: F.PoppinsRegular, fontSize: 11.5, color: CC.muted, marginTop: 3 },
   priceCol: { alignItems: 'flex-end', marginLeft: 8 },
   priceNew: { fontFamily: F.PoppinsBold, fontSize: 18, color: CC.text },
   priceOld: { fontFamily: F.PoppinsRegular, fontSize: 12, color: CC.muted, textDecorationLine: 'line-through' },

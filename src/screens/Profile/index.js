@@ -326,7 +326,7 @@ const Profile = ({ navigation }) => {
   const userProfile = useSelector(state => state?.profile?.data?.data);
   const cuoreCareSub = useSelector(state => state?.cuoreCare?.subscription);
   // CuoreCare is the superset / effective tier — when it's active, the subscription card
-  // reflects it (plan, store platform, dates) instead of the base premium record.
+  // reflects it (plan, dates) instead of the base premium record.
   const basePayment = userProfile?.payment || {};
   const CUORECARE_PLAN_LABELS = {
     monthly: 'CuoreCare · Monthly',
@@ -340,26 +340,10 @@ const Profile = ({ navigation }) => {
     IAP_ALL_ACCESS_PRODUCT_IDS.includes(sub?.productId)
       ? 'All Access'
       : CUORECARE_PLAN_LABELS[sub?.plan] || 'CuoreCare';
-  const CUORECARE_PLATFORM_LABELS = {
-    ios: 'App Store',
-    android: 'Google Play',
-    razorpay: 'Web',
-  };
-  // Every platform string either tier can carry, mapped to what a user would recognise.
-  // Anything unmapped falls through to a title-cased raw value rather than a guess.
-  const PLATFORM_LABELS = {
-    ...CUORECARE_PLATFORM_LABELS,
-    web_registration: 'Web',
-    'App Store': 'App Store',
-    'Google Play': 'Google Play',
-    Web: 'Web',
-  };
   const payment = cuoreCareSub?.active
     ? {
         productId: cuoreCarePlanLabel(cuoreCareSub),
         status: 'active',
-        platform:
-          CUORECARE_PLATFORM_LABELS[cuoreCareSub.platform] || cuoreCareSub.platform,
         startDate: cuoreCareSub.startDate,
         endDate: cuoreCareSub.expiryDate,
       }
@@ -637,8 +621,7 @@ const Profile = ({ navigation }) => {
                   </View>
                 ) : (
                   <Text style={styles.subscriptionHeroHint}>
-                    When you subscribe, your billing period and store platform will
-                    show here.
+                    When you subscribe, your billing period will show here.
                   </Text>
                 )}
               </View>
@@ -649,17 +632,6 @@ const Profile = ({ navigation }) => {
                     Billing details
                   </Text>
                   <View style={styles.subscriptionDivider} />
-                  <View style={styles.subscriptionDetailRow}>
-                    <Text style={styles.subscriptionDetailLabel}>Platform</Text>
-                    <Text style={styles.subscriptionDetailValue}>
-                      {/* Never substitute the DEVICE's OS for the purchase platform. A user
-                          can buy on Android and read this on an iPad, or have no record at
-                          all — guessing produced a confident wrong answer ("iOS") where the
-                          truth is simply unknown. Backend now sends null in that case. */}
-                      {PLATFORM_LABELS[payment?.platform] ||
-                        (payment?.platform ? toLabel(payment.platform) : 'Not recorded')}
-                    </Text>
-                  </View>
                   <View style={styles.subscriptionDetailRow}>
                     <Text style={styles.subscriptionDetailLabel}>Started</Text>
                     <Text style={styles.subscriptionDetailValue}>
