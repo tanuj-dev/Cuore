@@ -25,8 +25,9 @@ export const CUORECARE_BASE_URL = 'https://cuore-backend-995g.onrender.com';
 /* FALLBACK ONLY. The live value comes from /join, alongside the token it was minted with (see
  * screens/CuoreCare/Consultation.js) — the two have to match, so the server is the source of
  * truth and this is what an older build falls back to before its first join. Updated 21 Sept
- * 2026 when the previous ZEGO project ran out of credit. */
-export const ZEGO_APP_ID = 1249378672;
+ * 2026 when the previous ZEGO project ran out of credit; replaced again 1 Nov 2026 with the
+ * Cuore_MD project on the imood9319 account. */
+export const ZEGO_APP_ID = 253072503;
 
 // ZEGO / ZIM stable identities. The backend mints tokens for `u_<patientId>` (this app)
 // and `d_<doctorId>` (doctor portal); the room spine is `cuorecare_<appointmentId>`.
