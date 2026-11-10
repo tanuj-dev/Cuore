@@ -10,7 +10,9 @@ import {
   Image,
   ActivityIndicator,
   Platform,
+  Alert,
 } from 'react-native';
+import { Bell, Pill, Trash2, Pencil } from 'lucide-react-native';
 import Modal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
@@ -242,7 +244,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
         >
           {/* Header */}
           <View style={styles.headerRow}>
-            <Text style={styles.title}>Add/Delete Entry</Text>
+            <Text style={styles.title}>Your reminders</Text>
             <TouchableOpacity
               onPress={() => {
                 dispatch(getHomeData(user_id));
@@ -254,15 +256,17 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
             </TouchableOpacity>
           </View>
           {/* Existing Reminders */}
-          <Text style={styles.subtitle}>Existing Entries</Text>
+          <Text style={styles.subtitle}>Today's reminders</Text>
           {existingReminder && existingReminder.length > 0 ? (
             existingReminder.map((item, index) => (
               <View key={item.id || index.toString()} style={styles.entryCard}>
+                {/* Medicine vs other reminder at a glance (Launch edits, 5 Nov: happier, clearer). */}
+                <View style={[styles.entryBadge, item.type === 'USER_MEDICATION' ? styles.entryBadgeMed : null]}>
+                  {item.type === 'USER_MEDICATION' ? <Pill size={16} color="#7C3AED" /> : <Bell size={16} color="#2563EB" />}
+                </View>
                 <View style={styles.entryContent}>
-                  <Text style={styles.entryText}>
-                    {item.title === 'Medication'
-                      ? item.description
-                      : item.title}
+                  <Text style={styles.entryText} numberOfLines={1}>
+                    {item.title === 'Medication' ? item.description : item.title}
                   </Text>
                   <Text style={styles.entrySubtext}>{item.time}</Text>
                 </View>
@@ -273,33 +277,38 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                     setShowModal(true);
                   }}
                   style={styles.iconButton}
+                  accessibilityLabel="Edit reminder"
+                  hitSlop={8}
                 >
-                  <Image source={Images.EDIT} style={styles.entryIcon} />
+                  <Pencil size={18} color="#2563EB" />
                 </TouchableOpacity>
 
                 {item?.title?.toLowerCase() !== 'wake up' && (
                   <TouchableOpacity
-                    onPress={() => {
-                      // Optimistically remove from UI
-                      setExistingReminder(prev =>
-                        prev.filter(
-                          reminder => reminder.sourceId !== item.sourceId,
-                        ),
-                      );
-
-                      // Let backend update happen in background
-                      dispatch(
-                        deleteReminderThunk({
-                          userId: user_id,
-                          sourceId: item.sourceId,
-                        }),
-                      );
-                      // dispatch(getHomeData(user_id));
-                      // setIsVisible(false);
-                    }}
+                    accessibilityLabel="Delete reminder"
+                    hitSlop={8}
+                    onPress={() =>
+                      // Deleting used to happen on the first tap with no way back — one slip of the
+                      // thumb removed a prescribed medicine. Ask first.
+                      Alert.alert(
+                        'Delete this reminder?',
+                        item.title === 'Medication' ? item.description : item.title,
+                        [
+                          { text: 'Keep', style: 'cancel' },
+                          {
+                            text: 'Delete',
+                            style: 'destructive',
+                            onPress: () => {
+                              setExistingReminder(prev => prev.filter(reminder => reminder.sourceId !== item.sourceId));
+                              dispatch(deleteReminderThunk({ userId: user_id, sourceId: item.sourceId }));
+                            },
+                          },
+                        ],
+                      )
+                    }
                     style={styles.iconButton}
                   >
-                    <Image source={Images.DELETE} style={styles.deleteIcon} />
+                    <Trash2 size={18} color="#EF4444" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -309,10 +318,10 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
           )}
           <View style={styles.divider} />
           {/* Add New Entry */}
-          <Text style={styles.subtitle}>Add New Entry</Text>
+          <Text style={styles.subtitle}>Add a reminder</Text>
           {/* Reminder Input */}
           <TextInput
-            placeholder="Enter reminder"
+            placeholder="What should we remind you about?"
             style={styles.input}
             placeholderTextColor="#6B7280"
             value={reminderText}
@@ -351,6 +360,31 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               </Text>
               <Image source={Images.CLOCK} style={styles.dateTimeIcon} />
             </TouchableOpacity>
+          </View>
+          {/* One-tap times — no wheel needed for the usual four. */}
+          <View style={styles.quickRow}>
+            {[
+              ['Morning', 8],
+              ['Afternoon', 13],
+              ['Evening', 18],
+              ['Night', 21],
+            ].map(([label, h]) => {
+              const on = !!time && time.getHours() === h && time.getMinutes() === 0;
+              return (
+                <TouchableOpacity
+                  key={label}
+                  style={[styles.quickChip, on && styles.quickChipOn]}
+                  onPress={() => {
+                    const d = new Date();
+                    d.setHours(h, 0, 0, 0);
+                    setTime(d);
+                    setShowTimePicker(false);
+                  }}
+                >
+                  <Text style={[styles.quickText, on && styles.quickTextOn]}>{label}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
           {showDatePicker && (
             <View style={styles.datePickerWrapper}>
@@ -409,37 +443,26 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               )}
             </View>
           )}
-          {/* Repeat & End Repeat */}
-          {/* Repeat */}
-          <View style={styles.pickercontainer}>
-            <TouchableOpacity
-              style={styles.pickerinput}
-              onPress={() => setShowPicker(!showPicker)}
-            >
-              <Text style={styles.pickerLabel}>Repeat</Text>
-              <View style={styles.pickerValueRow}>
-                <Text style={styles.pickerValue}>{repeat}</Text>
-                <Image style={styles.pickerChevron} source={Images.DOWN} />
-              </View>
-            </TouchableOpacity>
-            {showPicker && (
-              <Picker
-                itemStyle={styles.pickerItemStyle}
-                selectedValue={repeat}
-                onValueChange={itemValue => {
-                  setRepeat(itemValue);
-                  setShowPicker(false);
-                }}
-                style={styles.repeatpicker}
+          {/* Repeat — every option visible as a chip (was a dropdown you had to open, scroll and
+              close). Same values the server already accepts. */}
+          <Text style={styles.fieldLabel}>Repeat</Text>
+          <View style={styles.repeatRow}>
+            {[
+              ['Never', 'Once'],
+              ['Every Day', 'Daily'],
+              ['Every Week', 'Weekly'],
+              ['Every 2 Week', '2 weeks'],
+              ['Every Month', 'Monthly'],
+              ['Every Year', 'Yearly'],
+            ].map(([value, label]) => (
+              <TouchableOpacity
+                key={value}
+                onPress={() => setRepeat(value)}
+                style={[styles.repeatChip, repeat === value && styles.repeatChipOn]}
               >
-                <Picker.Item label="Never" value="Never" />
-                <Picker.Item label="Every Day" value="Every Day" />
-                <Picker.Item label="Every Week" value="Every Week" />
-                <Picker.Item label="Every 2 Week" value="Every 2 Week" />
-                <Picker.Item label="Every Month" value="Every Month" />
-                <Picker.Item label="Every Year" value="Every Year" />
-              </Picker>
-            )}
+                <Text style={[styles.repeatText, repeat === value && styles.repeatTextOn]}>{label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
           {/* End Repeat */}
           <View style={styles.pickercontainerEnd}>
@@ -525,14 +548,14 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               value={flagAsMedication}
               onValueChange={setFlagAsMedication}
             />
-            <Text style={styles.switchLabel}>Flag as medication</Text>
+            <Text style={styles.switchLabel}>This is a medicine (louder medicine alarm)</Text>
           </View>
           {/* Add Button */}
           <TouchableOpacity onPress={handleAddEntry} style={styles.addButton}>
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.addButtonText}>Add Entry</Text>
+              <Text style={styles.addButtonText}>Add reminder</Text>
             )}
           </TouchableOpacity>
         </ScrollView>
@@ -553,10 +576,24 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
 };
 
 const styles = StyleSheet.create({
+  entryBadge: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  entryBadgeMed: { backgroundColor: '#EDE9FE' },
+  quickRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  quickChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 12, backgroundColor: '#F1F5F9' },
+  quickChipOn: { backgroundColor: '#2563EB' },
+  quickText: { fontSize: 12, color: '#334155', fontFamily: 'Poppins-Medium' },
+  quickTextOn: { color: '#FFFFFF' },
+  fieldLabel: { fontSize: 12.5, color: '#64748B', fontFamily: 'Poppins-Medium', marginBottom: 6 },
+  repeatRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  repeatChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
+  repeatChipOn: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  repeatText: { fontSize: 13, color: '#334155', fontFamily: 'Poppins-Medium' },
+  repeatTextOn: { color: '#1D4ED8' },
   modal: { justifyContent: 'flex-end', margin: 0 },
   container: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 20,
     height: '90%',
     ...(Platform.OS === 'android' && { elevation: 0.5 }),
@@ -568,8 +605,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 20,
     marginBottom: 15,
     color: '#1E293B',
     letterSpacing: 0.2,
@@ -589,8 +626,8 @@ const styles = StyleSheet.create({
   entryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     padding: 12,
     marginVertical: 5,
     borderWidth: 1,
@@ -681,10 +718,11 @@ const styles = StyleSheet.create({
   },
   addButton: {
     marginTop: 20,
-    alignSelf: 'center',
-    backgroundColor: '#11418A',
-    borderRadius: 10,
-    paddingVertical: 14,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    backgroundColor: '#2563EB',
+    borderRadius: 14,
+    paddingVertical: 15,
     paddingHorizontal: 40,
     shadowColor: '#11418A',
     shadowOffset: { width: 0, height: 2 },

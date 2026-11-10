@@ -151,6 +151,13 @@ const ALERT_REFERENCES = [
 ];
 
 import SkeletonBox from '../../components/SkeletonBox';
+import FamilyMemberDay from './FamilyMemberDay';
+import {
+  isMealRoute,
+  mealCardsEnabled,
+  MEAL_CARDS_OFF_TITLE,
+  MEAL_CARDS_OFF_BODY,
+} from '../../utilities/mealCards';
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -296,6 +303,12 @@ const TodaySkeleton = () => (
 // ─────────────────────────────────────────────────────────────────────────────
 
 const Today = ({ navigation, route }) => {
+  // Launch edits (5 Nov): a user swap changes Home too — see FamilyMemberDay.
+  const activeProfileId = useSelector(s => s.dependants?.activeProfileId) || null;
+  const familyMembers = useSelector(s => s.dependants?.items);
+  const activeMember = activeProfileId
+    ? (familyMembers || []).find(d => String(d.dependantId) === String(activeProfileId)) || null
+    : null;
   const [isVisible, setIsVisible] = useState(false);
   const [showAlertRefsModal, setShowAlertRefsModal] = useState(false);
   const [activeTab, setActiveTab] = useState('Feb 26');
@@ -813,6 +826,11 @@ const Today = ({ navigation, route }) => {
         setIsVisible(prev => !prev);
         return;
       }
+      // Clinic turned meal cards off: the card stays on Today, but does not open the dishes.
+      if (isMealRoute(targetRoute) && !mealCardsEnabled(data)) {
+        alert(MEAL_CARDS_OFF_TITLE, MEAL_CARDS_OFF_BODY);
+        return;
+      }
 
       const title = item.title?.toLowerCase();
       const hasPayload = TITLES_WITH_PAYLOAD.includes(item.title);
@@ -857,8 +875,13 @@ const Today = ({ navigation, route }) => {
         }
       }
     },
-    [navigation],
+    [navigation, data, alert],
   );
+
+  // Acting for a FAMILY MEMBER (user swap): their reminders only, no lifestyle cards.
+  if (activeMember) {
+    return <FamilyMemberDay member={activeMember} />;
+  }
 
   // Show skeleton only on first load — not on background refetches where data already exists
   if (loading && !data) {
@@ -950,7 +973,16 @@ const Today = ({ navigation, route }) => {
               to "Cuore": a line captioned with our own product name where a clinic's belongs
               is not white-labelling. */}
           {!!(branding?.name || doctorProfile?.clinic?.name) && (
-            <View style={styles.brandRow}>
+            <View
+              style={[
+                styles.brandRow,
+                // White label (Launch edits, 5 Nov): the clinic's own band, in its colour.
+                branding?.whiteLabel && [
+                  styles.brandBand,
+                  { backgroundColor: branding.color || '#11418A' },
+                ],
+              ]}
+            >
               {!!(branding?.logoUrl || doctorProfile?.clinic?.logoUrl) && (
                 <Image
                   source={{ uri: branding?.logoUrl || doctorProfile.clinic.logoUrl }}
@@ -958,16 +990,25 @@ const Today = ({ navigation, route }) => {
                 />
               )}
               <View style={styles.brandTextWrap}>
-                <Text style={styles.brandName} numberOfLines={1}>
+                <Text
+                  style={[styles.brandName, branding?.whiteLabel && styles.onBand]}
+                  numberOfLines={1}
+                >
                   {branding?.name || doctorProfile.clinic.name}
                 </Text>
                 {!!branding?.doctorName && branding.source !== 'physician' && (
-                  <Text style={styles.brandDoctor} numberOfLines={1}>
+                  <Text
+                    style={[styles.brandDoctor, branding?.whiteLabel && styles.onBandSub]}
+                    numberOfLines={1}
+                  >
                     {branding.doctorName}
                     {branding.specialization ? ` · ${branding.specialization}` : ''}
                   </Text>
                 )}
               </View>
+              {branding?.whiteLabel && (
+                <Text style={styles.poweredBy}>Powered by Cuore</Text>
+              )}
             </View>
           )}
           <View style={styles.headerBottomRow}>
@@ -1807,6 +1848,10 @@ const styles = StyleSheet.create({
   brandTextWrap: { flex: 1, minWidth: 0 },
   brandName: { fontSize: 14, color: '#16283F', fontFamily: 'Poppins-SemiBold' },
   brandDoctor: { fontSize: 11, color: '#64748B', fontFamily: 'Poppins-Regular', marginTop: -1 },
+  brandBand: { borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 },
+  onBand: { color: '#FFFFFF', fontSize: 15 },
+  onBandSub: { color: 'rgba(255,255,255,0.85)' },
+  poweredBy: { fontSize: 9.5, color: 'rgba(255,255,255,0.8)', fontFamily: 'Poppins-Medium', marginLeft: 8 },
   username: {
     fontFamily: 'Poppins-Regular',
     fontSize: 18,
@@ -1866,14 +1911,20 @@ const styles = StyleSheet.create({
   // Rose matches the period days on the tracker's own calendar. Same footprint as its
   // neighbours so Update Readings / My Cycle / + Reminder read as one row of actions.
   cycleButton: {
+    // Launch edits #7: Update Readings / My Cycle / + Reminder must be the SAME size. flex:1
+    // alone still let content, padding and a two-line label decide height, so all three now
+    // share a fixed height, zero basis and identical padding/radius.
     flex: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    height: hp(6.2),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: hp(0.6),
     backgroundColor: '#FFF1F2',
-    paddingVertical: hp(1.2),
-    paddingHorizontal: hp(1),
+    paddingVertical: 0,
+    paddingHorizontal: hp(0.8),
     borderRadius: hp(1.2),
     borderWidth: 1.5,
     borderColor: '#FECDD3',
@@ -1884,12 +1935,18 @@ const styles = StyleSheet.create({
     color: '#BE123C',
   },
   biomarkerButton: {
+    // Launch edits #7: Update Readings / My Cycle / + Reminder must be the SAME size. flex:1
+    // alone still let content, padding and a two-line label decide height, so all three now
+    // share a fixed height, zero basis and identical padding/radius.
     flex: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    height: hp(6.2),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ECFDF5',
-    paddingVertical: hp(1.2),
-    paddingHorizontal: hp(1.8),
+    paddingVertical: 0,
+    paddingHorizontal: hp(0.8),
     borderRadius: hp(1.2),
     borderWidth: 1.5,
     borderColor: '#A7F3D0',
@@ -2192,15 +2249,21 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   addReminderButton: {
+    // Launch edits #7: Update Readings / My Cycle / + Reminder must be the SAME size. flex:1
+    // alone still let content, padding and a two-line label decide height, so all three now
+    // share a fixed height, zero basis and identical padding/radius.
     flex: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    height: hp(6.2),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: hp(0.4),
     backgroundColor: '#EFF6FF',
-    paddingVertical: hp(1.2),
-    paddingHorizontal: hp(1),
-    borderRadius: 12,
+    paddingVertical: 0,
+    paddingHorizontal: hp(0.8),
+    borderRadius: hp(1.2),
     borderWidth: 1.5,
     borderColor: '#BFDBFE',
     shadowColor: '#11418A',

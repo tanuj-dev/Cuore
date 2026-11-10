@@ -248,7 +248,11 @@ const AppContent = () => {
               notificationId: remoteMessage.data?.notificationId,
             },
             android: {
-              channelId: 'health-schedule',
+              // Medicine times use the loud medicine-alarm channel (see NotificationService).
+              channelId:
+                remoteMessage.data?.type === 'USER_MEDICATION'
+                  ? 'medicine-alarm'
+                  : 'health-schedule',
               smallIcon: 'ic_launcher',
               pressAction: { id: 'default' },
             },
@@ -376,7 +380,6 @@ const AppContent = () => {
     dispatch,
     navigateFromNotification,
     openConsultationDirect,
-    resolveScreen,
     syncBadgeToTray,
   ]);
 

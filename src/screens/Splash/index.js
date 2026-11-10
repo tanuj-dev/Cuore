@@ -1,10 +1,53 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Animated, Easing } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Animated,
+  Easing,
+  AppState,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { setUserData } from '../../redux/Auth/slice';
 import { hp, wp, Images } from '../../utilities';
+
+// Resolves once the app is in the foreground (immediately if it already is).
+const waitUntilActive = () =>
+  new Promise(resolve => {
+    if (AppState.currentState === 'active') {
+      resolve();
+      return;
+    }
+    const sub = AppState.addEventListener('change', next => {
+      if (next === 'active') {
+        sub.remove();
+        resolve();
+      }
+    });
+  });
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// Reads the stored session, retrying transient Keychain/Keystore failures. Returns the
+// raw string, or null only when every attempt found nothing.
+const readAuthTokensWithRetry = async (attempts = 4) => {
+  let lastError = null;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const value = await EncryptedStorage.getItem('auth_tokens');
+      if (value) return value;
+    } catch (e) {
+      lastError = e;
+      console.log('Splash: auth_tokens read failed, retrying:', e?.message);
+    }
+    await sleep(300 * (i + 1));
+  }
+  if (lastError) throw lastError;
+  return null;
+};
 
 const Splash = () => {
   const navigation = useNavigation();
@@ -73,8 +116,14 @@ const Splash = () => {
 
     const checkLoginStatus = async () => {
       try {
+        // iOS can pre-launch ("prewarm") the app before the device is unlocked, and the
+        // Keychain is unreadable until then: the read throws or comes back empty, which used
+        // to send a logged-in user to Login on the first open (and Home only on the second).
+        // So: wait until the app is really in the foreground, then read with retries, and
+        // only treat "no token" as logged out once several reads agree.
+        await waitUntilActive();
         console.log('Splash: reading auth_tokens...');
-        const tokenData = await EncryptedStorage.getItem('auth_tokens');
+        const tokenData = await readAuthTokensWithRetry();
         console.log('Splash: auth_tokens read, has data:', !!tokenData);
 
         // Step 1: No token → Login
@@ -162,11 +211,20 @@ const Splash = () => {
       }
     };
 
-    // Safety timeout — if nothing navigates within 6 seconds, force to Login
-    const safetyTimer = setTimeout(() => {
+    // Safety net — only if the check itself is stuck. It no longer races a slow
+    // cold-start Keychain read (that is what sent logged-in users to Login): it fires
+    // late, and still prefers Home when a token can be read by then.
+    const safetyTimer = setTimeout(async () => {
       console.log('Splash: safety timeout triggered');
+      try {
+        const late = await EncryptedStorage.getItem('auth_tokens');
+        if (late && JSON.parse(late)?.accessToken) {
+          checkLoginStatus();
+          return;
+        }
+      } catch (e) {}
       navigateTo('Login', 0);
-    }, 10000);
+    }, 20000);
 
     checkLoginStatus();
 

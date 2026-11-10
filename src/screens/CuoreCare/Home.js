@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
+import { documentsForProfile } from './documentOwner';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   Stethoscope,
@@ -50,6 +51,7 @@ export default function CuoreCareHome({ navigation }) {
   const access = useSelector(state => state.cuoreCare.access);
   const appointments = useSelector(state => state.cuoreCare.appointments);
   const branding = useSelector(state => state.cuoreCare.access?.branding);
+  const activeProfileId = useSelector(state => state.dependants?.activeProfileId) || null;
   const [segment, setSegment] = useState('upcoming'); // upcoming | completed
   const [refreshing, setRefreshing] = useState(false);
 
@@ -174,7 +176,10 @@ export default function CuoreCareHome({ navigation }) {
   }
 
   /* ----- subscribed → scheduler ----- */
-  const list = appointments.list || [];
+  // Launch edits (5 Nov): after a user swap, upcoming & past consultations are the DISPLAYED
+  // person's, not the account holder's. Same ownership rule as the documents (documentOwner.js):
+  // a family member's appointment carries `forPatient`; the holder's own carries none.
+  const list = documentsForProfile(appointments.list, activeProfileId);
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
@@ -194,11 +199,18 @@ export default function CuoreCareHome({ navigation }) {
               fit a phone's width beside a button, and truncating the practice's own name to
               "Sunrise Multispecial…" is a poor way to show whose care this is. The type is a
               step smaller for the same reason — it buys the second line back. */}
-          <Text style={styles.topTitle} numberOfLines={2}>
+          <Text
+            style={[styles.topTitle, branding?.whiteLabel && branding.color ? { color: branding.color } : null]}
+            numberOfLines={2}
+          >
             {branding?.name || 'CuoreCare'}
           </Text>
           <Text style={styles.topSubtitle} numberOfLines={1}>
-            {branding?.name ? 'CuoreCare · Your consultations' : 'Your consultations'}
+            {branding?.whiteLabel
+              ? 'Your consultations · Powered by Cuore'
+              : branding?.name
+              ? 'CuoreCare · Your consultations'
+              : 'Your consultations'}
           </Text>
         </View>
         <TouchableOpacity

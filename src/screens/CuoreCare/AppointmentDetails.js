@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Platform,
   Modal,
   TouchableOpacity,
   RefreshControl,
@@ -14,7 +13,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import {
   CalendarClock,
@@ -39,6 +37,7 @@ import {
   rescheduleAppointment,
   getAppointments,
   fetchCasesheet,
+  getDoctorSlots,
 } from '../../redux/CuoreCare/thunks';
 import { getSocket } from '../../realtime/socket';
 import { EV as CC_EV } from '../../realtime/events';
@@ -84,8 +83,16 @@ export default function AppointmentDetails({ navigation, route }) {
 
   const [refreshing, setRefreshing] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
-  const [rDate, setRDate] = useState(new Date());
-  const [picker, setPicker] = useState(null);
+  /* Launch edits (5 Nov): "if reschedule – show empty/available slots – don't know which are
+   * available". The free date/time wheel let a patient pick any minute and only learn at Confirm
+   * that the doctor wasn't available. Reschedule now offers the doctor's OPEN slots for a chosen
+   * day — the same /doctors/:id/slots list Booking uses (booked/blocked/expired filtered
+   * server-side) — and the chosen slot's start is what is sent. */
+  const [rDay, setRDay] = useState(null); // 'YYYY-MM-DD'
+  const [rSlots, setRSlots] = useState([]);
+  const [rSlotsLoading, setRSlotsLoading] = useState(false);
+  const [rSlotsError, setRSlotsError] = useState('');
+  const [rSlot, setRSlot] = useState(null);
   // The doctor's finalised casesheet. Null while they're still drafting it — the server
   // only releases it once it's locked, so there's nothing to poll for.
   const [casesheet, setCasesheet] = useState(null);
@@ -187,44 +194,50 @@ export default function AppointmentDetails({ navigation, route }) {
       alert('Too late to reschedule', cancelBlockedMsg);
       return;
     }
-    setRDate(moment(appt?.scheduledStart).isAfter(moment()) ? new Date(appt.scheduledStart) : new Date(Date.now() + 15 * 60000));
+    setRSlot(null);
     setRescheduleOpen(true);
-    if (Platform.OS === 'android') setPicker('date');
+    loadRescheduleDay(moment().format('YYYY-MM-DD'));
   };
 
-  const onPickerChange = (event, selected) => {
-    if (Platform.OS === 'android') {
-      if (event.type === 'dismissed') return setPicker(null);
-      if (picker === 'date' && selected) {
-        const next = moment(selected).hour(moment(rDate).hour()).minute(moment(rDate).minute()).toDate();
-        setRDate(next);
-        setPicker('time');
-        return;
-      }
-      if (picker === 'time' && selected) {
-        setRDate(selected);
-        setPicker(null);
-        return;
-      }
-      setPicker(null);
-    } else if (selected) {
-      setRDate(selected);
+  const loadRescheduleDay = async day => {
+    setRDay(day);
+    setRSlot(null);
+    setRSlots([]);
+    setRSlotsError('');
+    const doctorId = appt?.doctorId?._id || appt?.doctorId;
+    if (!doctorId) return;
+    setRSlotsLoading(true);
+    const res = await dispatch(getDoctorSlots({ doctorId, date: day, channel: appt?.channel || 'teleconsult' }));
+    setRSlotsLoading(false);
+    if (getDoctorSlots.fulfilled.match(res)) {
+      const own = appt?.scheduledStart ? new Date(appt.scheduledStart).getTime() : null;
+      // The patient's current time is not a "new" time to move to.
+      setRSlots((res.payload.slots || []).filter(sl => new Date(sl.start).getTime() !== own));
+    } else {
+      setRSlotsError(res.payload?.message || 'Could not load time slots');
     }
   };
+  const rescheduleDays = useMemo(
+    () => Array.from({ length: 14 }, (_, i) => moment().add(i, 'day')),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rescheduleOpen],
+  );
 
   const submitReschedule = async () => {
-    if (moment(rDate).isBefore(moment().add(1, 'minute'))) {
-      alert('Pick a future time', 'Choose a time in the future.');
+    if (!rSlot) {
+      alert('Pick a time', 'Choose one of the available slots.');
       return;
     }
     const res = await dispatch(
-      rescheduleAppointment({ appointmentId, scheduledStart: moment(rDate).toISOString() }),
+      rescheduleAppointment({ appointmentId, scheduledStart: moment(rSlot.start).toISOString() }),
     );
-    setRescheduleOpen(false);
     if (rescheduleAppointment.fulfilled.match(res)) {
+      setRescheduleOpen(false);
       dispatch(getAppointment(appointmentId));
     } else {
+      // Taken in the meantime: refresh this day's open slots and let them pick again.
       alert('Could not reschedule', res.payload?.message || 'Please try another time.');
+      if (rDay) loadRescheduleDay(rDay);
     }
   };
 
@@ -446,39 +459,54 @@ export default function AppointmentDetails({ navigation, route }) {
               </TouchableOpacity>
             </View>
             <Text style={[styles.modalPreview, { color: sheet.text }]}>
-              {moment(rDate).format('ddd, D MMM YYYY')} · {moment(rDate).format('h:mm A')}
+              {rSlot
+                ? `${moment(rSlot.start).format('ddd, D MMM YYYY')} · ${fmtTime(rSlot.start)}`
+                : 'Pick a day, then an available time'}
             </Text>
-            {Platform.OS === 'ios' ? (
-              <DateTimePicker
-                value={rDate}
-                mode="datetime"
-                display="spinner"
-                minimumDate={new Date(Date.now() + 5 * 60000)}
-                onChange={onPickerChange}
-                // Keep the native wheels legible in both appearances (dark mode was invisible
-                // against the forced-white sheet before). themeVariant + textColor cover iOS.
-                themeVariant={isDark ? 'dark' : 'light'}
-                textColor={sheet.text}
-                style={{ backgroundColor: sheet.bg }}
-              />
-            ) : (
-              <View style={styles.androidPickerRow}>
-                <SecondaryButton label="Change date" onPress={() => setPicker('date')} style={{ flex: 1 }} />
-                <SecondaryButton label="Change time" onPress={() => setPicker('time')} style={{ flex: 1 }} />
-              </View>
-            )}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rDays}>
+              {rescheduleDays.map(d => {
+                const key = d.format('YYYY-MM-DD');
+                const on = key === rDay;
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    onPress={() => loadRescheduleDay(key)}
+                    style={[styles.rDay, { borderColor: on ? CC.primary : sheet.border, backgroundColor: on ? CC.primary : 'transparent' }]}
+                  >
+                    <Text style={[styles.rDayTop, { color: on ? '#fff' : sheet.sub }]}>{d.format('ddd')}</Text>
+                    <Text style={[styles.rDayNum, { color: on ? '#fff' : sheet.text }]}>{d.format('D')}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.rSlotsWrap}>
+              {rSlotsLoading ? (
+                <ActivityIndicator color={CC.primary} style={{ marginVertical: 18 }} />
+              ) : rSlotsError ? (
+                <Text style={[styles.rEmpty, { color: sheet.sub }]}>{rSlotsError}</Text>
+              ) : rSlots.length === 0 ? (
+                <Text style={[styles.rEmpty, { color: sheet.sub }]}>No open slots on this day. Try another date.</Text>
+              ) : (
+                <View style={styles.rSlots}>
+                  {rSlots.map(sl => {
+                    const on = rSlot?.start === sl.start;
+                    return (
+                      <TouchableOpacity
+                        key={sl.start}
+                        onPress={() => setRSlot(sl)}
+                        style={[styles.rSlot, { borderColor: on ? CC.primary : sheet.border, backgroundColor: on ? CC.primary : 'transparent' }]}
+                      >
+                        <Text style={[styles.rSlotText, { color: on ? '#fff' : sheet.text }]}>{fmtTime(sl.start)}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
           </View>
         </View>
       </Modal>
 
-      {Platform.OS === 'android' && rescheduleOpen && picker && (
-        <DateTimePicker
-          value={rDate}
-          mode={picker === 'time' ? 'time' : 'date'}
-          minimumDate={picker === 'date' ? new Date(Date.now() + 5 * 60000) : undefined}
-          onChange={onPickerChange}
-        />
-      )}
     </SafeAreaView>
   );
 }
@@ -551,6 +579,15 @@ function CasesheetCard({ casesheet }) {
 }
 
 const styles = StyleSheet.create({
+  rDays: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
+  rDay: { width: 52, paddingVertical: 8, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
+  rDayTop: { fontSize: 11, fontWeight: '600' },
+  rDayNum: { fontSize: 17, fontWeight: '800', marginTop: 2 },
+  rSlotsWrap: { paddingHorizontal: 16, paddingBottom: 28, minHeight: 120 },
+  rSlots: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  rSlot: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10, borderWidth: 1 },
+  rSlotText: { fontSize: 14, fontWeight: '700' },
+  rEmpty: { fontSize: 13, paddingVertical: 18, textAlign: 'center' },
   safe: { flex: 1, backgroundColor: CC.surface },
   csCard: { marginTop: 16 },
   csHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },

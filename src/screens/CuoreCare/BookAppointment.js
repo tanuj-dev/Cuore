@@ -85,6 +85,10 @@ export default function BookAppointment({ navigation, route }) {
   const MODES = ALL_MODES.filter(m => channels.includes(CHANNEL_FOR_MODE[m.key]));
 
   const [mode, setMode] = useState(() => MODES[0]?.key || null);
+  // Price of the chosen mode, as listed. A corporate/plan exemption is decided server-side, so
+  // this only changes the wording; the server's own answer still decides checkout vs. not.
+  const selectedPrice = doctor.modePrices?.[mode];
+  const needsPayment = !!(selectedPrice && typeof selectedPrice.rupees === 'number' && selectedPrice.rupees > 0);
   const [selectedDate, setSelectedDate] = useState(null);
   /* The day the doctor prescribed on a follow-up, handed over when the patient accepted it.
    * A SUGGESTION, not a booking: it opens that day's slots and the patient is free to pick
@@ -512,13 +516,17 @@ export default function BookAppointment({ navigation, route }) {
               </View>
             )}
 
+            {/* Launch edits (5 Nov): payment happens BEFORE the request goes out. The server
+                already held an unpaid booking back from the doctor (pending_payment); the button
+                and note now say so, instead of "Request appointment" reading as already sent. */}
             <Text style={styles.note}>
-              Your request is sent to the doctor for confirmation. You will be notified once it is
-              accepted.
+              {needsPayment
+                ? `Pay ₹${selectedPrice.rupees} on the next step — your request is sent to the doctor only after payment. If the doctor declines or you cancel in time, it is refunded.`
+                : 'Your request is sent to the doctor for confirmation. You will be notified once it is accepted.'}
             </Text>
 
             <PrimaryButton
-              label="Request appointment"
+              label={needsPayment ? 'Continue to payment' : 'Request appointment'}
               onPress={handleBook}
               loading={actionLoading}
               disabled={!selectedSlot}

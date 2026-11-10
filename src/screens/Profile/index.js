@@ -340,14 +340,22 @@ const Profile = ({ navigation }) => {
     IAP_ALL_ACCESS_PRODUCT_IDS.includes(sub?.productId)
       ? 'All Access'
       : CUORECARE_PLAN_LABELS[sub?.plan] || 'CuoreCare';
-  const payment = cuoreCareSub?.active
-    ? {
-        productId: cuoreCarePlanLabel(cuoreCareSub),
-        status: 'active',
-        startDate: cuoreCareSub.startDate,
-        endDate: cuoreCareSub.expiryDate,
-      }
-    : basePayment;
+  // The server now picks the entitlement actually in force (store receipt, CuoreCare/All
+  // Access, web or free grant) and names it (payment.planName). Prefer that; the CuoreCare
+  // status call is only a fallback for an older backend that does not send planName yet.
+  const payment =
+    basePayment?.planName && basePayment?.status === 'active'
+      ? { ...basePayment, productId: basePayment.planName }
+      : cuoreCareSub?.active
+      ? {
+          productId: cuoreCarePlanLabel(cuoreCareSub),
+          status: 'active',
+          startDate: cuoreCareSub.startDate,
+          endDate: cuoreCareSub.expiryDate,
+        }
+      : basePayment?.planName
+      ? { ...basePayment, productId: basePayment.planName }
+      : basePayment;
   const toLabel = value =>
     value
       ? String(value)

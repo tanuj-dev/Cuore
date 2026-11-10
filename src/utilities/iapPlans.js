@@ -30,6 +30,7 @@ import { Platform } from 'react-native';
 export const IAP_ALL_ACCESS_PRODUCT_IDS = [
   'com.cuore.allaccess.annual', // iOS
   'cuore_allaccess_annual', // Android
+  'cuore_allaccess_annual_web', // cuore.health (Razorpay) — same plan, bought on the web
 ];
 
 // The only product a new purchase on THIS device can use.

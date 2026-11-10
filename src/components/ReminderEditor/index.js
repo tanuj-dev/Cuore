@@ -9,7 +9,10 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Pressable,
+  KeyboardAvoidingView,
 } from 'react-native';
+import { Bell, Clock, Pill, X } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
@@ -152,6 +155,23 @@ const ReminderEditor = ({
     if (selectedTime) setTime(selectedTime);
   };
 
+  // Quick times (Launch edits, 5 Nov: "reminder setting, editing needs to be better — less
+  // clumsy"): most reminders are morning / afternoon / evening / night, so one tap instead of a wheel.
+  const QUICK_TIMES = [
+    { label: 'Morning', h: 8, m: 0 },
+    { label: 'Afternoon', h: 13, m: 0 },
+    { label: 'Evening', h: 18, m: 0 },
+    { label: 'Night', h: 21, m: 0 },
+  ];
+  const setQuickTime = (h, m) => {
+    const d = new Date(time);
+    d.setHours(h, m, 0, 0);
+    setTime(d);
+    setShowTimePicker(false);
+  };
+  const isMedicine = requestId?.type === 'USER_MEDICATION' || requestId?.title === 'Medication';
+  const MAX_TITLE = 40;
+
   return (
     <>
       {AlertComponent}
@@ -161,42 +181,70 @@ const ReminderEditor = ({
         animationType="slide"
         onRequestClose={() => setShowModal(false)}
       >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPressOut={() => setShowModal(false)}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.overlay}
         >
+          {/* The backdrop is its OWN layer. It used to wrap the sheet, so a tap on any empty
+              part of the sheet closed it mid-edit. */}
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowModal(false)} />
           <View style={styles.bottomSheet}>
-            <Text style={styles.title}>Edit Reminder</Text>
+            <View style={styles.grabber} />
+            <View style={styles.headRow}>
+              <View style={[styles.headIcon, isMedicine ? styles.headIconMed : null]}>
+                {isMedicine ? <Pill size={20} color="#7C3AED" /> : <Bell size={20} color="#2563EB" />}
+              </View>
+              <Text style={styles.title}>Edit reminder</Text>
+              <TouchableOpacity onPress={() => setShowModal(false)} hitSlop={12} accessibilityLabel="Close">
+                <X size={22} color="#64748B" />
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
+            <Text style={styles.fieldLabel}>Reminder</Text>
+            <TextInput
+              placeholder="e.g. Metformin 500"
+              placeholderTextColor="#94A3B8"
+              value={reminderText}
+              maxLength={MAX_TITLE}
+              onChangeText={text => {
+                setReminderText(text);
+                setError('');
+              }}
               style={styles.input}
-              onPress={() => setShowTimePicker(true)}
-            >
-              <Text style={styles.timeText}>
-                {time.toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </Text>
+            />
+            <Text style={styles.counter}>{reminderText.length}/{MAX_TITLE}</Text>
+
+            <Text style={styles.fieldLabel}>Time</Text>
+            <TouchableOpacity style={styles.timeCard} onPress={() => setShowTimePicker(v => !v)} activeOpacity={0.85}>
+              <Clock size={20} color="#2563EB" />
+              <Text style={styles.timeBig}>{moment(time).format('h:mm A')}</Text>
+              <Text style={styles.timeChange}>{showTimePicker ? 'Done' : 'Change'}</Text>
             </TouchableOpacity>
+            <View style={styles.chips}>
+              {QUICK_TIMES.map(q => {
+                const on = time.getHours() === q.h && time.getMinutes() === q.m;
+                return (
+                  <TouchableOpacity key={q.label} onPress={() => setQuickTime(q.h, q.m)} style={[styles.chip, on && styles.chipOn]}>
+                    <Text style={[styles.chipText, on && styles.chipTextOn]}>{q.label}</Text>
+                    <Text style={[styles.chipSub, on && styles.chipTextOn]}>{moment().hour(q.h).minute(q.m).format('h A')}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
             {showTimePicker && (
               <View style={styles.datePickerWrapper}>
                 <DateTimePicker
                   value={time}
                   mode="time"
-                  is24Hour={true}
+                  is24Hour={false}
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={onTimeSelected}
                   textColor="#000000"
                   themeVariant="light"
                 />
                 {Platform.OS === 'ios' && (
-                  <TouchableOpacity
-                    style={styles.pickerDoneButton}
-                    onPress={() => setShowTimePicker(false)}
-                  >
+                  <TouchableOpacity style={styles.pickerDoneButton} onPress={() => setShowTimePicker(false)}>
                     <Text style={styles.pickerDoneText}>Done</Text>
                   </TouchableOpacity>
                 )}
@@ -207,10 +255,7 @@ const ReminderEditor = ({
               <View style={styles.courseRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.fieldLabel}>Start date</Text>
-                  <TouchableOpacity
-                    style={[styles.input, { marginBottom: 0 }]}
-                    onPress={() => setShowStartPicker(true)}
-                  >
+                  <TouchableOpacity style={[styles.input, { marginBottom: 0 }]} onPress={() => setShowStartPicker(true)}>
                     <Text style={styles.timeText}>{moment(courseStart).format('D MMM YYYY')}</Text>
                   </TouchableOpacity>
                 </View>
@@ -251,44 +296,29 @@ const ReminderEditor = ({
                   themeVariant="light"
                 />
                 {Platform.OS === 'ios' && (
-                  <TouchableOpacity
-                    style={styles.pickerDoneButton}
-                    onPress={() => setShowStartPicker(false)}
-                  >
+                  <TouchableOpacity style={styles.pickerDoneButton} onPress={() => setShowStartPicker(false)}>
                     <Text style={styles.pickerDoneText}>Done</Text>
                   </TouchableOpacity>
                 )}
               </View>
             )}
 
-            <TextInput
-              placeholder="Reminder text"
-              value={reminderText}
-              onChangeText={text => {
-                if (text.length <= 20) {
-                  setReminderText(text);
-                  setError('');
-                } else {
-                  setError('Reminder must be 20 characters or less');
-                }
-              }}
-              style={styles.input}
-            />
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleChange}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.buttonText}>Save Changes</Text>
-              )}
-            </TouchableOpacity>
+            <View style={styles.actions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowModal(false)}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleChange}
+                disabled={loading}
+              >
+                {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Save</Text>}
+              </TouchableOpacity>
+            </View>
           </View>
-        </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );
@@ -297,69 +327,79 @@ const ReminderEditor = ({
 export default ReminderEditor;
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
+  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15,23,42,0.45)' },
   bottomSheet: {
     backgroundColor: '#FFFFFF',
-    padding: 24,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 10,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 28,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    elevation: 12,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 16,
-  },
+  grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#E2E8F0', marginBottom: 12 },
+  headRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 18 },
+  headIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+  headIconMed: { backgroundColor: '#EDE9FE' },
+  title: { flex: 1, fontSize: 19, fontFamily: 'Poppins-SemiBold', color: '#0F172A' },
+  fieldLabel: { fontSize: 12.5, fontFamily: 'Poppins-Medium', color: '#64748B', marginBottom: 6 },
   input: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    marginBottom: 16,
+    marginBottom: 4,
     fontSize: 16,
-    color: '#374151',
+    color: '#0F172A',
   },
-  button: {
-    backgroundColor: '#2563EB',
-    paddingVertical: 14,
-    borderRadius: 10,
+  counter: { alignSelf: 'flex-end', fontSize: 11, color: '#94A3B8', marginBottom: 12 },
+  timeText: { fontSize: 16, color: '#0F172A' },
+  timeCard: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#BFDBFE',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
-  buttonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 16 },
-  errorText: { fontSize: 12, color: '#EF4444', marginBottom: 10 },
+  timeBig: { flex: 1, fontSize: 22, fontFamily: 'Poppins-SemiBold', color: '#1E3A8A' },
+  timeChange: { fontSize: 13, fontFamily: 'Poppins-Medium', color: '#2563EB' },
+  chips: { flexDirection: 'row', gap: 8, marginTop: 10, marginBottom: 16 },
+  chip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 12, backgroundColor: '#F1F5F9' },
+  chipOn: { backgroundColor: '#2563EB' },
+  chipText: { fontSize: 12, fontFamily: 'Poppins-Medium', color: '#334155' },
+  chipSub: { fontSize: 10.5, color: '#64748B', marginTop: 1 },
+  chipTextOn: { color: '#FFFFFF' },
+  actions: { flexDirection: 'row', gap: 10, marginTop: 6 },
+  cancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: '#F1F5F9' },
+  cancelText: { color: '#334155', fontFamily: 'Poppins-Medium', fontSize: 15 },
+  button: { flex: 2, backgroundColor: '#2563EB', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: '#FFFFFF', fontFamily: 'Poppins-SemiBold', fontSize: 16 },
+  errorText: { fontSize: 12.5, color: '#DC2626', marginBottom: 10 },
   courseRow: { flexDirection: 'row', gap: 12, marginBottom: 6 },
-  fieldLabel: { fontSize: 12, color: '#6B7280', marginBottom: 6 },
-  courseHint: { fontSize: 12, color: '#6B7280', marginBottom: 16 },
+  courseHint: { fontSize: 12, color: '#64748B', marginBottom: 16 },
   datePickerWrapper: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 16,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
   },
   pickerDoneButton: {
     alignSelf: 'flex-end',
     paddingVertical: 8,
     paddingHorizontal: 20,
-    backgroundColor: '#11418A',
-    borderRadius: 8,
+    backgroundColor: '#2563EB',
+    borderRadius: 10,
     marginTop: 4,
     marginRight: 4,
   },
-  pickerDoneText: {
-    color: '#FFFFFF',
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-  },
+  pickerDoneText: { color: '#FFFFFF', fontFamily: 'Poppins-Medium', fontSize: 14 },
 });

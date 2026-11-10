@@ -12,6 +12,12 @@ import React, { useMemo, useCallback } from 'react';
 import { hp, wp, Images } from '../../utilities';
 import { useSelector } from 'react-redux';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
+import {
+  isMealRoute,
+  mealCardsEnabled,
+  MEAL_CARDS_OFF_TITLE,
+  MEAL_CARDS_OFF_BODY,
+} from '../../utilities/mealCards';
 
 // Constants
 const MODULES = [
@@ -66,6 +72,7 @@ const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const Explore = ({ navigation }) => {
   const { alert, AlertComponent } = useCustomAlert();
+  const mealsOn = useSelector(state => mealCardsEnabled(state.home?.data));
   const currentDayKey = useMemo(() => {
     return DAY_KEYS[new Date().getDay()];
   }, []);
@@ -76,6 +83,12 @@ const Explore = ({ navigation }) => {
 
       if (!route) {
         alert('Route not found', 'This module is not available yet.');
+        return;
+      }
+
+      // Clinic turned meal cards off: the card stays, but does not open the dishes.
+      if (isMealRoute(route) && !mealsOn) {
+        alert(MEAL_CARDS_OFF_TITLE, MEAL_CARDS_OFF_BODY);
         return;
       }
 
@@ -91,7 +104,7 @@ const Explore = ({ navigation }) => {
 
       navigation.navigate(route);
     },
-    [navigation, currentDayKey, alert],
+    [navigation, currentDayKey, alert, mealsOn],
   );
 
   const handleHealthPress = useCallback(() => {
@@ -169,7 +182,9 @@ const Explore = ({ navigation }) => {
         </View>
       </View>
     ),
-    [handleHealthPress, profileImageSource],
+    // The doctor's photo is read here too — without it the header kept a stale/missing photo
+    // after the profile loaded.
+    [handleHealthPress, profileImageSource, doctorProfile?.profileImage, doctorProfile?.photoUrl],
   );
 
   return (
