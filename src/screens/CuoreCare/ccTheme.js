@@ -2,19 +2,20 @@ import { Video, Phone, MessageSquare, Stethoscope } from 'lucide-react-native';
 import Fonts from '../../utilities/Fonts';
 
 /**
- * CuoreCare shared design tokens. Mirrors the palette the base app already uses (see
- * theme/colors.js + Checkout) so the feature feels native to Cuore: #11418A primary on a
- * slate neutral scale, Poppins type. Kept local to the feature so it can evolve without
- * touching global theme.
+ * CuoreCare shared design tokens. Brand navy (#11418A) stays the primary so the feature
+ * still reads as Cuore, but the neutrals are warmed slightly and a small family of friendly
+ * accents (coral, teal, amber, violet, sky) is available for icon chips, section cards and
+ * hero gradients — Launch Edits 13 Nov: "make Home & CuoreCare vibrant & happier" while
+ * staying clinical. Kept local to the feature so it can evolve without touching global theme.
  */
 export const CC = {
   primary: '#11418A',
-  primarySoft: '#EFF6FF',
+  primarySoft: '#EAF1FD',
   text: '#1E293B',
-  subText: '#64748B',
-  muted: '#94A3B8',
-  border: '#E2E8F0',
-  surface: '#F8FAFC',
+  subText: '#5F6B7D',
+  muted: '#98A2B3',
+  border: '#E9E6F0',
+  surface: '#F8F7FC',
   card: '#FFFFFF',
   danger: '#DC2626',
   dangerSoft: '#FEE2E2',
@@ -23,14 +24,40 @@ export const CC = {
   warning: '#B45309',
   warningSoft: '#FEF3C7',
   white: '#FFFFFF',
+
+  // Friendly accents. Each has a soft tint for chip / card backgrounds.
+  accentCoral: '#EF6F5A',
+  accentCoralSoft: '#FFEDE8',
+  accentTeal: '#0E9F8E',
+  accentTealSoft: '#DDF6F1',
+  accentAmber: '#D98A06',
+  accentAmberSoft: '#FFF3D6',
+  accentViolet: '#7457D6',
+  accentVioletSoft: '#EFEAFE',
+  accentSky: '#2B7BE4',
+  accentSkySoft: '#E5F0FD',
+
+  // Soft hero wash (top → bottom) and the vivid CTA gradient (left → right).
+  heroGradient: ['#E4EDFD', '#F3EEFD', '#FDF1EC'],
+  ctaGradient: ['#11418A', '#2B6CC4'],
+
+  radius: 18,
+  // Gentle elevation, spread rather than dark.
+  shadow: {
+    shadowColor: '#1E2A4A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 2,
+  },
   fonts: Fonts,
 };
 
 // Appointment status → { label, fg, bg }. Keep keys in sync with backend Appointment.STATUS.
 export const STATUS_META = {
   requested: { label: 'Requested', fg: '#B45309', bg: '#FEF3C7' },
-  accepted: { label: 'Confirmed', fg: '#11418A', bg: '#EFF6FF' },
-  scheduled: { label: 'Confirmed', fg: '#11418A', bg: '#EFF6FF' },
+  accepted: { label: 'Confirmed', fg: '#11418A', bg: '#EAF1FD' },
+  scheduled: { label: 'Confirmed', fg: '#11418A', bg: '#EAF1FD' },
   in_progress: { label: 'In progress', fg: '#059669', bg: '#D1FAE5' },
   completed: { label: 'Completed', fg: '#475569', bg: '#F1F5F9' },
   cancelled: { label: 'Cancelled', fg: '#DC2626', bg: '#FEE2E2' },

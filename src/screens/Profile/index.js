@@ -328,34 +328,37 @@ const Profile = ({ navigation }) => {
   // CuoreCare is the superset / effective tier — when it's active, the subscription card
   // reflects it (plan, dates) instead of the base premium record.
   const basePayment = userProfile?.payment || {};
+  // Plans are named by billing period — same names the server sends as payment.planName.
   const CUORECARE_PLAN_LABELS = {
-    monthly: 'CuoreCare · Monthly',
-    quarterly: 'CuoreCare · 3 Months',
-    annual: 'CuoreCare · 1 Year',
+    monthly: 'Monthly Plan',
+    quarterly: 'Quarterly Plan',
+    annual: 'Annual Plan',
   };
   // An All Access subscriber carries plan 'annual' exactly like a legacy CuoreCare-annual
   // one, so the plan alone cannot name the card — the product id has to. Without this,
   // everyone on the single ₹359 plan would see "CuoreCare · 1 Year".
   const cuoreCarePlanLabel = sub =>
     IAP_ALL_ACCESS_PRODUCT_IDS.includes(sub?.productId)
-      ? 'All Access'
-      : CUORECARE_PLAN_LABELS[sub?.plan] || 'CuoreCare';
+      ? 'Annual Plan'
+      : CUORECARE_PLAN_LABELS[sub?.plan] || 'Annual Plan';
   // The server now picks the entitlement actually in force (store receipt, CuoreCare/All
   // Access, web or free grant) and names it (payment.planName). Prefer that; the CuoreCare
   // status call is only a fallback for an older backend that does not send planName yet.
-  const payment =
-    basePayment?.planName && basePayment?.status === 'active'
-      ? { ...basePayment, productId: basePayment.planName }
-      : cuoreCareSub?.active
-      ? {
-          productId: cuoreCarePlanLabel(cuoreCareSub),
-          status: 'active',
-          startDate: cuoreCareSub.startDate,
-          endDate: cuoreCareSub.expiryDate,
-        }
-      : basePayment?.planName
-      ? { ...basePayment, productId: basePayment.planName }
-      : basePayment;
+  //
+  // The server already weighs the CuoreCare entitlement and fills in a start date when no
+  // record kept one, so whenever it sends planName it is the single source of truth — even
+  // for an expired plan. Mixing in the device's CuoreCare call is what used to produce a
+  // card with a CuoreCare name but the base record's blank "Started".
+  const payment = basePayment?.planName
+    ? { ...basePayment, productId: basePayment.planName }
+    : cuoreCareSub?.active
+    ? {
+        productId: cuoreCarePlanLabel(cuoreCareSub),
+        status: 'active',
+        startDate: cuoreCareSub.startDate,
+        endDate: cuoreCareSub.expiryDate,
+      }
+    : basePayment;
   const toLabel = value =>
     value
       ? String(value)

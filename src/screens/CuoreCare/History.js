@@ -19,11 +19,13 @@ import ProfileSwitcher from '../../components/ProfileSwitcher';
 import { fmtDayLabel } from './ccFormat';
 import { documentsForProfile } from './documentOwner';
 import DiagnosticsTab from './DiagnosticsTab';
+import VaccineSchedule from './VaccineSchedule';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import {
   getPrescriptions,
   getCertificates,
   getVaccinations,
+  getVaccineSchedule,
   getBills,
   getAppointments,
 } from '../../redux/CuoreCare/thunks';
@@ -59,6 +61,7 @@ export default function History({ navigation }) {
   const { list: prescriptions, loading: rxLoading } = useSelector(state => state.cuoreCare.prescriptions);
   const { list: certificates, loading: certLoading } = useSelector(state => state.cuoreCare.certificates);
   const { list: vaccinations, loading: vaxLoading } = useSelector(state => state.cuoreCare.vaccinations);
+  const scheduleChildren = useSelector(state => state.cuoreCare.vaccineSchedule?.children);
   const { list: bills, loading: billsLoading, totalDue } = useSelector(state => state.cuoreCare.bills);
   const completed = useSelector(state => state.cuoreCare.appointments.list);
   // Whose documents are on screen. Null = the account holder's own.
@@ -74,6 +77,7 @@ export default function History({ navigation }) {
     dispatch(getPrescriptions());
     dispatch(getCertificates());
     dispatch(getVaccinations());
+    dispatch(getVaccineSchedule());
     dispatch(getBills());
     dispatch(getAppointments({ scope: 'completed' }));
   }, [dispatch]);
@@ -91,6 +95,7 @@ export default function History({ navigation }) {
       dispatch(getPrescriptions()),
       dispatch(getCertificates()),
       dispatch(getVaccinations()),
+      dispatch(getVaccineSchedule()),
       dispatch(getBills()),
       dispatch(getAppointments({ scope: 'completed' })),
     ]);
@@ -262,6 +267,11 @@ export default function History({ navigation }) {
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
+        {/* Child vaccine schedule sits above the recorded doses. Renders nothing when the
+            account has no children (or the active profile is not a child). */}
+        {tab === 'vaccinations' && (
+          <VaccineSchedule childList={scheduleChildren} activeProfileId={activeProfileId} />
+        )}
         {tab === 'diagnostics' ? (
           <DiagnosticsTab activeProfileId={activeProfileId} alert={alert} refreshKey={refreshKey} />
         ) : loading && items.length === 0 ? (

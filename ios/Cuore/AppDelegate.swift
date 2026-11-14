@@ -54,6 +54,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     return true
   }
 
+  // ── Deep links: cuore:// scheme ──────────────────────────────
+  // Forwarded to React Native's Linking so JS receives the `url` event (warm) and
+  // getInitialURL (cold). Handled in src/utils/deepLinks.js.
+  func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    return RCTLinkingManager.application(app, open: url, options: options)
+  }
+
+  // ── Deep links: https://cuore.health/app/* universal links ───
+  func application(
+    _ application: UIApplication,
+    continue userActivity: NSUserActivity,
+    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+  ) -> Bool {
+    return RCTLinkingManager.application(
+      application,
+      continue: userActivity,
+      restorationHandler: restorationHandler
+    )
+  }
+
   // ── APNs token → hand to FCM ─────────────────────────────────
   func application(
     _ application: UIApplication,

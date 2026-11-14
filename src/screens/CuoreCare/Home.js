@@ -9,7 +9,8 @@ import {
   RefreshControl,
   StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import { documentsForProfile } from './documentOwner';
 import { useFocusEffect } from '@react-navigation/native';
@@ -21,6 +22,7 @@ import {
   ShieldCheck,
   Clock,
   CheckCircle2,
+  ChevronRight,
 } from 'lucide-react-native';
 
 import { CC } from './ccTheme';
@@ -39,14 +41,34 @@ import { EV as CC_EV } from '../../realtime/events';
 
 const F = CC.fonts;
 
+// Each benefit gets its own friendly accent chip.
 const BENEFITS = [
-  { icon: Video, title: 'Video, voice & chat', desc: 'Consult a doctor the way you prefer' },
-  { icon: ShieldCheck, title: 'Verified CuoreCare doctors', desc: 'Cardio-metabolic specialists' },
-  { icon: FileText, title: 'Digital prescriptions', desc: 'Signed PDF you can view & share' },
+  {
+    icon: Video,
+    title: 'Video, voice & chat',
+    desc: 'Consult a doctor the way you prefer',
+    fg: CC.accentSky,
+    bg: CC.accentSkySoft,
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Verified CuoreCare doctors',
+    desc: 'Cardio-metabolic specialists',
+    fg: CC.accentTeal,
+    bg: CC.accentTealSoft,
+  },
+  {
+    icon: FileText,
+    title: 'Digital prescriptions',
+    desc: 'Signed PDF you can view & share',
+    fg: CC.accentCoral,
+    bg: CC.accentCoralSoft,
+  },
 ];
 
 export default function CuoreCareHome({ navigation }) {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const subscription = useSelector(state => state.cuoreCare.subscription);
   const access = useSelector(state => state.cuoreCare.access);
   const appointments = useSelector(state => state.cuoreCare.appointments);
@@ -130,13 +152,18 @@ export default function CuoreCareHome({ navigation }) {
           contentContainerStyle={styles.paywallScroll}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          <View style={styles.heroIconWrap}>
+          <LinearGradient
+            colors={CC.heroGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroIconWrap}
+          >
             <Stethoscope size={34} color={CC.primary} />
-          </View>
+          </LinearGradient>
           <Text style={styles.heroTitle}>CuoreCare</Text>
           <Text style={styles.heroSubtitle}>
-            Talk to a doctor about your heart and metabolic health — book a video, voice or
-            chat consultation and get a digital prescription.
+            Care for your heart and metabolic health, from wherever you are. Book a video,
+            voice or chat consultation and get a digital prescription.
           </Text>
 
           <Card style={styles.benefitsCard}>
@@ -147,8 +174,8 @@ export default function CuoreCareHome({ navigation }) {
                   key={b.title}
                   style={[styles.benefitRow, i < BENEFITS.length - 1 && styles.benefitDivider]}
                 >
-                  <View style={styles.benefitIcon}>
-                    <Icon size={18} color={CC.primary} />
+                  <View style={[styles.benefitIcon, { backgroundColor: b.bg }]}>
+                    <Icon size={18} color={b.fg} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.benefitTitle}>{b.title}</Text>
@@ -181,54 +208,64 @@ export default function CuoreCareHome({ navigation }) {
   // a family member's appointment carries `forPatient`; the holder's own carries none.
   const list = documentsForProfile(appointments.list, activeProfileId);
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
-      {/* Header */}
-      <View style={styles.topBar}>
-        <DrawerMenuButton style={styles.menuButton} />
-        {/* minWidth:0 matters: without it a flex child refuses to shrink below its text's
-            intrinsic width, so the title pushed the Records button sideways instead of
-            wrapping. */}
-        <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
-          {/* White-labelling: the practice's name is the title when the patient has a linked
-              doctor, with "CuoreCare" demoted to the line beneath. A patient's relationship is
-              with their clinic, not with our product name. Falls back to the plain title when
-              there is no branding to show — never to a clinic name we invented.
+    // Top inset is painted by the gradient band itself (paddingTop below), so the wash runs
+    // up under the status bar instead of stopping at a flat strip.
+    <SafeAreaView style={styles.safe} edges={[]}>
+      <StatusBar barStyle="dark-content" backgroundColor={CC.heroGradient[0]} />
+      {/* Header — a soft gradient wash for a warmer welcome. Colour only; the clinic's
+          brandColor still wins on the title below when the practice is white-labelled. */}
+      <LinearGradient
+        colors={CC.heroGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.heroBand, { paddingTop: insets.top }]}
+      >
+        <View style={styles.topBar}>
+          <DrawerMenuButton style={styles.menuButton} />
+          {/* minWidth:0 matters: without it a flex child refuses to shrink below its text's
+              intrinsic width, so the title pushed the Records button sideways instead of
+              wrapping. */}
+          <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
+            {/* White-labelling: the practice's name is the title when the patient has a linked
+                doctor, with "CuoreCare" demoted to the line beneath. A patient's relationship is
+                with their clinic, not with our product name. Falls back to the plain title when
+                there is no branding to show — never to a clinic name we invented.
 
-              TWO lines, not one: a real clinic name ("Sunrise Multispecialty Clinic") does not
-              fit a phone's width beside a button, and truncating the practice's own name to
-              "Sunrise Multispecial…" is a poor way to show whose care this is. The type is a
-              step smaller for the same reason — it buys the second line back. */}
-          <Text
-            style={[styles.topTitle, branding?.whiteLabel && branding.color ? { color: branding.color } : null]}
-            numberOfLines={2}
+                TWO lines, not one: a real clinic name ("Sunrise Multispecialty Clinic") does not
+                fit a phone's width beside a button, and truncating the practice's own name to
+                "Sunrise Multispecial…" is a poor way to show whose care this is. The type is a
+                step smaller for the same reason — it buys the second line back. */}
+            <Text
+              style={[styles.topTitle, branding?.whiteLabel && branding.color ? { color: branding.color } : null]}
+              numberOfLines={2}
+            >
+              {branding?.name || 'CuoreCare'}
+            </Text>
+            <Text style={styles.topSubtitle} numberOfLines={1}>
+              {branding?.whiteLabel
+                ? 'Your consultations · Powered by Cuore'
+                : branding?.name
+                ? 'CuoreCare · Your consultations'
+                : 'Your consultations'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.rxButton}
+            onPress={() => navigation.navigate('CuoreCareHistory')}
+            activeOpacity={0.8}
           >
-            {branding?.name || 'CuoreCare'}
-          </Text>
-          <Text style={styles.topSubtitle} numberOfLines={1}>
-            {branding?.whiteLabel
-              ? 'Your consultations · Powered by Cuore'
-              : branding?.name
-              ? 'CuoreCare · Your consultations'
-              : 'Your consultations'}
-          </Text>
+            <FileText size={16} color={CC.primary} />
+            <Text style={styles.rxButtonText}>Records</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.rxButton}
-          onPress={() => navigation.navigate('CuoreCareHistory')}
-          activeOpacity={0.8}
-        >
-          <FileText size={16} color={CC.primary} />
-          <Text style={styles.rxButtonText}>Records</Text>
-        </TouchableOpacity>
-      </View>
-      {/* Swap user, on its own line rather than as a third item in the bar above.
-          A 22pt clinic name, a family member's name and the Records button do not share one
-          402pt row: the title lost, and "Sunrise Multispecialty Clinic" rendered as "Sunrise…".
-          The switcher renders nothing at all for an account with no family members, so a
-          single-person account's header keeps exactly the layout it had — no empty row, because
-          this is the component itself and not a wrapper around it. */}
-      <ProfileSwitcher compact style={styles.switcherRow} />
+        {/* Swap user, on its own line rather than as a third item in the bar above.
+            A 22pt clinic name, a family member's name and the Records button do not share one
+            402pt row: the title lost, and "Sunrise Multispecialty Clinic" rendered as "Sunrise…".
+            The switcher renders nothing at all for an account with no family members, so a
+            single-person account's header keeps exactly the layout it had — no empty row, because
+            this is the component itself and not a wrapper around it. */}
+        <ProfileSwitcher compact style={styles.switcherRow} />
+      </LinearGradient>
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -239,15 +276,27 @@ export default function CuoreCareHome({ navigation }) {
             DoctorList/BookAppointment already only offer the channel(s) that doctor has
             actually published for this patient. */}
         {(access.cuoreCare || access.emr) && (
-          <Card style={styles.bookCard} onPress={() => navigation.navigate('CuoreCareDoctors')}>
-            <View style={styles.bookIcon}>
-              <CalendarPlus size={22} color={CC.white} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.bookTitle}>Book a consultation</Text>
-              <Text style={styles.bookDesc}>Browse your CuoreCare doctors and pick a time</Text>
-            </View>
-          </Card>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => navigation.navigate('CuoreCareDoctors')}
+            style={styles.bookShadow}
+          >
+            <LinearGradient
+              colors={CC.ctaGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.bookCard}
+            >
+              <View style={styles.bookIcon}>
+                <CalendarPlus size={22} color={CC.white} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bookTitle}>Book a consultation</Text>
+                <Text style={styles.bookDesc}>Pick a doctor and a time that suits you</Text>
+              </View>
+              <ChevronRight size={20} color={CC.white} />
+            </LinearGradient>
+          </TouchableOpacity>
         )}
 
         {/* Segmented control */}
@@ -281,14 +330,14 @@ export default function CuoreCareHome({ navigation }) {
           </View>
         ) : list.length === 0 ? (
           <EmptyState
-            icon={<Stethoscope size={40} color={CC.muted} />}
-            title={segment === 'upcoming' ? 'No upcoming consultations' : 'No past consultations'}
+            icon={<Stethoscope size={36} color={CC.accentViolet} />}
+            title={segment === 'upcoming' ? 'Nothing scheduled yet' : 'No past consultations'}
             message={
               segment === 'upcoming'
                 ? access.cuoreCare || access.emr
-                  ? 'Book a consultation to get started.'
+                  ? 'Your doctor is just a few taps away. Book a consultation whenever you are ready.'
                   : 'Your doctor will add you here when they check you in for a visit.'
-                : 'Your completed consultations will appear here.'
+                : 'Once you have had a consultation, you will find it here.'
             }
             action={
               segment === 'upcoming' && (access.cuoreCare || access.emr) ? (
@@ -326,10 +375,9 @@ const styles = StyleSheet.create({
   /* paywall */
   paywallScroll: { padding: 20, paddingBottom: 40, alignItems: 'center' },
   heroIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: CC.primarySoft,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 16,
@@ -350,7 +398,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: CC.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -367,6 +414,11 @@ const styles = StyleSheet.create({
   },
 
   /* scheduler */
+  heroBand: {
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    marginBottom: 16,
+  },
   topBar: {
     flexDirection: 'row',
     /* Top-aligned, not centred: the title can now run to two lines, and a centred Records
@@ -375,16 +427,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 6,
     paddingBottom: 14,
-    backgroundColor: CC.surface,
   },
   menuButton: { paddingRight: 12, paddingTop: 2 },
-  switcherRow: { alignSelf: 'flex-start', marginLeft: 20, marginBottom: 10 },
+  switcherRow: { alignSelf: 'flex-start', marginLeft: 20, marginBottom: 14 },
   topTitle: { fontFamily: F.PoppinsBold, fontSize: 19, color: CC.text, lineHeight: 25 },
   topSubtitle: { fontFamily: F.PoppinsRegular, fontSize: 12.5, color: CC.subText, marginTop: 2 },
   rxButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: CC.primarySoft,
+    backgroundColor: CC.white,
     /* A border as well as the tint: on the very light surface the soft-blue fill alone barely
        reads as a control, which is why it looked like a label rather than a button. */
     borderWidth: 1,
@@ -395,27 +446,34 @@ const styles = StyleSheet.create({
   },
   rxButtonText: { fontFamily: F.PoppinsMedium, fontSize: 12.5, color: CC.primary, marginLeft: 6 },
   scroll: { paddingHorizontal: 20, paddingBottom: 20 },
+  bookShadow: {
+    borderRadius: CC.radius,
+    marginBottom: 20,
+    ...CC.shadow,
+    shadowColor: CC.primary,
+    shadowOpacity: 0.22,
+  },
   bookCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: CC.white,
-    marginBottom: 20,
+    borderRadius: CC.radius,
+    padding: 16,
   },
   bookIcon: {
     width: 46,
     height: 46,
-    borderRadius: 12,
-    backgroundColor: CC.primary,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
-  bookTitle: { fontFamily: F.PoppinsSemiBold, fontSize: 15, color: CC.text },
-  bookDesc: { fontFamily: F.PoppinsRegular, fontSize: 12, color: CC.subText, marginTop: 2 },
+  bookTitle: { fontFamily: F.PoppinsSemiBold, fontSize: 15, color: CC.white },
+  bookDesc: { fontFamily: F.PoppinsRegular, fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   segment: {
     flexDirection: 'row',
-    backgroundColor: '#EEF2F7',
-    borderRadius: 12,
+    backgroundColor: '#ECEAF4',
+    borderRadius: 14,
     padding: 4,
     marginBottom: 16,
   },
@@ -425,7 +483,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 9,
-    borderRadius: 9,
+    borderRadius: 11,
   },
   segmentItemActive: {
     backgroundColor: CC.white,

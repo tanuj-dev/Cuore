@@ -28,6 +28,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { fetchNotifications } from '../../redux/Notifications/thunks';
 import { getTodayConsultations } from '../../redux/CuoreCare/thunks';
 import ConsultationTimeCard from './ConsultationTimeCard';
+import LinearGradient from 'react-native-linear-gradient';
+import { CC } from '../CuoreCare/ccTheme';
 import ProgressBarWithImage from '../../components/ProgressBar';
 import PendingVisitCards from './PendingVisitCards';
 import Reminder from '../../components/Reminder';
@@ -159,10 +161,18 @@ import {
   MEAL_CARDS_OFF_BODY,
 } from '../../utilities/mealCards';
 
+// Friendly, time-aware greeting for the Home header.
+const timeOfDayGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+};
+
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 const TodaySkeleton = () => (
-  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: CC.surface }}>
     {/* Header */}
     <View
       style={{
@@ -171,7 +181,7 @@ const TodaySkeleton = () => (
         alignItems: 'center',
         paddingHorizontal: hp(2),
         paddingVertical: hp(1.5),
-        backgroundColor: '#FFF',
+        backgroundColor: CC.heroGradient[0],
       }}
     >
       <SkeletonBox width={120} height={22} />
@@ -900,7 +910,7 @@ const Today = ({ navigation, route }) => {
   return (
     <SafeAreaView
       edges={['top']}
-      style={{ flex: 1, backgroundColor: '#F8FAFC' }}
+      style={{ flex: 1, backgroundColor: CC.heroGradient[0] }}
     >
       {AlertComponent}
       <SubscriptionExpiringModal
@@ -908,7 +918,7 @@ const Today = ({ navigation, route }) => {
         onUpdatePayment={handleSubscriptionUpdatePayment}
         onDismiss={handleSubscriptionExpiryDismiss}
       />
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor={CC.heroGradient[0]} />
 
       <ScrollView
         nestedScrollEnabled
@@ -923,14 +933,21 @@ const Today = ({ navigation, route }) => {
         scrollEventThrottle={16}
         style={styles.container}
       >
-        <View style={styles.header}>
+        {/* Soft gradient wash behind the greeting (Launch Edits 13 Nov: warmer, happier Home).
+            Purely decorative — the white-label band inside keeps the clinic's own colour. */}
+        <LinearGradient
+          colors={CC.heroGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}
+        >
           <View style={styles.headerTopRow}>
             {/* Opens the app drawer. First thing in the row, where a menu is looked for. */}
             <DrawerMenuButton />
             <Text style={styles.username} numberOfLines={1}>
               {profileData?.display_name
-                ? `Hi, ${profileData.display_name.split(' ')[0]}`
-                : 'User'}
+                ? `${timeOfDayGreeting()}, ${profileData.display_name.split(' ')[0]}`
+                : `${timeOfDayGreeting()}`}
             </Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('Notifications')}
@@ -943,7 +960,7 @@ const Today = ({ navigation, route }) => {
                   the shared style would have rendered that avatar square. Visually identical,
                   minus the clipping. */}
               <View style={styles.bellIconWrapper}>
-                <Bell size={hp(2)} color="#11418A" />
+                <Bell size={hp(2)} color={CC.primary} />
               </View>
               {/* The badge is a SIBLING of the circle, not a child.
                   It is meant to overhang the circle's top-right corner, and a child cannot do
@@ -1057,7 +1074,7 @@ const Today = ({ navigation, route }) => {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* Alerts */}
         {/* <View
@@ -1327,7 +1344,7 @@ const Today = ({ navigation, route }) => {
         )}
 
         {/* Daily Schedule */}
-        <View style={{ backgroundColor: '#F9FAFB' }}>
+        <View style={{ backgroundColor: CC.surface }}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
               Optimize Your Health with Smart Guidance
@@ -1346,7 +1363,7 @@ const Today = ({ navigation, route }) => {
             windowSize={10}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No items found.</Text>
+                <Text style={styles.emptyText}>You are all caught up for today.</Text>
               </View>
             }
             renderItem={({ item, index: itemIndex }) => {
@@ -1823,12 +1840,13 @@ const Today = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: CC.surface },
   header: {
-    marginTop: Platform.OS === 'ios' ? hp(0) : hp(1),
+    paddingTop: Platform.OS === 'ios' ? hp(0) : hp(1),
     paddingHorizontal: hp(2),
-    paddingVertical: hp(1.5),
-    backgroundColor: '#FFFFFF',
+    paddingBottom: hp(1.8),
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -1853,9 +1871,9 @@ const styles = StyleSheet.create({
   onBandSub: { color: 'rgba(255,255,255,0.85)' },
   poweredBy: { fontSize: 9.5, color: 'rgba(255,255,255,0.8)', fontFamily: 'Poppins-Medium', marginLeft: 8 },
   username: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
-    color: '#1E293B',
+    color: CC.primary,
     letterSpacing: -0.4,
     /* Takes the slack in the header row, and gives it back first. Without this the greeting
      * sized to its own text and pushed the profile switcher clean off the right edge. */
@@ -1890,11 +1908,11 @@ const styles = StyleSheet.create({
     marginVertical: hp(1.5),
     marginHorizontal: hp(2),
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    borderRadius: 20,
+    shadowColor: CC.shadow.shadowColor,
+    shadowOffset: CC.shadow.shadowOffset,
+    shadowOpacity: CC.shadow.shadowOpacity,
+    shadowRadius: CC.shadow.shadowRadius,
     ...Platform.select({
       android: { elevation: 0.5 },
       ios: { elevation: 2 },
@@ -1925,7 +1943,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1F2',
     paddingVertical: 0,
     paddingHorizontal: hp(0.8),
-    borderRadius: hp(1.2),
+    borderRadius: hp(1.8),
     borderWidth: 1.5,
     borderColor: '#FECDD3',
   },
@@ -1944,17 +1962,17 @@ const styles = StyleSheet.create({
     height: hp(6.2),
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: CC.accentTealSoft,
     paddingVertical: 0,
     paddingHorizontal: hp(0.8),
-    borderRadius: hp(1.2),
+    borderRadius: hp(1.8),
     borderWidth: 1.5,
-    borderColor: '#A7F3D0',
+    borderColor: '#A6E6DB',
   },
   biomarkerButtonText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 11.5,
-    color: '#047857',
+    color: '#0B7F72',
     textAlign: 'center',
     lineHeight: 14,
   },
@@ -1963,13 +1981,14 @@ const styles = StyleSheet.create({
     marginVertical: hp(1.5),
   },
   quote: {
-    backgroundColor: '#F5F3FF',
+    backgroundColor: CC.accentVioletSoft,
     fontFamily: 'Poppins-Medium',
-    color: '#7C3AED',
+    color: '#6D3FD9',
     fontSize: 15,
     padding: hp(2),
     borderLeftWidth: 4,
-    borderRadius: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
     borderColor: '#9333EA',
     lineHeight: 22,
     fontStyle: 'italic',
@@ -1977,7 +1996,7 @@ const styles = StyleSheet.create({
   warnings: {
     marginVertical: 10,
     marginHorizontal: hp(2),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     padding: hp(0.5),
   },
   checkinActionsRow: {
@@ -2034,9 +2053,9 @@ const styles = StyleSheet.create({
     marginTop: hp(2),
   },
   sectionTitle: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: Platform.OS === 'ios' ? 16 : 18,
-    color: '#1E293B',
+    color: CC.text,
     letterSpacing: -0.5,
   },
   taskRow: {
@@ -2078,13 +2097,13 @@ const styles = StyleSheet.create({
     minHeight: hp(8.5),
     borderLeftWidth: 3,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: hp(1.5),
     flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 8,
+    shadowColor: CC.shadow.shadowColor,
+    shadowOpacity: 0.07,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
     ...Platform.select({
       android: { elevation: 0.5 },
       ios: { elevation: 3 },
@@ -2151,9 +2170,10 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Poppins-Medium',
-    color: '#94A3B8',
+    color: CC.subText,
+    textAlign: 'center',
   },
   checkIcon: {
     resizeMode: 'contain',
@@ -2260,10 +2280,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: hp(0.4),
-    backgroundColor: '#EFF6FF',
+    backgroundColor: CC.accentSkySoft,
     paddingVertical: 0,
     paddingHorizontal: hp(0.8),
-    borderRadius: hp(1.2),
+    borderRadius: hp(1.8),
     borderWidth: 1.5,
     borderColor: '#BFDBFE',
     shadowColor: '#11418A',
@@ -2278,10 +2298,10 @@ const styles = StyleSheet.create({
   healthButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: CC.accentCoralSoft,
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(2.5),
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#FECACA',
     shadowColor: '#DC2626',

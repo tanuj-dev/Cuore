@@ -47,6 +47,7 @@ import {
 import { onPipModeChanged } from './src/call/pip';
 import { resolveScreen, navigateFromNotification as navigateFromNotificationData } from './src/utils/notificationNavigation';
 import { markNotificationRead } from './src/redux/Notifications/thunks';
+import { initDeepLinks, onNavigationStateChange as onDeepLinkNavState } from './src/utils/deepLinks';
 
 const isOutdated = (current, minimum) => {
   const c = current.split('.').map(Number);
@@ -466,13 +467,22 @@ const AppContent = () => {
   // state (and the in-app chrome) in sync with the system window.
   useEffect(() => onPipModeChanged(setPipMode), []);
 
+  // ── Deep links (cuore:// and https://cuore.health/app/*) ─────────────────
+  // Cold start and warm URLs are parked in src/utils/deepLinks.js and opened once the user
+  // is signed in and on Home (see onStateChange below), never over Splash or Login.
+  useEffect(() => initDeepLinks(), []);
+
   const handleRetry = useCallback(async () => {
     await checkConnectivity();
   }, [checkConnectivity]);
 
   return (
     <GestureHandlerRootView style={styles.appContainer}>
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={onDeepLinkNavState}
+        onStateChange={onDeepLinkNavState}
+      >
         <Navigator />
       </NavigationContainer>
       {/* Minimized call window — lives above the whole app so the consultation keeps

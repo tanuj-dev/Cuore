@@ -15,6 +15,7 @@ import {
   getPrescriptions,
   getCertificates,
   getVaccinations,
+  getVaccineSchedule,
   getBills,
 } from './thunks';
 
@@ -74,6 +75,7 @@ const initialState = {
   prescriptions: { loading: false, list: [], error: null },
   certificates: { loading: false, list: [], error: null },
   vaccinations: { loading: false, list: [], error: null },
+  vaccineSchedule: { loading: false, children: [], error: null },
   bills: { loading: false, list: [], totalDue: 0, error: null },
   // Shared transient flag for write actions (book/cancel/reschedule/verify)
   action: { loading: false, error: null, lastResult: null },
@@ -350,6 +352,21 @@ const cuoreCareSlice = createSlice({
       .addCase(getVaccinations.rejected, (state, action) => {
         state.vaccinations.loading = false;
         state.vaccinations.error = action.payload?.message || 'Failed to load vaccinations';
+      });
+
+    /* ---- child vaccine schedule ---- */
+    builder
+      .addCase(getVaccineSchedule.pending, state => {
+        state.vaccineSchedule.loading = true;
+        state.vaccineSchedule.error = null;
+      })
+      .addCase(getVaccineSchedule.fulfilled, (state, action) => {
+        state.vaccineSchedule.loading = false;
+        state.vaccineSchedule.children = action.payload.children;
+      })
+      .addCase(getVaccineSchedule.rejected, (state, action) => {
+        state.vaccineSchedule.loading = false;
+        state.vaccineSchedule.error = action.payload?.message || 'Failed to load the vaccine schedule';
       });
 
     /* ---- bills ---- */

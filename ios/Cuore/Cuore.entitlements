@@ -8,6 +8,13 @@
 	     Developer portal and the provisioning profiles regenerated, or signing fails.
 	     Deliberately NOT adding com.apple.developer.healthkit.access: that key is for
 	     Clinical Health Records, which is a separate and much heavier App Review. -->
+	<!-- Universal links for https://cuore.health/app/* (WhatsApp consultation + booking
+	     links). Requires the Associated Domains capability on the com.cuore App ID and an
+	     apple-app-site-association file served from https://cuore.health. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:cuore.health</string>
+	</array>
 	<key>com.apple.developer.healthkit</key>
 	<true/>
 </dict>

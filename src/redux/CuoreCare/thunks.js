@@ -304,6 +304,20 @@ export const getVaccinations = createAsyncThunk(
   },
 );
 
+/* Child vaccine schedule — the household's children (account holder's dependants) with
+ * their age-based schedule, each item already resolved to done/due/overdue/upcoming by the
+ * backend. `children` is empty when there is no child on the account. */
+export const getVaccineSchedule = createAsyncThunk(
+  'cuoreCare/getVaccineSchedule',
+  async (_arg, { rejectWithValue }) => {
+    const res = await ccGet('/api/cuorecare/my/vaccine-schedule');
+    if (res.status === 200 && res.data?.status === 'success') {
+      return { children: Array.isArray(res.data.children) ? res.data.children : [] };
+    }
+    return rejectWithValue(fail(res, 'Could not load the vaccine schedule'));
+  },
+);
+
 /* ----------------------------------- Bills ---------------------------------- */
 
 export const getBills = createAsyncThunk(

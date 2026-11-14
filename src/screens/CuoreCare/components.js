@@ -172,7 +172,7 @@ const s = StyleSheet.create({
 
   primaryBtn: {
     backgroundColor: CC.primary,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
@@ -180,7 +180,7 @@ const s = StyleSheet.create({
   primaryBtnText: { fontFamily: F.PoppinsSemiBold, fontSize: 15, color: CC.white },
   secondaryBtn: {
     backgroundColor: CC.white,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -199,7 +199,16 @@ const s = StyleSheet.create({
   avatarInitials: { fontFamily: F.PoppinsSemiBold, color: CC.primary },
 
   empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48, paddingHorizontal: 24 },
-  emptyIcon: { marginBottom: 12 },
+  // Icon sits in a soft tinted circle so an empty list reads as friendly, not broken.
+  emptyIcon: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: CC.accentVioletSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
   emptyTitle: { fontFamily: F.PoppinsSemiBold, fontSize: 16, color: CC.text, textAlign: 'center' },
   emptyMessage: {
     fontFamily: F.PoppinsRegular,
@@ -212,10 +221,11 @@ const s = StyleSheet.create({
 
   card: {
     backgroundColor: CC.card,
-    borderRadius: 14,
+    borderRadius: CC.radius,
     borderWidth: 1,
     borderColor: CC.border,
     padding: 14,
+    ...CC.shadow,
   },
 });
 

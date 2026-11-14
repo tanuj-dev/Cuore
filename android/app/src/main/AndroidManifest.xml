@@ -116,6 +116,23 @@
             <category android:name="android.intent.category.DEFAULT" />
         </intent-filter>
 
+        <!-- Deep links: cuore://consultation/<id>, cuore://cuorecare/book. -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="cuore" />
+        </intent-filter>
+
+        <!-- App Links: https://cuore.health/app/* (WhatsApp messages). autoVerify needs
+             /.well-known/assetlinks.json on cuore.health with this app's signing SHA-256. -->
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" android:host="cuore.health" android:pathPrefix="/app" />
+        </intent-filter>
+
         <!-- Health Connect permission rationale, Android 13 and below. Health Connect's own
              settings screen links here so the user can see WHY we asked. MainActivity is
              singleTask, so this arrives through onNewIntent rather than a cold start. -->

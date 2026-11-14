@@ -27,9 +27,9 @@ const options = [
  *
  * THE BACKEND RESTATES THIS RULE in utils/cyclePredictions.js isCycleQuestionEligible, because it
  * decides the same thing when serving the calendar. The two must agree; change both or neither. */
-const CYCLE_AGE_RANGE = [11, 51];
+const CYCLE_AGE_RANGE = [10, 51]; // Launch Edits 13 Nov
 const isCycleQuestionEligible = (gender, age) => {
-  if (String(gender || '').toLowerCase() !== 'female') return false;
+  if (!/^(f|female|woman|girl)$/i.test(String(gender || '').trim())) return false;
   const n = Number(age);
   if (!Number.isFinite(n)) return false;
   return n >= CYCLE_AGE_RANGE[0] && n <= CYCLE_AGE_RANGE[1];
