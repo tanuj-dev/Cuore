@@ -10,14 +10,25 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useKeyboardScrollToEnd } from '../../hooks/useKeyboardScrollToEnd';
+
+/* iOS: a plain ScrollView that scrolls to the end when the keyboard opens (useKeyboardScrollToEnd),
+ * because KeyboardAwareScrollView left the fields under the keyboard there. Android keeps
+ * KeyboardAwareScrollView exactly as before. */
+const Scroller = Platform.OS === 'ios' ? ScrollView : KeyboardAwareScrollView;
+const SCROLLER_ANDROID_PROPS =
+  Platform.OS === 'ios' ? {} : { enableOnAndroid: true };
 import { Images, hp, wp } from '../../utilities';
 import { sendOtp, loginCaregiverThunk } from '../../redux/slices';
 import Toast from '../../components/Toast';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const Login = ({ navigation }) => {
+  const { ref: scrollRef, keyboardOpen } = useKeyboardScrollToEnd();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [tab, setTab] = useState('User');
   const [loading, setLoading] = useState(false);
@@ -72,119 +83,132 @@ const Login = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAwareScrollView
+    <KeyboardAvoidingView
       style={styles.scroll}
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-      enableOnAndroid
-      showsVerticalScrollIndicator={false}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {AlertComponent}
-      <Image source={Images.APP_LOGO} style={styles.logo} />
-      <Text style={styles.loginText}>
-        Log in with your registered mobile number
-      </Text>
-      <View style={styles.card}>
-        <View style={styles.switchTabs}>
-          <TouchableOpacity
-            onPress={() => setTab('User')}
-            style={tab === 'User' ? styles.activeTab : styles.inactiveTab}
-          >
-            <Text
-              style={
-                tab === 'User' ? styles.activeTabText : styles.inactiveTabText
-              }
-            >
-              User
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setTab('Caregiver')}
-            style={tab === 'Caregiver' ? styles.activeTab : styles.inactiveTab}
-          >
-            <Text
-              style={
-                tab === 'Caregiver'
-                  ? styles.activeTabText
-                  : styles.inactiveTabText
-              }
-            >
-              Caregiver
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.inputContainer}>
-          <View style={styles.countryCodeContainer}>
-            <Text style={styles.flagEmoji}>🇮🇳</Text>
-            <Text style={styles.countryCode}>+91</Text>
-          </View>
-          <TextInput
-            style={styles.phoneInput}
-            placeholder="9876543210"
-            keyboardType="numeric"
-            placeholderTextColor="#999"
-            value={phoneNumber}
-            onChangeText={text => {
-              const cleaned = text.replace(/[^0-9]/g, '');
-              if (cleaned.length <= 10) {
-                setPhoneNumber(cleaned);
-                setToast(null);
-              } else {
-                setToast({
-                  message: 'Mobile number must be 10 digits only',
-                  type: 'error',
-                });
-              }
-            }}
-          />
-        </View>
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onHide={() => setToast(null)}
-          />
-        )}
-
-        {tab === 'User' && (
-          <TouchableOpacity onPress={() => navigation.navigate('NewAccount')}>
-            <Text style={styles.signupText}>
-              New user? <Text style={styles.signupLink}>Sign up</Text>
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity
-          onPress={handleSendOtp}
-          style={styles.verifyButton}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.verifyText}>Verify</Text>
-          )}
-        </TouchableOpacity>
-
-        <Text style={styles.termsText}>
-          By clicking, I accept the{' '}
-          <Text
-            style={styles.termsLink}
-            onPress={() => Linking.openURL('https://cuore.health/terms')}
-          >
-            Terms & Conditions
-          </Text>{' '}
-          and{' '}
-          <Text
-            style={styles.termsLink}
-            onPress={() => Linking.openURL('https://cuore.health/privacy')}
-          >
-            Privacy
-          </Text>
+      <Scroller
+        {...SCROLLER_ANDROID_PROPS}
+        ref={scrollRef}
+        style={styles.scroll}
+        // The bottom padding only centres the card while the keyboard is shut; with it open it
+        // would push the number field and Verify up under the keyboard's top edge.
+        contentContainerStyle={[
+          styles.container,
+          keyboardOpen && styles.containerKeyboard,
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {AlertComponent}
+        <Image source={Images.APP_LOGO} style={styles.logo} />
+        <Text style={styles.loginText}>
+          Log in with your registered mobile number
         </Text>
-      </View>
-    </KeyboardAwareScrollView>
+        <View style={styles.card}>
+          <View style={styles.switchTabs}>
+            <TouchableOpacity
+              onPress={() => setTab('User')}
+              style={tab === 'User' ? styles.activeTab : styles.inactiveTab}
+            >
+              <Text
+                style={
+                  tab === 'User' ? styles.activeTabText : styles.inactiveTabText
+                }
+              >
+                User
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setTab('Caregiver')}
+              style={
+                tab === 'Caregiver' ? styles.activeTab : styles.inactiveTab
+              }
+            >
+              <Text
+                style={
+                  tab === 'Caregiver'
+                    ? styles.activeTabText
+                    : styles.inactiveTabText
+                }
+              >
+                Caregiver
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <View style={styles.countryCodeContainer}>
+              <Text style={styles.flagEmoji}>🇮🇳</Text>
+              <Text style={styles.countryCode}>+91</Text>
+            </View>
+            <TextInput
+              style={styles.phoneInput}
+              placeholder="9876543210"
+              keyboardType="numeric"
+              placeholderTextColor="#999"
+              value={phoneNumber}
+              onChangeText={text => {
+                const cleaned = text.replace(/[^0-9]/g, '');
+                if (cleaned.length <= 10) {
+                  setPhoneNumber(cleaned);
+                  setToast(null);
+                } else {
+                  setToast({
+                    message: 'Mobile number must be 10 digits only',
+                    type: 'error',
+                  });
+                }
+              }}
+            />
+          </View>
+          {toast && (
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onHide={() => setToast(null)}
+            />
+          )}
+
+          {tab === 'User' && (
+            <TouchableOpacity onPress={() => navigation.navigate('NewAccount')}>
+              <Text style={styles.signupText}>
+                New user? <Text style={styles.signupLink}>Sign up</Text>
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            onPress={handleSendOtp}
+            style={styles.verifyButton}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.verifyText}>Verify</Text>
+            )}
+          </TouchableOpacity>
+
+          <Text style={styles.termsText}>
+            By clicking, I accept the{' '}
+            <Text
+              style={styles.termsLink}
+              onPress={() => Linking.openURL('https://cuore.health/terms')}
+            >
+              Terms & Conditions
+            </Text>{' '}
+            and{' '}
+            <Text
+              style={styles.termsLink}
+              onPress={() => Linking.openURL('https://cuore.health/privacy')}
+            >
+              Privacy
+            </Text>
+          </Text>
+        </View>
+      </Scroller>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -201,6 +225,9 @@ const styles = StyleSheet.create({
     paddingBottom: hp(20),
     paddingHorizontal: wp(6),
     backgroundColor: '#FFFFFF',
+  },
+  containerKeyboard: {
+    paddingBottom: hp(3),
   },
   logo: {
     width: wp(30),

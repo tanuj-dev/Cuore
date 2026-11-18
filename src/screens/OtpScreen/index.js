@@ -9,8 +9,20 @@ import {
   Platform,
   ActivityIndicator,
   BackHandler,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useKeyboardScrollToEnd } from '../../hooks/useKeyboardScrollToEnd';
+
+/* iOS: a plain ScrollView that scrolls to the end when the keyboard opens (useKeyboardScrollToEnd),
+ * because KeyboardAwareScrollView left the fields under the keyboard there. Android keeps
+ * KeyboardAwareScrollView exactly as before. */
+const Scroller = Platform.OS === 'ios' ? ScrollView : KeyboardAwareScrollView;
+const SCROLLER_ANDROID_PROPS =
+  Platform.OS === 'ios'
+    ? {}
+    : { enableOnAndroid: true, extraScrollHeight: hp(22) };
 import { hp, wp, Images } from '../../utilities';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -34,6 +46,7 @@ const formatTimer = seconds => {
 };
 
 const OtpScreen = () => {
+  const { ref: scrollRef } = useKeyboardScrollToEnd();
   const route = useRoute();
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -353,129 +366,134 @@ const OtpScreen = () => {
   };
 
   return (
-    /* Scrollable with the keypad open, so Submit can be reached without closing it first.
-       extraScrollHeight keeps the area below the OTP boxes (Submit, resend) in view when a box
-       is focused, and "handled" lets the first tap on Submit press it rather than only
-       dismissing the keyboard. */
-    <KeyboardAwareScrollView
+    /* Scrollable with the keypad open, so Submit can be reached without closing it first. When
+       the keypad opens the screen scrolls to the end (useKeyboardScrollToEnd), which keeps the OTP
+       boxes, Submit and Resend above it; "handled" lets the first tap on Submit press it rather
+       than only dismissing the keyboard. */
+    <KeyboardAvoidingView
       style={styles.scroll}
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-      enableOnAndroid
-      extraScrollHeight={hp(22)}
-      showsVerticalScrollIndicator={false}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {AlertComponent}
-      <TouchableOpacity
-        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-        style={[styles.backArrow, timer > 0 && { opacity: 0.4 }]}
-        disabled={timer > 0}
-        onPress={() => navigation.goBack()}
+      <Scroller
+        {...SCROLLER_ANDROID_PROPS}
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Image
-          source={Images.BACK_BUTTON}
-          style={{
-            resizeMode: 'contain',
-            height: hp(3.5),
-            width: wp(4),
-            tintColor: '#1E293B',
-          }}
-        />
-      </TouchableOpacity>
+        {AlertComponent}
+        <TouchableOpacity
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          style={[styles.backArrow, timer > 0 && { opacity: 0.4 }]}
+          disabled={timer > 0}
+          onPress={() => navigation.goBack()}
+        >
+          <Image
+            source={Images.BACK_BUTTON}
+            style={{
+              resizeMode: 'contain',
+              height: hp(3.5),
+              width: wp(4),
+              tintColor: '#1E293B',
+            }}
+          />
+        </TouchableOpacity>
 
-      <Text style={styles.title}>OTP Verification</Text>
+        <Text style={styles.title}>OTP Verification</Text>
 
-      <View style={styles.otpContainer}>
-        {otp.map((digit, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.otpCellOuter}
-            activeOpacity={0.85}
-            onPress={() => focusInput(index)}
-          >
-            <TextInput
-              ref={ref => {
-                inputs.current[index] = ref;
-              }}
-              style={styles.otpInput}
-              pointerEvents="none"
-              keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
-              value={digit}
-              onChangeText={text => handleChange(text, index)}
-              onKeyPress={e => handleKeyPress(e, index)}
-              textContentType="none"
-              autoComplete="off"
-              importantForAutofill="no"
-              blurOnSubmit={false}
-              selectTextOnFocus
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
+        <View style={styles.otpContainer}>
+          {otp.map((digit, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.otpCellOuter}
+              activeOpacity={0.85}
+              onPress={() => focusInput(index)}
+            >
+              <TextInput
+                ref={ref => {
+                  inputs.current[index] = ref;
+                }}
+                style={styles.otpInput}
+                pointerEvents="none"
+                keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
+                value={digit}
+                onChangeText={text => handleChange(text, index)}
+                onKeyPress={e => handleKeyPress(e, index)}
+                textContentType="none"
+                autoComplete="off"
+                importantForAutofill="no"
+                blurOnSubmit={false}
+                selectTextOnFocus
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <TouchableOpacity
-        onPress={removeLastFilledDigit}
-        style={styles.removeLastRow}
-        hitSlop={{ top: 10, bottom: 10 }}
-      >
-        <Text style={styles.removeLastText}>⌫ Remove last digit</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={removeLastFilledDigit}
+          style={styles.removeLastRow}
+          hitSlop={{ top: 10, bottom: 10 }}
+        >
+          <Text style={styles.removeLastText}>⌫ Remove last digit</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.subtitle}>
-        OTP sent to your phone number. Valid for{' '}
-        {otpValidity >= 60
-          ? `${Math.round(otpValidity / 60)} minute${
-              otpValidity >= 120 ? 's' : ''
-            }`
-          : `${otpValidity} seconds`}
-        .{'\n'}
-        {/* <Text style={styles.subtitleHint}>
+        <Text style={styles.subtitle}>
+          OTP sent to your phone number. Valid for{' '}
+          {otpValidity >= 60
+            ? `${Math.round(otpValidity / 60)} minute${
+                otpValidity >= 120 ? 's' : ''
+              }`
+            : `${otpValidity} seconds`}
+          .{'\n'}
+          {/* <Text style={styles.subtitleHint}>
           Tap a box to edit that digit. On iPhone, use Remove last digit (the
           number pad has no backspace key).
         </Text> */}
-      </Text>
+        </Text>
 
-      <TouchableOpacity
-        onPress={handleVerifyOtp}
-        style={styles.submitButton}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitText}>Submit</Text>
-        )}
-      </TouchableOpacity>
-
-      <Text style={styles.timerText}>
-        {timer > 0
-          ? `You can resend a new code in ${formatTimer(timer)}`
-          : "Didn't receive the code?"}
-      </Text>
-
-      <TouchableOpacity
-        onPress={handleResendOtp}
-        disabled={timer > 0 || loader}
-      >
-        <View style={[styles.resendContainer, timer > 0 && { opacity: 0.4 }]}>
-          {loader ? (
-            <ActivityIndicator color="#11418A" />
+        <TouchableOpacity
+          onPress={handleVerifyOtp}
+          style={styles.submitButton}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
           ) : (
-            <>
-              <Image
-                source={Images.SHARE}
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(2),
-                  width: wp(4),
-                }}
-              />
-              <Text style={styles.resendText}> Resend OTP</Text>
-            </>
+            <Text style={styles.submitText}>Submit</Text>
           )}
-        </View>
-      </TouchableOpacity>
-    </KeyboardAwareScrollView>
+        </TouchableOpacity>
+
+        <Text style={styles.timerText}>
+          {timer > 0
+            ? `You can resend a new code in ${formatTimer(timer)}`
+            : "Didn't receive the code?"}
+        </Text>
+
+        <TouchableOpacity
+          onPress={handleResendOtp}
+          disabled={timer > 0 || loader}
+        >
+          <View style={[styles.resendContainer, timer > 0 && { opacity: 0.4 }]}>
+            {loader ? (
+              <ActivityIndicator color="#11418A" />
+            ) : (
+              <>
+                <Image
+                  source={Images.SHARE}
+                  style={{
+                    resizeMode: 'contain',
+                    height: hp(2),
+                    width: wp(4),
+                  }}
+                />
+                <Text style={styles.resendText}> Resend OTP</Text>
+              </>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Scroller>
+    </KeyboardAvoidingView>
   );
 };
 
