@@ -15,30 +15,21 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 import { getPredict } from '../../redux/slices';
 import Loader from '../../components/Loader';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import SkeletonBox from '../../components/SkeletonBox';
+import { Info, Check, Pencil, ChevronRight } from 'lucide-react-native';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 
 const PredictSkeleton = () => (
-  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-    <View
-      style={{
-        backgroundColor: '#FFF',
-        paddingHorizontal: hp(2),
-        paddingVertical: hp(2),
-        borderBottomWidth: 1,
-        borderBottomColor: '#E2E8F0',
-        alignItems: 'center',
-      }}
-    >
-      <SkeletonBox width={80} height={22} />
-    </View>
+  <View style={{ flex: 1, backgroundColor: '#F4F7FB' }}>
+    <HeroHeader title="Trend" subtitle="How your scores are moving over time." />
     <ScrollView
       scrollEnabled={false}
-      style={{ backgroundColor: '#F8FAFC' }}
+      style={{ backgroundColor: '#F4F7FB' }}
       contentContainerStyle={{ alignItems: 'center', padding: hp(2) }}
     >
       <SkeletonBox
-        width={wp(90)}
+        width={wp(92)}
         height={64}
         borderRadius={16}
         style={{ marginBottom: hp(2.5) }}
@@ -49,10 +40,12 @@ const PredictSkeleton = () => (
           style={{
             backgroundColor: '#FFF',
             borderRadius: 16,
+            borderWidth: 1,
+            borderColor: '#E2E8F0',
             paddingHorizontal: wp(4),
             paddingVertical: hp(2),
             marginBottom: hp(2.5),
-            width: wp(90),
+            width: wp(92),
           }}
         >
           <View
@@ -78,7 +71,7 @@ const PredictSkeleton = () => (
         </View>
       ))}
     </ScrollView>
-  </SafeAreaView>
+  </View>
 );
 
 // Constants
@@ -177,6 +170,7 @@ const hexToRgb = hex => {
 };
 
 const Predict = ({ navigation }) => {
+  useLightStatusBar();
   const [showRowData, setShowRowData] = useState([]);
   const [activeTab, setActiveTab] = useState('Predict');
   const [refreshing, setRefreshing] = useState(false);
@@ -259,26 +253,28 @@ const Predict = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <View style={styles.headerContainer}>
-        {loading && <Loader />}
-        <View style={styles.headerContent}>
-          <Text style={styles.header}>Trend</Text>
-        </View>
-      </View>
+    <View style={styles.safeArea}>
+      {loading && <Loader />}
       <ScrollView
+        // The hero paints under the status bar itself.
+        contentInsetAdjustmentBehavior="never"
         refreshControl={
           <RefreshControl
             title="Pull to refresh..."
             refreshing={loading || refreshing}
             onRefresh={onRefresh}
-            tintColor="#11418A"
+            tintColor="#1E64AC"
           />
         }
         style={styles.scrollView}
       >
+        <HeroHeader
+          title="Trend"
+          subtitle="How your scores are moving over time."
+        />
         <View style={styles.container}>
           <View style={styles.tipBox}>
+            <Info size={18} color="#1E64AC" style={styles.tipIcon} />
             <Text style={styles.tipText}>
               The projected line extends recent data trends for visualization
               purposes only. It is not a medical prediction.
@@ -339,14 +335,14 @@ const Predict = ({ navigation }) => {
                   <View style={styles.showDataRow}>
                     <TouchableOpacity
                       onPress={() => handleToggleShowData(item?.title)}
-                      style={styles.showDataButton}
+                      style={[
+                        styles.showDataButton,
+                        isShowDataVisible && styles.showDataButtonOn,
+                      ]}
                       activeOpacity={0.7}
                     >
                       {isShowDataVisible && (
-                        <Image
-                          style={styles.showDataIcon}
-                          source={Images.RIGHT_1}
-                        />
+                        <Check size={13} color="#FFFFFF" strokeWidth={3} />
                       )}
                     </TouchableOpacity>
                     <Text style={styles.showDataText}>Show Data</Text>
@@ -359,7 +355,7 @@ const Predict = ({ navigation }) => {
                     activeOpacity={0.8}
                     disabled={role === 'caregiver'}
                   >
-                    <Image style={styles.buttonIcon} source={Images.EDIT} />
+                    <Pencil size={14} color="#FFFFFF" style={styles.buttonIcon} />
                     <Text style={styles.buttonText}>
                       {getButtonText(item?.title)}
                     </Text>
@@ -403,6 +399,7 @@ const Predict = ({ navigation }) => {
                     {getTitleDisplay(item?.title)}
                   </Text>
                 )}
+                {datasetCount > 1 && (
                 <View style={styles.legendContainer}>
                   {item?.data?.datasets.map((ds, idx) => {
                     const colorValue =
@@ -425,6 +422,7 @@ const Predict = ({ navigation }) => {
                     );
                   })}
                 </View>
+                )}
                 {item.title === 'Cuore Score' && (
                   <View>
                     {/* <Text style={[styles.hintText, styles.warningText]}>
@@ -440,6 +438,7 @@ const Predict = ({ navigation }) => {
           <TouchableOpacity
             onPress={handleNavigateToHealth}
             style={styles.footerButton}
+            activeOpacity={0.8}
           >
             <Image
               source={
@@ -461,7 +460,13 @@ const Predict = ({ navigation }) => {
                   : 'contain'
               }
             />
-            <Text style={styles.footerText}>My Health</Text>
+            <View style={styles.footerTextWrap}>
+              <Text style={styles.footerText}>My Health</Text>
+              <Text style={styles.footerSub}>
+                Your readings and doctor in one place
+              </Text>
+            </View>
+            <ChevronRight size={18} color="#94A3B8" />
           </TouchableOpacity>
           {/* <View style={styles.card1}>
             <Image style={styles.noticeIcon} source={Images.NOTICE} />
@@ -476,18 +481,20 @@ const Predict = ({ navigation }) => {
           </View> */}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F4F7FB',
   },
+
   scrollView: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F4F7FB',
   },
+
   headerContainer: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: hp(2),
@@ -503,8 +510,9 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     padding: hp(2),
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F4F7FB',
   },
+
   header: {
     fontFamily: 'Poppins-Medium',
     fontSize: 22,
@@ -512,45 +520,35 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   tipBox: {
-    backgroundColor: '#DBEAFE',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: hp(2.5),
-    marginBottom: hp(2.5),
-    width: wp(90),
-    borderWidth: 1.5,
-    borderColor: '#93C5FD',
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 2 },
-    }),
+    padding: hp(1.8),
+    marginBottom: hp(2),
+    width: wp(92),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
+  tipIcon: { marginRight: 10, marginTop: 2 },
+
   tipText: {
-    fontFamily: 'Poppins-Medium',
-    textAlign: 'center',
-    color: '#1E40AF',
-    fontSize: 14.5,
-    lineHeight: 22,
-    letterSpacing: 0.2,
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    fontSize: 13,
+    lineHeight: 19,
   },
+
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
-    marginBottom: hp(2.5),
-    width: wp(90),
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 10,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 4 },
-    }),
+    marginBottom: hp(2),
+    width: wp(92),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -581,18 +579,10 @@ const styles = StyleSheet.create({
     gap: wp(2),
   },
   button: {
-    backgroundColor: '#11418A',
-    paddingHorizontal: hp(1.5),
-    paddingVertical: hp(0.8),
-    borderRadius: 10,
-    shadowColor: '#11418A',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 4 },
-    }),
+    backgroundColor: '#1E64AC',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
   },
   buttonText: {
     fontFamily: 'Poppins-Medium',
@@ -603,26 +593,26 @@ const styles = StyleSheet.create({
   footerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DC2626',
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(3.5),
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#DC2626',
-    shadowColor: '#DC2626',
-    shadowOpacity: 0.35,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    ...Platform.select({
-      android: { elevation: 4 },
-      ios: { elevation: 6 },
-    }),
+    backgroundColor: '#FFFFFF',
+    paddingVertical: hp(1.6),
+    paddingHorizontal: wp(4),
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    width: wp(92),
+    marginBottom: hp(2),
   },
+  footerTextWrap: { flex: 1, minWidth: 0 },
   footerText: {
     fontFamily: 'Poppins-SemiBold',
-    color: '#FFFFFF',
-    fontSize: 14,
+    color: '#0F172A',
+    fontSize: 15,
     letterSpacing: -0.2,
+  },
+  footerSub: {
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    fontSize: 12.5,
   },
   hintText: {
     fontSize: 13,
@@ -633,19 +623,14 @@ const styles = StyleSheet.create({
   showDataButton: {
     borderWidth: 1.5,
     borderColor: '#CBD5E1',
-    height: hp(2.5),
-    width: wp(5),
-    borderRadius: 8,
-    backgroundColor: '#F8FAFC',
+    height: 20,
+    width: 20,
+    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  showDataIcon: {
-    resizeMode: 'cover',
-    height: hp(2.5),
-    width: wp(5),
-    borderRadius: 6,
-  },
+  showDataButtonOn: { backgroundColor: '#1E64AC', borderColor: '#1E64AC' },
   showDataText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13,
@@ -656,13 +641,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  buttonIcon: {
-    resizeMode: 'contain',
-    width: wp(4),
-    height: hp(2.2),
-    marginRight: hp(0.8),
-    tintColor: 'white',
-  },
+  buttonIcon: { marginRight: 6 },
   dotText: {
     position: 'absolute',
     color: '#1E293B',
@@ -682,8 +661,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
     flexDirection: 'row',
-    gap: hp(2),
-    marginVertical: hp(1.5),
+    flexWrap: 'wrap',
+    columnGap: hp(2),
+    marginTop: hp(1.5),
     paddingHorizontal: hp(0.5),
   },
   legendItem: {
@@ -707,57 +687,38 @@ const styles = StyleSheet.create({
   },
   warningText: {
     textAlign: 'center',
-    color: '#11418A',
+    color: '#1E64AC',
     fontFamily: 'Poppins-Medium',
     fontSize: 13,
     letterSpacing: 0.1,
   },
   footerIcon: {
-    resizeMode: 'contain',
-    width: wp(5),
-    height: hp(2.5),
-    marginRight: hp(1.2),
-    tintColor: '#11418A',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: wp(3),
+    backgroundColor: '#DBEAFE',
   },
-  footerDoctorIcon: {
-    tintColor: undefined,
-    width: wp(8),
-    height: wp(8),
-  },
-  footerDoctorIconFull: {
-    tintColor: undefined,
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
-  },
+  footerDoctorIcon: {},
+  footerDoctorIconFull: {},
   tabContainer: {
     flexDirection: 'row',
     marginBottom: hp(2),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    padding: hp(0.5),
+    borderRadius: 999,
+    padding: 4,
   },
   tab: {
     paddingHorizontal: hp(3.5),
-    paddingVertical: hp(1.2),
+    paddingVertical: hp(1),
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 999,
     backgroundColor: 'transparent',
     marginHorizontal: hp(0.3),
   },
-  activeTab: {
-    backgroundColor: '#11418A',
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 3 },
-    }),
-  },
+  activeTab: { backgroundColor: '#1E64AC' },
   activeText: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',

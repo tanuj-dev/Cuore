@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Check } from 'lucide-react-native';
 import {
   View,
   Text,
@@ -137,7 +138,11 @@ const OnBoardingThree = ({ onFormChange, initialData = {}, o2Data = {} }) => {
                 styles.checkbox,
                 selectedOptions.includes(option) && styles.checkedBox,
               ]}
-            />
+            >
+              {selectedOptions.includes(option) ? (
+                <Check size={14} color="#FFFFFF" strokeWidth={3} />
+              ) : null}
+            </View>
             <Text style={styles.optionText}>{option}</Text>
           </TouchableOpacity>
         ))}
@@ -202,86 +207,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     flexGrow: 1,
   },
-  questionTitle: {
-    fontSize: hp(1.9),
-    color: '#16283F',
-    fontWeight: '600',
-    marginBottom: hp(1.2),
-  },
+  questionTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 15, color: '#0F172A', marginTop: 6, marginBottom: 10, letterSpacing: -0.1 },
   // A circle, where the checkboxes above are squares: the shape is the difference between
   // "pick any" and "pick one", and it reads before the label does.
-  radio: {
-    height: hp(2.4),
-    width: hp(2.4),
-    // Same gap the checkboxes above carry. Without it the control sits against its own label.
-    marginRight: wp(2.5),
-    borderRadius: hp(1.2),
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioOn: { borderColor: '#11418A' },
-  radioDot: {
-    height: hp(1.2),
-    width: hp(1.2),
-    borderRadius: hp(0.6),
-    backgroundColor: '#11418A',
-  },
-  card: {
-    backgroundColor: 'white',
-    padding: wp(4),
-    borderRadius: wp(1),
-    marginBottom: hp(2),
-    elevation: 1,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: hp(1.5),
-  },
-  checkbox: {
-    width: wp(4),
-    height: wp(4.5),
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: wp(1),
-    marginTop: hp(0.5),
-    marginRight: wp(2.5),
-  },
+  radio: { height: 22, width: 22, marginRight: 12, borderRadius: 11, borderWidth: 1.5, borderColor: '#CBD5E1', alignItems: 'center', justifyContent: 'center' },
+  radioOn: { borderColor: '#1E64AC' },
+  radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#1E64AC' },
+  card: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, marginBottom: 14, borderWidth: 1, borderColor: '#E2E8F0' },
+  optionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  checkbox: { width: 22, height: 22, borderWidth: 1.5, borderColor: '#CBD5E1', borderRadius: 6, marginRight: 12, alignItems: 'center', justifyContent: 'center' },
   checkedBox: {
-    backgroundColor: '#11418A',
-    borderColor: '#11418A',
+    backgroundColor: '#1E64AC',
+    borderColor: '#1E64AC',
   },
-  optionText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14, letterSpacing: 0.2,
-    flex: 1,
-    color: '#475569',
-  },
-  tagTitle: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14, letterSpacing: 0.2,
-    marginBottom: hp(1),
-    color: '#475569',
-  },
-  tagsWrapper: {
-    marginTop: hp(2),
-    borderWidth: 0.3,
-    borderRadius: hp(0.5),
-    borderColor: '#E2E8F0',
-    elevation: 1,
-    backgroundColor: '#FFFFFF',
-    padding: hp(1),
-  },
-  input: {
-    height: hp(8),
-    borderColor: '#ccc',
-    padding: 10,
-    borderRadius: 5,
-  },
-  wordCount: {
-    textAlign: 'right',
-    color: '#888',
-  },
+  optionText: { fontFamily: 'Poppins-Regular', fontSize: 14, letterSpacing: 0.1, color: '#334155', flex: 1 },
+  tagTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 14, marginBottom: 8, color: '#0F172A' },
+  tagsWrapper: { marginTop: 6, borderWidth: 1, borderRadius: 16, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF', padding: 14 },
+  input: { minHeight: 72, borderWidth: 1, borderColor: '#E2E8F0', padding: 12, borderRadius: 12, fontFamily: 'Poppins-Regular', color: '#0F172A', textAlignVertical: 'top' },
+  wordCount: { textAlign: 'right', color: '#94A3B8', fontFamily: 'Poppins-Regular', fontSize: 12, marginTop: 4 },
 });

@@ -124,7 +124,7 @@ const Search = ({ navigation }) => {
             <ActivityIndicator
               style={styles.loader}
               size="small"
-              color="#11418A"
+              color="#1E64AC"
             />
           )}
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -296,6 +296,6 @@ const styles = StyleSheet.create({
   metaValue: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
-    color: '#11418A',
+    color: '#1E64AC',
   },
 });

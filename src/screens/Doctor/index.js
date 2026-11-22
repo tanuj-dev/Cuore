@@ -441,7 +441,7 @@ const Doctor = ({ navigation }) => {
 
           {loading && doctors.length === 0 ? (
             <View style={styles.loadingWrap}>
-              <ActivityIndicator size="large" color="#11418A" />
+              <ActivityIndicator size="large" color="#1E64AC" />
               <Text style={styles.loadingText}>Loading doctors...</Text>
             </View>
           ) : doctors.length === 0 ? (
@@ -776,7 +776,7 @@ const styles = StyleSheet.create({
     marginTop: hp(1),
     marginBottom: hp(2),
     alignSelf: 'center',
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(6),
     borderRadius: 10,
@@ -805,8 +805,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkboxCircleSelected: {
-    borderColor: '#11418A',
-    backgroundColor: '#11418A',
+    borderColor: '#1E64AC',
+    backgroundColor: '#1E64AC',
   },
   checkIcon: {
     width: wp(3),
@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
     borderColor: '#BBF7D0',
   },
   cardSelected: {
-    borderLeftColor: '#11418A',
+    borderLeftColor: '#1E64AC',
     backgroundColor: '#F8FAFF',
   },
   cardMyDoctorSelected: {
@@ -911,7 +911,7 @@ const styles = StyleSheet.create({
   specialization: {
     fontFamily: 'Poppins-Medium',
     fontSize: 12,
-    color: '#11418A',
+    color: '#1E64AC',
     marginBottom: hp(0.45),
     textTransform: 'capitalize',
   },
@@ -938,7 +938,7 @@ const styles = StyleSheet.create({
   patientCount: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 15,
-    color: '#11418A',
+    color: '#1E64AC',
   },
   patientLabel: {
     fontFamily: 'Poppins-Regular',
@@ -1020,7 +1020,7 @@ const styles = StyleSheet.create({
     }),
   },
   button: {
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(1.8),
     borderRadius: 14,
     alignItems: 'center',

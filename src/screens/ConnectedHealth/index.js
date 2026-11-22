@@ -25,7 +25,8 @@ import {
 } from 'lucide-react-native';
 
 import { hp, wp } from '../../utilities';
-import ProfileHeader from '../../components/ProfileHeader';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import {
   connectHealthThunk,
@@ -70,6 +71,7 @@ function formatLastSynced(iso) {
 const ConnectedHealth = ({ navigation }) => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
+  useLightStatusBar();
   const [refreshing, setRefreshing] = useState(false);
 
   const {
@@ -126,7 +128,7 @@ const ConnectedHealth = ({ navigation }) => {
     if (loadingStatus && sdkStatus === null) {
       return (
         <View style={styles.centered}>
-          <ActivityIndicator color="#11418A" />
+          <ActivityIndicator color="#1E64AC" />
         </View>
       );
     }
@@ -182,7 +184,9 @@ const ConnectedHealth = ({ navigation }) => {
       <>
         <View style={styles.statusCard}>
           <View style={styles.statusRow}>
-            <ShieldCheck size={wp(5.5)} color={connected ? '#11418A' : '#94A3B8'} />
+            <View style={styles.catTile}>
+              <ShieldCheck size={20} color={connected ? '#1E64AC' : '#94A3B8'} />
+            </View>
             <View style={styles.statusTextWrap}>
               <Text style={styles.statusTitle}>{sourceName()}</Text>
               <Text style={styles.statusSub}>
@@ -205,7 +209,9 @@ const ConnectedHealth = ({ navigation }) => {
               key={key}
               style={[styles.catRow, i === CATEGORIES.length - 1 && styles.catRowLast]}
             >
-              <Icon size={wp(5)} color="#64748B" />
+              <View style={styles.catTile}>
+                <Icon size={18} color="#1E64AC" />
+              </View>
               <View style={styles.catTextWrap}>
                 <Text style={styles.catLabel}>{label}</Text>
                 <Text style={styles.catDetail}>{detail}</Text>
@@ -279,7 +285,11 @@ const ConnectedHealth = ({ navigation }) => {
     <>
       {AlertComponent}
       <View style={styles.wrapper}>
-        <ProfileHeader navigation={navigation} title="Connected Health Sources" />
+        <HeroHeader
+          title="Health Sources"
+          subtitle={`Sync readings from ${sourceName()}`}
+          onBack={() => navigation.goBack()}
+        />
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.content}
@@ -293,9 +303,9 @@ const ConnectedHealth = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: '#FFFFFF' },
+  wrapper: { flex: 1, backgroundColor: '#F4F7FB' },
   container: { flex: 1 },
-  content: { paddingHorizontal: wp(5), paddingBottom: hp(5) },
+  content: { paddingHorizontal: wp(4), paddingTop: hp(0.5), paddingBottom: hp(5) },
 
   centered: { alignItems: 'center', paddingTop: hp(10), paddingHorizontal: wp(6) },
   emptyTitle: {
@@ -315,8 +325,8 @@ const styles = StyleSheet.create({
   },
 
   statusCard: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: wp(3),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: wp(4),
     marginTop: hp(2),
     borderWidth: 1,
@@ -324,7 +334,7 @@ const styles = StyleSheet.create({
   },
   statusRow: { flexDirection: 'row', alignItems: 'center' },
   statusTextWrap: { marginLeft: wp(3), flex: 1 },
-  statusTitle: { fontSize: wp(4), fontFamily: 'Poppins-Medium', color: '#1E293B' },
+  statusTitle: { fontSize: wp(4), fontFamily: 'Poppins-SemiBold', color: '#0F172A' },
   statusSub: {
     fontSize: wp(3.3),
     fontFamily: 'Poppins-Regular',
@@ -334,21 +344,21 @@ const styles = StyleSheet.create({
   statusNote: {
     fontSize: wp(3.2),
     fontFamily: 'Poppins-Regular',
-    color: '#11418A',
+    color: '#1E64AC',
     marginTop: hp(1.2),
   },
 
   sectionHeader: {
     fontSize: wp(3),
     fontFamily: 'Poppins-Medium',
-    color: '#94A3B8',
+    color: '#64748B',
     letterSpacing: 0.8,
     marginTop: hp(3),
     marginBottom: hp(1),
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: wp(3),
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     paddingHorizontal: wp(4),
@@ -361,8 +371,16 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9',
   },
   catRowLast: { borderBottomWidth: 0 },
+  catTile: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   catTextWrap: { marginLeft: wp(3.5), flex: 1 },
-  catLabel: { fontSize: wp(3.7), fontFamily: 'Poppins-Medium', color: '#1E293B' },
+  catLabel: { fontSize: wp(3.7), fontFamily: 'Poppins-Medium', color: '#0F172A' },
   catDetail: {
     fontSize: wp(3.1),
     fontFamily: 'Poppins-Regular',
@@ -382,8 +400,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#11418A',
-    borderRadius: wp(2.5),
+    backgroundColor: '#1E64AC',
+    borderRadius: 999,
     paddingVertical: hp(1.8),
     marginTop: hp(3),
   },
@@ -399,7 +417,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: wp(2.5),
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
     paddingVertical: hp(1.7),
     marginTop: hp(1.5),
     borderWidth: 1,

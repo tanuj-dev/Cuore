@@ -25,7 +25,17 @@ import Share from 'react-native-share';
 
 import { hp, wp, Images } from '../../utilities';
 import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
-import { Info, ChevronLeft, Share2, FolderOpen, FileUp } from 'lucide-react-native';
+import {
+  Info,
+  Share2,
+  FolderOpen,
+  FileUp,
+  Pencil,
+  ShieldCheck,
+  Activity,
+} from 'lucide-react-native';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { useSelector, useDispatch } from 'react-redux';
 import { getHealthRecord } from '../../redux/slices';
 import { updateLastConsulted } from '../../redux/Home/homeThunk';
@@ -108,6 +118,7 @@ const formatDate = date => {
 };
 
 const Health = ({ navigation }) => {
+  useLightStatusBar();
   const [refreshing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [lastConsulted, setLastConsulted] = useState(new Date());
@@ -307,13 +318,13 @@ const Health = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#11418A" />
+        <ActivityIndicator size="large" color="#1E64AC" />
       </View>
     );
   }
 
   return (
-    <View edges={['top']} style={{ flex: 1, backgroundColor: 'white' }}>
+    <View style={{ flex: 1, backgroundColor: '#F4F7FB' }}>
       {AlertComponent}
       <ViewShot
         ref={viewShotRef}
@@ -321,53 +332,37 @@ const Health = ({ navigation }) => {
         style={{ flex: 1 }}
       >
         <View style={{ flex: 1 }}>
-          {/* Fixed Header - Always Visible */}
-          <View style={styles.fixedHeader}>
-            <TouchableOpacity
-              hitSlop={HIT_SLOP}
-              onPress={handleNavigateBack}
-              style={styles.headerBtn}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-            >
-              <ChevronLeft size={22} color="#1F2937" />
-            </TouchableOpacity>
-
-            {/* flex:1 + equal-width side buttons keeps the title truly centred */}
-            <Text style={styles.fixedHeaderTitle} numberOfLines={1}>
-              My Health
-            </Text>
-
-            <TouchableOpacity
-              disabled={isCaregiver || sharingLoading}
-              hitSlop={HIT_SLOP}
-              onPress={handleShareScreenshot}
-              style={[
-                styles.headerBtn,
-                styles.headerBtnAccent,
-                (isCaregiver || sharingLoading) && styles.headerBtnDisabled,
-              ]}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Share my health report"
-            >
-              <Share2 size={19} color="#11418A" />
-            </TouchableOpacity>
-          </View>
+          {/* CuoreMD blue hero; in normal flow now, so the list no longer needs a fixed top
+              padding to clear an absolutely positioned header. */}
+          <HeroHeader
+            title="My Health"
+            subtitle="Your profile, readings and records."
+            onBack={handleNavigateBack}
+            bottom={20}
+            right={
+              <TouchableOpacity
+                disabled={isCaregiver || sharingLoading}
+                hitSlop={HIT_SLOP}
+                onPress={handleShareScreenshot}
+                style={[
+                  styles.headerBtn,
+                  (isCaregiver || sharingLoading) && styles.headerBtnDisabled,
+                ]}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Share my health report"
+              >
+                <Share2 size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            }
+          />
 
           <ScrollView
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
-            style={{
-              backgroundColor: '#FFFFFF',
-              flex: 1,
-              marginTop: Platform.OS === 'ios' ? hp(0) : hp(2),
-            }}
-            contentContainerStyle={{
-              paddingTop: Platform.OS === 'ios' ? hp(10) : hp(6),
-            }}
+            style={{ backgroundColor: '#F4F7FB', flex: 1 }}
+            contentContainerStyle={{ paddingTop: hp(1) }}
           >
             <View style={{ flex: 1 }}>
               <View style={styles.container}>
@@ -407,16 +402,9 @@ const Health = ({ navigation }) => {
                       disabled={isCaregiver}
                       onPress={() => handleNavigateToReassess(REASSESS_STEP_3)}
                     >
-                      <Image
-                        source={Images.EDIT}
-                        style={{
-                          height: hp(3),
-                          width: wp(4),
-                          resizeMode: 'contain',
-                        }}
-                        size={20}
-                        color="gray"
-                      />
+                      <View style={styles.editTile}>
+                        <Pencil size={15} color="#1E64AC" />
+                      </View>
                     </TouchableOpacity>
                   </View>
 
@@ -433,16 +421,9 @@ const Health = ({ navigation }) => {
                       <Text style={styles.detail}>{medicationsText}</Text>
                     </View>
                     <TouchableOpacity onPress={handleNavigateBack}>
-                      <Image
-                        source={Images.EDIT}
-                        style={{
-                          height: hp(3),
-                          width: wp(4),
-                          resizeMode: 'contain',
-                        }}
-                        size={20}
-                        color="gray"
-                      />
+                      <View style={styles.editTile}>
+                        <Pencil size={15} color="#1E64AC" />
+                      </View>
                     </TouchableOpacity>
                   </View>
 
@@ -461,16 +442,9 @@ const Health = ({ navigation }) => {
                       </Text>
                     </View>
                     <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-                      <Image
-                        source={Images.EDIT}
-                        style={{
-                          height: hp(3),
-                          width: wp(4),
-                          resizeMode: 'contain',
-                        }}
-                        size={20}
-                        color="gray"
-                      />
+                      <View style={styles.editTile}>
+                        <Pencil size={15} color="#1E64AC" />
+                      </View>
                     </TouchableOpacity>
                   </View>
 
@@ -491,9 +465,10 @@ const Health = ({ navigation }) => {
 
                 {/* Health Observations */}
                 <View style={styles.observationsDisclaimerRow}>
-                  <Image
+                  <Info
+                    size={16}
+                    color="#64748B"
                     style={styles.observationsDisclaimerIcon}
-                    source={Images.NOTICE}
                   />
                   <Text style={styles.observationsDisclaimer}>
                     Values are manually entered by you. Status indicators
@@ -516,9 +491,8 @@ const Health = ({ navigation }) => {
                       onPress={() => handleNavigateToReassess(REASSESS_STEP_7)}
                       style={styles.updateButton}
                     >
-                      <Text style={styles.updateButtonText}>
-                        Update Readings
-                      </Text>
+                      <Activity size={14} color="#FFFFFF" />
+                      <Text style={styles.updateButtonText}>Update</Text>
                     </TouchableOpacity>
                   </View>
                   <View
@@ -530,8 +504,8 @@ const Health = ({ navigation }) => {
                   >
                     <Text
                       style={{
-                        fontSize: 15,
-                        color: '#374151',
+                        fontSize: 12.5,
+                        color: '#64748B',
                         fontFamily: 'Poppins-Medium',
                       }}
                     >
@@ -539,8 +513,8 @@ const Health = ({ navigation }) => {
                     </Text>
                     <Text
                       style={{
-                        fontSize: 14,
-                        color: '#374151',
+                        fontSize: 12.5,
+                        color: '#64748B',
                         fontFamily: 'Poppins-Medium',
                       }}
                     >
@@ -548,8 +522,8 @@ const Health = ({ navigation }) => {
                     </Text>
                     <Text
                       style={{
-                        fontSize: 14,
-                        color: '#000000',
+                        fontSize: 12.5,
+                        color: '#64748B',
                         fontFamily: 'Poppins-Medium',
                         marginRight: hp(2),
                       }}
@@ -645,7 +619,7 @@ const Health = ({ navigation }) => {
 
                   <View style={styles.recordsTile}>
                     <View style={styles.recordsTileIcon}>
-                      <FolderOpen size={20} color="#11418A" />
+                      <FolderOpen size={20} color="#1E64AC" />
                     </View>
                     <View style={styles.recordsTileText}>
                       <Text style={styles.recordsTileTitle}>
@@ -676,9 +650,10 @@ const Health = ({ navigation }) => {
                 {/* Data & privacy */}
                 <View style={styles.card}>
                   <View style={styles.aiDisclaimerHeader}>
-                    <Image
+                    <ShieldCheck
+                      size={18}
+                      color="#1E64AC"
                       style={styles.aiDisclaimerIcon}
-                      source={Images.NOTICE}
                     />
                     <Text style={styles.aiDisclaimerTitle}>
                       About Your Data
@@ -773,7 +748,7 @@ const Health = ({ navigation }) => {
       >
         <View style={styles.sharingLoaderOverlay}>
           <View style={styles.sharingLoaderContainer}>
-            <ActivityIndicator size="large" color="#11418A" />
+            <ActivityIndicator size="large" color="#1E64AC" />
             <Text style={styles.sharingLoaderText}>Generating PDF...</Text>
           </View>
         </View>
@@ -784,8 +759,9 @@ const Health = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F9FAFB',
-    padding: 10,
+    backgroundColor: '#F4F7FB',
+    paddingHorizontal: wp(4),
+    paddingVertical: 10,
   },
   fixedHeader: {
     position: 'absolute',
@@ -807,16 +783,22 @@ const styles = StyleSheet.create({
   // Both header buttons are the same 38x38 circle, so the flex:1 title between
   // them lands dead centre. (The old style put a drop shadow on the touchable
   // itself, which rendered as a grey box behind the bare icon on Android.)
+  // Translucent circle on the blue hero, matching HeroHeader's back button.
   headerBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255,255,255,0.16)',
   },
-  headerBtnAccent: {
-    backgroundColor: '#EFF6FF',
+  editTile: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerBtnDisabled: {
     opacity: 0.45,
@@ -841,11 +823,11 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: hp(2),
     marginVertical: hp(0.8),
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -865,14 +847,14 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   name: {
-    fontSize: 14,
-    color: '#1F2937',
-    fontFamily: 'Poppins-Regular',
+    fontSize: 17,
+    color: '#0F172A',
+    fontFamily: 'Poppins-SemiBold',
   },
   detail: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#6B7280',
+    color: '#64748B',
   },
   label: {
     fontSize: 14,
@@ -882,9 +864,8 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontSize: 14,
-    color: '#11418A',
-    fontFamily: 'Poppins-Medium',
-    fontWeight: 'bold',
+    color: '#1E64AC',
+    fontFamily: 'Poppins-SemiBold',
   },
   flatHistoryRow: {
     flexDirection: 'row',
@@ -897,9 +878,9 @@ const styles = StyleSheet.create({
     marginRight: wp(2),
   },
   sectionTitle: {
-    fontSize: 16,
-    color: '#1F2937',
-    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#0F172A',
+    fontFamily: 'Poppins-SemiBold',
   },
   observationsDisclaimerRow: {
     flexDirection: 'row',
@@ -909,10 +890,8 @@ const styles = StyleSheet.create({
   },
   observationsDisclaimerIcon: {
     marginRight: hp(1),
-    height: hp(1.5),
-    width: hp(2),
-    resizeMode: 'contain',
-    marginHorizontal: hp(0.5),
+    marginTop: 2,
+    marginLeft: hp(0.5),
   },
   observationsDisclaimer: {
     flex: 1,
@@ -929,17 +908,18 @@ const styles = StyleSheet.create({
   updateButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#11418A',
-    paddingVertical: hp(1),
-    paddingHorizontal: hp(1),
-    width: hp(12),
-    borderRadius: hp(1),
+    flexDirection: 'row',
+    gap: 6,
+    backgroundColor: '#1E64AC',
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 999,
   },
   updateButtonText: {
     textAlign: 'center',
     color: '#FFFFFF',
-    fontSize: 12.5,
-    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    fontFamily: 'Poppins-SemiBold',
   },
   columnHeader: {
     fontSize: 14,
@@ -1005,7 +985,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: hp(1.6),
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1137,7 +1117,7 @@ const styles = StyleSheet.create({
   referenceParameter: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13.5,
-    color: '#11418A',
+    color: '#1E64AC',
     marginBottom: 2,
   },
   referenceSource: {
@@ -1147,7 +1127,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   referenceLink: {
-    color: '#11418A',
+    color: '#1E64AC',
     textDecorationLine: 'underline',
   },
   referenceContext: {
@@ -1168,7 +1148,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   referencesCloseBtn: {
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     borderRadius: 10,
     paddingVertical: hp(1.5),
     alignItems: 'center',
@@ -1186,9 +1166,6 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
   },
   aiDisclaimerIcon: {
-    height: hp(1.8),
-    width: hp(2),
-    resizeMode: 'contain',
     marginRight: hp(1),
   },
   aiDisclaimerTitle: {

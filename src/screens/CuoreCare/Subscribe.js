@@ -247,9 +247,9 @@ export default function Subscribe({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       {AlertComponent}
-      <CCHeader title="CuoreCare" onBack={onBack} />
+      <CCHeader title="CuoreCare" subtitle="Consult your doctor from home" onBack={onBack} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.heroIcon}>

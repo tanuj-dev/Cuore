@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   selectedCard: {
-    borderColor: '#11418A',
+    borderColor: '#1E64AC',
     backgroundColor: '#F1F5F9',
   },
   radioWrapper: {
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   radioInnerSelected: {
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
   },
   roleText: {
     fontFamily: 'Poppins-Regular',
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   continueBtn: {
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(1.8),
     borderRadius: 10,
     alignItems: 'center',

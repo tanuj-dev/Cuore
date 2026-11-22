@@ -7,13 +7,14 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
-  StatusBar,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, BellOff, Trash2 } from 'lucide-react-native';
+import { Bell, BellOff, Trash2 } from 'lucide-react-native';
 import moment from 'moment';
 import { hp, wp, Fonts } from '../../utilities';
 import {
@@ -29,6 +30,8 @@ import { navigationRef } from '../../navigation/navigationRef';
 const F = Fonts;
 
 export default function Notifications({ navigation }) {
+  const insets = useSafeAreaInsets();
+  useLightStatusBar();
   const dispatch = useDispatch();
   const { items, unreadCount, loading } = useSelector(state => state.notifications);
   const [refreshing, setRefreshing] = useState(false);
@@ -112,39 +115,41 @@ export default function Notifications({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <ArrowLeft size={22} color="#1E293B" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Notifications</Text>
-        <View style={styles.headerActions}>
-          {unreadCount > 0 && (
-            <TouchableOpacity onPress={onMarkAllRead} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
-              <Text style={styles.markAllText}>Mark all read</Text>
-            </TouchableOpacity>
-          )}
-          {items.length > 0 && (
+    // Edge to edge (see EDGE_TO_EDGE in navigation): the blue hero paints under the status bar.
+    <View style={styles.safe}>
+      <HeroHeader
+        title="Notifications"
+        subtitle={unreadCount > 0 ? `${unreadCount} unread` : 'You are all caught up'}
+        onBack={() => navigation.goBack()}
+        bottom={20}
+      >
+        {items.length > 0 ? (
+          <View style={styles.headerActions}>
+            {unreadCount > 0 && (
+              <TouchableOpacity
+                onPress={onMarkAllRead}
+                style={styles.headerPill}
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+              >
+                <Text style={styles.headerPillText}>Mark all read</Text>
+              </TouchableOpacity>
+            )}
+            {/* Destructive one last, so a tap aimed at "Mark all read" cannot land on it. */}
             <TouchableOpacity
               onPress={onDeleteAll}
-              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              style={styles.headerPill}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
               accessibilityLabel="Delete all notifications"
             >
-              <Text style={styles.deleteAllText}>Delete all</Text>
+              <Text style={styles.headerPillText}>Delete all</Text>
             </TouchableOpacity>
-          )}
-          {unreadCount === 0 && items.length === 0 && <View style={styles.headerSpacer} />}
-        </View>
-      </View>
+          </View>
+        ) : null}
+      </HeroHeader>
 
       {loading && items.length === 0 ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#11418A" />
+          <ActivityIndicator size="large" color="#1E64AC" />
         </View>
       ) : items.length === 0 ? (
         <View style={styles.center}>
@@ -156,9 +161,9 @@ export default function Notifications({ navigation }) {
         <FlatList
           data={items}
           keyExtractor={item => item._id}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + hp(3) }]}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#11418A" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1E64AC" />
           }
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -166,7 +171,10 @@ export default function Notifications({ navigation }) {
               onPress={() => onPressItem(item)}
               activeOpacity={0.8}
             >
-              {!item.read && <View style={styles.dot} />}
+              <View style={styles.iconTile}>
+                <Bell size={17} color="#1E64AC" />
+                {!item.read && <View style={styles.dot} />}
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowTitle}>{item.title}</Text>
                 <Text style={styles.rowBody} numberOfLines={2}>{item.body}</Text>
@@ -186,30 +194,26 @@ export default function Notifications({ navigation }) {
           )}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
+  safe: { flex: 1, backgroundColor: '#F4F7FB' },
+  headerActions: { flexDirection: 'row', gap: wp(2.5), marginTop: hp(1.8), marginLeft: 52 },
+  headerPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.32)',
   },
-  title: { fontSize: 17, fontFamily: F.PoppinsSemiBold, color: '#1E293B' },
-  markAllText: { fontSize: 13, fontFamily: F.PoppinsMedium, color: '#11418A' },
-  // The two header actions sit together on the right. Destructive one last, so a tap aimed at
-  // "Mark all read" cannot land on "Delete all" by being a few pixels off.
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: wp(3) },
-  deleteAllText: { fontSize: 13, fontFamily: F.PoppinsMedium, color: '#DC2626' },
-  headerSpacer: { width: wp(20) },
+  headerPillText: { fontSize: 12.5, fontFamily: F.PoppinsMedium, color: '#FFFFFF' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: wp(10) },
   emptyTitle: { fontSize: 15, fontFamily: F.PoppinsSemiBold, color: '#1E293B', marginTop: hp(1.5) },
   emptyMsg: { fontSize: 13, fontFamily: F.PoppinsRegular, color: '#64748B', textAlign: 'center', marginTop: hp(0.5) },
-  list: { paddingHorizontal: wp(4), paddingBottom: hp(3) },
+  list: { paddingHorizontal: wp(4), paddingTop: hp(2) },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -222,13 +226,26 @@ const styles = StyleSheet.create({
   },
   rowUnread: { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' },
   deleteBtn: { paddingLeft: wp(2.5), paddingTop: hp(0.2) },
+  iconTile: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(3),
+  },
+  // Unread marker on the tile's corner.
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#11418A',
-    marginRight: wp(2.5),
-    marginTop: 6,
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#1E64AC',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   rowTitle: { fontSize: 14, fontFamily: F.PoppinsSemiBold, color: '#1E293B' },
   rowBody: { fontSize: 13, fontFamily: F.PoppinsRegular, color: '#475569', marginTop: 2 },

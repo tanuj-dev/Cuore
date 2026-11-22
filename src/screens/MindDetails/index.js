@@ -4,14 +4,16 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Platform,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Sound from 'react-native-sound';
-import { hp, wp, Images } from '../../utilities';
+import { Play, Pause, Headphones } from 'lucide-react-native';
+import { hp } from '../../utilities';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import RenderHTML from 'react-native-render-html';
 import { useWindowDimensions } from 'react-native';
 import ToastMessage from '../../components/Toast';
@@ -26,6 +28,7 @@ function isRemoteAudioUri(uri) {
 const MindDetails = ({ navigation, route }) => {
   const { instructions, audio, title } = route.params;
   const { width } = useWindowDimensions();
+  useLightStatusBar();
 
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -144,42 +147,46 @@ const MindDetails = ({ navigation, route }) => {
           onHide={() => setToast(null)}
         />
       ) : null}
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
+      <HeroHeader
+        title={title || 'Cuore Mind'}
+        subtitle="Guided audio session"
+        onBack={() => navigation.goBack()}
+      />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.scroll}
+        contentInsetAdjustmentBehavior="never"
+      >
         <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.headerWrapper}>
-            <View style={styles.header}>
-              <TouchableOpacity
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                style={styles.backButton}
-                onPress={() => navigation.goBack()}
-              >
-                <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
-              </TouchableOpacity>
-              <Text style={styles.title} numberOfLines={1}>
-                {title || ''}
-              </Text>
-              <View style={styles.headerSpacer} />
-            </View>
-          </View>
-
           <View style={styles.content}>
             {/* Audio Box */}
-            <View style={styles.videoBox}>
-              <View style={styles.videoControls}>
+            <View style={styles.audioCard}>
+              <View style={styles.audioTop}>
+                <View style={styles.audioTile}>
+                  <Headphones size={20} color="#7C3AED" />
+                </View>
+                <View style={styles.audioText}>
+                  <Text style={styles.audioTitle} numberOfLines={1}>
+                    {title || 'Session'}
+                  </Text>
+                  <Text style={styles.audioSub}>
+                    {isPlaying ? 'Playing' : 'Tap play to begin'}
+                  </Text>
+                </View>
                 <TouchableOpacity
                   onPress={handlePlayPause}
                   disabled={isAudioLoading}
-                  style={styles.playButtonWrap}
-                  activeOpacity={0.7}
+                  style={styles.playButton}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={isPlaying ? 'Pause' : 'Play'}
                 >
                   {showAudioBusy ? (
-                    <ActivityIndicator size="large" color="#11418A" />
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : isPlaying ? (
+                    <Pause size={22} color="#FFFFFF" fill="#FFFFFF" />
                   ) : (
-                    <Image
-                      source={isPlaying ? Images.PAUSE : Images.PLAY}
-                      style={styles.playIcon}
-                    />
+                    <Play size={22} color="#FFFFFF" fill="#FFFFFF" />
                   )}
                 </TouchableOpacity>
               </View>
@@ -200,9 +207,9 @@ const MindDetails = ({ navigation, route }) => {
                     }
                     setIsSeeking(false);
                   }}
-                  minimumTrackTintColor="#11418A"
+                  minimumTrackTintColor="#1E64AC"
                   maximumTrackTintColor="#E2E8F0"
-                  thumbTintColor="#11418A"
+                  thumbTintColor="#1E64AC"
                 />
                 <View style={styles.timeRow}>
                   <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
@@ -236,8 +243,8 @@ const MindDetails = ({ navigation, route }) => {
                     fontFamily: 'Poppins-Regular',
                   },
                   strong: {
-                    fontFamily: 'Poppins-Medium',
-                    color: '#1E293B',
+                    fontFamily: 'Poppins-SemiBold',
+                    color: '#0F172A',
                   },
                   em: {
                     fontStyle: 'italic',
@@ -248,13 +255,13 @@ const MindDetails = ({ navigation, route }) => {
                     fontSize: 22,
                     fontFamily: 'Poppins-Medium',
                     marginBottom: 12,
-                    color: '#11418A',
+                    color: '#0F172A',
                   },
                   h3: {
                     fontSize: 16,
                     fontFamily: 'Poppins-Medium',
                     marginBottom: 8,
-                    color: '#1E293B',
+                    color: '#0F172A',
                   },
                 }}
               />
@@ -269,130 +276,56 @@ const MindDetails = ({ navigation, route }) => {
 export default MindDetails;
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
+  root: { flex: 1, backgroundColor: '#F4F7FB' },
+  scroll: { flex: 1, backgroundColor: '#F4F7FB' },
+  container: { flex: 1 },
+  content: { padding: 16, paddingBottom: hp(4) },
+  audioCard: {
     backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 16,
+    marginBottom: 14,
   },
-  scroll: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  headerWrapper: {
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: hp(1),
-    paddingTop: Platform.OS === 'ios' ? hp(3) : hp(1.5),
-    paddingBottom: hp(2),
-  },
-  backButton: {
+  audioTop: { flexDirection: 'row', alignItems: 'center' },
+  audioTile: {
     width: 44,
     height: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  backIcon: {
-    resizeMode: 'contain',
-    height: hp(3.5),
-    width: wp(4),
-    tintColor: '#000000',
-  },
-  title: {
-    flex: 1,
-    fontFamily: 'Poppins-Medium',
-    fontSize: 20,
-    color: '#000000',
-    textAlign: 'center',
-    letterSpacing: 0.2,
-    paddingHorizontal: 8,
-  },
-  headerSpacer: {
-    width: 44,
-  },
-  content: {
-    padding: hp(1.5),
-  },
-  videoBox: {
-    alignItems: 'center',
-    backgroundColor: '#F1E8EF',
     borderRadius: 12,
-    padding: hp(2),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    ...(Platform.OS === 'android' && { elevation: 0.5 }),
-    marginBottom: hp(2),
-    height: hp(20),
-  },
-  videoControls: {
-    alignItems: 'center',
-    width: hp(20),
-    marginTop: hp(5),
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: hp(1),
-  },
-  playButtonWrap: {
-    minHeight: hp(4),
-    minWidth: wp(12),
+    backgroundColor: '#EDE9FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  playIcon: {
-    resizeMode: 'contain',
-    height: hp(3),
-    width: wp(5),
-    tintColor: '#11418A',
+  audioText: { flex: 1, minWidth: 0, marginHorizontal: 12 },
+  audioTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 15, color: '#0F172A' },
+  audioSub: { fontFamily: 'Poppins-Regular', fontSize: 12.5, color: '#64748B' },
+  playButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#1E64AC',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  loadingHint: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: hp(0.5),
-  },
-  sliderRow: {
-    width: '100%',
-    marginTop: hp(2),
-  },
-  slider: {
-    width: '100%',
-    height: 24,
-  },
+  sliderRow: { width: '100%', marginTop: 14 },
+  slider: { width: '100%', height: 24 },
   timeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 4,
   },
-  timeText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 13,
-    color: '#64748B',
-    letterSpacing: 0.2,
-  },
+  timeText: { fontFamily: 'Poppins-Regular', fontSize: 12.5, color: '#64748B' },
   descriptionBox: {
     backgroundColor: '#FFFFFF',
-    padding: hp(2),
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#11418A',
-    borderTopWidth: 1,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   descriptionText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
     color: '#475569',
-    marginBottom: hp(1.5),
-    letterSpacing: 0.2,
   },
 });

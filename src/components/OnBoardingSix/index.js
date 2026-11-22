@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { Clock } from 'lucide-react-native';
 import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   ScrollView,
   Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Images, wp, hp, color } from '../../utilities';
+import { wp, hp, color } from '../../utilities';
 
 const RadioOption = ({ label, selected, onPress }) => (
   <TouchableOpacity style={styles.radioOption} onPress={onPress}>
@@ -112,15 +112,7 @@ const OnBoardingSix = ({ onFormChange, initialData = {} }) => {
           <Text style={{ fontFamily: 'Poppins-Regular', fontSize: wp(4) }}>
             {formatTime(time)}
           </Text>
-          <Image
-            style={{
-              resizeMode: 'contain',
-              height: hp(2),
-              width: wp(5),
-              tintColor: '#000000',
-            }}
-            source={Images.WATCH}
-          />
+          <Clock size={18} color="#1E64AC" />
         </TouchableOpacity>
 
         {showTimePicker && (
@@ -182,89 +174,20 @@ export default OnBoardingSix;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFF',
+    backgroundColor: '#FFFFFF',
     padding: wp(0.5),
     // marginBottom: 10,
     // borderWidth: 1,
   },
-  timeButton: {
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    marginTop: hp(1),
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(4),
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
+  timeButton: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, marginBottom: 14, paddingVertical: 13, paddingHorizontal: 14, width: '100%', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, backgroundColor: '#FFFFFF' },
 
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: wp(2),
-    padding: wp(4),
-    elevation: 1,
-    marginBottom: 10,
-  },
-  cardTitle: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: wp(3.8),
-    
-    color: color.QUESTION_COLOR,
-    marginTop: hp(2),
-    marginBottom: hp(1),
-  },
-  radioOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(1.5),
-  },
-  radioCircle: {
-    width: wp(4.5),
-    height: wp(4.5),
-    borderRadius: wp(2.25),
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: wp(3),
-  },
-  radioCircleSelected: {
-    width: wp(2.5),
-    height: wp(2.5),
-    borderRadius: wp(1.25),
-    backgroundColor: '#11418A',
-  },
-  radioLabel: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14, letterSpacing: 0.2,
-    color: color.ANSWER_COLOR,
-  },
-  timeInput: {
-    fontFamily: 'Poppins-Regular',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
-    borderRadius: wp(2),
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1),
-    marginBottom: hp(2),
-  },
-  subHint: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: wp(3.2),
-    color: color.NOTE_COLOR,
-    marginBottom: hp(1),
-  },
-  datePickerWrapper: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    marginTop: hp(1),
-    padding: wp(2),
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
+  card: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, marginBottom: 14, borderWidth: 1, borderColor: '#E2E8F0' },
+  cardTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 15, color: '#0F172A', marginTop: 6, marginBottom: 10, letterSpacing: -0.1 },
+  radioOption: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  radioCircle: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  radioCircleSelected: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#1E64AC' },
+  radioLabel: { fontFamily: 'Poppins-Regular', fontSize: 14, letterSpacing: 0.1, color: '#334155' },
+  timeInput: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderColor: '#E2E8F0', borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, marginBottom: 16, backgroundColor: '#FFFFFF' },
+  subHint: { fontFamily: 'Poppins-Regular', fontSize: 13, letterSpacing: 0.1, color: '#64748B', marginBottom: 6 },
+  datePickerWrapper: { backgroundColor: '#FFFFFF', borderRadius: 12, marginTop: 8, padding: 8, borderWidth: 1, borderColor: '#E2E8F0' },
 });

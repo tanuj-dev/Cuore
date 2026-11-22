@@ -5,14 +5,22 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   RefreshControl,
-  Platform,
 } from 'react-native';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { hp, wp, Images } from '../../utilities';
-import Header from '../../components/Header';
+import { hp, wp } from '../../utilities';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
+import {
+  Clock,
+  Trophy,
+  Quote,
+  Hourglass,
+  Wallet,
+  HeartPulse,
+  PiggyBank,
+} from 'lucide-react-native';
 import ToastMessage from '../../components/Toast';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -22,21 +30,9 @@ import {
 } from '../../redux/slices';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const TobaccoSkeleton = () => (
-  <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-    {/* Header placeholder */}
-    <View
-      style={{
-        height: hp(7),
-        backgroundColor: '#FFF',
-        borderBottomWidth: 1,
-        borderBottomColor: '#E2E8F0',
-        justifyContent: 'center',
-        paddingHorizontal: hp(2),
-      }}
-    >
-      <SkeletonBox width={140} height={20} />
-    </View>
+const TobaccoSkeleton = ({ onBack }) => (
+  <View style={{ flex: 1, backgroundColor: '#F4F7FB' }}>
+    <HeroHeader title="Cuore Habits" subtitle="Track habit-free days and what you gain." onBack={onBack} />
     <ScrollView
       scrollEnabled={false}
       contentContainerStyle={{
@@ -127,6 +123,7 @@ const NUDGES = [
 const getRandomNudge = () => NUDGES[Math.floor(Math.random() * NUDGES.length)];
 
 const Tobacco = ({ navigation }) => {
+  useLightStatusBar();
   const [yesterdayCount, setYesterdayCount] = useState('');
   const [cigarettesPerDay, setCigarettesPerDay] = useState(0);
   const [yearsOfSmoking, setYearsOfSmoking] = useState(0);
@@ -169,7 +166,7 @@ const Tobacco = ({ navigation }) => {
   const tobaccoLoading = useSelector(state => state.tobacco.loading);
 
   if (!data) {
-    return <TobaccoSkeleton />;
+    return <TobaccoSkeleton onBack={() => navigation.goBack()} />;
   }
 
   const handleSubmit = async () => {
@@ -223,7 +220,11 @@ const Tobacco = ({ navigation }) => {
   return (
     <>
       <View style={styles.screen}>
-        <Header title="Cuore Habits" navigation={navigation} />
+        <HeroHeader
+          title="Cuore Habits"
+          subtitle="Track habit-free days and what you gain."
+          onBack={() => navigation.goBack()}
+        />
 
         <ScrollView
           contentContainerStyle={styles.container}
@@ -232,44 +233,50 @@ const Tobacco = ({ navigation }) => {
           }
         >
           <View style={styles.box}>
-            <View style={styles.rowCenter}>
-              <Image style={styles.iconWatch} source={Images.WATCH} />
-              <Text style={styles.daysText}>
-                {profileData?.tobaccoFreeDays} habit-free days
-              </Text>
+            <View style={styles.boxTop}>
+              <View style={styles.rowCenter}>
+                <View style={styles.iconTile}>
+                  <Clock size={18} color="#1E64AC" />
+                </View>
+                <Text style={styles.daysText}>
+                  {profileData?.tobaccoFreeDays} habit-free days
+                </Text>
+              </View>
+              <View style={styles.levelPill}>
+                <Trophy size={14} color="#B45309" />
+                <Text style={styles.levelText}>
+                  Level {profileData?.currentLevel}
+                </Text>
+              </View>
             </View>
 
-            <View style={styles.inputRow}>
-              <Text style={styles.label}>
-                Enter the number of units used yesterday
-              </Text>
+            <Text style={styles.label}>
+              Enter the number of units used yesterday
+            </Text>
+            <View style={styles.logRow}>
               <TextInput
                 style={styles.inputSmall}
                 keyboardType="numeric"
                 value={String(yesterdayCount)}
                 onChangeText={setYesterdayCount}
                 placeholder="0"
+                placeholderTextColor="#94A3B8"
               />
-            </View>
-            <TouchableOpacity
-              style={styles.logSubmitButton}
-              onPress={() => handleLogUsage()}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.reassessText}>Submit</Text>
-              )}
-            </TouchableOpacity>
-            <View style={styles.rowCenter}>
-              <Text style={styles.levelText}>
-                Level {profileData?.currentLevel}
-              </Text>
-              <Image style={styles.iconTrophy} source={Images.TROPHY} />
+              <TouchableOpacity
+                style={styles.logSubmitButton}
+                onPress={() => handleLogUsage()}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.reassessText}>Submit</Text>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.quoteBox}>
+            <Quote size={18} color="#1E64AC" />
             <Text style={styles.quote}>{currentNudge}</Text>
           </View>
 
@@ -335,13 +342,17 @@ const Tobacco = ({ navigation }) => {
 
           <View style={styles.gridContainer}>
             <View style={styles.gridBox}>
-              <Image style={styles.gridIcon} source={Images.SOIL_WATCH} />
+              <View style={[styles.gridIcon, { backgroundColor: '#FEE2E2' }]}>
+                <Hourglass size={18} color="#DC2626" />
+              </View>
               <Text style={styles.gridLabel}>Estimated Longevity Impact</Text>
               <Text style={styles.gridValueRed}>{stats?.yearsLost}</Text>
             </View>
 
             <View style={styles.gridBox}>
-              <Image style={styles.gridIcon} source={Images.COIN} />
+              <View style={[styles.gridIcon, { backgroundColor: '#FEF3C7' }]}>
+                <Wallet size={18} color="#B45309" />
+              </View>
               <Text style={styles.gridLabel}>Money Spent</Text>
               <Text style={styles.gridValue}>{stats?.moneySpent}</Text>
             </View>
@@ -351,13 +362,17 @@ const Tobacco = ({ navigation }) => {
 
           <View style={styles.gridContainer}>
             <View style={styles.gridBox}>
-              <Image style={styles.gridIcon} source={Images.HEART} />
+              <View style={[styles.gridIcon, { backgroundColor: '#D1FAE5' }]}>
+                <HeartPulse size={18} color="#059669" />
+              </View>
               <Text style={styles.gridLabel}>Potential Longevity Benefit</Text>
               <Text style={styles.gridValue}>{stats?.yearsSaved}</Text>
             </View>
 
             <View style={styles.gridBox}>
-              <Image style={styles.gridIcon} source={Images.PIGIBACK} />
+              <View style={[styles.gridIcon, { backgroundColor: '#DBEAFE' }]}>
+                <PiggyBank size={18} color="#1E64AC" />
+              </View>
               <Text style={styles.gridLabel}>Money Saved</Text>
               <Text style={styles.gridValue}>{stats?.moneySaved}</Text>
             </View>
@@ -369,236 +384,39 @@ const Tobacco = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  container: {
-    padding: wp(4),
-    paddingBottom: hp(6),
-    backgroundColor: '#F8FAFC',
-  },
-  box: {
-    backgroundColor: '#F1F5F9',
-    padding: wp(4),
-    borderRadius: 12,
-    marginBottom: hp(2),
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  rowCenter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconWatch: {
-    resizeMode: 'contain',
-    width: wp(5),
-    height: hp(3),
-  },
-  iconTrophy: {
-    resizeMode: 'contain',
-    width: wp(9),
-    height: hp(3.5),
-  },
-  daysText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    marginLeft: hp(1),
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  inputRow: {
-    paddingVertical: hp(4),
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: hp(1.5),
-    flexWrap: 'wrap',
-  },
-  label: {
-    fontFamily: 'Poppins-Regular',
-    flex: 1,
-    fontSize: 15,
-    color: '#475569',
-    marginRight: wp(3),
-    letterSpacing: 0.2,
-  },
-  inputSmall: {
-    backgroundColor: '#FEE2E2',
-    borderRadius: 10,
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(1),
-    width: wp(17),
-    textAlign: 'center',
-    fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  logSubmitButton: {
-    alignSelf: 'flex-end',
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1),
-    backgroundColor: '#11418A',
-    borderRadius: 10,
-    position: 'absolute',
-    top: hp(17.5),
-    right: wp(4),
-  },
-  levelText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  quoteBox: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#11418A',
-    backgroundColor: '#FEE2E2',
-    padding: wp(4),
-    borderRadius: 12,
-    marginBottom: hp(2),
-    borderTopWidth: 1,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  quote: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 15,
-    color: '#11418A',
-    letterSpacing: 0.2,
-    fontWeight: 'bold',
-  },
-  challengeBox: {
-    backgroundColor: '#F1F5F9',
-    padding: wp(4),
-    borderRadius: 12,
-    marginBottom: hp(2),
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...(Platform.OS === 'android' && { elevation: 1 }),
-  },
-  sectionTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    color: '#11418A',
-    marginBottom: hp(1.5),
-    letterSpacing: 0.2,
-  },
-  sectionTitleAccent: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 20,
-    color: '#11418A',
-    marginBottom: hp(1),
-    letterSpacing: 0.2,
-  },
-  sectionTitleDark: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 18,
-    color: '#1E293B',
-    marginBottom: hp(1),
-    letterSpacing: 0.2,
-  },
-  challengeSubText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 18,
-    color: '#1E293B',
-    paddingVertical: hp(1),
-    marginBottom: hp(0.5),
-    letterSpacing: 0.2,
-  },
-  detailText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 16,
-    color: '#475569',
-    letterSpacing: 0.2,
-  },
-  profileBox: {
-    backgroundColor: '#E2E8F0',
-    padding: wp(4),
-    borderRadius: 12,
-    marginBottom: hp(2),
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  inputLabel: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#475569',
-    marginTop: hp(1.2),
-    marginBottom: hp(0.5),
-    letterSpacing: 0.2,
-  },
-  inputLabelSpaced: {
-    marginVertical: hp(2),
-  },
-  input: {
-    fontFamily: 'Poppins-Regular',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(1.2),
-    color: '#1E293B',
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: hp(2),
-  },
-  gridBox: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    padding: wp(4),
-    borderRadius: 12,
-    marginRight: wp(2),
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  gridIcon: {
-    resizeMode: 'contain',
-    width: wp(5),
-    height: hp(4),
-    alignSelf: 'flex-start',
-  },
-  gridLabel: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#475569',
-    paddingVertical: hp(1),
-    letterSpacing: 0.2,
-  },
-  gridValue: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 20,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  gridValueRed: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 20,
-    color: '#DC2626',
-    letterSpacing: 0.2,
-  },
-  reassessButton: {
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#11418A',
-    borderRadius: 10,
-    marginVertical: hp(2),
-    paddingVertical: hp(1.2),
-  },
-  reassessText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
+  logRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  levelPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FEF3C7', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, marginLeft: 8 },
+  iconTile: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+  boxTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  screen: { flex: 1, backgroundColor: '#F4F7FB' },
+  container: { padding: wp(4), paddingBottom: hp(6), backgroundColor: '#F4F7FB' },
+  box: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, marginBottom: hp(2), borderWidth: 1, borderColor: '#E2E8F0' },
+  rowCenter: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
+  daysText: { fontFamily: 'Poppins-SemiBold', fontSize: 15, marginLeft: 10, color: '#0F172A', flexShrink: 1 },
+  label: { fontFamily: 'Poppins-Medium', fontSize: 13, color: '#64748B', marginBottom: 8 },
+  inputSmall: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontFamily: 'Poppins-Medium', fontSize: 15, color: '#0F172A', borderWidth: 1, borderColor: '#E2E8F0' },
+  logSubmitButton: { paddingHorizontal: 20, paddingVertical: 13, backgroundColor: '#1E64AC', borderRadius: 12, minWidth: 96, alignItems: 'center' },
+  levelText: { fontFamily: 'Poppins-SemiBold', fontSize: 12, color: '#B45309' },
+  quoteBox: { flexDirection: 'row', gap: 10, backgroundColor: '#EFF6FF', padding: 16, borderRadius: 16, marginBottom: hp(2), borderWidth: 1, borderColor: '#BFDBFE' },
+  quote: { flex: 1, fontFamily: 'Poppins-Medium', fontSize: 14.5, lineHeight: 22, color: '#1E3A8A' },
+  challengeBox: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, marginBottom: hp(2), borderWidth: 1, borderColor: '#E2E8F0' },
+  sectionTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 16, color: '#0F172A', marginTop: 4, marginBottom: 12 },
+  sectionTitleAccent: { fontFamily: 'Poppins-SemiBold', fontSize: 12, color: '#1E64AC', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 },
+  sectionTitleDark: { fontFamily: 'Poppins-SemiBold', fontSize: 16, color: '#0F172A', marginBottom: 4 },
+  challengeSubText: { fontFamily: 'Poppins-SemiBold', fontSize: 16, lineHeight: 23, color: '#0F172A', marginBottom: 6 },
+  detailText: { fontFamily: 'Poppins-Regular', fontSize: 14, lineHeight: 21, color: '#475569' },
+  profileBox: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, marginBottom: hp(2), borderWidth: 1, borderColor: '#E2E8F0' },
+  inputLabel: { fontFamily: 'Poppins-Medium', fontSize: 13, color: '#64748B', marginTop: 12, marginBottom: 6 },
+  inputLabelSpaced: { marginTop: 14 },
+  input: { fontFamily: 'Poppins-Regular', backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: '#0F172A', fontSize: 15, borderWidth: 1, borderColor: '#E2E8F0' },
+  gridContainer: { flexDirection: 'row', gap: 12, marginBottom: hp(2) },
+  gridBox: { flex: 1, backgroundColor: '#FFFFFF', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  gridIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  gridLabel: { fontFamily: 'Poppins-Medium', fontSize: 12.5, lineHeight: 18, color: '#64748B', marginTop: 10, marginBottom: 4 },
+  gridValue: { fontFamily: 'Poppins-SemiBold', fontSize: 18, color: '#0F172A' },
+  gridValueRed: { fontFamily: 'Poppins-SemiBold', fontSize: 18, color: '#DC2626' },
+  reassessButton: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#1E64AC', borderRadius: 12, marginTop: 16, paddingVertical: 13 },
+  reassessText: { fontFamily: 'Poppins-SemiBold', color: '#FFFFFF', fontSize: 14 },
 });
 
 export default Tobacco;

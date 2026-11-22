@@ -1,19 +1,29 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
-  Image,
   Platform,
-  ActivityIndicator,
   BackHandler,
   KeyboardAvoidingView,
   ScrollView,
+  Pressable,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { RotateCcw } from 'lucide-react-native';
 import { useKeyboardScrollToEnd } from '../../hooks/useKeyboardScrollToEnd';
+import { hp } from '../../utilities';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { verifyOtp, sendOtp, createAccountThunk } from '../../redux/slices';
+import { setUserData } from '../../redux/Auth/slice';
+import EncryptedStorage from 'react-native-encrypted-storage';
+import Endpoints from '../../utilities/Endpoints';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
+import { Text } from '../../components/ui/Text';
+import Button from '../../components/ui/Button';
+import OtpInput from '../../components/ui/OtpInput';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { font, radius, spacing, useTheme } from '../../theme';
 
 /* iOS: a plain ScrollView that scrolls to the end when the keyboard opens (useKeyboardScrollToEnd),
  * because KeyboardAwareScrollView left the fields under the keyboard there. Android keeps
@@ -23,14 +33,6 @@ const SCROLLER_ANDROID_PROPS =
   Platform.OS === 'ios'
     ? {}
     : { enableOnAndroid: true, extraScrollHeight: hp(22) };
-import { hp, wp, Images } from '../../utilities';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import { useDispatch, useSelector } from 'react-redux';
-import { verifyOtp, sendOtp, createAccountThunk } from '../../redux/slices';
-import { setUserData } from '../../redux/Auth/slice';
-import EncryptedStorage from 'react-native-encrypted-storage';
-import Endpoints from '../../utilities/Endpoints';
-import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const OTP_LENGTH = 6;
 // Fallback only — the real validity comes from the backend's
@@ -46,6 +48,7 @@ const formatTimer = seconds => {
 };
 
 const OtpScreen = () => {
+  const t = useTheme();
   const { ref: scrollRef } = useKeyboardScrollToEnd();
   const route = useRoute();
   const navigation = useNavigation();
@@ -75,8 +78,6 @@ const OtpScreen = () => {
   const [timer, setTimer] = useState(retryAfter || OTP_VALIDITY_SECONDS);
   const [loader, setLoader] = useState(false);
 
-  const inputs = useRef([]);
-
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => {
@@ -99,87 +100,11 @@ const OtpScreen = () => {
     return () => sub.remove();
   }, [timer, navigation]);
 
-  const focusInput = i => {
-    if (i >= 0 && i < OTP_LENGTH) {
-      setTimeout(() => inputs.current[i]?.focus(), 0);
-    }
-  };
-
-  /** Digits & paste — backspace is handled in onKeyPress (reliable on Android). */
-  const handleChange = (text, index) => {
-    const digitsOnly = text.replace(/\D/g, '');
-
-    if (digitsOnly.length === 0) {
-      setOtp(prev => {
-        const next = [...prev];
-        next[index] = '';
-        return next;
-      });
-      return;
-    }
-
-    setOtp(prev => {
-      const next = [...prev];
-      if (digitsOnly.length === 1) {
-        next[index] = digitsOnly;
-        return next;
-      }
-      let j = index;
-      for (let k = 0; k < digitsOnly.length && j < OTP_LENGTH; k++, j++) {
-        next[j] = digitsOnly[k];
-      }
-      return next;
-    });
-
-    if (digitsOnly.length === 1) {
-      if (index < OTP_LENGTH - 1) {
-        focusInput(index + 1);
-      }
-    } else {
-      const end = Math.min(index + digitsOnly.length - 1, OTP_LENGTH - 1);
-      focusInput(end);
-    }
-  };
-
-  const handleKeyPress = (e, index) => {
-    if (e.nativeEvent.key !== 'Backspace') return;
-
-    let focusPrevious = false;
-    setOtp(prev => {
-      const next = [...prev];
-      if (prev[index] !== '') {
-        next[index] = '';
-        return next;
-      }
-      if (index > 0) {
-        next[index - 1] = '';
-        focusPrevious = true;
-      }
-      return next;
-    });
-    if (focusPrevious) {
-      focusInput(index - 1);
-    }
-  };
-
-  /** iOS number-pad has no ⌫ — use this to fix typos without tapping the cell */
-  const removeLastFilledDigit = () => {
-    let focusIndex = -1;
-    setOtp(prev => {
-      const next = [...prev];
-      for (let i = OTP_LENGTH - 1; i >= 0; i--) {
-        if (next[i] !== '') {
-          next[i] = '';
-          focusIndex = i;
-          return next;
-        }
-      }
-      return prev;
-    });
-    if (focusIndex >= 0) {
-      focusInput(focusIndex);
-    }
-  };
+  // One hidden input drives the boxes (components/ui/OtpInput): typing, paste, SMS autofill and
+  // backspace all work there, so the old per-box focus juggling and "Remove last digit" are gone.
+  const otpValue = otp.join('');
+  const onOtpChange = v =>
+    setOtp(Array.from({ length: OTP_LENGTH }, (_, i) => v[i] || ''));
 
   const handleVerifyOtp = async () => {
     try {
@@ -365,246 +290,113 @@ const OtpScreen = () => {
     }
   };
 
+  const validityLabel =
+    otpValidity >= 60
+      ? `${Math.round(otpValidity / 60)} minute${otpValidity >= 120 ? 's' : ''}`
+      : `${otpValidity} seconds`;
+
   return (
-    /* Scrollable with the keypad open, so Submit can be reached without closing it first. When
+    /* Scrollable with the keypad open, so Verify can be reached without closing it first. When
        the keypad opens the screen scrolls to the end (useKeyboardScrollToEnd), which keeps the OTP
-       boxes, Submit and Resend above it; "handled" lets the first tap on Submit press it rather
+       boxes, Verify and Resend above it; "handled" lets the first tap on Verify press it rather
        than only dismissing the keyboard. */
     <KeyboardAvoidingView
-      style={styles.scroll}
+      style={[styles.root, { backgroundColor: t.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Scroller
         {...SCROLLER_ANDROID_PROPS}
         ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={styles.container}
+        style={styles.root}
+        contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        // The hero paints under the status bar itself; no automatic top inset.
+        contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
       >
         {AlertComponent}
-        <TouchableOpacity
-          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          style={[styles.backArrow, timer > 0 && { opacity: 0.4 }]}
-          disabled={timer > 0}
-          onPress={() => navigation.goBack()}
-        >
-          <Image
-            source={Images.BACK_BUTTON}
-            style={{
-              resizeMode: 'contain',
-              height: hp(3.5),
-              width: wp(4),
-              tintColor: '#1E293B',
-            }}
-          />
-        </TouchableOpacity>
+        {/* Back stays hidden while the resend timer runs, the same rule as the gesture and
+            hardware back above. */}
+        <HeroHeader
+          title="Verify your number"
+          subtitle={`Enter the ${OTP_LENGTH}-digit code sent to +91 ${phone}`}
+          onBack={timer > 0 ? undefined : () => navigation.goBack()}
+          bottom={56}
+        />
 
-        <Text style={styles.title}>OTP Verification</Text>
+        <View style={styles.formWrap}>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: t.surface, borderColor: t.border },
+            ]}
+          >
+            <OtpInput
+              value={otpValue}
+              onChange={onOtpChange}
+              length={OTP_LENGTH}
+            />
 
-        <View style={styles.otpContainer}>
-          {otp.map((digit, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.otpCellOuter}
-              activeOpacity={0.85}
-              onPress={() => focusInput(index)}
+            <Text style={[font.small, styles.validity, { color: t.textMuted }]}>
+              The code is valid for {validityLabel}.
+            </Text>
+
+            <Button
+              label="Verify and continue"
+              onPress={handleVerifyOtp}
+              loading={loading}
+              disabled={otpValue.length !== OTP_LENGTH}
+              style={{ marginTop: spacing.xl }}
+            />
+
+            <Pressable
+              onPress={handleResendOtp}
+              disabled={timer > 0 || loader}
+              style={styles.resend}
+              accessibilityRole="button"
             >
-              <TextInput
-                ref={ref => {
-                  inputs.current[index] = ref;
-                }}
-                style={styles.otpInput}
-                pointerEvents="none"
-                keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
-                value={digit}
-                onChangeText={text => handleChange(text, index)}
-                onKeyPress={e => handleKeyPress(e, index)}
-                textContentType="none"
-                autoComplete="off"
-                importantForAutofill="no"
-                blurOnSubmit={false}
-                selectTextOnFocus
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <TouchableOpacity
-          onPress={removeLastFilledDigit}
-          style={styles.removeLastRow}
-          hitSlop={{ top: 10, bottom: 10 }}
-        >
-          <Text style={styles.removeLastText}>⌫ Remove last digit</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.subtitle}>
-          OTP sent to your phone number. Valid for{' '}
-          {otpValidity >= 60
-            ? `${Math.round(otpValidity / 60)} minute${
-                otpValidity >= 120 ? 's' : ''
-              }`
-            : `${otpValidity} seconds`}
-          .{'\n'}
-          {/* <Text style={styles.subtitleHint}>
-          Tap a box to edit that digit. On iPhone, use Remove last digit (the
-          number pad has no backspace key).
-        </Text> */}
-        </Text>
-
-        <TouchableOpacity
-          onPress={handleVerifyOtp}
-          style={styles.submitButton}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitText}>Submit</Text>
-          )}
-        </TouchableOpacity>
-
-        <Text style={styles.timerText}>
-          {timer > 0
-            ? `You can resend a new code in ${formatTimer(timer)}`
-            : "Didn't receive the code?"}
-        </Text>
-
-        <TouchableOpacity
-          onPress={handleResendOtp}
-          disabled={timer > 0 || loader}
-        >
-          <View style={[styles.resendContainer, timer > 0 && { opacity: 0.4 }]}>
-            {loader ? (
-              <ActivityIndicator color="#11418A" />
-            ) : (
-              <>
-                <Image
-                  source={Images.SHARE}
-                  style={{
-                    resizeMode: 'contain',
-                    height: hp(2),
-                    width: wp(4),
-                  }}
-                />
-                <Text style={styles.resendText}> Resend OTP</Text>
-              </>
-            )}
+              {timer > 0 ? (
+                <Text style={[font.small, { color: t.textMuted }]}>
+                  Resend code in {formatTimer(timer)}
+                </Text>
+              ) : (
+                <View style={styles.resendRow}>
+                  <RotateCcw size={15} color={t.brand} />
+                  <Text
+                    style={[
+                      font.small,
+                      { color: t.brand, fontWeight: '700', marginLeft: 6 },
+                    ]}
+                  >
+                    {loader ? 'Sending...' : 'Resend code'}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
           </View>
-        </TouchableOpacity>
+        </View>
       </Scroller>
     </KeyboardAvoidingView>
   );
 };
 
-const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#FFFFFF' },
-  container: {
-    flexGrow: 1,
-    paddingBottom: hp(4),
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: wp(6),
-    paddingTop: hp(3),
-  },
-  backArrow: {
-    marginTop: Platform.OS === 'ios' ? hp(2) : hp(1),
-    marginBottom: hp(3),
-    padding: hp(0.5),
-  },
-  title: {
-    marginTop: hp(7),
-    fontSize: 24,
-    fontFamily: 'Poppins-Medium',
-    textAlign: 'center',
-    marginBottom: hp(3),
-    color: '#1E293B',
-    letterSpacing: -0.3,
-  },
-  otpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: hp(1),
-    gap: wp(2),
-  },
-  otpCellOuter: {
-    flex: 1,
-    maxWidth: wp(14),
-  },
-  otpInput: {
-    width: '100%',
-    height: wp(14),
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    textAlign: 'center',
-    fontSize: 22,
-    fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
-    backgroundColor: '#F8FAFC',
-    letterSpacing: 2,
-  },
-  removeLastRow: {
-    alignSelf: 'center',
-    paddingVertical: hp(1),
-    marginBottom: hp(1.5),
-  },
-  removeLastText: {
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 14,
-    color: '#11418A',
-    letterSpacing: 0.2,
-  },
-  subtitle: {
-    fontFamily: 'Poppins-Regular',
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: hp(3),
-    lineHeight: 20,
-    letterSpacing: 0.2,
-  },
-  subtitleHint: {
-    fontSize: 12,
-    color: '#94A3B8',
-    lineHeight: 18,
-  },
-  submitButton: {
-    backgroundColor: '#11418A',
-    paddingVertical: hp(2),
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: hp(2),
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  submitText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Poppins-Medium',
-    letterSpacing: 0.5,
-  },
-  timerText: {
-    fontFamily: 'Poppins-Regular',
-    textAlign: 'center',
-    fontSize: 13,
-    color: '#64748B',
-    marginBottom: hp(1),
-    letterSpacing: 0.2,
-  },
-  resendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: hp(1),
-  },
-  resendText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#11418A',
-    fontSize: 15,
-    letterSpacing: 0.3,
-  },
-});
-
 export default OtpScreen;
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  content: { flexGrow: 1, paddingBottom: spacing.xxl },
+  formWrap: { paddingHorizontal: spacing.lg, marginTop: -36 },
+  card: {
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    padding: spacing.xl,
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
+  },
+  validity: { textAlign: 'center', marginTop: spacing.lg },
+  resend: { marginTop: spacing.lg, alignItems: 'center', paddingVertical: 4 },
+  resendRow: { flexDirection: 'row', alignItems: 'center' },
+});

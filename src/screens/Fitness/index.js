@@ -6,26 +6,22 @@ import {
   FlatList,
   Platform,
   StyleSheet,
-  Image,
   ScrollView,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { hp, wp, Images } from '../../utilities';
+import { hp, wp } from '../../utilities';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateFitnessTime, getFitness } from '../../redux/slices';
 import ToastMessage from '../../components/Toast';
 import ApiError from '../../components/ApiError';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
+import { Clock, Check, Dumbbell } from 'lucide-react-native';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const FitnessSkeleton = () => (
-  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
-    {/* Header */}
-    <View style={{ backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', paddingHorizontal: wp(2), paddingVertical: hp(1.5) }}>
-      <SkeletonBox width={44} height={28} borderRadius={6} />
-      <SkeletonBox width={130} height={22} style={{ flex: 1, alignSelf: 'center', marginHorizontal: 8 }} />
-      <SkeletonBox width={44} height={28} borderRadius={6} />
-    </View>
+const FitnessSkeleton = ({ onBack }) => (
+  <View style={{ flex: 1, backgroundColor: '#F4F7FB' }}>
+    <HeroHeader title="Cuore Fitness" subtitle="Your weekly workout plan." onBack={onBack} />
     <View style={{ flex: 1, padding: wp(4), gap: hp(2) }}>
       {/* Time card */}
       <View style={{ backgroundColor: '#FFF', padding: wp(4), borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: hp(1.5) }}>
@@ -51,7 +47,7 @@ const FitnessSkeleton = () => (
         </View>
       ))}
     </View>
-  </SafeAreaView>
+  </View>
 );
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -81,7 +77,9 @@ const WorkoutCard = React.memo(({ item, navigation }) => {
       activeOpacity={0.7}
     >
       <View style={styles.cardHeader}>
-        <Image style={styles.coinIcon} source={Images.COIN} />
+        <View style={styles.coinTile}>
+          <Dumbbell size={16} color="#1E64AC" />
+        </View>
         <Text style={styles.cardTitle}>{item?.title}</Text>
       </View>
       <View style={styles.cardDetails}>
@@ -93,6 +91,7 @@ const WorkoutCard = React.memo(({ item, navigation }) => {
 });
 
 const Fitness = ({ navigation, route }) => {
+  useLightStatusBar();
   const todayWorkoutDay = route?.params?.initialTab;
   const [selectedDay, setSelectedDay] = useState(todayWorkoutDay || days[0]);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -178,7 +177,7 @@ const Fitness = ({ navigation, route }) => {
   const fitnessLoading = useSelector(state => state.fitness.loading);
 
   if (fitnessLoading && !data) {
-    return <FitnessSkeleton />;
+    return <FitnessSkeleton onBack={handleGoBack} />;
   }
 
   if (!fitnessData) {
@@ -191,7 +190,7 @@ const Fitness = ({ navigation, route }) => {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <View style={styles.safeArea}>
       {toast && (
         <ToastMessage
           top={hp(8)}
@@ -201,27 +200,20 @@ const Fitness = ({ navigation, route }) => {
         />
       )}
 
-      {/* Header */}
-      <View style={styles.headerContainer}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            style={styles.backButton}
-            onPress={handleGoBack}
-          >
-            <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
-          </TouchableOpacity>
-          <Text style={styles.title} numberOfLines={1}>Cuore Fitness</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-      </View>
+      <HeroHeader
+        title="Cuore Fitness"
+        subtitle="Your weekly workout plan."
+        onBack={handleGoBack}
+      />
 
       {/* Main Content */}
       <View style={styles.content}>
         {/* Time Update Card */}
         <View style={styles.timeCard}>
           <View style={styles.timeCardHeader}>
-            <Image style={styles.watchIcon} source={Images.WATCH} />
+            <View style={styles.watchTile}>
+              <Clock size={18} color="#1E64AC" />
+            </View>
             <Text style={styles.timeCardTitle}>
               Update Preferred Exercise Time
             </Text>
@@ -236,7 +228,7 @@ const Fitness = ({ navigation, route }) => {
             onPress={handleShowTimePicker}
           >
             <Text style={styles.timeText}>{formattedTime}</Text>
-            <Image style={styles.timeWatchIcon} source={Images.WATCH} />
+            <Clock size={18} color="#1E64AC" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -247,7 +239,8 @@ const Fitness = ({ navigation, route }) => {
               role === 'caregiver' && styles.updateBtnDisabled,
             ]}
           >
-            <Text style={styles.updateBtnText}>✓ Update Time</Text>
+            <Check size={16} color="#FFFFFF" strokeWidth={2.5} />
+            <Text style={styles.updateBtnText}>Update Time</Text>
           </TouchableOpacity>
 
           {showTimePicker && (
@@ -313,15 +306,14 @@ const Fitness = ({ navigation, route }) => {
           windowSize={10}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
+  coinTile: { width: 30, height: 30, borderRadius: 9, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+  watchTile: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+  safeArea: { flex: 1, backgroundColor: '#F4F7FB' },
   headerContainer: {
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
@@ -356,24 +348,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   headerSpacer: { width: 44 },
-  content: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    padding: wp(4),
-  },
-  timeCard: {
-    backgroundColor: '#FFFFFF',
-    padding: wp(4),
-    borderRadius: 12,
-    marginBottom: hp(2),
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    ...(Platform.OS === 'android' && { elevation: 1 }),
-  },
+  content: { flex: 1, backgroundColor: '#F4F7FB', paddingHorizontal: wp(4), paddingTop: hp(2) },
+  timeCard: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, marginBottom: hp(2), borderWidth: 1, borderColor: '#E2E8F0' },
   timeCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -382,134 +358,34 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     height: hp(2.5),
     width: wp(5),
-    tintColor: '#11418A',
+    tintColor: '#1E64AC',
   },
-  timeCardTitle: {
-    fontFamily: 'Poppins-Medium',
-    marginLeft: hp(1),
-    fontSize: 18,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  timeCardSubtitle: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#64748B',
-    marginTop: 4,
-    letterSpacing: 0.2,
-  },
-  timeButton: {
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: hp(1),
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(4),
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-  },
-  timeText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: wp(4),
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
+  timeCardTitle: { fontFamily: 'Poppins-SemiBold', marginLeft: 10, fontSize: 15, color: '#0F172A', flex: 1 },
+  timeCardSubtitle: { fontFamily: 'Poppins-Regular', fontSize: 13, color: '#64748B', marginTop: 8 },
+  timeButton: { justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', marginTop: 10, paddingVertical: 12, paddingHorizontal: 14, width: '100%', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, backgroundColor: '#FFFFFF' },
+  timeText: { fontFamily: 'Poppins-Regular', fontSize: 15, color: '#0F172A' },
   timeWatchIcon: {
     resizeMode: 'contain',
     height: hp(2),
     width: wp(5),
     tintColor: '#64748B',
   },
-  updateBtn: {
-    marginTop: hp(1.5),
-    backgroundColor: '#11418A',
-    paddingVertical: hp(1.2),
-    alignItems: 'center',
-    borderRadius: 10,
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    ...(Platform.OS === 'android' && { elevation: 2 }),
-  },
+  updateBtn: { marginTop: 12, backgroundColor: '#1E64AC', paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12 },
   updateBtnDisabled: {
     opacity: 0.5,
   },
-  updateBtnText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    fontSize: 14,
-    letterSpacing: 0.3,
-  },
-  datePickerContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    marginTop: hp(1),
-    padding: wp(2),
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  innerShadowContainer: {
-    backgroundColor: '#FFFFFF',
-    marginBottom: hp(1),
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    overflow: 'hidden',
-    ...(Platform.OS === 'android' && { elevation: 0.5 }),
-  },
+  updateBtnText: { fontFamily: 'Poppins-SemiBold', color: '#FFFFFF', fontSize: 14 },
+  datePickerContainer: { backgroundColor: '#FFFFFF', borderRadius: 12, marginTop: 10, padding: 8, borderWidth: 1, borderColor: '#E2E8F0' },
+  innerShadowContainer: { marginBottom: hp(1) },
   dayTabsScroll: {
     flexGrow: 0,
   },
-  dayTabsScrollContent: {
-    paddingHorizontal: wp(2),
-    paddingVertical: hp(0.6),
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dayBtn: {
-    minWidth: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: hp(0.8),
-    paddingHorizontal: wp(2.5),
-    borderRadius: 20,
-    marginRight: 8,
-  },
-  selectedDayBtn: {
-    backgroundColor: '#E8EEF7',
-  },
-  dayText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 16,
-    color: '#11418A',
-    letterSpacing: 0.2,
-  },
-  selectedDayText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
-    fontSize: 16,
-    letterSpacing: 0.2,
-  },
-  card: {
-    padding: wp(4),
-    marginVertical: hp(0.8),
-    borderLeftWidth: 4,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderRightWidth: 1,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    ...(Platform.OS === 'android' && { elevation: 1 }),
-  },
+  dayTabsScrollContent: { paddingVertical: 2, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  dayBtn: { minWidth: 48, alignItems: 'center', justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
+  selectedDayBtn: { backgroundColor: '#1E64AC', borderColor: '#1E64AC' },
+  dayText: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#334155' },
+  selectedDayText: { fontFamily: 'Poppins-SemiBold', color: '#FFFFFF', fontSize: 14 },
+  card: { padding: 14, marginVertical: 6, borderLeftWidth: 4, borderRadius: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -518,26 +394,11 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     height: hp(2),
     width: wp(4),
-    tintColor: '#11418A',
+    tintColor: '#1E64AC',
   },
-  cardTitle: {
-    fontFamily: 'Poppins-Medium',
-    marginLeft: hp(1),
-    fontSize: 14,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  cardDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: hp(0.7),
-  },
-  detailText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#64748B',
-    letterSpacing: 0.2,
-  },
+  cardTitle: { fontFamily: 'Poppins-SemiBold', marginLeft: 10, fontSize: 14.5, color: '#0F172A', flex: 1 },
+  cardDetails: { flexDirection: 'row', gap: 16, marginTop: 10, marginLeft: 40 },
+  detailText: { fontFamily: 'Poppins-Medium', fontSize: 13, color: '#64748B' },
   listContent: {
     paddingBottom: hp(8),
   },

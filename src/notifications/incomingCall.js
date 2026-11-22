@@ -100,7 +100,7 @@ export async function displayIncomingCallNotification(data = {}) {
       importance: AndroidImportance.HIGH,
       visibility: AndroidVisibility.PUBLIC, // show content on the lock screen
       smallIcon: 'ic_launcher',
-      color: '#11418A',
+      color: '#1E64AC',
       ongoing: true, // not swipeable — it is a call, answer or decline it
       autoCancel: false,
       onlyAlertOnce: false,

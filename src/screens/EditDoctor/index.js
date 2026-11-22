@@ -6,16 +6,17 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Platform,
-  Image,
 } from 'react-native';
-import { hp, wp, Images } from '../../utilities';
-import ProfileHeader from '../../components/ProfileHeader';
+import { Pencil, Phone, UserRound, Hash, Stethoscope, Search } from 'lucide-react-native';
+import { hp, wp } from '../../utilities';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateProfile } from '../../redux/slices';
 import ToastMessage from '../../components/Toast';
 
 const EditDoctor = ({ navigation }) => {
+  useLightStatusBar();
   const [doctorName, setDoctorName] = useState('');
   const [doctorMobile, setDoctorMobile] = useState('+91');
   const [doctorCode, setDoctorCode] = useState('');
@@ -140,216 +141,206 @@ const EditDoctor = ({ navigation }) => {
     setIsEditing(false);
   };
 
-  const renderInputField = (
-    label,
-    value,
-    onChangeText,
-    keyboardType = 'default',
-  ) => (
+  const canEdit = role !== 'caregiver';
+
+  const renderInputField = (label, value, onChangeText, Icon, keyboardType = 'default') => (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.inputWrapper}>
+      <View style={[styles.inputRow, !isEditing && styles.inputRowOff]}>
+        <Icon size={18} color="#94A3B8" />
         <TextInput
-          style={styles.input}
+          style={[styles.input, !isEditing && styles.inputOff]}
           value={value}
           onChangeText={onChangeText}
           editable={isEditing}
           keyboardType={keyboardType}
           placeholder={label}
+          placeholderTextColor="#94A3B8"
         />
       </View>
     </View>
   );
 
   return (
-    <ScrollView style={styles.scroll}>
-      <View style={styles.screen}>
-        <ProfileHeader navigation={navigation} title="Add/Edit Doctor" />
-
-        {toastMessage && (
-          <ToastMessage
-            message={toastMessage}
-            type={toastType}
-            onHide={() => setToastMessage('')}
-            top={60}
-          />
-        )}
-
-        <View style={styles.container}>
-          {!isEditing && (
+    <View style={styles.screen}>
+      <HeroHeader
+        title="Your Doctor"
+        subtitle="Link the doctor who looks after you"
+        onBack={() => navigation.goBack()}
+        right={
+          !isEditing && canEdit ? (
             <TouchableOpacity
-              disabled={role === 'caregiver'}
-              style={styles.editButtonWrap}
               onPress={() => setIsEditing(true)}
+              style={styles.heroBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Edit doctor"
             >
-              <Image source={Images.EDIT} style={styles.editIcon} />
+              <Pencil size={18} color="#FFFFFF" />
             </TouchableOpacity>
-          )}
+          ) : null
+        }
+      />
 
-          {renderInputField(
-            'Doctor Name',
-            doctorName,
-            handleNameChange,
-            'default',
-          )}
-          {renderInputField(
-            'Doctor Mobile',
-            doctorMobile,
-            handleMobileChange,
-            'phone-pad',
-          )}
-          {renderInputField(
-            'Doctor Code',
-            doctorCode,
-            handleCodeChange,
-            'default',
-          )}
+      {toastMessage ? (
+        <ToastMessage
+          message={toastMessage}
+          type={toastType}
+          onHide={() => setToastMessage('')}
+          top={60}
+        />
+      ) : null}
 
-          <View style={styles.buttonRow}>
-            {isEditing && (
-              <>
-                <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                  <Text style={styles.saveText}>Save</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.cancelBtn}
-                  onPress={handleCancel}
-                >
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
-              </>
-            )}
+      <ScrollView
+        contentContainerStyle={styles.body}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.tile}>
+              <Stethoscope size={20} color="#1E64AC" />
+            </View>
+            <View style={styles.cardHeadText}>
+              <Text style={styles.cardTitle}>Doctor details</Text>
+              <Text style={styles.cardSub}>
+                {isEditing ? 'Update and save the details' : 'Tap the pencil to edit'}
+              </Text>
+            </View>
           </View>
 
+          {renderInputField('Doctor Name', doctorName, handleNameChange, UserRound)}
+          {renderInputField('Doctor Mobile', doctorMobile, handleMobileChange, Phone, 'phone-pad')}
+          {renderInputField('Doctor Code', doctorCode, handleCodeChange, Hash)}
+
+          {isEditing && (
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+                <Text style={styles.saveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        <View style={[styles.card, styles.findCard]}>
           <Text style={styles.noteText}>
             I do not have a Cuore-partnered doctor
           </Text>
           <TouchableOpacity
-            disabled={role === 'caregiver'}
-            onPressIn={() => navigation.navigate('Doctor')}
-            style={styles.findBtn}
+            disabled={!canEdit}
+            onPress={() => navigation.navigate('Doctor')}
+            style={[styles.findBtn, !canEdit && styles.findBtnOff]}
+            activeOpacity={0.85}
+            accessibilityRole="button"
           >
+            <Search size={18} color="#1E64AC" />
             <Text style={styles.findText}>Find Cuore-Partnered Doctors</Text>
           </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  screen: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  container: {
-    padding: wp(5),
-    // minHeight: hp(80),
-    margin: wp(4),
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+  screen: { flex: 1, backgroundColor: '#F4F7FB' },
+  body: { padding: wp(4), gap: hp(2), paddingBottom: hp(6) },
+  heroBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.16)',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...(Platform.OS === 'android' && { elevation: 1 }),
-  },
-  editButtonWrap: {
-    marginBottom: hp(2),
-    alignSelf: 'flex-end',
-  },
-  editIcon: {
-    width: wp(5),
-    height: wp(5),
-    resizeMode: 'contain',
-  },
-  inputGroup: {
-    marginBottom: hp(2),
-  },
-  label: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#475569',
-    marginBottom: hp(0.5),
-    letterSpacing: 0.2,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingHorizontal: wp(3),
-    paddingVertical: Platform.OS === 'ios' ? hp(1) : hp(0.5),
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  input: {
-    flex: 1,
-    fontFamily: 'Poppins-Regular',
-    fontSize: 16,
-    color: '#1E293B',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: hp(3),
-  },
-  saveBtn: {
-    alignItems: 'center',
-    backgroundColor: '#11418A',
-    paddingVertical: hp(1.5),
-    width: wp(40),
-    borderRadius: 10,
-  },
-  saveText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
-  cancelBtn: {
-    backgroundColor: '#FFFFFF',
-    width: wp(40),
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingVertical: hp(1.5),
-    borderRadius: 10,
-  },
-  cancelText: {
-    fontFamily: 'Poppins-Regular',
-    color: '#475569',
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
-  noteText: {
-    alignSelf: 'center',
-    fontFamily: 'Poppins-Regular',
-    color: '#64748B',
-    fontSize: 15,
-    fontStyle: 'italic',
-    // marginTop: hp(24),
-    letterSpacing: 0.2,
-  },
-  findBtn: {
-    backgroundColor: '#11418A',
-    padding: hp(1.5),
-    marginHorizontal: hp(6),
-    borderRadius: 10,
-    marginTop: hp(1),
+    borderColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  findText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    fontSize: 14,
-    alignSelf: 'center',
-    textAlign: 'center',
-    letterSpacing: 0.2,
+  card: {
+    padding: wp(5),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
+  cardHead: { flexDirection: 'row', alignItems: 'center', marginBottom: hp(2.5) },
+  tile: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardHeadText: { flex: 1, marginLeft: wp(3.5) },
+  cardTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 16, color: '#0F172A' },
+  cardSub: { fontFamily: 'Poppins-Regular', fontSize: 13, color: '#64748B' },
+  inputGroup: { marginBottom: hp(2) },
+  label: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: hp(0.8),
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    paddingHorizontal: wp(3.5),
+    height: hp(6),
+    backgroundColor: '#FFFFFF',
+  },
+  inputRowOff: { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' },
+  input: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 15,
+    color: '#0F172A',
+    marginLeft: wp(2.5),
+    paddingVertical: 0,
+  },
+  inputOff: { color: '#64748B' },
+  buttonRow: { flexDirection: 'row', gap: wp(3), marginTop: hp(1) },
+  saveBtn: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: '#1E64AC',
+    paddingVertical: hp(1.6),
+    borderRadius: 999,
+  },
+  saveText: { fontFamily: 'Poppins-SemiBold', color: '#FFFFFF', fontSize: 15 },
+  cancelBtn: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: hp(1.6),
+    borderRadius: 999,
+  },
+  cancelText: { fontFamily: 'Poppins-Medium', color: '#0F172A', fontSize: 15 },
+  findCard: { alignItems: 'center' },
+  noteText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+  },
+  findBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    alignSelf: 'stretch',
+    marginTop: hp(1.5),
+    paddingVertical: hp(1.6),
+    borderRadius: 999,
+    backgroundColor: '#DBEAFE',
+  },
+  findBtnOff: { opacity: 0.5 },
+  findText: { fontFamily: 'Poppins-SemiBold', fontSize: 14.5, color: '#1E64AC' },
 });
 
 export default EditDoctor;

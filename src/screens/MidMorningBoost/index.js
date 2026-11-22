@@ -147,14 +147,14 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(1),
     paddingHorizontal: wp(5),
     borderRadius: 20,
     ...Platform.select({
       android: { elevation: 2 },
       ios: {
-        shadowColor: '#11418A',
+        shadowColor: '#1E64AC',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 4,

@@ -15,27 +15,27 @@
 // it ends the session rather than going anywhere, so it sits on its own at the bottom.
 // -----------------------------------------------------------------------------
 import React, { useCallback } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { View, Image, StyleSheet, Pressable, ScrollView } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DrawerActions } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import { CalendarDays, FileText, LogOut, Pill } from 'lucide-react-native';
+import {
+  CalendarDays,
+  ChevronRight,
+  FileText,
+  LogOut,
+  Pill,
+} from 'lucide-react-native';
 
 import images from '../utilities/Images';
-import { hp } from '../utilities';
 import { navigationRef } from './navigationRef';
 import { logoutUser } from '../redux/Auth/authThunk';
 import { teardownCalls } from '../call/callManager';
 import { useCustomAlert } from '../hooks/useCustomAlert';
-
-const BRAND = '#11418A';
+import { Text } from '../components/ui/Text';
+import HeroDiscs from '../components/ui/HeroDiscs';
+import { font, radius, spacing, useTheme } from '../theme';
 
 const DRAWER_ITEMS = [
   {
@@ -67,6 +67,7 @@ const DRAWER_ITEMS = [
 ];
 
 export default function AppDrawerContent({ navigation, state }) {
+  const t = useTheme();
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
@@ -140,59 +141,91 @@ export default function AppDrawerContent({ navigation, state }) {
   })();
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      <TouchableOpacity
-        style={styles.profileRow}
-        activeOpacity={0.8}
+    <View style={[styles.root, { backgroundColor: t.bg }]}>
+      {/* Header: the same blue gradient hero as the rest of the restyled app. */}
+      <Pressable
         onPress={() => go({ tab: 'Profile', screen: 'ProfileMain' })}
+        accessibilityRole="button"
+        accessibilityLabel="View profile"
+        style={[styles.header, { paddingTop: insets.top + spacing.xl }]}
       >
+        <LinearGradient
+          colors={[t.brandDark, t.brand]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <HeroDiscs />
         <Image
           source={photo ? { uri: photo } : images.PROFILE}
           style={styles.avatar}
         />
-        <View style={styles.profileText}>
-          <Text style={styles.name} numberOfLines={1}>
-            {name}
-          </Text>
-          <Text style={styles.subtle} numberOfLines={1}>
-            View profile
-          </Text>
+        <Text style={[font.h3, styles.name]} numberOfLines={1}>
+          {name}
+        </Text>
+        <View style={styles.viewProfile}>
+          <Text style={[font.small, styles.viewProfileText]}>View profile</Text>
+          <ChevronRight size={14} color="rgba(255,255,255,0.85)" />
         </View>
-      </TouchableOpacity>
+      </Pressable>
 
       <ScrollView
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={[font.small, styles.section, { color: t.textMuted }]}>
+          MENU
+        </Text>
         {DRAWER_ITEMS.filter(i => !i.cuoreCare || cuoreCareActive).map(item => {
           const Icon = item.icon;
           const current = !item.screen && item.tab === activeTab;
           return (
-            <TouchableOpacity
+            <Pressable
               key={item.key}
-              style={[styles.item, current && styles.itemActive]}
-              activeOpacity={0.7}
               onPress={() => go(item)}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.item,
+                {
+                  backgroundColor: current ? t.brandSoft : t.surface,
+                  borderColor: t.border,
+                  opacity: pressed ? 0.75 : 1,
+                },
+              ]}
             >
-              <Icon size={hp(2.2)} color={current ? BRAND : '#475569'} />
-              <Text style={[styles.itemLabel, current && styles.itemLabelActive]}>
+              <View style={[styles.iconTile, { backgroundColor: t.brandSoft }]}>
+                <Icon size={18} color={t.brand} />
+              </View>
+              <Text
+                style={[
+                  font.bodyStrong,
+                  styles.itemLabel,
+                  { color: current ? t.brand : t.text },
+                ]}
+              >
                 {item.label}
               </Text>
-            </TouchableOpacity>
+              <ChevronRight size={18} color={t.textMuted} />
+            </Pressable>
           );
         })}
       </ScrollView>
 
       {/* Pinned to the bottom, away from the navigation items: it is the one row here that
           does something irreversible rather than taking you somewhere. */}
-      <TouchableOpacity
-        style={[styles.logout, { paddingBottom: insets.bottom + 14 }]}
-        activeOpacity={0.7}
-        onPress={onLogout}
-      >
-        <LogOut size={hp(2.2)} color="#DC2626" />
-        <Text style={styles.logoutLabel}>Logout</Text>
-      </TouchableOpacity>
+      <View style={{ paddingBottom: insets.bottom + spacing.lg, paddingHorizontal: spacing.lg }}>
+        <Pressable
+          onPress={onLogout}
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            styles.logout,
+            { backgroundColor: t.dangerSoft, opacity: pressed ? 0.75 : 1 },
+          ]}
+        >
+          <LogOut size={18} color={t.danger} />
+          <Text style={[font.bodyStrong, { color: t.danger }]}>Log out</Text>
+        </Pressable>
+      </View>
 
       {AlertComponent}
     </View>
@@ -200,38 +233,49 @@ export default function AppDrawerContent({ navigation, state }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FFFFFF' },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+  root: { flex: 1 },
+  header: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
+    overflow: 'hidden',
+    borderBottomRightRadius: radius.xl,
   },
-  avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#E2E8F0' },
-  profileText: { flex: 1, marginLeft: 12 },
-  name: { fontSize: 16, fontWeight: '600', color: '#0F172A' },
-  subtle: { fontSize: 12, color: '#64748B', marginTop: 2 },
-  list: { paddingTop: 10 },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#E2E8F0',
+  },
+  name: { color: '#fff', marginTop: spacing.md },
+  viewProfile: { flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 2 },
+  viewProfileText: { color: 'rgba(255,255,255,0.85)' },
+  list: { padding: spacing.lg, gap: spacing.sm },
+  section: { fontWeight: '700', letterSpacing: 0.8, marginBottom: spacing.xs, marginLeft: spacing.xs },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    gap: 14,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    gap: spacing.md,
   },
-  itemActive: { backgroundColor: '#EEF3FC' },
-  itemLabel: { fontSize: 15, color: '#334155' },
-  itemLabelActive: { color: BRAND, fontWeight: '600' },
+  iconTile: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemLabel: { flex: 1 },
   logout: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: 18,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    height: 50,
+    borderRadius: radius.md,
   },
-  logoutLabel: { fontSize: 15, color: '#DC2626', fontWeight: '600' },
 });

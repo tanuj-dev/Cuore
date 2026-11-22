@@ -26,7 +26,7 @@ const ToastMessage = ({ message, type = 'info', onHide, top }) => {
   }, [slideAnim, onHide]);
 
   const backgroundColor =
-    type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#11418A';
+    type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#1E64AC';
 
   return (
     <Animated.View

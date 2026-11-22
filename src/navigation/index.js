@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Image, Platform } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   SafeAreaView,
@@ -63,7 +64,14 @@ import { ExploreStack } from './ExploreStack';
 import { CuoreCareStack } from './CuoreCareStack';
 import CuoreCareConsultation from '../screens/CuoreCare/Consultation';
 import CuoreCareIncomingCall from '../screens/CuoreCare/IncomingCall';
-import { Stethoscope } from 'lucide-react-native';
+import {
+  Compass,
+  House,
+  NotebookPen,
+  Stethoscope,
+  TrendingUp,
+} from 'lucide-react-native';
+import { useTheme } from '../theme';
 import { getCuoreCareStatus, getCuoreCareAccess } from '../redux/CuoreCare/thunks';
 import { hydrateCuoreCareAccess } from '../redux/CuoreCare/slice';
 import { loadCachedAccess } from '../utilities/cuoreCareAccessCache';
@@ -73,6 +81,7 @@ const Tab = createBottomTabNavigator();
 
 /* -------------------- BOTTOM TABS -------------------- */
 function BottomTabNavigator() {
+  const t = useTheme();
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
 
@@ -114,70 +123,61 @@ function BottomTabNavigator() {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: 'white' }}
+      style={{ flex: 1, backgroundColor: t.bg }}
       edges={['bottom']}
     >
+      {/* CuoreMD's floating rounded bar, kept in the layout rather than absolutely positioned
+          so it never covers the bottom of a screen that has not been restyled yet. */}
       <Tab.Navigator
+        screenLayout={tabScreenLayout}
         screenOptions={{
           headerShown: false,
-          tabBarStyle: {
-            height: 50,
-            marginBottom: Platform.OS === 'ios' ? 0 : 0,
+          tabBarActiveTintColor: t.brand,
+          tabBarInactiveTintColor: t.textMuted,
+          tabBarLabelStyle: {
+            fontSize: 10.5,
+            fontFamily: 'Poppins-SemiBold',
+            marginTop: 2,
           },
-          tabBarActiveTintColor: '#11418A',
+          tabBarStyle: {
+            marginHorizontal: 16,
+            marginBottom: insets.bottom > 0 ? 4 : 10,
+            marginTop: 6,
+            height: 66,
+            paddingTop: 8,
+            paddingBottom: 8,
+            borderRadius: 26,
+            borderTopWidth: 0,
+            backgroundColor: t.surface,
+            shadowColor: '#0f172a',
+            shadowOpacity: 0.12,
+            shadowRadius: 18,
+            shadowOffset: { width: 0, height: 6 },
+            elevation: 12,
+          },
+          // The selected tab sits in a soft brand pill, not just a tinted icon.
+          tabBarActiveBackgroundColor: t.brandSoft,
+          tabBarItemStyle: { borderRadius: 18, marginHorizontal: 1, overflow: 'hidden' },
+          sceneStyle: { backgroundColor: t.bg },
         }}
       >
         <Tab.Screen
           name="Today"
           component={TodayStack}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Image
-                source={images.HOME}
-                style={{
-                  width: size,
-                  height: size,
-                  tintColor: color,
-                  resizeMode: 'contain',
-                }}
-              />
-            ),
-          }}
+          options={{ tabBarIcon: ({ color }) => <House size={22} color={color} /> }}
         />
 
         <Tab.Screen
           name="Explore"
           component={ExploreStack}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Image
-                source={images.EXPLORE}
-                style={{
-                  width: size,
-                  height: size,
-                  tintColor: color,
-                  resizeMode: 'contain',
-                }}
-              />
-            ),
-          }}
+          options={{ tabBarIcon: ({ color }) => <Compass size={22} color={color} /> }}
         />
 
         <Tab.Screen
           name="Trend"
           component={PredictStack}
           options={{
-            tabBarIcon: ({ color, size }) => (
-              <Image
-                source={images.PREDICT}
-                style={{
-                  width: size,
-                  height: size,
-                  tintColor: color,
-                  resizeMode: 'contain',
-                }}
-              />
-            ),
+            tabBarIcon: ({ color }) => <TrendingUp size={22} color={color} />,
           }}
         />
 
@@ -188,17 +188,7 @@ function BottomTabNavigator() {
             name="Notes"
             component={Notes}
             options={{
-              tabBarIcon: ({ color, size }) => (
-                <Image
-                  source={images.CHAT}
-                  style={{
-                    width: size,
-                    height: size,
-                    tintColor: color,
-                    resizeMode: 'contain',
-                  }}
-                />
-              ),
+              tabBarIcon: ({ color }) => <NotebookPen size={22} color={color} />,
             }}
           />
         )}
@@ -208,14 +198,11 @@ function BottomTabNavigator() {
             name="CuoreCare"
             component={CuoreCareStack}
             options={{
-              tabBarIcon: ({ color, size }) => (
-                <Stethoscope size={size} color={color} />
-              ),
+              tabBarIcon: ({ color }) => <Stethoscope size={22} color={color} />,
             }}
           />
         )}
 
-        {/* ✅ PROFILE TAB WITH USER IMAGE */}
         <Tab.Screen
           name="Profile"
           component={ProfileStack}
@@ -223,25 +210,62 @@ function BottomTabNavigator() {
             tabBarIcon: ({ focused }) => (
               <View
                 style={{
-                  borderWidth: focused ? 2 : 0,
-                  borderColor: '#11418A',
-                  borderRadius: 18,
-                  padding: 2,
+                  borderWidth: 2,
+                  borderColor: focused ? t.brand : 'transparent',
+                  borderRadius: 16,
+                  padding: 1,
                 }}
               >
                 <Image
                   source={profileImageSource}
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 14,
-                  }}
+                  style={{ width: 24, height: 24, borderRadius: 12 }}
                 />
               </View>
             ),
           }}
         />
       </Tab.Navigator>
+    </SafeAreaView>
+  );
+}
+
+/* Screens inside the tabs that handle the top safe area themselves (their own SafeAreaView or
+ * insets.top). Wrapping them as well doubled the gap above their header. Every other screen in a
+ * tab gets a white top frame here, as the old root frame gave it. A screen restyled to draw its
+ * own hero must be listed. */
+const SELF_INSET = new Set([
+  'TodayMain', 'ExploreMain', 'Predict', 'ProfileMain', 'Notes', 'CuoreCareHome',
+  'CalorieIgnite', 'CuoreCareAppointment', 'CuoreCareBook', 'CuoreCareCertificate',
+  'CuoreCareCheckout', 'CuoreCareDoctors', 'CuoreCareHistory', 'CuoreCarePrescription',
+  'CuoreCareSubscribe', 'CuoreKnowledge', 'CycleTracker', 'Doctor', 'EditProfile',
+  'FamilyMembers', 'Fitness', 'Health', 'KnowledgeDetails', 'MidMorningBoost', 'Mind', 'RefreshRefuel',
+  'Tobacco', 'Nutrition', 'MealBuilder', 'MindDetails', 'FitnessDetails', 'Recipe',
+  'MealBuilder1', 'MealBuilder2', 'HealthRecords', 'Support', 'DeleteAccount', 'EditCaregiver', 'EditDoctor', 'ConnectedHealth',
+  'Score', 'Search',
+]);
+// A stack that has not navigated yet reports no focused child: that is its first screen.
+const TAB_FIRST_SCREEN = {
+  Today: 'TodayMain',
+  Explore: 'ExploreMain',
+  Trend: 'Predict',
+  Profile: 'ProfileMain',
+  CuoreCare: 'CuoreCareHome',
+};
+
+function tabScreenLayout({ children, route }) {
+  const focused =
+    getFocusedRouteNameFromRoute(route) ?? TAB_FIRST_SCREEN[route.name] ?? route.name;
+  // Always the SAME wrapper element, only its edges change. Returning bare children for
+  // self-inset screens and a SafeAreaView for the rest swapped the element type whenever the
+  // focused screen crossed between the two groups, which remounted the whole tab stack and
+  // threw the user back to its first screen (My Health "did nothing" from Today).
+  const selfInset = SELF_INSET.has(focused);
+  return (
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: selfInset ? 'transparent' : 'white' }}
+      edges={selfInset ? [] : ['top']}
+    >
+      {children}
     </SafeAreaView>
   );
 }
@@ -320,12 +344,28 @@ function HomeDrawer() {
 
 /* -------------------- ROOT NAVIGATOR -------------------- */
 
-export default function Navigator() {
+/* Screens restyled in the CuoreMD style paint their own hero under the status bar and handle
+ * insets themselves. Every other screen still gets the white safe-area frame it was built for. */
+// 'Home' (drawer + tabs) handles its own insets: the tab bar takes the bottom one and
+// tabScreenLayout below takes the top one for each screen inside the tabs.
+const EDGE_TO_EDGE = new Set(['Login', 'OtpScreen', 'NewAccount', 'Home', 'Notifications']);
+
+function rootScreenLayout({ children, route }) {
+  if (EDGE_TO_EDGE.has(route.name)) return children;
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+      {children}
+    </SafeAreaView>
+  );
+}
+
+export default function Navigator() {
+  return (
+    <View style={{ flex: 1, backgroundColor: 'white' }}>
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{ headerShown: false }}
+        screenLayout={rootScreenLayout}
       >
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
@@ -365,6 +405,6 @@ export default function Navigator() {
         <Stack.Screen name="Health" component={Health} />
         <Stack.Screen name="Notifications" component={Notifications} />
       </Stack.Navigator>
-    </SafeAreaView>
+    </View>
   );
 }

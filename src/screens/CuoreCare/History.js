@@ -232,9 +232,13 @@ export default function History({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       {AlertComponent}
-      <CCHeader title="My documents" onBack={() => navigation.goBack()} />
+      <CCHeader
+        title="My documents"
+        subtitle="Prescriptions, certificates and vaccinations"
+        onBack={() => navigation.goBack()}
+      />
 
       {/* Whose documents these are. Renders nothing for an account with no family members, so
           a patient who has never used the family plan sees the screen exactly as before. */}
@@ -307,24 +311,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   dueBannerText: { fontFamily: F.PoppinsSemiBold, fontSize: 13, color: CC.danger, textAlign: 'center' },
-  tabsScroll: { marginTop: 12, flexGrow: 0 },
+  tabsScroll: { marginTop: 12, flexGrow: 0, height: 46 },
+  // A scrolling row of chips rather than one tinted track: the track ran off the right edge
+  // because there are more tabs than fit, and a cut-off track looks broken where a cut-off
+  // chip reads as "scroll for more".
   tabs: {
     flexDirection: 'row',
-    marginHorizontal: 16,
-    backgroundColor: CC.primarySoft,
-    borderRadius: 12,
-    padding: 4,
-    gap: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 2,
+    alignItems: 'center',
+    gap: 8,
   },
   tab: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 40,
-    paddingVertical: 8,
+    minHeight: 38,
+    paddingVertical: 7,
     paddingHorizontal: 16,
-    borderRadius: 9,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: CC.border,
+    backgroundColor: CC.white,
   },
-  tabActive: { backgroundColor: CC.white },
+  tabActive: { backgroundColor: CC.primary, borderColor: CC.primary },
   // Explicit lineHeight: Poppins' metrics otherwise clip descenders ("p" in Prescriptions,
   // "g" in Diagnostics) on Android — the only labels that have them.
   tabText: {
@@ -335,7 +344,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     color: CC.subText,
   },
-  tabTextActive: { fontFamily: F.PoppinsSemiBold, color: CC.primary },
+  tabTextActive: { fontFamily: F.PoppinsSemiBold, color: CC.white },
   rxCard: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   billCard: { marginBottom: 12, alignItems: 'stretch' },
   billTopRow: { flexDirection: 'row', alignItems: 'center' },

@@ -7,16 +7,14 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Image,
   ActivityIndicator,
   Platform,
   Alert,
 } from 'react-native';
-import { Bell, Pill, Trash2, Pencil } from 'lucide-react-native';
+import { Bell, Pill, Trash2, Pencil, CalendarDays, Clock, X, ChevronDown } from 'lucide-react-native';
 import Modal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
-import { Images } from '../../utilities';
 import {
   setReminder,
   getHomeData,
@@ -252,7 +250,9 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Image style={styles.closeIcon} source={Images.CROSS} />
+              <View style={styles.closeBtn}>
+                <X size={18} color="#64748B" />
+              </View>
             </TouchableOpacity>
           </View>
           {/* Existing Reminders */}
@@ -262,7 +262,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               <View key={item.id || index.toString()} style={styles.entryCard}>
                 {/* Medicine vs other reminder at a glance (Launch edits, 5 Nov: happier, clearer). */}
                 <View style={[styles.entryBadge, item.type === 'USER_MEDICATION' ? styles.entryBadgeMed : null]}>
-                  {item.type === 'USER_MEDICATION' ? <Pill size={16} color="#7C3AED" /> : <Bell size={16} color="#2563EB" />}
+                  {item.type === 'USER_MEDICATION' ? <Pill size={16} color="#7C3AED" /> : <Bell size={16} color="#1E64AC" />}
                 </View>
                 <View style={styles.entryContent}>
                   <Text style={styles.entryText} numberOfLines={1}>
@@ -280,7 +280,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                   accessibilityLabel="Edit reminder"
                   hitSlop={8}
                 >
-                  <Pencil size={18} color="#2563EB" />
+                  <Pencil size={18} color="#1E64AC" />
                 </TouchableOpacity>
 
                 {item?.title?.toLowerCase() !== 'wake up' && (
@@ -342,7 +342,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               >
                 {date ? formatDisplayDate(date) : 'Start Date'}
               </Text>
-              <Image source={Images.CALANDER} style={styles.dateTimeIcon} />
+              <CalendarDays size={18} color="#1E64AC" />
             </TouchableOpacity>
 
             {/* Time Picker */}
@@ -358,7 +358,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               >
                 {time ? formatTime(time) : 'Current Time'}
               </Text>
-              <Image source={Images.CLOCK} style={styles.dateTimeIcon} />
+              <Clock size={18} color="#1E64AC" />
             </TouchableOpacity>
           </View>
           {/* One-tap times — no wheel needed for the usual four. */}
@@ -473,7 +473,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
               <Text style={styles.pickerLabel}>End Repeat</Text>
               <View style={styles.pickerValueRow}>
                 <Text style={styles.pickerValue}>{endRepeat}</Text>
-                <Image style={styles.pickerChevron} source={Images.DOWN} />
+                <ChevronDown size={18} color="#94A3B8" />
               </View>
             </TouchableOpacity>
             {showEndPicker && (
@@ -507,7 +507,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
                 >
                   {endRepeatDate ? formatDisplayDate(endRepeatDate) : 'Select end date'}
                 </Text>
-                <Image source={Images.CALANDER} style={styles.dateTimeIcon} />
+                <CalendarDays size={18} color="#1E64AC" />
               </TouchableOpacity>
               {showEndDatePicker && (
                 <View style={styles.datePickerWrapper}>
@@ -547,6 +547,7 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
             <Switch
               value={flagAsMedication}
               onValueChange={setFlagAsMedication}
+              trackColor={{ true: '#1E64AC' }}
             />
             <Text style={styles.switchLabel}>This is a medicine (louder medicine alarm)</Text>
           </View>
@@ -578,17 +579,17 @@ const Reminder = ({ isVisible, setIsVisible, user_id, scheduleReminder }) => {
 const styles = StyleSheet.create({
   entryBadge: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   entryBadgeMed: { backgroundColor: '#EDE9FE' },
-  quickRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  quickRow: { flexDirection: 'row', gap: 8, marginTop: 10, marginBottom: 14 },
   quickChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 12, backgroundColor: '#F1F5F9' },
-  quickChipOn: { backgroundColor: '#2563EB' },
+  quickChipOn: { backgroundColor: '#1E64AC' },
   quickText: { fontSize: 12, color: '#334155', fontFamily: 'Poppins-Medium' },
   quickTextOn: { color: '#FFFFFF' },
   fieldLabel: { fontSize: 12.5, color: '#64748B', fontFamily: 'Poppins-Medium', marginBottom: 6 },
   repeatRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   repeatChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
-  repeatChipOn: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  repeatChipOn: { borderColor: '#1E64AC', backgroundColor: '#DBEAFE' },
   repeatText: { fontSize: 13, color: '#334155', fontFamily: 'Poppins-Medium' },
-  repeatTextOn: { color: '#1D4ED8' },
+  repeatTextOn: { color: '#1E64AC' },
   modal: { justifyContent: 'flex-end', margin: 0 },
   container: {
     backgroundColor: '#FFFFFF',
@@ -611,10 +612,13 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     letterSpacing: 0.2,
   },
-  closeIcon: {
-    width: 20,
-    height: 20,
-    tintColor: '#64748B',
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   subtitle: {
     fontFamily: 'Poppins-Regular',
@@ -709,9 +713,11 @@ const styles = StyleSheet.create({
   dateTimePlaceholder: { color: '#94A3B8' },
   dateTimeIcon: { width: 18, height: 18 },
   switchRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
+  // flex:1 lets the label wrap instead of running off the sheet's edge.
   switchLabel: {
+    flex: 1,
     fontFamily: 'Poppins-Regular',
-    marginLeft: 8,
+    marginLeft: 10,
     fontSize: 14,
     color: '#475569',
     letterSpacing: 0.2,
@@ -720,11 +726,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignSelf: 'stretch',
     alignItems: 'center',
-    backgroundColor: '#2563EB',
+    backgroundColor: '#1E64AC',
     borderRadius: 14,
     paddingVertical: 15,
     paddingHorizontal: 40,
-    shadowColor: '#11418A',
+    shadowColor: '#1E64AC',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -761,7 +767,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   pickerChevron: { marginLeft: 6 },
-  pickerItemStyle: { color: '#11418A' },
+  pickerItemStyle: { color: '#1E64AC' },
   repeatpicker: {
     marginBottom: 100,
     backgroundColor: '#F8FAFC',
@@ -789,7 +795,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     paddingVertical: 8,
     paddingHorizontal: 20,
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     borderRadius: 8,
     marginTop: 4,
     marginRight: 4,

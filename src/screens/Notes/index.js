@@ -197,7 +197,7 @@ const Notes = () => {
 
         {loading ? (
           <ActivityIndicator
-            color="#11418A"
+            color="#1E64AC"
             size="large"
             style={styles.loader}
           />
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   },
   addBtn: {
     alignSelf: 'flex-end',
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingHorizontal: wp(5),
     paddingVertical: hp(1),
     borderRadius: 8,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     resizeMode: 'contain',
-    tintColor: '#11418A',
+    tintColor: '#1E64AC',
   },
   deleteIcon: {
     width: 20,

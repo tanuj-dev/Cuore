@@ -31,22 +31,42 @@ import {
   isPaymentEndDateToday,
   navigateToCheckoutFromTabs,
 } from '../../utilities/subscriptionExpiry';
+import LinearGradient from 'react-native-linear-gradient';
+import HeroDiscs from '../../components/ui/HeroDiscs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Pencil,
+  ChevronRight,
+  HeartHandshake,
+  Stethoscope,
+  FolderHeart,
+  Users,
+  Watch,
+  Activity,
+  Trash2,
+  Headset,
+  Crown,
+  Share2,
+  FileText,
+  LogOut,
+} from 'lucide-react-native';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 
 const profileOptions = [
   {
     title: 'Caregiver',
-    icon: Images.PERSON1,
+    icon: HeartHandshake,
     section: 'ACCOUNT & PRIVACY',
   },
   {
     title: 'Doctor',
 
-    icon: Images.CAREGIVER,
+    icon: Stethoscope,
     section: 'ACCOUNT & PRIVACY',
   },
   {
     title: 'Health Records',
-    icon: Images.HEALTH_RECORD,
+    icon: FolderHeart,
     section: 'ACCOUNT & PRIVACY',
   },
   {
@@ -57,54 +77,56 @@ const profileOptions = [
      * User"; renamed back on client request, Oct 2026). The row also shows who the app is
      * currently acting as — see renderSection below. */
     title: 'Family Members',
-    icon: Images.PERSON1,
+    icon: Users,
     section: 'ACCOUNT & PRIVACY',
   },
   {
     title: 'Connected Health Sources',
-    icon: Images.HEALTH_RECORD,
+    icon: Watch,
     section: 'ACCOUNT & PRIVACY',
   },
   {
     title: 'Health Data',
-    icon: Images.HEALTH_RECORD,
+    icon: Activity,
     section: 'ACCOUNT & PRIVACY',
   },
 
   {
     title: 'Delete Account',
-    icon: Images.DELETE_ACCOUNT,
+    icon: Trash2,
     section: 'GENERAL',
   },
   {
     title: 'Support',
-    icon: Images.SUPPORT,
+    icon: Headset,
     section: 'GENERAL',
   },
   {
     title: 'Subscription',
-    icon: Images.HEALTH_RECORD,
+    icon: Crown,
     section: 'GENERAL',
   },
   {
     // Lets a patient withdraw record sharing after granting it at their first upload.
     title: 'Record Sharing',
-    icon: Images.HEALTH_RECORD,
+    icon: Share2,
     section: 'GENERAL',
   },
   {
     title: 'Terms and Conditions',
-    icon: Images.TERMS_AND_CONDITION,
+    icon: FileText,
     section: 'GENERAL',
   },
   {
     title: 'Logout',
-    icon: Images.EXIT,
+    icon: LogOut,
     section: 'GENERAL',
   },
 ];
 
 const Profile = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
+  useLightStatusBar();
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   // Group the options by section
@@ -241,22 +263,32 @@ const Profile = ({ navigation }) => {
             index === items.length - 1 ? styles.itemLast : null,
           ]}
         >
-          <Image
-            source={item.icon}
+          <View
             style={[
-              styles.itemIcon,
+              styles.itemIconTile,
               {
-                tintColor: item.title === 'Logout' ? '#EF4444' : '#64748B',
+                backgroundColor:
+                  item.title === 'Logout' || item.title === 'Delete Account'
+                    ? '#FFE4E6'
+                    : '#DBEAFE',
               },
             ]}
-            resizeMode="contain"
-          />
+          >
+            <item.icon
+              size={19}
+              color={
+                item.title === 'Logout' || item.title === 'Delete Account'
+                  ? '#BE123C'
+                  : '#1E64AC'
+              }
+            />
+          </View>
           <View style={styles.itemTextWrap}>
             <Text
               style={[
                 styles.itemText,
                 {
-                  color: item.title === 'Logout' ? '#EF4444' : '#1E293B',
+                  color: item.title === 'Logout' ? '#BE123C' : '#0F172A',
                 },
               ]}
             >
@@ -270,14 +302,9 @@ const Profile = ({ navigation }) => {
               </Text>
             )}
           </View>
-          <Image
-            source={Images.RIGHT_ARROW}
-            style={[
-              styles.arrowIcon,
-              {
-                tintColor: item.title === 'Logout' ? '#EF4444' : '#94A3B8',
-              },
-            ]}
+          <ChevronRight
+            size={18}
+            color={item.title === 'Logout' ? '#EF4444' : '#94A3B8'}
           />
         </TouchableOpacity>
       ))}
@@ -431,82 +458,76 @@ const Profile = ({ navigation }) => {
       setRefreshing(false);
     }
   };
+  const userPhoto = (
+    userProfile?.user?.photo_url || userProfile?.user?.photoUrl
+  )?.trim();
+  const userPhone = userProfile?.user?.phone || userProfile?.user?.mobile;
+
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <View style={styles.safeArea}>
       {AlertComponent}
       <SubscriptionExpiringModal
         visible={subscriptionExpiryVisible}
         onUpdatePayment={handleSubscriptionUpdatePayment}
         onDismiss={handleSubscriptionExpiryDismiss}
       />
-      <View style={styles.headerSection}>
-        <Image
-          source={Images.APP_LOGO}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
       <ScrollView
+        // The hero paints under the status bar itself.
+        contentInsetAdjustmentBehavior="never"
         refreshControl={
           <RefreshControl
             title="Pull to refresh"
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#11418A"
+            tintColor="#1E64AC"
           />
         }
         style={styles.container}
       >
         <View style={styles.contentContainer}>
-          <View style={styles.paddingContainer}>
-            {/* User profile card */}
-            <TouchableOpacity
-              disabled={role === 'caregiver'}
-              onPress={() => navigation.navigate('EditProfile')}
-              style={styles.profileCard}
-            >
-              {userProfile?.user?.photo_url || userProfile?.user?.photoUrl ? (
-                <Image
-                  key={
-                    userProfile?.user?.photo_url || userProfile?.user?.photoUrl
-                  }
-                  source={{
-                    uri: (
-                      userProfile?.user?.photo_url ||
-                      userProfile?.user?.photoUrl
-                    )?.trim(),
-                  }}
-                  style={[styles.profileImage, { borderRadius: wp(6) }]}
-                  onError={error => {
-                    console.log(
-                      'Profile image load error:',
-                      error.nativeEvent?.error || error,
-                    );
-                    console.log(
-                      'Failed to load image URI:',
-                      userProfile?.user?.photo_url ||
-                        userProfile?.user?.photoUrl,
-                    );
-                  }}
-                  onLoad={() => {
-                    console.log('Profile image loaded successfully');
-                  }}
-                />
-              ) : (
-                <Image source={Images.UNCLE} style={styles.profileImage} />
-              )}
+          {/* CuoreMD profile hero: the account at the top on the brand gradient. Tapping it
+              edits the profile, as the old profile card did (not for a caregiver). */}
+          <TouchableOpacity
+            disabled={role === 'caregiver'}
+            onPress={() => navigation.navigate('EditProfile')}
+            activeOpacity={0.9}
+            style={[styles.hero, { paddingTop: insets.top + hp(2.5) }]}
+          >
+            <LinearGradient
+              colors={['#1E3A8A', '#1E64AC']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <HeroDiscs />
+            {/* Photo, name and edit in one row keeps the header short. */}
+            <View style={styles.heroRow}>
+              <Image
+                key={userPhoto || 'default'}
+                source={userPhoto ? { uri: userPhoto } : Images.UNCLE}
+                style={styles.profileImage}
+              />
               <View style={styles.nameWrapper}>
-                <Text
-                  style={styles.name}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
+                <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
                   {userProfile?.user?.display_name}
                 </Text>
+                {!!userPhone && (
+                  <Text style={styles.phone} numberOfLines={1}>
+                    {userPhone}
+                  </Text>
+                )}
               </View>
-              <Image source={Images.RIGHT_ARROW} style={styles.profileArrow} />
-            </TouchableOpacity>
-
+              {role !== 'caregiver' && (
+                <View
+                  style={styles.editButton}
+                  accessibilityLabel="Edit profile"
+                >
+                  <Pencil size={18} color="#FFFFFF" />
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+          <View style={styles.paddingContainer}>
             {/* Render sections */}
             {Object.entries(groupedSections).map(([sectionTitle, items]) =>
               renderSection(sectionTitle, items),
@@ -683,7 +704,7 @@ const Profile = ({ navigation }) => {
             {isWebViewLoading && (
               <ActivityIndicator
                 size="large"
-                color="#11418A"
+                color="#1E64AC"
                 style={styles.webViewLoader}
               />
             )}
@@ -696,15 +717,16 @@ const Profile = ({ navigation }) => {
           </SafeAreaView>
         </SafeAreaProvider>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F4F7FB',
   },
+
   headerSection: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: hp(2),
@@ -715,11 +737,13 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F4F7FB',
   },
+
   contentContainer: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F4F7FB',
   },
+
   paddingContainer: {
     padding: wp(4),
   },
@@ -728,44 +752,54 @@ const styles = StyleSheet.create({
     width: wp(20),
     height: hp(3),
   },
-  profileCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: wp(4.5),
-    flexDirection: 'row',
+  hero: {
+    paddingHorizontal: wp(5),
+    paddingBottom: hp(3),
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
+  },
+  phone: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13.5,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+  },
+  heroRow: { flexDirection: 'row', alignItems: 'center' },
+  editButton: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
-    marginBottom: hp(2.5),
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
+    justifyContent: 'center',
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.16)',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 4 },
-    }),
+    borderColor: 'rgba(255,255,255,0.3)',
   },
+
   profileImage: {
-    width: wp(14),
-    height: wp(14),
-    borderRadius: wp(7),
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
-    flexShrink: 0,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#E2E8F0',
   },
+
   nameWrapper: {
     flex: 1,
     minWidth: 0,
-    marginLeft: wp(3),
+    marginLeft: wp(3.5),
+    marginRight: 12,
     justifyContent: 'center',
   },
   name: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 16,
-    color: '#1E293B',
+    fontFamily: 'Poppins-Bold',
+    fontSize: 22,
+    color: '#FFFFFF',
     letterSpacing: -0.3,
   },
+
   profileArrow: {
     resizeMode: 'contain',
     width: wp(5),
@@ -777,13 +811,11 @@ const styles = StyleSheet.create({
     marginBottom: hp(2.5),
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 0.5,
   },
+
   sectionHeader: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13,
@@ -820,10 +852,14 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     letterSpacing: 0.2,
   },
-  itemIcon: {
-    width: wp(5.5),
-    height: wp(5.5),
+  itemIconTile: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+
   // The label and its optional subtitle share the row's flexible column; `itemText` keeps its
   // own styling so every other row looks exactly as it did.
   itemTextWrap: { flex: 1, marginLeft: wp(3.5), minWidth: 0 },
@@ -836,14 +872,8 @@ const styles = StyleSheet.create({
   itemSubText: {
     fontSize: 12,
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: '#1E64AC',
     marginTop: 2,
-  },
-  arrowIcon: {
-    width: wp(4),
-    height: wp(4),
-    resizeMode: 'contain',
-    tintColor: '#94A3B8',
   },
   webViewContainer: {
     flex: 1,
@@ -906,7 +936,7 @@ const styles = StyleSheet.create({
   consentActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: hp(1.5) },
   consentCancel: { paddingVertical: hp(1.2), paddingHorizontal: wp(4) },
   consentCancelText: { color: '#64748B', fontSize: hp(1.7), fontWeight: '600' },
-  consentAgree: { backgroundColor: '#11418A', borderRadius: 10, paddingVertical: hp(1.2), paddingHorizontal: wp(5), minWidth: wp(34), alignItems: 'center' },
+  consentAgree: { backgroundColor: '#1E64AC', borderRadius: 10, paddingVertical: hp(1.2), paddingHorizontal: wp(5), minWidth: wp(34), alignItems: 'center' },
   consentRevoke: { backgroundColor: '#DC2626' },
   consentAgreeText: { color: '#FFFFFF', fontSize: hp(1.7), fontWeight: '700' },
   subscriptionScroll: {
@@ -923,8 +953,8 @@ const styles = StyleSheet.create({
     paddingVertical: hp(3),
     paddingHorizontal: wp(5),
     borderRadius: 20,
-    backgroundColor: '#11418A',
-    shadowColor: '#11418A',
+    backgroundColor: '#1E64AC',
+    shadowColor: '#1E64AC',
     shadowOpacity: 0.35,
     shadowOffset: { width: 0, height: 12 },
     shadowRadius: 20,

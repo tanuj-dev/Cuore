@@ -2,20 +2,21 @@ import { Video, Phone, MessageSquare, Stethoscope } from 'lucide-react-native';
 import Fonts from '../../utilities/Fonts';
 
 /**
- * CuoreCare shared design tokens. Brand navy (#11418A) stays the primary so the feature
+ * CuoreCare shared design tokens. Brand navy (#1E64AC) stays the primary so the feature
  * still reads as Cuore, but the neutrals are warmed slightly and a small family of friendly
  * accents (coral, teal, amber, violet, sky) is available for icon chips, section cards and
  * hero gradients — Launch Edits 13 Nov: "make Home & CuoreCare vibrant & happier" while
  * staying clinical. Kept local to the feature so it can evolve without touching global theme.
  */
 export const CC = {
-  primary: '#11418A',
-  primarySoft: '#EAF1FD',
-  text: '#1E293B',
-  subText: '#5F6B7D',
-  muted: '#98A2B3',
-  border: '#E9E6F0',
-  surface: '#F8F7FC',
+  // CuoreMD palette (src/theme/palette.ts) so the patient app and the doctor app read as one.
+  primary: '#1E64AC',
+  primarySoft: '#DBEAFE',
+  text: '#0F172A',
+  subText: '#64748B',
+  muted: '#94A3B8',
+  border: '#E2E8F0',
+  surface: '#F4F7FB',
   card: '#FFFFFF',
   danger: '#DC2626',
   dangerSoft: '#FEE2E2',
@@ -39,14 +40,14 @@ export const CC = {
 
   // Soft hero wash (top → bottom) and the vivid CTA gradient (left → right).
   heroGradient: ['#E4EDFD', '#F3EEFD', '#FDF1EC'],
-  ctaGradient: ['#11418A', '#2B6CC4'],
+  ctaGradient: ['#1E3A8A', '#1E64AC'],
 
-  radius: 18,
+  radius: 16,
   // Gentle elevation, spread rather than dark.
   shadow: {
-    shadowColor: '#1E2A4A',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.07,
+    shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
   },
@@ -56,8 +57,8 @@ export const CC = {
 // Appointment status → { label, fg, bg }. Keep keys in sync with backend Appointment.STATUS.
 export const STATUS_META = {
   requested: { label: 'Requested', fg: '#B45309', bg: '#FEF3C7' },
-  accepted: { label: 'Confirmed', fg: '#11418A', bg: '#EAF1FD' },
-  scheduled: { label: 'Confirmed', fg: '#11418A', bg: '#EAF1FD' },
+  accepted: { label: 'Confirmed', fg: '#1E64AC', bg: '#DBEAFE' },
+  scheduled: { label: 'Confirmed', fg: '#1E64AC', bg: '#DBEAFE' },
   in_progress: { label: 'In progress', fg: '#059669', bg: '#D1FAE5' },
   completed: { label: 'Completed', fg: '#475569', bg: '#F1F5F9' },
   cancelled: { label: 'Cancelled', fg: '#DC2626', bg: '#FEE2E2' },

@@ -46,10 +46,15 @@ import {
   X,
   Check,
   FolderOpen,
+  UploadCloud,
+  Camera,
+  ImagePlus,
+  FileUp,
 } from 'lucide-react-native';
 
-import { hp, wp, Images } from '../../utilities';
-import ProfileHeader from '../../components/ProfileHeader';
+import { hp, wp } from '../../utilities';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { uploadPhoto } from '../../redux/uploadPhoto/uploadPhotoThunk';
 import { uploadImagingStudy } from '../../redux/uploadPhoto/uploadImagingStudyThunk';
 import { getPresRecordsThunk } from '../../redux/uploadPhoto/getPresRecordsThunk';
@@ -148,6 +153,7 @@ const safeFileName = (name, record) => {
 const HealthRecords = ({ navigation }) => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
+  useLightStatusBar();
   const userId = useSelector(state => state.auth?.userId);
   // Which family member's records are on screen. Shared with the booking flow so the two
   // surfaces cannot disagree about who the app is acting for.
@@ -872,7 +878,7 @@ const HealthRecords = ({ navigation }) => {
     return (
       <View key={record.recordId} style={styles.recordItem}>
         <View style={styles.recordIcon}>
-          <TypeIcon size={18} color="#11418A" />
+          <TypeIcon size={18} color="#1E64AC" />
         </View>
 
         <View style={styles.recordItemContent}>
@@ -895,7 +901,7 @@ const HealthRecords = ({ navigation }) => {
                 accessibilityLabel="Save name"
               >
                 {isSavingName ? (
-                  <ActivityIndicator size="small" color="#11418A" />
+                  <ActivityIndicator size="small" color="#1E64AC" />
                 ) : (
                   <Check size={18} color="#059669" />
                 )}
@@ -933,7 +939,7 @@ const HealthRecords = ({ navigation }) => {
               style={styles.iconBtn}
               accessibilityLabel={`Open ${record.name}`}
             >
-              <Eye size={18} color="#11418A" />
+              <Eye size={18} color="#1E64AC" />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => handleDownload(record)}
@@ -942,9 +948,9 @@ const HealthRecords = ({ navigation }) => {
               accessibilityLabel={`Download ${record.name}`}
             >
               {downloadingRecordId === record.recordId ? (
-                <ActivityIndicator size="small" color="#11418A" />
+                <ActivityIndicator size="small" color="#1E64AC" />
               ) : (
-                <Download size={18} color="#11418A" />
+                <Download size={18} color="#1E64AC" />
               )}
             </TouchableOpacity>
             {!isCaregiver && !record.isClinical && (
@@ -953,7 +959,7 @@ const HealthRecords = ({ navigation }) => {
                 style={styles.iconBtn}
                 accessibilityLabel={`Rename ${record.name}`}
               >
-                <Pencil size={17} color="#11418A" />
+                <Pencil size={17} color="#1E64AC" />
               </TouchableOpacity>
             )}
             {!isCaregiver && !record.isClinical && (
@@ -980,13 +986,18 @@ const HealthRecords = ({ navigation }) => {
     <>
       {AlertComponent}
       <ScrollView
+        style={styles.scroll}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.screen}>
-          <ProfileHeader navigation={navigation} title="Health Records" />
+          <HeroHeader
+            title="Health Records"
+            subtitle="Reports, prescriptions and scans in one place"
+            onBack={() => navigation.goBack()}
+          />
 
           <View style={styles.container}>
             {/* ------------------------- Upload ------------------------- */}
@@ -998,10 +1009,9 @@ const HealthRecords = ({ navigation }) => {
                 disabled={isCaregiver}
                 activeOpacity={isCaregiver ? 1 : 0.7}
               >
-                <Image
-                  source={Images.UPLOAD}
-                  style={[styles.uploadIcon, isCaregiver && styles.uploadIconDisabled]}
-                />
+                <View style={styles.uploadTile}>
+                  <UploadCloud size={26} color="#1E64AC" />
+                </View>
                 <Text style={[styles.uploadLabel, isCaregiver && styles.textDisabled]}>
                   Upload Record
                 </Text>
@@ -1053,9 +1063,9 @@ const HealthRecords = ({ navigation }) => {
                     <View key={`${file.uri}-${index}`} style={styles.namingRow}>
                       <View style={styles.namingIcon}>
                         {/pdf/i.test(file.type) ? (
-                          <FileText size={16} color="#11418A" />
+                          <FileText size={16} color="#1E64AC" />
                         ) : (
-                          <ImageIcon size={16} color="#11418A" />
+                          <ImageIcon size={16} color="#1E64AC" />
                         )}
                       </View>
                       <View style={styles.namingFields}>
@@ -1178,7 +1188,7 @@ const HealthRecords = ({ navigation }) => {
             )}
 
             {isFetching ? (
-              <ActivityIndicator size="large" color="#11418A" style={styles.fetchLoader} />
+              <ActivityIndicator size="large" color="#1E64AC" style={styles.fetchLoader} />
             ) : loadError ? (
               <View style={styles.emptyRecords}>
                 <Text style={styles.emptyRecordsText}>{loadError}</Text>
@@ -1195,7 +1205,9 @@ const HealthRecords = ({ navigation }) => {
               ))
             ) : (
               <View style={styles.emptyRecords}>
-                <FolderOpen size={30} color="#94A3B8" />
+                <View style={styles.emptyTile}>
+                  <FolderOpen size={28} color="#1E64AC" />
+                </View>
                 <Text style={styles.emptyRecordsTitle}>
                   {search ? 'No matching records' : 'No records yet'}
                 </Text>
@@ -1224,17 +1236,23 @@ const HealthRecords = ({ navigation }) => {
                 <Text style={styles.modalTitle}>Choose Upload Method</Text>
 
                 <TouchableOpacity style={styles.modalButton} onPress={pickImageFromCamera}>
-                  <Image source={Images.CAMERA} style={styles.modalIcon} />
+                  <View style={styles.modalIconTile}>
+                    <Camera size={18} color="#1E64AC" />
+                  </View>
                   <Text style={styles.modalButtonText}>Take Photo</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.modalButton} onPress={pickImageFromGallery}>
-                  <Image source={Images.UPLOAD} style={styles.modalIcon} />
+                  <View style={styles.modalIconTile}>
+                    <ImagePlus size={18} color="#1E64AC" />
+                  </View>
                   <Text style={styles.modalButtonText}>Choose from Gallery</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.modalButton} onPress={pickDocumentForUpload}>
-                  <Image source={Images.UPLOAD} style={styles.modalIcon} />
+                  <View style={styles.modalIconTile}>
+                    <FileUp size={18} color="#1E64AC" />
+                  </View>
                   <Text style={styles.modalButtonText}>Choose PDF</Text>
                 </TouchableOpacity>
 
@@ -1360,41 +1378,52 @@ const HealthRecords = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC', paddingBottom: hp(4) },
+  scroll: { flex: 1, backgroundColor: '#F4F7FB' },
+  screen: { flex: 1, backgroundColor: '#F4F7FB', paddingBottom: hp(4) },
   container: { paddingHorizontal: wp(4) },
 
   header: {
     fontSize: hp(2.2),
-    fontWeight: '700',
+    fontFamily: 'Poppins-SemiBold',
     color: '#0F172A',
-    marginTop: hp(2),
-    marginBottom: hp(1.4),
+    marginTop: hp(2.2),
+    marginBottom: hp(1.2),
   },
 
   uploadCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     padding: wp(4),
   },
   uploadBox: {
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: '#93C5FD',
     borderStyle: 'dashed',
-    borderRadius: 12,
+    borderRadius: 14,
+    backgroundColor: '#F8FBFF',
     paddingVertical: hp(3),
     alignItems: 'center',
     justifyContent: 'center',
   },
   uploadBoxDisabled: { opacity: 0.5 },
-  uploadIcon: { width: wp(9), height: wp(9), resizeMode: 'contain' },
-  uploadIconDisabled: { opacity: 0.5 },
+  uploadTile: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   uploadLabel: {
     marginTop: hp(1),
     fontSize: hp(1.9),
-    fontWeight: '600',
-    color: '#11418A',
+    fontFamily: 'Poppins-SemiBold',
+    color: '#1E64AC',
   },
   fileText: {
+    fontFamily: 'Poppins-Regular',
     marginTop: hp(0.5),
     fontSize: hp(1.5),
     color: '#64748B',
@@ -1404,25 +1433,26 @@ const styles = StyleSheet.create({
   textDisabled: { color: '#94A3B8' },
 
   namingBlock: { marginTop: hp(2) },
-  namingHint: { fontSize: hp(1.5), color: '#64748B', marginBottom: hp(1) },
+  namingHint: { fontFamily: 'Poppins-Regular', fontSize: hp(1.5), color: '#64748B', marginBottom: hp(1) },
   namingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 10,
+    backgroundColor: '#F4F7FB',
+    borderRadius: 12,
     padding: wp(2.5),
     marginBottom: hp(1),
   },
   namingIcon: {
     width: wp(8),
     height: wp(8),
-    borderRadius: 8,
-    backgroundColor: '#EFF6FF',
+    borderRadius: 10,
+    backgroundColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
   },
   namingFields: { flex: 1, marginHorizontal: wp(2.5) },
   nameInput: {
+    fontFamily: 'Poppins-Regular',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -1432,7 +1462,7 @@ const styles = StyleSheet.create({
     fontSize: hp(1.7),
     color: '#0F172A',
   },
-  namingOriginal: { fontSize: hp(1.3), color: '#94A3B8', marginTop: hp(0.4) },
+  namingOriginal: { fontFamily: 'Poppins-Regular', fontSize: hp(1.3), color: '#94A3B8', marginTop: hp(0.4) },
   removeButton: {
     width: wp(7),
     height: wp(7),
@@ -1443,25 +1473,25 @@ const styles = StyleSheet.create({
   },
 
   submitBtn: {
-    backgroundColor: '#11418A',
-    borderRadius: 10,
+    backgroundColor: '#1E64AC',
+    borderRadius: 999,
     paddingVertical: hp(1.8),
     alignItems: 'center',
     marginTop: hp(2),
   },
   submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText: { color: '#FFFFFF', fontSize: hp(1.9), fontWeight: '600' },
+  submitBtnText: { color: '#FFFFFF', fontSize: hp(1.9), fontFamily: 'Poppins-SemiBold' },
   uploadingRow: { flexDirection: 'row', alignItems: 'center', gap: wp(2) },
 
   consentBackdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.45)', justifyContent: 'center', paddingHorizontal: wp(6) },
   consentCard: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: wp(5) },
-  consentTitle: { fontSize: hp(2), fontWeight: '700', color: '#0F172A', marginBottom: hp(1) },
-  consentBody: { fontSize: hp(1.6), color: '#475569', lineHeight: hp(2.3), marginBottom: hp(1) },
+  consentTitle: { fontSize: hp(2), fontFamily: 'Poppins-SemiBold', color: '#0F172A', marginBottom: hp(1) },
+  consentBody: { fontFamily: 'Poppins-Regular', fontSize: hp(1.6), color: '#475569', lineHeight: hp(2.3), marginBottom: hp(1) },
   consentActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: hp(1) },
   consentCancel: { paddingVertical: hp(1.2), paddingHorizontal: wp(4) },
-  consentCancelText: { color: '#64748B', fontSize: hp(1.7), fontWeight: '600' },
-  consentAgree: { backgroundColor: '#11418A', borderRadius: 10, paddingVertical: hp(1.2), paddingHorizontal: wp(5), minWidth: wp(34), alignItems: 'center' },
-  consentAgreeText: { color: '#FFFFFF', fontSize: hp(1.7), fontWeight: '700' },
+  consentCancelText: { color: '#64748B', fontSize: hp(1.7), fontFamily: 'Poppins-SemiBold' },
+  consentAgree: { backgroundColor: '#1E64AC', borderRadius: 999, paddingVertical: hp(1.2), paddingHorizontal: wp(5), minWidth: wp(34), alignItems: 'center' },
+  consentAgreeText: { color: '#FFFFFF', fontSize: hp(1.7), fontFamily: 'Poppins-SemiBold' },
   recordsHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1469,8 +1499,8 @@ const styles = StyleSheet.create({
     marginTop: hp(3),
     marginBottom: hp(1),
   },
-  viewRecordsTitle: { fontSize: hp(2.2), fontWeight: '700', color: '#0F172A' },
-  recordsCount: { fontSize: hp(1.5), color: '#64748B' },
+  viewRecordsTitle: { fontSize: hp(2.2), fontFamily: 'Poppins-SemiBold', color: '#0F172A' },
+  recordsCount: { fontFamily: 'Poppins-Regular', fontSize: hp(1.5), color: '#64748B' },
 
   profileRow: { flexDirection: 'row', flexWrap: 'wrap', gap: wp(2), marginBottom: hp(1.4) },
   profileChip: {
@@ -1481,8 +1511,8 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',
   },
-  profileChipOn: { backgroundColor: '#11418A', borderColor: '#11418A' },
-  profileChipText: { fontSize: hp(1.6), color: '#64748B', fontWeight: '600' },
+  profileChipOn: { backgroundColor: '#1E64AC', borderColor: '#1E64AC' },
+  profileChipText: { fontSize: hp(1.6), color: '#64748B', fontFamily: 'Poppins-SemiBold' },
   profileChipTextOn: { color: '#FFFFFF' },
 
   searchBox: {
@@ -1492,11 +1522,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 10,
-    paddingHorizontal: wp(3),
+    borderRadius: 999,
+    paddingHorizontal: wp(4),
     marginBottom: hp(1.5),
   },
   searchInput: {
+    fontFamily: 'Poppins-Regular',
     flex: 1,
     fontSize: hp(1.7),
     color: '#0F172A',
@@ -1505,7 +1536,7 @@ const styles = StyleSheet.create({
 
   monthHeading: {
     fontSize: hp(1.6),
-    fontWeight: '700',
+    fontFamily: 'Poppins-SemiBold',
     color: '#64748B',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
@@ -1517,21 +1548,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     padding: wp(3),
     marginBottom: hp(1),
   },
   recordIcon: {
     width: wp(10),
     height: wp(10),
-    borderRadius: 10,
-    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    backgroundColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
   },
   recordItemContent: { flex: 1, marginLeft: wp(3) },
-  recordTitle: { fontSize: hp(1.8), fontWeight: '600', color: '#0F172A' },
-  recordMeta: { fontSize: hp(1.4), color: '#64748B', marginTop: hp(0.4) },
+  recordTitle: { fontSize: hp(1.8), fontFamily: 'Poppins-SemiBold', color: '#0F172A' },
+  recordMeta: { fontFamily: 'Poppins-Regular', fontSize: hp(1.4), color: '#64748B', marginTop: hp(0.4) },
   recordActions: { flexDirection: 'row', alignItems: 'center' },
   iconBtn: {
     paddingHorizontal: wp(1.6),
@@ -1542,6 +1575,7 @@ const styles = StyleSheet.create({
 
   editRow: { flexDirection: 'row', alignItems: 'center' },
   editNameInput: {
+    fontFamily: 'Poppins-Regular',
     flex: 1,
     borderWidth: 1,
     borderColor: '#CBD5E1',
@@ -1553,6 +1587,14 @@ const styles = StyleSheet.create({
   },
 
   fetchLoader: { marginTop: hp(4) },
+  emptyTile: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyRecords: {
     alignItems: 'center',
     paddingVertical: hp(5),
@@ -1560,18 +1602,19 @@ const styles = StyleSheet.create({
   },
   emptyRecordsTitle: {
     fontSize: hp(1.9),
-    fontWeight: '600',
+    fontFamily: 'Poppins-SemiBold',
     color: '#334155',
     marginTop: hp(1.4),
   },
   emptyRecordsText: {
+    fontFamily: 'Poppins-Regular',
     fontSize: hp(1.6),
     color: '#64748B',
     textAlign: 'center',
     marginTop: hp(0.6),
   },
   retryBtn: { marginTop: hp(1.6) },
-  retryText: { fontSize: hp(1.7), fontWeight: '600', color: '#11418A' },
+  retryText: { fontSize: hp(1.7), fontFamily: 'Poppins-SemiBold', color: '#1E64AC' },
 
   modalOverlay: {
     flex: 1,
@@ -1582,12 +1625,12 @@ const styles = StyleSheet.create({
   modalContent: {
     width: wp(82),
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 20,
     padding: wp(5),
   },
   modalTitle: {
     fontSize: hp(2),
-    fontWeight: '700',
+    fontFamily: 'Poppins-SemiBold',
     color: '#0F172A',
     marginBottom: hp(2),
     textAlign: 'center',
@@ -1597,19 +1640,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: hp(1.6),
     paddingHorizontal: wp(3),
-    borderRadius: 10,
-    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
     marginBottom: hp(1.2),
   },
-  modalIcon: { width: wp(5.5), height: wp(5.5), resizeMode: 'contain' },
+  modalIconTile: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   modalButtonText: {
     marginLeft: wp(3),
     fontSize: hp(1.8),
     color: '#0F172A',
-    fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
-  cancelButton: { backgroundColor: 'transparent', justifyContent: 'center' },
-  cancelButtonText: { fontSize: hp(1.8), color: '#64748B', fontWeight: '600' },
+  cancelButton: { backgroundColor: 'transparent', borderWidth: 0, justifyContent: 'center' },
+  cancelButtonText: { fontSize: hp(1.8), color: '#64748B', fontFamily: 'Poppins-SemiBold' },
 
   viewerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)' },
   viewerHeader: {
@@ -1619,14 +1671,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingBottom: hp(1.5),
   },
-  viewerTitle: { flex: 1, color: '#FFFFFF', fontSize: hp(1.9), fontWeight: '600' },
+  viewerTitle: { flex: 1, color: '#FFFFFF', fontSize: hp(1.9), fontFamily: 'Poppins-SemiBold' },
   viewerClose: { padding: wp(2) },
   viewerBody: { flex: 1, justifyContent: 'center' },
   viewerLoader: { position: 'absolute', alignSelf: 'center' },
   viewerPdf: { flex: 1, backgroundColor: 'transparent' },
   viewerImage: { flex: 1, width: '100%' },
   viewerErrorBox: { alignItems: 'center', padding: wp(8) },
-  viewerErrorText: { color: '#FCA5A5', fontSize: hp(1.8), textAlign: 'center' },
+  viewerErrorText: { fontFamily: 'Poppins-Regular', color: '#FCA5A5', fontSize: hp(1.8), textAlign: 'center' },
   viewerDownload: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1634,10 +1686,10 @@ const styles = StyleSheet.create({
     gap: wp(2),
     margin: wp(4),
     paddingVertical: hp(1.6),
-    borderRadius: 10,
-    backgroundColor: '#11418A',
+    borderRadius: 999,
+    backgroundColor: '#1E64AC',
   },
-  viewerDownloadText: { color: '#FFFFFF', fontSize: hp(1.8), fontWeight: '600' },
+  viewerDownloadText: { color: '#FFFFFF', fontSize: hp(1.8), fontFamily: 'Poppins-SemiBold' },
 });
 
 export default HealthRecords;

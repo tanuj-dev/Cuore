@@ -47,9 +47,9 @@ export default function PendingVisitCards({ reminders, respondingId, onAccept, o
           <View key={String(r._id)} style={styles.card}>
             <View style={styles.iconWrap}>
               {isNextVisit ? (
-                <CalendarClock size={hp(2.2)} color="#11418A" />
+                <CalendarClock size={hp(2.2)} color="#1E64AC" />
               ) : (
-                <Stethoscope size={hp(2.2)} color="#11418A" />
+                <Stethoscope size={hp(2.2)} color="#1E64AC" />
               )}
             </View>
 
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   meta: { fontSize: hp(1.5), fontFamily: Fonts.regular, color: '#64748B', marginTop: 2 },
   actions: { flexDirection: 'row', gap: wp(2), marginTop: hp(1) },
   accept: {
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(0.7),
     paddingHorizontal: wp(3.5),
     borderRadius: 14,

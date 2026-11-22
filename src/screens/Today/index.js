@@ -23,12 +23,31 @@ import {
 } from 'react-native';
 import { Images, hp, wp } from '../../utilities';
 import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
-import { Info, Bell, Trash2, CalendarDays, Plus } from 'lucide-react-native';
+import {
+  Activity,
+  Apple,
+  Bell,
+  CalendarDays,
+  CircleCheck,
+  Dumbbell,
+  Flame,
+  Footprints,
+  GlassWater,
+  Info,
+  Moon,
+  Pill,
+  Plus,
+  Trash2,
+  TriangleAlert,
+  Utensils,
+} from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { fetchNotifications } from '../../redux/Notifications/thunks';
 import { getTodayConsultations } from '../../redux/CuoreCare/thunks';
 import ConsultationTimeCard from './ConsultationTimeCard';
 import LinearGradient from 'react-native-linear-gradient';
+import HeroDiscs from '../../components/ui/HeroDiscs';
 import { CC } from '../CuoreCare/ccTheme';
 import ProgressBarWithImage from '../../components/ProgressBar';
 import PendingVisitCards from './PendingVisitCards';
@@ -37,7 +56,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import DrawerMenuButton from '../../components/DrawerMenuButton';
 import { getHomeData, getProfile } from '../../redux/slices';
 import ReminderEditor from '../../components/ReminderEditor';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from '../../components/Toast';
 import moment from 'moment';
 import { Fonts } from '../../utilities';
@@ -94,6 +113,35 @@ const TITLES_WITH_PAYLOAD = [
   'Check Fasting Sugar',
 ];
 
+/* The server sends each timeline task an emoji as its icon. The app does not show emoji, so the
+ * task is matched to a lucide icon and a tint by its type and title instead. Order matters: the
+ * first rule whose words appear wins, so "Mid-Morning Boost" lands on the snack rule. */
+const TASK_ICON_RULES = [
+  { test: /medic|pill|tablet|dose/i, Icon: Pill, fg: '#7C3AED', bg: '#EDE9FE' },
+  { test: /water|hydrat/i, Icon: GlassWater, fg: '#0284C7', bg: '#E0F2FE' },
+  { test: /sleep|bed|night|rest/i, Icon: Moon, fg: '#4338CA', bg: '#E0E7FF' },
+  { test: /walk|step/i, Icon: Footprints, fg: '#0F766E', bg: '#CCFBF1' },
+  { test: /fitness|exercise|workout|yoga|gym/i, Icon: Dumbbell, fg: '#0F766E', bg: '#CCFBF1' },
+  { test: /snack|fruit|boost/i, Icon: Apple, fg: '#C2410C', bg: '#FFEDD5' },
+  { test: /breakfast|lunch|dinner|meal|food|eat/i, Icon: Utensils, fg: '#B45309', bg: '#FEF3C7' },
+  { test: /reminder|appointment|visit/i, Icon: Bell, fg: '#1E64AC', bg: '#DBEAFE' },
+];
+const DEFAULT_TASK_ICON = { Icon: CircleCheck, fg: '#1E64AC', bg: '#DBEAFE' };
+const taskIconFor = item => {
+  const hay = `${item?.type || ''} ${item?.title || ''}`;
+  return TASK_ICON_RULES.find(r => r.test.test(hay)) || DEFAULT_TASK_ICON;
+};
+
+// Alert card tones, CuoreMD's soft status colours (palette danger / warning).
+const ALERT_TONE = {
+  red: { bg: '#FFE4E6', border: '#FECDD3', fg: '#BE123C' },
+  yellow: { bg: '#FEF3C7', border: '#FDE68A', fg: '#B45309' },
+  other: { bg: '#FFEDD5', border: '#FED7AA', fg: '#C2410C' },
+};
+const alertTone = type => ALERT_TONE[type] || ALERT_TONE.other;
+
+// Same deep blue as the CuoreMD heroes (theme brandDark → brand).
+const HERO = ['#1E3A8A', '#1E64AC'];
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const REASSESS_STEP = 7;
 
@@ -313,6 +361,10 @@ const TodaySkeleton = () => (
 // ─────────────────────────────────────────────────────────────────────────────
 
 const Today = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
+  // Once the hero has scrolled under the status bar, a solid strip keeps the clock readable.
+  const [heroScrolledAway, setHeroScrolledAway] = useState(false);
+  useLightStatusBar();
   // Launch edits (5 Nov): a user swap changes Home too — see FamilyMemberDay.
   const activeProfileId = useSelector(s => s.dependants?.activeProfileId) || null;
   const familyMembers = useSelector(s => s.dependants?.items);
@@ -908,17 +960,13 @@ const Today = ({ navigation, route }) => {
   }
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={{ flex: 1, backgroundColor: CC.heroGradient[0] }}
-    >
+    <View style={{ flex: 1, backgroundColor: CC.surface }}>
       {AlertComponent}
       <SubscriptionExpiringModal
         visible={subscriptionExpiryVisible}
         onUpdatePayment={handleSubscriptionUpdatePayment}
         onDismiss={handleSubscriptionExpiryDismiss}
       />
-      <StatusBar barStyle="dark-content" backgroundColor={CC.heroGradient[0]} />
 
       <ScrollView
         nestedScrollEnabled
@@ -927,23 +975,32 @@ const Today = ({ navigation, route }) => {
             title="Pull to refresh..."
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#11418A"
+            tintColor="#1E64AC"
           />
         }
+        // Pulling down past the top shows the hero's blue, not a grey gap above it.
+        contentInsetAdjustmentBehavior="never"
         scrollEventThrottle={16}
+        onScroll={e => {
+          const away = e.nativeEvent.contentOffset.y > 24;
+          if (away !== heroScrolledAway) setHeroScrolledAway(away);
+        }}
         style={styles.container}
       >
-        {/* Soft gradient wash behind the greeting (Launch Edits 13 Nov: warmer, happier Home).
-            Purely decorative — the white-label band inside keeps the clinic's own colour. */}
-        <LinearGradient
-          colors={CC.heroGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
+        {/* CuoreMD hero: deep blue gradient running under the status bar, white type on it.
+            The gradient is an absolute-fill layer behind a padded View: on the New Architecture
+            LinearGradient paints only its content box, so padding it directly clips the paint. */}
+        <View style={[styles.header, { paddingTop: insets.top + hp(1) }]}>
+          <LinearGradient
+            colors={HERO}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+            <HeroDiscs />
           <View style={styles.headerTopRow}>
             {/* Opens the app drawer. First thing in the row, where a menu is looked for. */}
-            <DrawerMenuButton />
+            <DrawerMenuButton color="#FFFFFF" />
             <Text style={styles.username} numberOfLines={1}>
               {profileData?.display_name
                 ? `${timeOfDayGreeting()}, ${profileData.display_name.split(' ')[0]}`
@@ -960,7 +1017,7 @@ const Today = ({ navigation, route }) => {
                   the shared style would have rendered that avatar square. Visually identical,
                   minus the clipping. */}
               <View style={styles.bellIconWrapper}>
-                <Bell size={hp(2)} color={CC.primary} />
+                <Bell size={hp(2.2)} color="#FFFFFF" />
               </View>
               {/* The badge is a SIBLING of the circle, not a child.
                   It is meant to overhang the circle's top-right corner, and a child cannot do
@@ -996,7 +1053,7 @@ const Today = ({ navigation, route }) => {
                 // White label (Launch edits, 5 Nov): the clinic's own band, in its colour.
                 branding?.whiteLabel && [
                   styles.brandBand,
-                  { backgroundColor: branding.color || '#11418A' },
+                  { backgroundColor: branding.color || '#1E64AC' },
                 ],
               ]}
             >
@@ -1074,7 +1131,7 @@ const Today = ({ navigation, route }) => {
               </TouchableOpacity>
             </View>
           </View>
-        </LinearGradient>
+        </View>
 
         {/* Alerts */}
         {/* <View
@@ -1109,6 +1166,7 @@ const Today = ({ navigation, route }) => {
             }}
             style={styles.biomarkerButton}
           >
+            <Activity size={hp(2.2)} color="#0F766E" />
             <Text style={styles.biomarkerButtonText}>Update{'\n'}Readings</Text>
           </TouchableOpacity>
 
@@ -1135,7 +1193,7 @@ const Today = ({ navigation, route }) => {
             activeOpacity={0.8}
             accessibilityLabel="Add reminder"
           >
-            <Plus size={hp(2)} color="#1E40AF" />
+            <Plus size={hp(2.2)} color="#1E64AC" />
             <Text style={styles.addReminderText}>Reminder</Text>
           </TouchableOpacity>
         </View>
@@ -1185,43 +1243,25 @@ const Today = ({ navigation, route }) => {
                     alignItems: 'flex-start',
                     width: wp(70),
                     minHeight: hp(9),
-                    borderRadius: hp(1),
+                    borderRadius: 16,
                     padding: hp(2),
                     marginRight: hp(1),
-                    backgroundColor:
-                      item?.type === 'red'
-                        ? '#FEE4E4'
-                        : item?.type === 'yellow'
-                        ? '#FFFFC5'
-                        : '#f4ba62ff',
+                    backgroundColor: alertTone(item?.type).bg,
+                    borderWidth: 1,
+                    borderColor: alertTone(item?.type).border,
                     position: 'relative',
                   }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingRight: hp(1.5) }}>
-                    <Image
-                      style={{
-                        resizeMode: 'contain',
-                        height: hp(2),
-                        width: wp(4),
-                        tintColor:
-                          item?.type === 'red'
-                            ? '#EF4444'
-                            : item?.type === 'yellow'
-                            ? '#FFCE1B'
-                            : '#A16207',
-                        marginRight: hp(0.5),
-                        marginTop: hp(0.15),
-                      }}
-                      source={Images.WARNING}
+                    <TriangleAlert
+                      size={hp(2.1)}
+                      color={alertTone(item?.type).fg}
+                      style={{ marginRight: hp(0.8), marginTop: hp(0.1) }}
                     />
                     <Text
                       style={{
-                        color:
-                          item?.type === 'red'
-                            ? '#B91C1C'
-                            : item?.type === 'yellow'
-                            ? '#A16207'
-                            : '#A16207',
+                        color: alertTone(item?.type).fg,
+                        fontFamily: 'Poppins-Medium',
                         flex: 1,
                         flexShrink: 1,
                         lineHeight: hp(2.3),
@@ -1547,7 +1587,7 @@ const Today = ({ navigation, route }) => {
                   >
                     <View style={styles.blackDot}>
                       {loadingTaskId === item.id || loadingTaskId === 'all' ? (
-                        <ActivityIndicator size="small" color="#11418A" />
+                        <ActivityIndicator size="small" color="#1E64AC" />
                       ) : (
                         item.completed && <View style={styles.blackDotInner} />
                       )}
@@ -1556,11 +1596,16 @@ const Today = ({ navigation, route }) => {
 
                   <TouchableOpacity
                     onPress={() => handleNavigationPress(item)}
-                    style={[styles.taskCard, { borderLeftColor: item?.color }]}
+                    style={styles.taskCard}
                   >
-                    <View style={styles.taskHeader}>
-                      <Text style={styles.taskIcon}>{item?.icon}</Text>
-                    </View>
+                    {(() => {
+                      const { Icon, fg, bg } = taskIconFor(item);
+                      return (
+                        <View style={[styles.taskIconTile, { backgroundColor: bg }]}>
+                          <Icon size={hp(2.3)} color={fg} />
+                        </View>
+                      );
+                    })()}
                     <View style={styles.taskCardBody}>
                       <View style={styles.taskContent}>
                         <Text style={styles.taskTitle} numberOfLines={1}>
@@ -1601,7 +1646,7 @@ const Today = ({ navigation, route }) => {
                                 handleReminderRespond(item, 'accepted')
                               }
                               style={{
-                                backgroundColor: '#11418A',
+                                backgroundColor: '#1E64AC',
                                 paddingVertical: hp(0.5),
                                 paddingHorizontal: wp(3),
                                 borderRadius: 14,
@@ -1671,7 +1716,7 @@ const Today = ({ navigation, route }) => {
                 styles.checkAll,
                 {
                   backgroundColor: reminderList.every(item => item.completed)
-                    ? '#11418A'
+                    ? '#1E64AC'
                     : 'transparent',
                 },
               ]}
@@ -1745,9 +1790,11 @@ const Today = ({ navigation, route }) => {
 
         {/* Streak Section */}
         <View style={styles.streakContainer}>
-          {/* <Image source={Images.FIRE} style={styles.fireIcon} /> */}
+          <View style={styles.streakIcon}>
+            <Flame size={hp(2.8)} color="#EA580C" />
+          </View>
           <Text style={styles.streakTitle}>
-            {homeData?.streak}-Day Streak 🔥
+            {homeData?.streak}-Day Streak
           </Text>
           <Text style={styles.streakSubtitle}>
             Before you sleep, update today's details.
@@ -1835,18 +1882,26 @@ const Today = ({ navigation, route }) => {
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+      {/* Solid hero blue behind the status bar, so its white clock stays readable once the
+          hero has scrolled away under it. */}
+      {heroScrolledAway && (
+        <View
+          pointerEvents="none"
+          style={[styles.statusBarBackdrop, { height: insets.top }]}
+        />
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: CC.surface },
   header: {
-    paddingTop: Platform.OS === 'ios' ? hp(0) : hp(1),
-    paddingHorizontal: hp(2),
-    paddingBottom: hp(1.8),
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingHorizontal: hp(2.2),
+    paddingBottom: hp(2.4),
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -1862,18 +1917,24 @@ const styles = StyleSheet.create({
   // No `marginLeft: 'auto'` — the greeting now carries flex:1, which does the pushing.
   // Its own full-width line under the greeting row, so a long clinic name has somewhere to go.
   brandRow: { flexDirection: 'row', alignItems: 'center', marginBottom: hp(1.2) },
-  brandLogo: { width: 26, height: 26, borderRadius: 6, marginRight: 7, backgroundColor: '#F1F5F9' },
+  brandLogo: { width: 30, height: 30, borderRadius: 8, marginRight: 9, backgroundColor: '#FFFFFF' },
   brandTextWrap: { flex: 1, minWidth: 0 },
-  brandName: { fontSize: 14, color: '#16283F', fontFamily: 'Poppins-SemiBold' },
-  brandDoctor: { fontSize: 11, color: '#64748B', fontFamily: 'Poppins-Regular', marginTop: -1 },
-  brandBand: { borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 },
+  brandName: { fontSize: 14, color: '#FFFFFF', fontFamily: 'Poppins-SemiBold' },
+  brandDoctor: { fontSize: 11, color: 'rgba(255,255,255,0.8)', fontFamily: 'Poppins-Regular', marginTop: -1 },
+  brandBand: {
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
   onBand: { color: '#FFFFFF', fontSize: 15 },
   onBandSub: { color: 'rgba(255,255,255,0.85)' },
   poweredBy: { fontSize: 9.5, color: 'rgba(255,255,255,0.8)', fontFamily: 'Poppins-Medium', marginLeft: 8 },
   username: {
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 18,
-    color: CC.primary,
+    fontFamily: 'Poppins-Bold',
+    fontSize: 20,
+    color: '#FFFFFF',
     letterSpacing: -0.4,
     /* Takes the slack in the header row, and gives it back first. Without this the greeting
      * sized to its own text and pushed the profile switcher clean off the right edge. */
@@ -1889,8 +1950,8 @@ const styles = StyleSheet.create({
     height: hp(2),
     resizeMode: 'contain',
   },
-  activeTab: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#11418A' },
-  inactiveTab: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#94A3B8' },
+  activeTab: { fontFamily: 'Poppins-SemiBold', fontSize: 14, color: '#FFFFFF' },
+  inactiveTab: { fontFamily: 'Poppins-Medium', fontSize: 14, color: 'rgba(255,255,255,0.6)' },
   alert: {
     fontFamily: 'Poppins-Medium',
     color: '#DC2626',
@@ -1929,9 +1990,7 @@ const styles = StyleSheet.create({
   // Rose matches the period days on the tracker's own calendar. Same footprint as its
   // neighbours so Update Readings / My Cycle / + Reminder read as one row of actions.
   cycleButton: {
-    // Launch edits #7: Update Readings / My Cycle / + Reminder must be the SAME size. flex:1
-    // alone still let content, padding and a two-line label decide height, so all three now
-    // share a fixed height, zero basis and identical padding/radius.
+    // Launch edits #7: Update Readings / My Cycle / + Reminder share one fixed size.
     flex: 1,
     flexBasis: 0,
     minWidth: 0,
@@ -1940,59 +1999,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: hp(0.6),
-    backgroundColor: '#FFF1F2',
-    paddingVertical: 0,
     paddingHorizontal: hp(0.8),
-    borderRadius: hp(1.8),
-    borderWidth: 1.5,
-    borderColor: '#FECDD3',
+    borderRadius: 14,
+    backgroundColor: '#FFE4E6',
   },
+
   cycleButtonText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 11.5,
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 12,
     color: '#BE123C',
   },
+
   biomarkerButton: {
-    // Launch edits #7: Update Readings / My Cycle / + Reminder must be the SAME size. flex:1
-    // alone still let content, padding and a two-line label decide height, so all three now
-    // share a fixed height, zero basis and identical padding/radius.
+    // Launch edits #7: Update Readings / My Cycle / + Reminder share one fixed size.
     flex: 1,
     flexBasis: 0,
     minWidth: 0,
     height: hp(6.2),
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: CC.accentTealSoft,
-    paddingVertical: 0,
+    gap: hp(0.6),
     paddingHorizontal: hp(0.8),
-    borderRadius: hp(1.8),
-    borderWidth: 1.5,
-    borderColor: '#A6E6DB',
+    borderRadius: 14,
+    backgroundColor: '#CCFBF1',
   },
+
   biomarkerButtonText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 11.5,
-    color: '#0B7F72',
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 12,
+    color: '#0F766E',
     textAlign: 'center',
-    lineHeight: 14,
+    lineHeight: 15,
   },
+
   quoteContainer: {
     paddingHorizontal: hp(2.5),
     marginVertical: hp(1.5),
   },
   quote: {
-    backgroundColor: CC.accentVioletSoft,
+    backgroundColor: '#FFFFFF',
     fontFamily: 'Poppins-Medium',
-    color: '#6D3FD9',
-    fontSize: 15,
+    color: '#334155',
+    fontSize: 14,
     padding: hp(2),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     borderLeftWidth: 4,
+    borderLeftColor: '#1E64AC',
     borderRadius: 16,
     overflow: 'hidden',
-    borderColor: '#9333EA',
-    lineHeight: 22,
+    lineHeight: 21,
     fontStyle: 'italic',
   },
+
   warnings: {
     marginVertical: 10,
     marginHorizontal: hp(2),
@@ -2095,20 +2155,15 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     minHeight: hp(8.5),
-    borderLeftWidth: 3,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     padding: hp(1.5),
     flexDirection: 'row',
-    shadowColor: CC.shadow.shadowColor,
-    shadowOpacity: 0.07,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 10,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 3 },
-    }),
+    alignItems: 'center',
   },
+
   taskCardBody: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2116,23 +2171,33 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   taskHeader: { flexDirection: 'row', alignItems: 'center' },
-  taskIcon: {
-    width: hp(3),
-    height: hp(2),
-    marginRight: 8,
-    resizeMode: 'contain',
-    marginTop: 10,
+  taskIconTile: {
+    width: hp(4.6),
+    height: hp(4.6),
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: hp(1.4),
   },
+  statusBarBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#1E3A8A',
+  },
+
   taskTitle: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 15,
-    color: '#334155',
+    color: '#0F172A',
     letterSpacing: -0.2,
   },
+
   taskCourse: {
     marginTop: 3,
     fontSize: 12,
-    color: '#11418A',
+    color: '#1E64AC',
     fontFamily: 'Poppins-Medium',
   },
   taskDescription: {
@@ -2205,7 +2270,7 @@ const styles = StyleSheet.create({
   floatingTextLabel: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: '#1E64AC',
     textAlign: 'center',
   },
   checkAll: {
@@ -2222,21 +2287,23 @@ const styles = StyleSheet.create({
   blackDot: {
     marginTop: hp(1),
     marginHorizontal: hp(1.5),
-    borderWidth: 0.5,
-    height: hp(2),
-    width: hp(2),
+    borderWidth: 2,
+    height: hp(2.4),
+    width: hp(2.4),
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: hp(2),
-    borderColor: '#101010',
+    borderRadius: hp(1.2),
+    borderColor: '#CBD5E1',
+    backgroundColor: '#FFFFFF',
   },
+
   blackDotInner: {
-    borderWidth: 1,
-    height: hp(1.2),
-    width: hp(1.2),
-    borderRadius: hp(2),
-    backgroundColor: '#000000',
+    height: hp(1.3),
+    width: hp(1.3),
+    borderRadius: hp(0.65),
+    backgroundColor: '#1E64AC',
   },
+
   headerButtonsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2269,9 +2336,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   addReminderButton: {
-    // Launch edits #7: Update Readings / My Cycle / + Reminder must be the SAME size. flex:1
-    // alone still let content, padding and a two-line label decide height, so all three now
-    // share a fixed height, zero basis and identical padding/radius.
+    // Launch edits #7: Update Readings / My Cycle / + Reminder share one fixed size.
     flex: 1,
     flexBasis: 0,
     minWidth: 0,
@@ -2279,39 +2344,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: hp(0.4),
-    backgroundColor: CC.accentSkySoft,
-    paddingVertical: 0,
+    gap: hp(0.6),
     paddingHorizontal: hp(0.8),
-    borderRadius: hp(1.8),
-    borderWidth: 1.5,
-    borderColor: '#BFDBFE',
-    shadowColor: '#11418A',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 3 },
-    }),
+    borderRadius: 14,
+    backgroundColor: '#DBEAFE',
   },
+
   healthButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: CC.accentCoralSoft,
-    paddingVertical: hp(1.2),
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    paddingVertical: hp(1),
     paddingHorizontal: wp(2.5),
     borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#FECACA',
-    shadowColor: '#DC2626',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 3 },
-    }),
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   /* Same circle as buttonIconWrapper below, minus overflow:'hidden'.
    *
@@ -2321,18 +2368,13 @@ const styles = StyleSheet.create({
    * overflow also stops iOS clipping the shadow. The badge is NOT a child of this view — see
    * the note at the call site. */
   bellIconWrapper: {
-    width: hp(3.5),
-    height: hp(3.5),
-    borderRadius: hp(1.75),
-    backgroundColor: '#FFFFFF',
+    width: hp(4.4),
+    height: hp(4.4),
+    borderRadius: hp(2.2),
+    backgroundColor: 'rgba(255,255,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(1.5),
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
-    elevation: 2,
   },
   buttonIconWrapper: {
     width: hp(3.5),
@@ -2355,7 +2397,7 @@ const styles = StyleSheet.create({
   addIcon: {
     height: hp(2),
     width: hp(2),
-    tintColor: '#11418A',
+    tintColor: '#1E64AC',
   },
   healthIcon: {
     height: hp(2),
@@ -2368,17 +2410,17 @@ const styles = StyleSheet.create({
     borderRadius: hp(1.75),
   },
   addReminderText: {
-    fontSize: 11.5,
-    fontFamily: 'Poppins-Medium',
-    color: '#1E40AF',
+    fontSize: 12,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#1E64AC',
     textAlign: 'center',
-    lineHeight: 14,
-    letterSpacing: -0.2,
+    lineHeight: 15,
   },
+
   healthButtonText: {
     fontSize: 11.5,
     fontFamily: 'Poppins-Medium',
-    color: '#DC2626',
+    color: '#FFFFFF',
     textAlign: 'center',
     lineHeight: 14,
     letterSpacing: -0.2,
@@ -2417,7 +2459,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: hp(2),
     fontFamily: 'Poppins-Medium',
-    color: '#11418A',
+    color: '#1E64AC',
     fontSize: 16,
   },
   checkAllText: {
@@ -2430,36 +2472,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: hp(2.5),
     marginHorizontal: hp(2),
-    backgroundColor: '#FEF9C3',
-    paddingVertical: hp(3),
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: hp(2.5),
     borderRadius: 16,
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 4 },
-    }),
   },
+  streakIcon: {
+    width: hp(5.4),
+    height: hp(5.4),
+    borderRadius: hp(2.7),
+    backgroundColor: '#FFEDD5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(1),
+  },
+
   fireIcon: {
     marginBottom: hp(1),
   },
   streakTitle: {
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 24,
-    color: '#78350F',
-    letterSpacing: -0.6,
-    marginBottom: 6,
+    fontFamily: 'Poppins-Bold',
+    fontSize: 22,
+    color: '#0F172A',
+    letterSpacing: -0.4,
+    marginBottom: 4,
   },
+
   streakSubtitle: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#92400E',
+    color: '#64748B',
     textAlign: 'center',
     paddingHorizontal: hp(2.5),
     lineHeight: 20,
   },
+
   alertRefsCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2533,7 +2581,7 @@ const styles = StyleSheet.create({
   referenceParameter: {
     fontFamily: 'Poppins-Medium',
     fontSize: 13.5,
-    color: '#11418A',
+    color: '#1E64AC',
     marginBottom: 2,
   },
   referenceSource: {
@@ -2543,7 +2591,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   referenceLink: {
-    color: '#11418A',
+    color: '#1E64AC',
     textDecorationLine: 'underline',
   },
   referencesFootnote: {
@@ -2556,7 +2604,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   referencesCloseBtn: {
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     borderRadius: 10,
     paddingVertical: hp(1.5),
     alignItems: 'center',

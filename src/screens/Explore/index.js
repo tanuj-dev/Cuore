@@ -5,10 +5,13 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useMemo, useCallback } from 'react';
+import LinearGradient from 'react-native-linear-gradient';
+import HeroDiscs from '../../components/ui/HeroDiscs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChevronRight } from 'lucide-react-native';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
+import React, { useMemo, useCallback, useState } from 'react';
 import { hp, wp, Images } from '../../utilities';
 import { useSelector } from 'react-redux';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
@@ -70,7 +73,12 @@ const ROUTE_MAP = {
 
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+// CuoreMD hero blue (theme brandDark → brand), as on Today.
+const HERO = ['#1E3A8A', '#1E64AC'];
+
 const Explore = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
+  useLightStatusBar();
   const { alert, AlertComponent } = useCustomAlert();
   const mealsOn = useSelector(state => mealCardsEnabled(state.home?.data));
   const currentDayKey = useMemo(() => {
@@ -119,8 +127,17 @@ const Explore = ({ navigation }) => {
         activeOpacity={0.7}
       >
         <Image source={item.image} style={styles.image} />
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.subtitle}>{item.subtitle}</Text>
+        <View style={styles.cardBody}>
+          <View style={styles.cardText}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {item.subtitle}
+            </Text>
+          </View>
+          <ChevronRight size={16} color="#94A3B8" />
+        </View>
       </TouchableOpacity>
     ),
     [handleModulePress],
@@ -143,54 +160,82 @@ const Explore = ({ navigation }) => {
     [profileImage],
   );
 
+  const profileUser = useSelector(state => state?.profile?.data?.data?.user);
+  // Same sources and checks as the Today header: only an absolute http(s) URL is tried, and a
+  // photo that fails to load falls back to the default doctor image instead of a blank circle.
+  const doctorPhoto = useMemo(() => {
+    const raw =
+      profileUser?.doctor?.photoUrl ||
+      profileUser?.doctor?.photo_url ||
+      profileUser?.doctor_profile?.photoUrl ||
+      profileUser?.doctor_profile?.photo_url ||
+      doctorProfile?.profileImage ||
+      doctorProfile?.photoUrl;
+    const url = typeof raw === 'string' ? raw.trim() : '';
+    return /^https?:\/\//i.test(url) ? url : null;
+  }, [profileUser, doctorProfile]);
+  const [doctorPhotoFailed, setDoctorPhotoFailed] = useState(false);
+
   const renderListHeader = useCallback(
     () => (
-      <View style={styles.headerContainer}>
-        <View style={styles.logoContainer}>
-          <Image source={Images.APP_LOGO} style={styles.logo} />
-
-          {/* ✅ FIXED PROFILE IMAGE */}
+      <View style={[styles.hero, { paddingTop: insets.top + hp(2) }]}>
+        {/* Absolute-fill gradient behind a padded View: on the New Architecture LinearGradient
+            paints only its content box, so padding it directly clips the paint. */}
+        <LinearGradient
+          colors={HERO}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+          <HeroDiscs />
+        <View style={styles.heroTop}>
+          <View style={styles.heroText}>
+            <Text style={styles.heroTitle}>Explore</Text>
+            <Text style={styles.heroSub}>
+              Food, fitness and mind programs made for you.
+            </Text>
+          </View>
           <Image
             source={profileImageSource}
-            style={styles.logoRight}
+            style={styles.avatar}
             resizeMode="cover"
           />
         </View>
 
-        <View style={styles.healthSection}>
-          <TouchableOpacity
-            onPress={handleHealthPress}
-            style={styles.healthButton}
-            activeOpacity={0.7}
-          >
-            <Image
-              source={
-                doctorProfile?.profileImage || doctorProfile?.photoUrl
-                  ? {
-                      uri:
-                        doctorProfile?.profileImage || doctorProfile?.photoUrl,
-                    }
-                  : Images.DOCTOR_PROFILE
-              }
-              style={styles.doctorIcon}
-              resizeMode="cover"
-            />
+        <TouchableOpacity
+          onPress={handleHealthPress}
+          style={styles.healthButton}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="My Health"
+        >
+          <Image
+            source={
+              doctorPhoto && !doctorPhotoFailed
+                ? { uri: doctorPhoto }
+                : Images.DOCTOR_PROFILE
+            }
+            style={styles.doctorIcon}
+            resizeMode="cover"
+            onError={() => setDoctorPhotoFailed(true)}
+          />
+          <View style={styles.healthText}>
             <Text style={styles.heading}>My Health</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.subheading}>Your Health Journey</Text>
-        </View>
+            <Text style={styles.subheading}>Your health journey</Text>
+          </View>
+          <ChevronRight size={18} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
     ),
     // The doctor's photo is read here too — without it the header kept a stale/missing photo
     // after the profile loaded.
-    [handleHealthPress, profileImageSource, doctorProfile?.profileImage, doctorProfile?.photoUrl],
+    [handleHealthPress, profileImageSource, doctorPhoto, doctorPhotoFailed, insets.top],
   );
 
   return (
     <>
       {AlertComponent}
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <FlatList
           data={MODULES}
           renderItem={renderItem}
@@ -201,140 +246,118 @@ const Explore = ({ navigation }) => {
           contentContainerStyle={styles.grid}
           showsVerticalScrollIndicator={false}
           style={styles.list}
+          // The hero paints under the status bar itself.
+          contentInsetAdjustmentBehavior="never"
+          ListHeaderComponentStyle={styles.headerWrap}
         />
-      </SafeAreaView>
+      </View>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+  safeArea: { flex: 1, backgroundColor: '#F4F7FB' },
+  list: { flex: 1, backgroundColor: '#F4F7FB' },
+  // The hero spans the full width; the grid's side padding is cancelled for it.
+  headerWrap: { marginHorizontal: -wp(4), marginBottom: hp(2.5) },
+  hero: {
+    paddingHorizontal: wp(5),
+    paddingBottom: hp(3),
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
   },
-  list: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
+  heroTop: { flexDirection: 'row', alignItems: 'center' },
+  heroText: { flex: 1, minWidth: 0, paddingRight: wp(3) },
+  heroTitle: {
+    fontSize: 28,
+    fontFamily: 'Poppins-Bold',
+    color: '#FFFFFF',
+    letterSpacing: -0.4,
   },
-  headerContainer: {
-    backgroundColor: '#FFFFFF',
-    paddingBottom: hp(2.5),
-    // borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    marginBottom: hp(2.5),
-    borderRadius: hp(2),
+  heroSub: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
   },
-  logoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: hp(2),
-    paddingTop: hp(1.5),
-    paddingBottom: hp(1),
-  },
-  logo: {
-    width: wp(20),
-    height: hp(4),
-    resizeMode: 'contain',
-  },
-  logoRight: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 2,
-    borderColor: '#11418A',
-  },
-  healthSection: {
-    alignItems: 'center',
-    paddingHorizontal: wp(4),
-    paddingTop: hp(1),
+    borderColor: 'rgba(255,255,255,0.9)',
   },
   healthButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DC2626',
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(3.5),
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#DC2626',
-    shadowColor: '#DC2626',
-    shadowOpacity: 0.35,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    ...Platform.select({
-      android: { elevation: 4 },
-      ios: { elevation: 6 },
-    }),
+    marginTop: hp(2.5),
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 16,
+    paddingVertical: hp(1.4),
+    paddingHorizontal: wp(4),
   },
   doctorIcon: {
-    height: hp(3.5),
-    width: hp(3.5),
-    borderRadius: hp(1.75),
+    height: 40,
+    width: 40,
+    borderRadius: 20,
     overflow: 'hidden',
-    marginRight: wp(1.5),
+    backgroundColor: '#FFFFFF',
   },
+  healthText: { flex: 1, marginLeft: wp(3) },
   heading: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: 'Poppins-SemiBold',
     color: '#FFFFFF',
-    marginLeft: wp(2),
-    letterSpacing: -0.2,
   },
   subheading: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#64748B',
-    marginTop: hp(1.2),
-    textAlign: 'center',
-    letterSpacing: 0.1,
+    fontSize: 12.5,
+    fontFamily: 'Poppins-Regular',
+    color: 'rgba(255,255,255,0.8)',
   },
   grid: {
     paddingHorizontal: wp(4),
     paddingBottom: hp(4),
-    paddingTop: hp(2.5),
   },
   row: {
     justifyContent: 'space-between',
-    marginBottom: hp(2.5),
+    marginBottom: hp(2),
   },
   card: {
-    width: wp(42),
+    width: wp(44),
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: wp(3.5),
-    alignItems: 'center',
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-      },
-    }),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: wp(2.5),
   },
   image: {
-    width: wp(36),
-    height: hp(11),
-    marginBottom: hp(1.5),
+    width: '100%',
+    height: hp(12),
     borderRadius: 12,
+    resizeMode: 'cover',
+    backgroundColor: '#F4F7FB',
   },
+  cardBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: hp(1.2),
+    paddingHorizontal: wp(1),
+  },
+  cardText: { flex: 1, minWidth: 0 },
   title: {
-    fontSize: 15.5,
-    fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
-    textAlign: 'center',
-    letterSpacing: -0.3,
+    fontSize: 14.5,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#0F172A',
+    letterSpacing: -0.2,
   },
   subtitle: {
     fontSize: 12,
     fontFamily: 'Poppins-Regular',
     color: '#64748B',
-    textAlign: 'center',
-    marginTop: hp(0.3),
-    letterSpacing: 0.1,
-    lineHeight: 16,
+    marginTop: 1,
   },
 });
 

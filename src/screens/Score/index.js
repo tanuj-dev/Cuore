@@ -23,7 +23,15 @@ import Share from 'react-native-share';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import { hp, wp, Images } from '../../utilities';
 import { CLINICAL_REFERENCES_LABEL } from '../../utilities/Constants';
-import { Info } from 'lucide-react-native';
+import {
+  Info,
+  Share2,
+  Pencil,
+  Target,
+  X,
+} from 'lucide-react-native';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 
 const MEDICAL_REFERENCES = [
   {
@@ -116,6 +124,7 @@ import Loader from '../../components/Loader';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const Score = ({ navigation }) => {
+  useLightStatusBar();
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
 
@@ -375,7 +384,7 @@ const Score = ({ navigation }) => {
   return (
     <>
       {AlertComponent}
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <ViewShot
           ref={viewShotRef}
           options={{ format: 'jpg', quality: 0.9 }}
@@ -383,40 +392,30 @@ const Score = ({ navigation }) => {
           collapsable={false}
         >
           <View style={styles.viewShotContent}>
-            {/* Fixed Header - Non-scrollable */}
-            <View style={styles.fixedHeader}>
-              <View style={styles.headerContainer}>
-                <View style={styles.headerTopRow}>
-                  <TouchableOpacity>
-                    <Text style={styles.date}>{date || ''}</Text>
+            <HeroHeader
+              title="Cuore Score"
+              subtitle={date ? `Updated ${date}` : 'Your heart health at a glance'}
+              onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+              right={
+                <View style={styles.headerIconsRow}>
+                  <TouchableOpacity
+                    disabled={role === 'caregiver'}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    onPress={handleShareScreenshot}
+                    style={styles.glassBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Share score"
+                  >
+                    <Share2 size={18} color="#FFFFFF" />
                   </TouchableOpacity>
-                  <View style={styles.headerIconsRow}>
-                    <TouchableOpacity
-                      disabled={role === 'caregiver'}
-                      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                      onPress={handleShareScreenshot}
-                    >
-                      <Image
-                        source={require('../../assets/images/share4.png')}
-                        style={styles.shareIcon}
-                        resizeMode="contain"
-                      />
-                    </TouchableOpacity>
-                    <Image
-                      source={profileImageSource}
-                      style={styles.profileIcon}
-                      resizeMode="contain"
-                    />
-                  </View>
+                  <Image
+                    source={profileImageSource}
+                    style={styles.profileIcon}
+                    resizeMode="cover"
+                  />
                 </View>
-                <View style={styles.header}>
-                  <Text style={styles.title}>Cuore Score</Text>
-                  <View style={styles.avatarWrapper}>
-                    <Image source={Images.avatar} style={styles.avatar} />
-                  </View>
-                </View>
-              </View>
-            </View>
+              }
+            />
 
             <ScrollView
               refreshControl={
@@ -450,10 +449,10 @@ const Score = ({ navigation }) => {
                   As you habits change, update you score regularly
                 </Text> */}
                   <View style={styles.timeToTargetTitleRow}>
-                    <Image
-                      source={Images.NOTICE}
+                    <Target
+                      size={16}
+                      color="#1E64AC"
                       style={styles.timeToTargetTitleIcon}
-                      resizeMode="contain"
                     />
 
                     <Text style={styles.timeToTarget}>Progress Projection</Text>
@@ -485,11 +484,7 @@ const Score = ({ navigation }) => {
                     onPress={handleReassess}
                     style={styles.reassessButton}
                   >
-                    <Image
-                      source={Images.EDIT}
-                      style={styles.reassessIcon}
-                      resizeMode="contain"
-                    />
+                    <Pencil size={16} color="#FFFFFF" />
 
                     <Text style={styles.reassessText}>Update Score </Text>
                   </TouchableOpacity>
@@ -626,7 +621,7 @@ const Score = ({ navigation }) => {
         >
           <View style={styles.sharingLoaderOverlay}>
             <View style={styles.sharingLoaderContainer}>
-              <ActivityIndicator size="large" color="#11418A" />
+              <ActivityIndicator size="large" color="#1E64AC" />
               <Text style={styles.sharingLoaderText}>Generating PDF...</Text>
             </View>
           </View>
@@ -647,7 +642,7 @@ const Score = ({ navigation }) => {
                 style={styles.refModalCloseBtn}
                 onPress={() => setShowReferencesModal(false)}
               >
-                <Text style={styles.refModalCloseText}>✕</Text>
+                <X size={20} color="#475569" />
               </TouchableOpacity>
             </View>
             <ScrollView
@@ -707,12 +702,12 @@ const Score = ({ navigation }) => {
                   setWebViewUrl('');
                 }}
               >
-                <Text style={styles.webViewModalCloseText}>✕</Text>
+                <X size={20} color="#475569" />
               </TouchableOpacity>
             </View>
             {webViewLoading && (
               <View style={styles.webViewLoaderWrap}>
-                <ActivityIndicator size="large" color="#11418A" />
+                <ActivityIndicator size="large" color="#1E64AC" />
               </View>
             )}
             {webViewUrl ? (
@@ -725,7 +720,7 @@ const Score = ({ navigation }) => {
             ) : null}
           </SafeAreaView>
         </Modal>
-      </SafeAreaView>
+      </View>
     </>
   );
 };
@@ -773,7 +768,7 @@ const VitalCard = React.memo(({ label, value, target, hasDiabetes, color }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F4F7FB',
   },
   viewShot: {
     flex: 1,
@@ -782,9 +777,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F4F7FB',
+    paddingTop: hp(0.5),
   },
-  container: { flex: 1, backgroundColor: '#FFFFFF', marginTop: hp(9) },
+  container: { flex: 1, backgroundColor: '#F4F7FB' },
+  glassBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   fixedHeader: {
     position: 'absolute',
     top: 0,
@@ -807,6 +813,7 @@ const styles = StyleSheet.create({
   headerIconsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
   },
   header: {
     flexDirection: 'row',
@@ -835,10 +842,11 @@ const styles = StyleSheet.create({
     tintColor: '#1E293B',
   },
   profileIcon: {
-    resizeMode: 'contain',
-    width: wp(7),
-    height: hp(3.5),
-    borderRadius: wp(40),
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.9)',
   },
   avatarWrapper: {},
   avatar: { width: wp(10), height: wp(10), borderRadius: wp(5) },
@@ -848,7 +856,7 @@ const styles = StyleSheet.create({
   timeToTargetValue: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#11418A',
+    color: '#1E64AC',
     letterSpacing: 0.3,
   },
   reassessIcon: {
@@ -861,32 +869,27 @@ const styles = StyleSheet.create({
   scoreCard: {
     backgroundColor: '#FFFFFF',
     paddingVertical: hp(2.5),
-    marginHorizontal: hp(1.5),
-    elevation: 2,
+    marginHorizontal: wp(4),
     borderRadius: 16,
     alignItems: 'center',
     marginVertical: hp(2),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   meter: { width: wp(70), height: wp(34), resizeMode: 'cover' },
-  score: { fontSize: wp(10), color: '#11418A', fontFamily: 'Poppins-Medium' },
+  score: { fontSize: wp(10), color: '#1E64AC', fontFamily: 'Poppins-Medium' },
   timeToTargetTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: hp(0.3),
   },
   timeToTargetTitleIcon: {
-    marginRight: hp(1),
-    height: hp(1.5),
-    width: hp(2),
+    marginRight: 6,
   },
   timeToTarget: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#64748B',
+    color: '#0F172A',
     letterSpacing: 0.2,
   },
   projectionDisclaimerRow: {
@@ -913,30 +916,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   months: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 15,
-    color: '#64748B',
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 18,
+    color: '#1E64AC',
     letterSpacing: 0.2,
   },
   reassessButton: {
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(1.5),
-    borderRadius: 12,
+    borderRadius: 999,
     marginVertical: hp(2),
     marginHorizontal: hp(2),
     width: '90%',
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
   },
   reassessText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     color: '#FFFFFF',
-    marginLeft: wp(3),
+    marginLeft: wp(2),
     fontSize: 15,
     letterSpacing: 0.3,
   },
@@ -953,31 +952,28 @@ const styles = StyleSheet.create({
   reassessLink: {
     fontFamily: 'Poppins-Medium',
     textDecorationLine: 'underline',
-    color: '#11418A',
+    color: '#1E64AC',
   },
 
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: wp(4),
-    marginVertical: hp(1),
+    marginVertical: hp(0.6),
   },
   infoCard: {
-    width: '48%',
+    width: '48.5%',
     backgroundColor: '#FFFFFF',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     padding: wp(3.5),
-    borderRadius: 12,
+    borderRadius: 16,
     justifyContent: 'center',
   },
   infoValue: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
-    color: '#1E293B',
+    color: '#0F172A',
     letterSpacing: 0.2,
   },
   infoLabel: {
@@ -1008,14 +1004,12 @@ const styles = StyleSheet.create({
   vitalsContainer: {
     marginTop: hp(2),
     paddingVertical: hp(2),
-    margin: hp(1.5),
+    marginHorizontal: wp(4),
+    marginBottom: hp(1),
     backgroundColor: '#FFFFFF',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
   },
   vitalItemWrapper: {
     marginVertical: 0,
@@ -1037,17 +1031,9 @@ const styles = StyleSheet.create({
     marginLeft: wp(2),
   },
   continueContainer: {
-    backgroundColor: '#FFFFFF',
-    margin: hp(2),
-    marginBottom: hp(6),
-    marginTop: hp(2),
-    borderRadius: 12,
-    paddingVertical: hp(1),
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    marginHorizontal: wp(4),
+    marginTop: hp(1),
+    marginBottom: hp(1),
   },
 
   vitalCard: {
@@ -1112,25 +1098,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingVertical: hp(1),
     backgroundColor: '#DBEAFE',
-    borderRadius: 8,
+    borderRadius: 999,
+    overflow: 'hidden',
     fontSize: 13,
-    color: '#DC2626',
+    color: '#1E64AC',
     letterSpacing: 0.2,
   },
 
   continueButton: {
-    margin: wp(4),
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(1.8),
-    borderRadius: 12,
+    borderRadius: 999,
     alignItems: 'center',
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
   },
   continueText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     color: '#FFFFFF',
     fontSize: 16,
     letterSpacing: 0.5,
@@ -1165,15 +1147,14 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: hp(2),
     marginVertical: hp(1),
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     justifyContent: 'center',
-    marginHorizontal: hp(1.5),
+    marginHorizontal: wp(4),
+    marginBottom: hp(5),
   },
   referencesCard: {
     flexDirection: 'row',
@@ -1246,7 +1227,7 @@ const styles = StyleSheet.create({
   refSectionTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#11418A',
+    color: '#1E64AC',
     marginBottom: hp(1),
     letterSpacing: 0.2,
   },
@@ -1260,13 +1241,13 @@ const styles = StyleSheet.create({
   refLinkBullet: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#11418A',
+    color: '#1E64AC',
     marginRight: wp(1.5),
   },
   refLinkText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#11418A',
+    color: '#1E64AC',
     textDecorationLine: 'underline',
     letterSpacing: 0.2,
     flex: 1,

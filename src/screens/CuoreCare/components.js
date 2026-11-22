@@ -6,45 +6,21 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  StatusBar,
 } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { CC, statusMeta } from './ccTheme';
 
 const F = CC.fonts;
 
 /* ------------------------------- Screen header -----------------------------
-   Every CuoreCare screen using this header sits inside a SafeAreaView painted
-   CC.surface — but StatusBar is a native singleton, not scoped per screen, so
-   without setting it here it keeps whatever color the previously-focused
-   screen (e.g. Today, which sets pure white) last left it as. */
+   The CuoreMD blue hero (shared HeroHeader), so every CuoreCare sub-screen opens like the
+   rest of the app. The hero paints under the status bar itself, so screens using it must not
+   add a top safe-area edge, and the clock is switched to light while the screen is focused. */
 export function CCHeader({ title, subtitle, onBack, right }) {
+  useLightStatusBar();
   return (
-    <View style={s.header}>
-      <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
-      {onBack ? (
-        <TouchableOpacity
-          onPress={onBack}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          style={s.backBtn}
-        >
-          <ChevronLeft size={24} color={CC.text} />
-        </TouchableOpacity>
-      ) : (
-        <View style={s.backBtn} />
-      )}
-      <View style={s.headerTitleWrap}>
-        <Text style={s.headerTitle} numberOfLines={1}>
-          {title}
-        </Text>
-        {!!subtitle && (
-          <Text style={s.headerSubtitle} numberOfLines={1}>
-            {subtitle}
-          </Text>
-        )}
-      </View>
-      <View style={s.headerRight}>{right || <View style={s.backBtn} />}</View>
-    </View>
+    <HeroHeader title={title} subtitle={subtitle} onBack={onBack} right={right} />
   );
 }
 
@@ -111,6 +87,7 @@ export function StatusPill({ status, style }) {
 
 /* ------------------------------- Doctor avatar ----------------------------- */
 export function DoctorAvatar({ uri, name, size = 48 }) {
+  const [failedUri, setFailedUri] = React.useState(null);
   const initials = String(name || 'Dr')
     .replace(/^dr\.?\s*/i, '')
     .trim()
@@ -120,8 +97,12 @@ export function DoctorAvatar({ uri, name, size = 48 }) {
     .join('')
     .toUpperCase();
   const dim = { width: size, height: size, borderRadius: size / 2 };
-  if (uri) {
-    return <Image source={{ uri }} style={[s.avatar, dim]} />;
+  // Only an absolute http(s) URL is tried, and one that fails to load falls back to the
+  // initials: a dead link used to leave a blank grey circle on the doctor list.
+  const url = typeof uri === 'string' ? uri.trim() : '';
+  const usable = /^https?:\/\//i.test(url) && failedUri !== url;
+  if (usable) {
+    return <Image source={{ uri: url }} style={[s.avatar, dim]} onError={() => setFailedUri(url)} />;
   }
   return (
     <View style={[s.avatar, s.avatarFallback, dim]}>
@@ -155,24 +136,9 @@ export function Card({ children, style, onPress }) {
 }
 
 const s = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: CC.white,
-    borderBottomWidth: 1,
-    borderBottomColor: CC.border,
-  },
-  backBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  headerTitleWrap: { flex: 1, alignItems: 'center', paddingHorizontal: 8 },
-  headerTitle: { fontFamily: F.PoppinsSemiBold, fontSize: 17, color: CC.text },
-  headerSubtitle: { fontFamily: F.PoppinsRegular, fontSize: 12, color: CC.subText, marginTop: 1 },
-  headerRight: { minWidth: 32, alignItems: 'flex-end' },
-
   primaryBtn: {
     backgroundColor: CC.primary,
-    borderRadius: 14,
+    borderRadius: 999,
     paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
@@ -180,7 +146,7 @@ const s = StyleSheet.create({
   primaryBtnText: { fontFamily: F.PoppinsSemiBold, fontSize: 15, color: CC.white },
   secondaryBtn: {
     backgroundColor: CC.white,
-    borderRadius: 14,
+    borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -204,7 +170,7 @@ const s = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: 42,
-    backgroundColor: CC.accentVioletSoft,
+    backgroundColor: CC.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,

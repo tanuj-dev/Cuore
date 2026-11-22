@@ -29,7 +29,7 @@ import { getApiCall } from '../../utilities/Services';
 import { setActiveProfile } from '../../redux/Dependants/slice';
 import ProfileSwitcher from '../../components/ProfileSwitcher';
 
-const BRAND = '#11418A';
+const BRAND = '#1E64AC';
 const KIND = {
   medicine: { label: 'Medicine', Icon: Pill, bg: '#EFF6FF', fg: '#1D4ED8' },
   consultation: { label: 'Consultation', Icon: Stethoscope, bg: '#ECFDF5', fg: '#047857' },

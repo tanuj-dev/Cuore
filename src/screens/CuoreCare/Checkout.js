@@ -187,7 +187,7 @@ export default function Checkout({ route, navigation }) {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
+      <SafeAreaView style={styles.safe} edges={[]}>
         <CCHeader title="Payment" onBack={() => navigation.goBack()} />
         <View style={styles.center}>
           <ActivityIndicator color={CC.primary} />
@@ -200,7 +200,7 @@ export default function Checkout({ route, navigation }) {
   // if they do — a deep link, a stale navigation — say so plainly instead of showing a ₹0 bill.
   if (payment && !payment.payable) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
+      <SafeAreaView style={styles.safe} edges={[]}>
         <CCHeader title="Payment" onBack={() => navigation.goBack()} />
         <View style={styles.center}>
           <ShieldCheck size={34} color={CC.success} />
@@ -219,7 +219,7 @@ export default function Checkout({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       <CCHeader
         title="Payment"
         subtitle="Complete payment to send your request"

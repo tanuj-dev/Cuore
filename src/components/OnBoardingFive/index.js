@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { Clock } from 'lucide-react-native';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Image,
   Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { wp, hp, Images, color } from '../../utilities';
+import { wp, hp, color } from '../../utilities';
 
 const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
   const [exerciseMinutes, setExerciseMinutes] = useState('');
@@ -135,15 +135,7 @@ const OnBoardingFive = ({ onFormChange, initialData = {} }) => {
           <Text style={{ fontFamily: 'Poppins-Regular', fontSize: wp(4) }}>
             {formatTime(time)}
           </Text>
-          <Image
-            style={{
-              resizeMode: 'contain',
-              height: hp(2),
-              width: wp(5),
-              tintColor: '#000000',
-            }}
-            source={Images.WATCH}
-          />
+          <Clock size={18} color="#1E64AC" />
         </TouchableOpacity>
         {showTimePicker && (
           <View style={styles.datePickerWrapper}>
@@ -244,122 +236,28 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     flexGrow: 1,
   },
-  timeButton: {
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    marginTop: hp(1),
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(4),
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    padding: wp(4),
-    borderRadius: wp(3),
-    marginBottom: hp(2),
-    elevation: 1,
-  },
-  question: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: wp(3.6),
-    
-    marginTop: hp(2),
-    marginBottom: hp(2),
-    color: color.QUESTION_COLOR,
-  },
-  note: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 13, letterSpacing: 0.1,
-    color: color.NOTE_COLOR,
-    marginBottom: hp(1),
-  },
-  optionRow: {
-    // backgroundColor: 'red',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(1.2),
-  },
-  radioOuter: {
-    width: wp(4.5),
-    height: wp(4.5),
-    borderRadius: wp(2.25),
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: wp(3),
-  },
-  radioInner: {
-    width: wp(2.5),
-    height: wp(2.5),
-    borderRadius: wp(1.25),
-    backgroundColor: '#11418A',
-  },
-  checkbox: {
-    width: wp(4.5),
-    height: wp(4.5),
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: hp(3),
-    marginRight: wp(3),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxTick: {
-    width: wp(2.5),
-    height: wp(2.5),
-    backgroundColor: '#11418A',
-    borderRadius: hp(2),
-  },
-  optionText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14, letterSpacing: 0.2,
-    color: color.ANSWER_COLOR,
-    flex: 1,
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: wp(2),
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(3),
-    marginBottom: hp(1),
-  },
-  dropdownText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14, letterSpacing: 0.2,
-    color: '#555',
-  },
+  timeButton: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, marginBottom: 14, paddingVertical: 13, paddingHorizontal: 14, width: '100%', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, backgroundColor: '#FFFFFF' },
+  card: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, marginBottom: 14, borderWidth: 1, borderColor: '#E2E8F0' },
+  question: { fontFamily: 'Poppins-SemiBold', fontSize: 15, color: '#0F172A', marginTop: 6, marginBottom: 10, letterSpacing: -0.1 },
+  note: { fontFamily: 'Poppins-Regular', fontSize: 13, letterSpacing: 0.1, color: '#64748B', marginBottom: 6 },
+  optionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  radioOuter: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#1E64AC' },
+  checkbox: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  checkboxTick: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#1E64AC' },
+  optionText: { fontFamily: 'Poppins-Regular', fontSize: 14, letterSpacing: 0.1, color: '#334155', flex: 1 },
+  dropdown: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, paddingVertical: 13, paddingHorizontal: 14, marginBottom: 8, backgroundColor: '#FFFFFF' },
+  dropdownText: { fontFamily: 'Poppins-Regular', fontSize: 14, color: '#334155' },
   dayRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: wp(2),
     marginBottom: hp(1),
   },
-  dayChip: {
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(0.8),
-    borderRadius: wp(2),
-    backgroundColor: '#eaeaea',
-    marginRight: wp(1),
-    marginBottom: hp(1),
-  },
-  selectedDayChip: {
-    backgroundColor: '#11418A',
-  },
-  dayText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: wp(3.2),
-    color: '#333',
-  },
-  selectedDayText: {
-    fontFamily: 'Poppins-Regular',
-    color: '#fff',
-  },
+  dayChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#E2E8F0' },
+  selectedDayChip: { backgroundColor: '#1E64AC', borderColor: '#1E64AC' },
+  dayText: { fontFamily: 'Poppins-Medium', fontSize: 13, color: '#334155' },
+  selectedDayText: { fontFamily: 'Poppins-Medium', color: '#FFFFFF' },
   errorText: {
     fontFamily: 'Poppins-Regular',
     fontSize: wp(3.2),
@@ -367,7 +265,7 @@ const styles = StyleSheet.create({
     marginTop: hp(0.5),
   },
   button: {
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(1.8),
     borderRadius: wp(2.5),
     alignItems: 'center',
@@ -379,12 +277,5 @@ const styles = StyleSheet.create({
     fontSize: 15, letterSpacing: 0.3,
     
   },
-  datePickerWrapper: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    marginTop: hp(1),
-    padding: wp(2),
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
+  datePickerWrapper: { backgroundColor: '#FFFFFF', borderRadius: 12, marginTop: 8, padding: 8, borderWidth: 1, borderColor: '#E2E8F0' },
 });

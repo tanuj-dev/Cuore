@@ -5,41 +5,51 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Image,
-  ImageBackground,
   ActivityIndicator,
-  Platform,
-  TextInput,
 } from 'react-native';
+import {
+  Share2,
+  Coffee,
+  UtensilsCrossed,
+  Search as SearchIcon,
+  ChevronRight,
+  Leaf,
+  Drumstick,
+  Egg,
+  TriangleAlert,
+} from 'lucide-react-native';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
-import { Images, hp, wp } from '../../utilities';
+import { hp, wp } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
 import { getNourish, getRecipe } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
 import Toast from '../../components/Toast';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const NutritionSkeleton = () => (
-  <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-    {/* Fixed header */}
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: hp(2), paddingVertical: hp(1) }}>
-      <SkeletonBox width={wp(4)} height={hp(3)} borderRadius={4} />
-      <SkeletonBox width={wp(4)} height={hp(2)} borderRadius={4} />
-    </View>
-    {/* Image background area */}
-    <View style={{ backgroundColor: '#CBD5E1', padding: hp(2), gap: hp(2) }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: hp(2) }}>
-        <SkeletonBox width={wp(36)} height={hp(5.5)} borderRadius={12} />
-        <SkeletonBox width={wp(36)} height={hp(5.5)} borderRadius={12} />
+// Diet tag → lucide pill. 'C' (caution) has no label in the old artwork, so it stays icon-only.
+const DIET_TAGS = {
+  V: { label: 'Veg', Icon: Leaf, fg: '#15803D', bg: '#DCFCE7' },
+  N: { label: 'Non-veg', Icon: Drumstick, fg: '#B91C1C', bg: '#FEE2E2' },
+  E: { label: 'Egg', Icon: Egg, fg: '#B45309', bg: '#FEF3C7' },
+  C: { label: null, Icon: TriangleAlert, fg: '#B91C1C', bg: '#FEE2E2' },
+};
+
+const NutritionSkeleton = ({ onBack }) => (
+  <View style={{ flex: 1, backgroundColor: '#F4F7FB' }}>
+    <HeroHeader title="Cuore Nourish" subtitle="Simple, everyday meals for your plan." onBack={onBack}>
+      <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+        <View style={{ flex: 1, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)' }} />
+        <View style={{ flex: 1, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)' }} />
       </View>
-      <SkeletonBox width="100%" height={hp(5.5)} borderRadius={12} />
-      <SkeletonBox width="80%" height={14} borderRadius={6} style={{ alignSelf: 'center' }} />
-    </View>
+      <View style={{ height: 46, borderRadius: 12, marginTop: 12, backgroundColor: 'rgba(255,255,255,0.16)' }} />
+    </HeroHeader>
     {/* Meal cards */}
     <ScrollView scrollEnabled={false} contentContainerStyle={{ padding: wp(5), gap: hp(2) }}>
       {[1, 2, 3, 4, 5].map(i => (
-        <View key={i} style={{ backgroundColor: '#FFF', borderRadius: 12, padding: wp(4), borderLeftWidth: 3, borderLeftColor: '#E2E8F0' }}>
+        <View key={i} style={{ backgroundColor: '#FFF', borderRadius: 16, padding: wp(4), borderWidth: 1, borderColor: '#E2E8F0' }}>
           <SkeletonBox width="65%" height={16} style={{ marginBottom: hp(1) }} />
           <SkeletonBox width="90%" height={12} borderRadius={4} style={{ marginBottom: hp(0.6) }} />
           <SkeletonBox width="75%" height={12} borderRadius={4} style={{ marginBottom: hp(0.6) }} />
@@ -68,6 +78,7 @@ const Nutrition = ({ navigation, route }) => {
   const nourishData = useSelector(state => state.nourish.data);
   const nourishLoading = useSelector(state => state.nourish.loading);
   const [receipeData, setRecipeData] = useState(null);
+  useLightStatusBar();
 
   useEffect(() => {
     if (activeTab === 'Breakfast') {
@@ -156,93 +167,36 @@ const Nutrition = ({ navigation, route }) => {
   };
 
   const renderMealCard = (item, index) => {
-    const dietTag = item?.dietTag?.toUpperCase() || item?.type?.toUpperCase();
-    let tagColor = '#dc2626';
-    let tagLabel = Images.VEG;
-
-    if (dietTag.startsWith('V')) {
-      tagColor = '#16a34a';
-      tagLabel = Images.VEG;
-    } else if (dietTag.startsWith('N')) {
-      tagColor = '#dc2626';
-      tagLabel = Images.NON_VEG;
-    } else if (dietTag.startsWith('E')) {
-      tagColor = '#f59e0b';
-      tagLabel = Images.EGG;
-    } else if (dietTag.startsWith('C')) {
-      tagColor = '#dc2626';
-      tagLabel = Images.WARNING;
-    }
+    const dietTag = (item?.dietTag || item?.type || '').toUpperCase();
+    const tag = DIET_TAGS[dietTag.charAt(0)] || DIET_TAGS.C;
+    const TagIcon = tag.Icon;
 
     return (
       <TouchableOpacity
         onPress={() => handlePress(item, navigation)}
         key={index}
-        style={[styles.card, { borderLeftColor: tagColor }]}
+        style={styles.card}
+        activeOpacity={0.7}
       >
-        <View>
-          <Text style={styles.mealTitle}>{item?.name || item?.title}</Text>
-
-          <View>
+        <View style={styles.cardTop}>
+          <View style={styles.cardText}>
+            <Text style={styles.mealTitle}>{item?.name || item?.title}</Text>
             {item?.components?.map((line, idx) => (
               <Text key={idx} style={styles.detail}>
                 {'\u2022'} {line}
               </Text>
             ))}
-            <Image
-              style={{
-                height: hp(2),
-                width: wp(4),
-                resizeMode: 'contain',
-                position: 'absolute',
-                right: hp(0),
-                top: hp(1),
-              }}
-              source={Images.RIGHT_ARROW}
-            />
           </View>
+          <ChevronRight size={18} color="#94A3B8" />
         </View>
         <View style={styles.cardFooter}>
-          {tagLabel === Images.EGG ? (
-            <View
-              style={{
-                backgroundColor: '#fff8c3',
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginRight: hp(2),
-                paddingHorizontal: wp(2),
-                borderRadius: hp(1),
-                justifyContent: 'center',
-              }}
-            >
-              <Image
-                style={{
-                  height: hp(2.5),
-                  width: wp(3),
-                  resizeMode: 'contain',
-                  marginRight: hp(0),
-                }}
-                source={Images.EGG}
-              />
-              <Text style={styles.eggTagText}>Egg</Text>
-            </View>
-          ) : (
-            <Image
-              style={{
-                height: tagLabel === Images.WARNING ? hp(2) : hp(2.5),
-                width: tagLabel === Images.WARNING ? wp(14) : wp(13),
-                resizeMode: 'contain',
-              }}
-              source={tagLabel}
-            />
-          )}
-
-          <Text
-            style={[
-              styles.kcal,
-              tagLabel == Images.EGG ? { marginLeft: -hp(1.2) } : '',
-            ]}
-          >
+          <View style={[styles.tagPill, { backgroundColor: tag.bg }]}>
+            <TagIcon size={13} color={tag.fg} />
+            {tag.label ? (
+              <Text style={[styles.tagText, { color: tag.fg }]}>{tag.label}</Text>
+            ) : null}
+          </View>
+          <Text style={styles.kcal}>
             {item?.calories || item?.custom_plate} kcal
           </Text>
         </View>
@@ -251,11 +205,11 @@ const Nutrition = ({ navigation, route }) => {
   };
 
   if (nourishLoading && !nourishData) {
-    return <NutritionSkeleton />;
+    return <NutritionSkeleton onBack={() => navigation.goBack()} />;
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <View style={{ flex: 1, backgroundColor: '#F4F7FB' }}>
       {toast && (
         <View style={styles.toastContainer}>
           <Toast
@@ -269,252 +223,190 @@ const Nutrition = ({ navigation, route }) => {
       <ViewShot
         ref={viewShotRef}
         options={{ format: 'jpg', quality: 0.9 }}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: '#F4F7FB' }}
       >
-        <View style={{ flex: 1 }}>
-          {/* Fixed Header Buttons - Always Visible */}
-          <View style={styles.fixedHeader}>
+        <HeroHeader
+          title="Cuore Nourish"
+          subtitle="Simple, everyday meals for your plan."
+          onBack={() => navigation.goBack()}
+          right={
             <TouchableOpacity
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              onPress={() => navigation.goBack()}
-              style={styles.fixedButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={handleShareScreenshot}
+              style={styles.shareButton}
+              accessibilityRole="button"
+              accessibilityLabel="Share"
             >
-              <Image
-                style={{
-                  resizeMode: 'contain',
-                  height: hp(3),
-                  width: wp(4),
-                }}
-                source={Images.BACK_BUTTON}
+              <Share2 size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          }
+        >
+          <View style={styles.tabRow}>
+            <TouchableOpacity
+              onPress={() => setActiveTab('Breakfast')}
+              style={[styles.tabButton, activeTab === 'Breakfast' && styles.tabButtonActive]}
+              activeOpacity={0.8}
+            >
+              <Coffee
+                size={16}
+                color={activeTab === 'Breakfast' ? '#1E64AC' : '#FFFFFF'}
               />
+              <Text
+                style={[styles.tabText, activeTab === 'Breakfast' && styles.tabTextActive]}
+              >
+                Breakfast
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              onPress={handleShareScreenshot}
-              style={styles.fixedButton}
+              onPress={() => setActiveTab('LunchDinner')}
+              style={[styles.tabButton, activeTab === 'LunchDinner' && styles.tabButtonActive]}
+              activeOpacity={0.8}
             >
-              <Image
-                style={{
-                  height: hp(2),
-                  width: wp(4),
-                  resizeMode: 'contain',
-                }}
-                source={Images.SHARE_4}
+              <UtensilsCrossed
+                size={16}
+                color={activeTab === 'LunchDinner' ? '#1E64AC' : '#FFFFFF'}
               />
+              <Text
+                style={[styles.tabText, activeTab === 'LunchDinner' && styles.tabTextActive]}
+              >
+                Lunch/Dinner
+              </Text>
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            style={styles.container}
-            scrollEventThrottle={16}
-            keyboardShouldPersistTaps="handled"
-            nestedScrollEnabled={true}
-            contentContainerStyle={
-              {
-                // paddingTop: Platform.OS === 'ios' ? hp(4) : hp(1.5),
-              }
-            }
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Search')}
+            style={styles.searchContainer}
+            activeOpacity={0.8}
           >
-            {/* 🔵 Header */}
-            <ImageBackground
-              style={{ padding: hp(2) }}
-              source={Images.BACKGROUND_IMAGE_NUTRITION}
-            >
-              {/* Spacer for fixed buttons */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  height: Platform.OS === 'ios' ? hp(4) : hp(1.5),
-                }}
-              >
-                <View style={{ width: wp(4) }} />
-                <View style={{ width: wp(4) }} />
-              </View>
+            <SearchIcon size={18} color="#94A3B8" />
+            <Text style={styles.searchPlaceholder}>Search recipe...</Text>
+          </TouchableOpacity>
+        </HeroHeader>
 
-              {/* Tabs */}
-              <View
-                style={{
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginTop: Platform.OS === 'ios' ? hp(0) : hp(2),
-                }}
-              >
-                {/* Breakfast Tab */}
-                <TouchableOpacity
-                  onPress={() => setActiveTab('Breakfast')}
-                  style={[
-                    styles.tabButton,
-                    {
-                      backgroundColor:
-                        activeTab === 'Breakfast' ? '#11418A' : '#94A3B8',
-                    },
-                  ]}
-                >
-                  <Image style={styles.tabIcon} source={Images.BREAKFAST} />
-                  <Text style={styles.tabText}>Breakfast</Text>
-                </TouchableOpacity>
+        <ScrollView
+          style={styles.container}
+          keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="never"
+        >
+          {loading ? (
+            <ActivityIndicator
+              style={{ marginTop: hp(2) }}
+              size="small"
+              color="#1E64AC"
+            />
+          ) : (
+            <Text style={styles.headerTitle}>
+              Daily variety leads to better results. Try a new option each
+              day.
+            </Text>
+          )}
 
-                {/* Lunch & Dinner Tab */}
-                <TouchableOpacity
-                  onPress={() => setActiveTab('LunchDinner')}
-                  style={[
-                    styles.tabButton,
-                    {
-                      backgroundColor:
-                        activeTab === 'LunchDinner' ? '#11418A' : '#94A3B8',
-                    },
-                  ]}
-                >
-                  <Image style={styles.tabIcon} source={Images.KNIFE} />
-                  <Text style={styles.tabText}>Lunch/Dinner</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* 🔍 Search Bar */}
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Search')}
-                style={styles.searchContainer}
-              >
-                <View>
-                  <Image source={Images.SEARCH} style={styles.searchIcon} />
-                </View>
-
-                <Text style={styles.searchPlaceholder}> Search Recipe...</Text>
-              </TouchableOpacity>
-
-              {loading ? (
-                <ActivityIndicator
-                  style={{ marginTop: hp(2) }}
-                  size="small"
-                  color="#11418A"
-                />
-              ) : (
-                <Text style={styles.headerTitle}>
-                  Daily variety leads to better results— try a new option each
-                  day.
-                </Text>
-              )}
-            </ImageBackground>
-
-            {/* 🥗 Meal Cards */}
-            <View style={styles.cardList}>
-              {filteredMeals?.length > 0 ? (
-                filteredMeals.map((item, index) => renderMealCard(item, index))
-              ) : (
-                <Text style={styles.noResultText}>No meals found.</Text>
-              )}
-            </View>
-          </ScrollView>
-        </View>
+          <View style={styles.cardList}>
+            {filteredMeals?.length > 0 ? (
+              filteredMeals.map((item, index) => renderMealCard(item, index))
+            ) : (
+              <Text style={styles.noResultText}>No meals found.</Text>
+            )}
+          </View>
+        </ScrollView>
       </ViewShot>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  fixedHeader: {
-    // position: 'absolute',
-    // top: Platform.OS === 'ios' ? hp(0) : hp(1.5),
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  container: { flex: 1, backgroundColor: '#F4F7FB' },
+  shareButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.16)',
     alignItems: 'center',
-    paddingHorizontal: hp(2),
-    zIndex: 1000,
-    // elevation: 1000,
-    pointerEvents: 'box-none',
+    justifyContent: 'center',
   },
-  fixedButton: {
-    // backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    // borderRadius: 12,
-    // padding: hp(1.2),
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 6,
-    // elevation: 3,
+  tabRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  tabButtonActive: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
+  tabText: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#FFFFFF' },
+  tabTextActive: { color: '#1E64AC', fontFamily: 'Poppins-SemiBold' },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    height: 46,
+  },
+  searchPlaceholder: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#94A3B8',
   },
   headerTitle: {
     fontFamily: 'Poppins-Regular',
-    paddingHorizontal: hp(5),
-    fontSize: 15,
-    color: '#1E293B',
+    paddingHorizontal: wp(8),
+    fontSize: 13.5,
+    color: '#475569',
     textAlign: 'center',
-    marginTop: hp(1.5),
-    lineHeight: 22,
-    letterSpacing: 0.2,
+    marginTop: hp(2),
+    lineHeight: 20,
   },
-  cardList: {
-    padding: wp(5),
-  },
+  cardList: { padding: wp(4), paddingBottom: hp(4) },
   card: {
-    borderLeftWidth: 3,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     padding: wp(4),
-    marginBottom: hp(1.8),
-    elevation: 2,
-    borderLeftColor: '#10B981',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
+    marginBottom: hp(1.5),
   },
+  cardTop: { flexDirection: 'row', alignItems: 'center' },
+  cardText: { flex: 1, minWidth: 0, paddingRight: 10 },
   mealTitle: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 15,
-    color: '#1E293B',
+    color: '#0F172A',
     marginBottom: hp(0.5),
-    letterSpacing: -0.2,
   },
   detail: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 12,
+    fontSize: 12.5,
     color: '#64748B',
     lineHeight: 18,
-    letterSpacing: 0.1,
   },
   cardFooter: {
     marginTop: hp(1.5),
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
   },
-  kcal: {
-    fontFamily: 'Poppins-Regular',
-    marginLeft: hp(0),
-    fontSize: 14,
-    color: '#475569',
-    letterSpacing: 0.2,
-  },
-  tabButton: {
-    alignItems: 'center',
+  tagPill: {
     flexDirection: 'row',
-    padding: hp(1.2),
-    paddingHorizontal: hp(4),
-    borderRadius: 12,
-    marginHorizontal: hp(1),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
   },
-  tabIcon: {
-    resizeMode: 'contain',
-    height: hp(3),
-    width: wp(4),
-    tintColor: '#FFFFFF',
-  },
-  tabText: {
+  tagText: { fontFamily: 'Poppins-Medium', fontSize: 12 },
+  kcal: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#FFFFFF',
-    marginLeft: hp(1),
-    letterSpacing: 0.3,
+    fontSize: 13,
+    color: '#334155',
   },
   toastContainer: {
     position: 'absolute',
@@ -525,52 +417,12 @@ const styles = StyleSheet.create({
     zIndex: 9999,
     elevation: 9999,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginHorizontal: hp(1),
-    marginTop: hp(2),
-    paddingHorizontal: hp(2),
-    paddingVertical: hp(1.2),
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  searchPlaceholder: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#94A3B8',
-    letterSpacing: 0.2,
-  },
-  searchIcon: {
-    height: hp(2.5),
-    width: wp(4),
-    resizeMode: 'contain',
-    tintColor: '#94A3B8',
-    marginRight: hp(1),
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#1E293B',
-    paddingVertical: Platform.OS === 'ios' ? hp(1.5) : 0,
-    letterSpacing: 0.2,
-  },
   noResultText: {
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     color: '#64748B',
     fontSize: 14,
     marginTop: hp(2),
-    letterSpacing: 0.2,
-  },
-  eggTagText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 11,
-    color: '#C68A40',
-    letterSpacing: 0.2,
   },
 });
 

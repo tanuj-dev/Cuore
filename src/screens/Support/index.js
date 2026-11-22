@@ -1,52 +1,63 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  Linking,
-  Platform,
-} from 'react-native';
-import { hp, wp, Images } from '../../utilities';
-import ProfileHeader from '../../components/ProfileHeader';
+import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import { Phone, Clock } from 'lucide-react-native';
+import { hp, wp } from '../../utilities';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
+
+const PHONE = '+918595220225';
 
 const Support = ({ navigation }) => {
   const { alert, AlertComponent } = useCustomAlert();
+  useLightStatusBar();
+
+  const callSupport = async () => {
+    const url = `tel:${PHONE}`;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      Linking.openURL(url);
+    } else {
+      alert('Error', 'Phone dialer not supported on this device');
+    }
+  };
+
   return (
     <>
       {AlertComponent}
       <View style={styles.wrapper}>
-        <ProfileHeader navigation={navigation} title="Support" />
+        <HeroHeader
+          title="Support"
+          subtitle="We are here to help"
+          onBack={() => navigation.goBack()}
+        />
 
-        <View style={styles.container}>
-          <Text style={styles.heading}>Call our support team</Text>
-          <View style={styles.centerSection}>
-            <View style={styles.iconContainer}>
-              <Image source={Images.PHONE} style={styles.phoneIcon} />
+        <View style={styles.body}>
+          <View style={styles.card}>
+            <View style={styles.iconTile}>
+              <Phone size={28} color="#1E64AC" />
             </View>
-            <Text style={styles.supportLineText}>Support Line</Text>
+            <Text style={styles.heading}>Call our support team</Text>
+            <Text style={styles.muted}>Support line</Text>
             <TouchableOpacity
-              onPress={async () => {
-                const url = 'tel:+918595220225';
-                const supported = await Linking.canOpenURL(url);
-                if (supported) {
-                  Linking.openURL(url);
-                } else {
-                  alert('Error', 'Phone dialer not supported on this device');
-                }
-              }}
-              style={styles.continueBtn}
+              onPress={callSupport}
+              style={styles.callBtn}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Call support"
             >
-              <Text style={styles.continueText}> Call +91 85952 20225</Text>
+              <Phone size={18} color="#FFFFFF" />
+              <Text style={styles.callText}>Call +91 85952 20225</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.hoursContainer}>
-            <Text style={styles.hoursTitle}>Support Hours</Text>
 
-            <View style={styles.hoursContent}>
-              <Text style={styles.hoursDay}>Monday - Saturday</Text>
+          <View style={[styles.card, styles.hoursCard]}>
+            <View style={styles.smallTile}>
+              <Clock size={20} color="#1E64AC" />
+            </View>
+            <View style={styles.hoursText}>
+              <Text style={styles.hoursTitle}>Support hours</Text>
+              <Text style={styles.muted}>Monday - Saturday</Text>
               <Text style={styles.hoursTime}>9:00 AM - 6:00 PM</Text>
             </View>
           </View>
@@ -57,108 +68,73 @@ const Support = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  container: {
-    padding: wp(5),
-    margin: wp(4),
+  wrapper: { flex: 1, backgroundColor: '#F4F7FB' },
+  body: { padding: wp(4), gap: hp(2) },
+  card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 10,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 4 },
-    }),
-  },
-  heading: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 20,
-    marginBottom: hp(2),
-    color: '#1E293B',
-    letterSpacing: -0.5,
-  },
-  centerSection: {
-    alignItems: 'center',
-    marginTop: hp(3),
-  },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: hp(2),
-  },
-  phoneIcon: {
-    height: hp(4.5),
-    width: wp(9),
-    resizeMode: 'contain',
-    tintColor: '#11418A',
-  },
-  supportLineText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 18,
-    marginTop: hp(1),
-    color: '#475569',
-    letterSpacing: -0.3,
-  },
-  continueBtn: {
-    width: wp(70),
-    backgroundColor: '#11418A',
-    paddingVertical: hp(2),
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: hp(3.5),
-    shadowColor: '#11418A',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    ...Platform.select({
-      android: { elevation: 0.5 },
-      ios: { elevation: 6 },
-    }),
-  },
-  continueText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    fontSize: 15.5,
-    letterSpacing: -0.2,
-  },
-  hoursContainer: {
-    marginTop: hp(6),
-    backgroundColor: '#F1F5F9',
-    padding: hp(2.5),
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    padding: wp(5),
+    alignItems: 'center',
   },
-  hoursTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 15,
-    color: '#1E293B',
+  iconTile: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(1.5),
+  },
+  heading: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 18,
+    color: '#0F172A',
     letterSpacing: -0.3,
   },
-  hoursContent: {
-    marginTop: hp(1.5),
-  },
-  hoursDay: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
+  muted: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13.5,
     color: '#64748B',
-    marginBottom: hp(0.5),
-    letterSpacing: 0.1,
+    marginTop: 2,
+  },
+  callBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    alignSelf: 'stretch',
+    backgroundColor: '#1E64AC',
+    paddingVertical: hp(1.8),
+    borderRadius: 999,
+    marginTop: hp(2.5),
+  },
+  callText: {
+    fontFamily: 'Poppins-SemiBold',
+    color: '#FFFFFF',
+    fontSize: 15,
+  },
+  hoursCard: { flexDirection: 'row', alignItems: 'center' },
+  smallTile: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hoursText: { flex: 1, marginLeft: wp(3.5) },
+  hoursTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 15,
+    color: '#0F172A',
   },
   hoursTime: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#64748B',
-    letterSpacing: 0.1,
+    color: '#0F172A',
+    marginTop: 2,
   },
 });
 

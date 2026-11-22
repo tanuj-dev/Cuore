@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Info } from 'lucide-react-native';
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Platform,
 } from 'react-native';
-import { Images, color, hp, wp } from '../../utilities';
+import { color, hp, wp } from '../../utilities';
 
 const validationLimits = {
   o2_sat: { min: 70, max: 100 },
@@ -147,7 +147,7 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
 
       <Text style={styles.sectionTitle}>Blood Tests</Text>
       <View style={styles.noteRow}>
-        <Image style={styles.noteIcon} source={Images.NOTICE} />
+        <Info size={16} color="#B45309" style={styles.noteIcon} />
         <View style={styles.noteTextWrap}>
           <Text style={styles.note}>
           General guidance: often checked annually. Follow your doctor’s advice
@@ -214,49 +214,20 @@ const OnBoardingSeven = ({ initialData, onFormChange }) => {
 
 // --- Styles ---
 const styles = StyleSheet.create({
-  container: {
-    padding: hp(1),
-    backgroundColor: '#FFFFFF',
-    flex: 1,
-    elevation: 1,
-    borderRadius: hp(1),
-  },
-  sectionTitle: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: wp(4.5),
-    marginTop: hp(2),
-    marginBottom: hp(1),
-    color: color.QUESTION_COLOR,
-  },
-  subsectionTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 15,
-    color: color.QUESTION_COLOR,
-    marginTop: hp(1),
-    marginBottom: hp(1),
-    letterSpacing: 0.2,
-  },
+  container: { paddingVertical: 4, backgroundColor: '#FFFFFF', flex: 1 },
+  sectionTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 16, marginTop: 18, marginBottom: 10, color: '#0F172A' },
+  subsectionTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 14, color: '#334155', marginTop: 6, marginBottom: 8 },
   noteRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: hp(2),
   },
-  noteIcon: {
-    height: hp(2),
-    width: wp(4),
-    marginRight: hp(1),
-  },
+  noteIcon: { marginRight: 8, marginTop: 2 },
   noteTextWrap: {
     flex: 1,
     flexShrink: 1,
   },
-  note: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    letterSpacing: 0.2,
-    color: color.NOTE_COLOR,
-    marginBottom: hp(2),
-  },
+  note: { fontFamily: 'Poppins-Regular', fontSize: 13, letterSpacing: 0.1, color: '#64748B', marginBottom: 6 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -266,48 +237,17 @@ const styles = StyleSheet.create({
   inputGroup: {
     flex: 1,
   },
-  label: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#475569',
-    marginBottom: hp(1),
-  },
-  input: {
-    fontFamily: 'Poppins-Regular',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingVertical: hp(1.2),
-    paddingHorizontal: wp(3),
-    borderRadius: wp(2),
-  },
+  label: { fontFamily: 'Poppins-SemiBold', fontSize: 13, color: '#64748B', marginBottom: 6 },
+  input: { fontFamily: 'Poppins-Regular', fontSize: 15, color: '#0F172A', borderWidth: 1, borderColor: '#E2E8F0', paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: '#FFFFFF' },
   unitContainer: {
     flexDirection: 'row',
     paddingVertical: hp(1),
     marginTop: Platform.OS === 'android' ? hp(3.8) : hp(2.9),
   },
-  unitButton: {
-    padding: hp(0.45),
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#aaa',
-    borderRadius: 5,
-    backgroundColor: '#9CA3AF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  unitButtonSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  unitText: {
-    fontSize: hp(1.5),
-    color: '#1E293B',
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#EF4444',
-    marginTop: 4,
-  },
+  unitButton: { paddingVertical: 6, paddingHorizontal: 12, marginRight: 8, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 999, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
+  unitButtonSelected: { backgroundColor: '#1E64AC', borderColor: '#1E64AC' },
+  unitText: { fontFamily: 'Poppins-Medium', fontSize: 12, color: '#334155' },
+  errorText: { fontFamily: 'Poppins-Regular', fontSize: 12, color: '#BE123C', marginTop: 4 },
 });
 
 export default OnBoardingSeven;

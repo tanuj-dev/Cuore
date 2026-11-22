@@ -3,218 +3,185 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   ScrollView,
-  TouchableOpacity,
-  Platform,
   useWindowDimensions,
 } from 'react-native';
 import Video from 'react-native-video';
-import { hp, wp, Images } from '../../utilities';
+import { Clock, Repeat, Dumbbell } from 'lucide-react-native';
+import { hp } from '../../utilities';
 import RenderHTML from 'react-native-render-html';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
+
+const Stat = ({ Icon, tint, bg, label, value }) => (
+  <View style={styles.stat}>
+    <View style={[styles.statTile, { backgroundColor: bg }]}>
+      <Icon size={16} color={tint} />
+    </View>
+    <Text style={styles.statLabel}>{label}</Text>
+    <Text style={styles.statValue} numberOfLines={2}>
+      {value || '-'}
+    </Text>
+  </View>
+);
 
 const FitnessDetails = ({ navigation, route }) => {
   const { instruction, data } = route?.params || {};
   const { width } = useWindowDimensions();
+  useLightStatusBar();
   const instructionsHtml =
     typeof instruction?.instructionsText === 'string'
       ? instruction.instructionsText
       : '<p>No instructions available.</p>';
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.headerWrapper}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
-          </TouchableOpacity>
-          <Text style={styles.title} numberOfLines={1}>
-            {data?.title ? data.title : 'Cuore Fitness'}
-          </Text>
-          <View style={styles.headerSpacer} />
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.videoContainer}>
-          <Video
-            source={{
-              uri:
-                data?.videoUrl ||
-                'https://www.shutterstock.com/shutterstock/videos/1054650107/preview/stock-footage-humor-in-sports-fat-african-american-lazy-guy-resting-on-couch-while-his-clumsy-funny-friend-doing.mp4',
-            }}
-            style={styles.video}
-            controls
-            resizeMode="cover"
-          />
-        </View>
-
-        <View style={styles.detailsBox}>
-          <View style={styles.detailsRow}>
-            <Text style={styles.detailText}>
-              Duration: {instruction?.duration}
-            </Text>
-            <Text style={styles.detailText}>Sets: {instruction?.sets}</Text>
+    <View style={styles.container}>
+      <HeroHeader
+        title="Cuore Fitness"
+        subtitle={data?.title || 'Watch the demo, then follow the steps.'}
+        onBack={() => navigation.goBack()}
+      />
+      <ScrollView
+        style={styles.scroll}
+        contentInsetAdjustmentBehavior="never"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          <View style={styles.videoContainer}>
+            <Video
+              source={{
+                uri:
+                  data?.videoUrl ||
+                  'https://www.shutterstock.com/shutterstock/videos/1054650107/preview/stock-footage-humor-in-sports-fat-african-american-lazy-guy-resting-on-couch-while-his-clumsy-funny-friend-doing.mp4',
+              }}
+              style={styles.video}
+              controls
+              resizeMode="cover"
+            />
           </View>
 
-          <Text style={styles.detailText}>
-            Equipment:{' '}
-            {instruction?.equipment === 'None'
-              ? 'No equipment specified'
-              : instruction?.equipment}
-          </Text>
-        </View>
+          <View style={styles.statsRow}>
+            <Stat
+              Icon={Clock}
+              tint="#1E64AC"
+              bg="#DBEAFE"
+              label="Duration"
+              value={instruction?.duration}
+            />
+            <Stat
+              Icon={Repeat}
+              tint="#059669"
+              bg="#D1FAE5"
+              label="Sets"
+              value={instruction?.sets}
+            />
+            <Stat
+              Icon={Dumbbell}
+              tint="#B45309"
+              bg="#FEF3C7"
+              label="Equipment"
+              value={
+                instruction?.equipment === 'None'
+                  ? 'None'
+                  : instruction?.equipment
+              }
+            />
+          </View>
 
-        <View
-          style={[
-            styles.instructionBox,
-            { borderLeftColor: data?.color || '#11418A' },
-          ]}
-        >
-          <RenderHTML
-            contentWidth={width}
-            source={{ html: instructionsHtml }}
-            tagsStyles={{
-              p: {
-                fontSize: 14,
-                color: '#475569',
-                lineHeight: 22,
-                fontFamily: 'Poppins-Regular',
-              },
-              ul: { paddingLeft: 20, marginBottom: 10 },
-              ol: { paddingLeft: 20, marginBottom: 10 },
-              li: {
-                marginBottom: 6,
-                fontSize: 14,
-                color: '#475569',
-                fontFamily: 'Poppins-Regular',
-              },
-              strong: {
-                fontFamily: 'Poppins-Medium',
-                color: '#1E293B',
-              },
-              em: {
-                fontStyle: 'italic',
-                color: '#64748B',
-                fontFamily: 'Poppins-Regular',
-              },
-              h1: {
-                fontSize: 22,
-                fontFamily: 'Poppins-Medium',
-                marginBottom: 12,
-                color: data?.color || '#11418A',
-              },
-              h3: {
-                fontSize: 16,
-                fontFamily: 'Poppins-Medium',
-                marginBottom: 8,
-                color: '#1E293B',
-              },
-            }}
-          />
+          <Text style={styles.sectionTitle}>How to do it</Text>
+          <View style={styles.instructionBox}>
+            <RenderHTML
+              contentWidth={width}
+              source={{ html: instructionsHtml }}
+              tagsStyles={{
+                p: {
+                  fontSize: 14,
+                  color: '#475569',
+                  lineHeight: 22,
+                  fontFamily: 'Poppins-Regular',
+                },
+                ul: { paddingLeft: 20, marginBottom: 10 },
+                ol: { paddingLeft: 20, marginBottom: 10 },
+                li: {
+                  marginBottom: 6,
+                  fontSize: 14,
+                  color: '#475569',
+                  fontFamily: 'Poppins-Regular',
+                },
+                strong: {
+                  fontFamily: 'Poppins-SemiBold',
+                  color: '#0F172A',
+                },
+                em: {
+                  fontStyle: 'italic',
+                  color: '#64748B',
+                  fontFamily: 'Poppins-Regular',
+                },
+                h1: {
+                  fontSize: 22,
+                  fontFamily: 'Poppins-Medium',
+                  marginBottom: 12,
+                  color: '#0F172A',
+                },
+                h3: {
+                  fontSize: 16,
+                  fontFamily: 'Poppins-Medium',
+                  marginBottom: 8,
+                  color: '#0F172A',
+                },
+              }}
+            />
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  headerWrapper: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    ...(Platform.OS === 'android' && { elevation: 0.5 }),
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(2),
-    paddingTop: Platform.OS === 'ios' ? hp(2) : hp(1),
-    paddingBottom: hp(1.5),
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  backIcon: {
-    resizeMode: 'contain',
-    height: hp(3.5),
-    width: wp(4),
-  },
-  title: {
-    flex: 1,
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    color: '#1E293B',
-    textAlign: 'center',
-    letterSpacing: 0.2,
-    paddingHorizontal: 8,
-  },
-  headerSpacer: { width: 44 },
-  content: {
-    padding: wp(4),
-    paddingBottom: hp(6),
-  },
+  container: { flex: 1, backgroundColor: '#F4F7FB' },
+  scroll: { flex: 1 },
+  content: { padding: 16, paddingBottom: hp(6) },
   videoContainer: {
     width: '100%',
     height: hp(25),
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: hp(2),
+    marginBottom: 14,
+    backgroundColor: '#0F172A',
+  },
+  video: { width: '100%', height: '100%' },
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
+  stat: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    padding: 12,
   },
-  video: {
-    width: '100%',
-    height: '100%',
+  statTile: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
-  detailsBox: {
-    backgroundColor: '#F1F5F9',
-    padding: wp(4),
-    borderRadius: 12,
-    marginBottom: hp(2),
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  detailText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    marginBottom: hp(0.5),
-    color: '#475569',
-    letterSpacing: 0.2,
+  statLabel: { fontFamily: 'Poppins-Regular', fontSize: 12, color: '#64748B' },
+  statValue: { fontFamily: 'Poppins-SemiBold', fontSize: 14, color: '#0F172A' },
+  sectionTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 16,
+    color: '#0F172A',
+    marginBottom: 10,
   },
   instructionBox: {
-    marginBottom: hp(3),
-    borderLeftWidth: 4,
-    borderLeftColor: '#11418A',
     backgroundColor: '#FFFFFF',
-    padding: wp(4),
-    borderRadius: 12,
-    borderTopWidth: 1,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    ...(Platform.OS === 'android' && { elevation: 1 }),
   },
 });
 

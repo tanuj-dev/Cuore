@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  StatusBar,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import LinearGradient from 'react-native-linear-gradient';
+import HeroDiscs from '../../components/ui/HeroDiscs';
 import { useDispatch, useSelector } from 'react-redux';
 import { documentsForProfile } from './documentOwner';
 import { useFocusEffect } from '@react-navigation/native';
@@ -69,6 +70,7 @@ const BENEFITS = [
 export default function CuoreCareHome({ navigation }) {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
+  useLightStatusBar();
   const subscription = useSelector(state => state.cuoreCare.subscription);
   const access = useSelector(state => state.cuoreCare.access);
   const appointments = useSelector(state => state.cuoreCare.appointments);
@@ -131,12 +133,18 @@ export default function CuoreCareHome({ navigation }) {
   /* ----- initial access check still loading ----- */
   if (!access.checked && (access.loading || subscription.loading)) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
+      <View style={styles.safe}>
+        <View style={[styles.hero, { paddingTop: insets.top + 8 }]}>
+          <HeroFill />
+          <View style={styles.topBar}>
+            <DrawerMenuButton color={CC.white} style={styles.menuButton} />
+            <Text style={styles.topTitle}>CuoreCare</Text>
+          </View>
+        </View>
         <View style={styles.center}>
           <ActivityIndicator size="large" color={CC.primary} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -146,26 +154,28 @@ export default function CuoreCareHome({ navigation }) {
      branch entirely too. ----- */
   if (access.checked && !access.cuoreCare && !access.emr) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <StatusBar barStyle="dark-content" backgroundColor={CC.surface} />
+      <View style={styles.safe}>
         <ScrollView
           contentContainerStyle={styles.paywallScroll}
+          contentInsetAdjustmentBehavior="never"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          <LinearGradient
-            colors={CC.heroGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroIconWrap}
-          >
-            <Stethoscope size={34} color={CC.primary} />
-          </LinearGradient>
-          <Text style={styles.heroTitle}>CuoreCare</Text>
-          <Text style={styles.heroSubtitle}>
-            Care for your heart and metabolic health, from wherever you are. Book a video,
-            voice or chat consultation and get a digital prescription.
-          </Text>
+          <View style={[styles.hero, styles.paywallHero, { paddingTop: insets.top + 8 }]}>
+            <HeroFill />
+            <View style={styles.topBar}>
+              <DrawerMenuButton color={CC.white} style={styles.menuButton} />
+            </View>
+            <View style={styles.heroIconWrap}>
+              <Stethoscope size={30} color={CC.white} />
+            </View>
+            <Text style={styles.heroTitle}>CuoreCare</Text>
+            <Text style={styles.heroSubtitle}>
+              Care for your heart and metabolic health, from wherever you are. Book a video,
+              voice or chat consultation and get a digital prescription.
+            </Text>
+          </View>
 
+          <View style={styles.paywallBody}>
           <Card style={styles.benefitsCard}>
             {BENEFITS.map((b, i) => {
               const Icon = b.icon;
@@ -197,8 +207,9 @@ export default function CuoreCareHome({ navigation }) {
             onPress={() => navigation.navigate('CuoreCareSubscribe')}
             style={{ marginTop: 20 }}
           />
+          </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -210,18 +221,16 @@ export default function CuoreCareHome({ navigation }) {
   return (
     // Top inset is painted by the gradient band itself (paddingTop below), so the wash runs
     // up under the status bar instead of stopping at a flat strip.
-    <SafeAreaView style={styles.safe} edges={[]}>
-      <StatusBar barStyle="dark-content" backgroundColor={CC.heroGradient[0]} />
-      {/* Header — a soft gradient wash for a warmer welcome. Colour only; the clinic's
-          brandColor still wins on the title below when the practice is white-labelled. */}
-      <LinearGradient
-        colors={CC.heroGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.heroBand, { paddingTop: insets.top }]}
-      >
+    <View style={styles.safe}>
+      {/* CuoreMD blue hero. The gradient is an absolute fill behind a padded View: on the New
+          Architecture a padded LinearGradient paints only its content box and clipped the
+          header. Title text stays white on the blue; a white-labelled clinic's brand colour is
+          shown as a dot beside the subtitle instead, since an arbitrary clinic colour is not
+          guaranteed to read on blue. */}
+      <View style={[styles.hero, { paddingTop: insets.top + 8 }]}>
+        <HeroFill />
         <View style={styles.topBar}>
-          <DrawerMenuButton style={styles.menuButton} />
+          <DrawerMenuButton color={CC.white} style={styles.menuButton} />
           {/* minWidth:0 matters: without it a flex child refuses to shrink below its text's
               intrinsic width, so the title pushed the Records button sideways instead of
               wrapping. */}
@@ -235,26 +244,29 @@ export default function CuoreCareHome({ navigation }) {
                 fit a phone's width beside a button, and truncating the practice's own name to
                 "Sunrise Multispecial…" is a poor way to show whose care this is. The type is a
                 step smaller for the same reason — it buys the second line back. */}
-            <Text
-              style={[styles.topTitle, branding?.whiteLabel && branding.color ? { color: branding.color } : null]}
-              numberOfLines={2}
-            >
+            <Text style={styles.topTitle} numberOfLines={2}>
               {branding?.name || 'CuoreCare'}
             </Text>
-            <Text style={styles.topSubtitle} numberOfLines={1}>
-              {branding?.whiteLabel
-                ? 'Your consultations · Powered by Cuore'
-                : branding?.name
-                ? 'CuoreCare · Your consultations'
-                : 'Your consultations'}
-            </Text>
+            <View style={styles.subRow}>
+              {branding?.whiteLabel && branding.color ? (
+                <View style={[styles.brandDot, { backgroundColor: branding.color }]} />
+              ) : null}
+              <Text style={styles.topSubtitle} numberOfLines={1}>
+                {branding?.whiteLabel
+                  ? 'Your consultations · Powered by Cuore'
+                  : branding?.name
+                  ? 'CuoreCare · Your consultations'
+                  : 'Your consultations'}
+              </Text>
+            </View>
           </View>
           <TouchableOpacity
             style={styles.rxButton}
             onPress={() => navigation.navigate('CuoreCareHistory')}
             activeOpacity={0.8}
+            accessibilityRole="button"
           >
-            <FileText size={16} color={CC.primary} />
+            <FileText size={15} color={CC.white} />
             <Text style={styles.rxButtonText}>Records</Text>
           </TouchableOpacity>
         </View>
@@ -265,7 +277,7 @@ export default function CuoreCareHome({ navigation }) {
             single-person account's header keeps exactly the layout it had — no empty row, because
             this is the component itself and not a wrapper around it. */}
         <ProfileSwitcher compact style={styles.switcherRow} />
-      </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -277,25 +289,19 @@ export default function CuoreCareHome({ navigation }) {
             actually published for this patient. */}
         {(access.cuoreCare || access.emr) && (
           <TouchableOpacity
-            activeOpacity={0.9}
+            activeOpacity={0.85}
             onPress={() => navigation.navigate('CuoreCareDoctors')}
-            style={styles.bookShadow}
+            style={styles.bookCard}
+            accessibilityRole="button"
           >
-            <LinearGradient
-              colors={CC.ctaGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.bookCard}
-            >
-              <View style={styles.bookIcon}>
-                <CalendarPlus size={22} color={CC.white} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.bookTitle}>Book a consultation</Text>
-                <Text style={styles.bookDesc}>Pick a doctor and a time that suits you</Text>
-              </View>
-              <ChevronRight size={20} color={CC.white} />
-            </LinearGradient>
+            <View style={styles.bookIcon}>
+              <CalendarPlus size={22} color={CC.primary} />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.bookTitle}>Book a consultation</Text>
+              <Text style={styles.bookDesc}>Pick a doctor and a time that suits you</Text>
+            </View>
+            <ChevronRight size={20} color={CC.muted} />
           </TouchableOpacity>
         )}
 
@@ -330,7 +336,7 @@ export default function CuoreCareHome({ navigation }) {
           </View>
         ) : list.length === 0 ? (
           <EmptyState
-            icon={<Stethoscope size={36} color={CC.accentViolet} />}
+            icon={<Stethoscope size={34} color={CC.primary} />}
             title={segment === 'upcoming' ? 'Nothing scheduled yet' : 'No past consultations'}
             message={
               segment === 'upcoming'
@@ -364,7 +370,24 @@ export default function CuoreCareHome({ navigation }) {
 
         <View style={{ height: 24 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
+  );
+}
+
+// CuoreMD hero blue (brandDark → brand), as on Today, Explore and Profile.
+const HERO = ['#1E3A8A', '#1E64AC'];
+
+function HeroFill() {
+  return (
+    <>
+      <LinearGradient
+        colors={HERO}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <HeroDiscs />
+    </>
   );
 }
 
@@ -372,32 +395,90 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: CC.surface },
   center: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center' },
 
+  /* hero (shared by all three states) */
+  hero: {
+    paddingBottom: 18,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
+    marginBottom: 18,
+  },
+  topBar: {
+    flexDirection: 'row',
+    /* Top-aligned, not centred: the clinic name can run to two lines, and a centred Records
+       button would drift down the taller header with it. */
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingTop: 4,
+  },
+  menuButton: { paddingRight: 12, paddingTop: 2 },
+  topTitle: { fontFamily: F.PoppinsBold, fontSize: 20, color: CC.white, lineHeight: 27 },
+  subRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  brandDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
+  },
+  topSubtitle: {
+    fontFamily: F.PoppinsRegular,
+    fontSize: 12.5,
+    color: 'rgba(255,255,255,0.82)',
+    flexShrink: 1,
+  },
+  rxButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.32)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  rxButtonText: { fontFamily: F.PoppinsMedium, fontSize: 12.5, color: CC.white, marginLeft: 6 },
+  // White outline so the active (brand-filled) chip still separates from the blue hero.
+  switcherRow: {
+    alignSelf: 'flex-start',
+    marginLeft: 52,
+    marginTop: 12,
+    borderColor: 'rgba(255,255,255,0.55)',
+  },
+
   /* paywall */
-  paywallScroll: { padding: 20, paddingBottom: 40, alignItems: 'center' },
+  paywallScroll: { paddingBottom: 40 },
+  paywallHero: { alignItems: 'center', paddingBottom: 28, overflow: 'hidden' },
+  paywallBody: { paddingHorizontal: 20 },
   heroIconWrap: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
+    width: 72,
+    height: 72,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 8,
   },
-  heroTitle: { fontFamily: F.PoppinsBold, fontSize: 24, color: CC.text, marginTop: 16 },
+  heroTitle: { fontFamily: F.PoppinsBold, fontSize: 26, color: CC.white, marginTop: 14 },
   heroSubtitle: {
     fontFamily: F.PoppinsRegular,
     fontSize: 14,
-    color: CC.subText,
+    color: 'rgba(255,255,255,0.85)',
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 21,
+    paddingHorizontal: 24,
   },
-  benefitsCard: { alignSelf: 'stretch', marginTop: 24, padding: 4 },
+  benefitsCard: { alignSelf: 'stretch', marginTop: 4, padding: 4 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', padding: 14 },
   benefitDivider: { borderBottomWidth: 1, borderBottomColor: CC.border },
   benefitIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -414,65 +495,32 @@ const styles = StyleSheet.create({
   },
 
   /* scheduler */
-  heroBand: {
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    marginBottom: 16,
-  },
-  topBar: {
-    flexDirection: 'row',
-    /* Top-aligned, not centred: the title can now run to two lines, and a centred Records
-       button would drift down the taller header with it. */
-    alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 14,
-  },
-  menuButton: { paddingRight: 12, paddingTop: 2 },
-  switcherRow: { alignSelf: 'flex-start', marginLeft: 20, marginBottom: 14 },
-  topTitle: { fontFamily: F.PoppinsBold, fontSize: 19, color: CC.text, lineHeight: 25 },
-  topSubtitle: { fontFamily: F.PoppinsRegular, fontSize: 12.5, color: CC.subText, marginTop: 2 },
-  rxButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: CC.white,
-    /* A border as well as the tint: on the very light surface the soft-blue fill alone barely
-       reads as a control, which is why it looked like a label rather than a button. */
-    borderWidth: 1,
-    borderColor: '#DBE7FA',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  rxButtonText: { fontFamily: F.PoppinsMedium, fontSize: 12.5, color: CC.primary, marginLeft: 6 },
-  scroll: { paddingHorizontal: 20, paddingBottom: 20 },
-  bookShadow: {
-    borderRadius: CC.radius,
-    marginBottom: 20,
-    ...CC.shadow,
-    shadowColor: CC.primary,
-    shadowOpacity: 0.22,
-  },
+  scroll: { paddingHorizontal: 16, paddingBottom: 20 },
   bookCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: CC.card,
     borderRadius: CC.radius,
+    borderWidth: 1,
+    borderColor: CC.border,
     padding: 16,
+    marginBottom: 18,
+    ...CC.shadow,
   },
   bookIcon: {
     width: 46,
     height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 14,
+    backgroundColor: CC.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
-  bookTitle: { fontFamily: F.PoppinsSemiBold, fontSize: 15, color: CC.white },
-  bookDesc: { fontFamily: F.PoppinsRegular, fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
+  bookTitle: { fontFamily: F.PoppinsSemiBold, fontSize: 15, color: CC.text },
+  bookDesc: { fontFamily: F.PoppinsRegular, fontSize: 12.5, color: CC.subText, marginTop: 2 },
   segment: {
     flexDirection: 'row',
-    backgroundColor: '#ECEAF4',
+    backgroundColor: '#E8EEF6',
     borderRadius: 14,
     padding: 4,
     marginBottom: 16,

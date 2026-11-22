@@ -88,7 +88,7 @@ const NetworkError = ({ onRetry }) => {
               {isChecking ? (
                 <ActivityIndicator
                   size="large"
-                  color="#11418A"
+                  color="#1E64AC"
                   style={styles.loader}
                 />
               ) : (
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(2),
   },
   button: {
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(1.5),
     paddingHorizontal: wp(8),
     borderRadius: hp(1),

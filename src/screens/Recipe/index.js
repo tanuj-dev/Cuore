@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  Image,
-  Platform,
 } from 'react-native';
-import { hp, wp, Images } from '../../utilities';
+import { ChefHat, Timer, Flame, Info } from 'lucide-react-native';
+import { hp } from '../../utilities';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 
 const DIET_COLORS = {
   'Non-Veg': { bg: '#FEE2E2', text: '#991B1B' },
@@ -18,163 +18,249 @@ const DIET_COLORS = {
 
 const Recipe = ({ navigation, route }) => {
   const recipeData = route?.params?.recipeData;
+  useLightStatusBar();
   const { ingredients, instructions } = recipeData || {};
-
-  const totalSteps =
-    instructions?.reduce((acc, s) => acc + (s?.steps?.length || 0), 0) ?? 0;
 
   const dietPref = recipeData?.dietPreference;
   const badgeColors = DIET_COLORS[dietPref] || DIET_COLORS['Veg'];
 
+  const goBack = () => navigation.goBack();
+
   if (!recipeData || recipeData.message === 'Recipe not found.') {
     return (
-      <View style={styles.emptyScreen}>
-        <Image
-          source={Images.EMPTY_CART}
-          style={styles.emptyImage}
-          resizeMode="contain"
-        />
-        <Text style={styles.emptyTitle}>No recipe found</Text>
-        <Text style={styles.emptyMessage}>
-          We couldn't find a recipe for this particular dish. Please try another
-          one or check back later.
-        </Text>
+      <View style={styles.screen}>
+        <HeroHeader title="Recipe" onBack={goBack} />
+        <View style={styles.emptyScreen}>
+          <View style={styles.emptyTile}>
+            <ChefHat size={30} color="#1E64AC" />
+          </View>
+          <Text style={styles.emptyTitle}>No recipe found</Text>
+          <Text style={styles.emptyMessage}>
+            We couldn't find a recipe for this dish. Please try another one or
+            check back later.
+          </Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.scroll} bounces={false}>
-      <View style={styles.screen}>
-        {/* ── Hero Header ── */}
-        <View style={styles.heroHeader}>
-          <View style={styles.heroTopRow}>
-            <TouchableOpacity
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
-            </TouchableOpacity>
-
-            {dietPref && (
-              <View
-                style={[styles.dietBadge, { backgroundColor: badgeColors.bg }]}
-              >
-                <Text
-                  style={[styles.dietBadgeText, { color: badgeColors.text }]}
-                >
-                  {dietPref === 'Eggetarian' ? 'Egg' : dietPref}
-                </Text>
-              </View>
-            )}
+    <View style={styles.screen}>
+      <HeroHeader title="Recipe" onBack={goBack}>
+        <Text style={styles.heroTitle}>{recipeData?.name}</Text>
+        {dietPref ? (
+          <View style={[styles.dietBadge, { backgroundColor: badgeColors.bg }]}>
+            <Text style={[styles.dietBadgeText, { color: badgeColors.text }]}>
+              {dietPref === 'Eggetarian' ? 'Egg' : dietPref}
+            </Text>
           </View>
+        ) : null}
+      </HeroHeader>
 
-          <Text style={styles.heroTitle}>{recipeData?.name}</Text>
-          <Text style={styles.heroMeasurements}>
-            1 katori = 150ml • 1 Cup = 200ml • 1 Bowl = 300ml
-          </Text>
-        </View>
-
-        {/* ── Floating Stats Card ── */}
-        <View style={styles.statsCard}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.container}
+        contentInsetAdjustmentBehavior="never"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Prep Time</Text>
+            <View style={[styles.statTile, { backgroundColor: '#DBEAFE' }]}>
+              <Timer size={16} color="#1E64AC" />
+            </View>
+            <Text style={styles.statLabel}>Prep time</Text>
             <Text style={styles.statValue}>
               {recipeData?.prepTime?.replace(/\t/g, '') || 'N/A'}
             </Text>
           </View>
-          <View style={styles.statDivider} />
           <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Cook Time</Text>
+            <View style={[styles.statTile, { backgroundColor: '#FEF3C7' }]}>
+              <Flame size={16} color="#B45309" />
+            </View>
+            <Text style={styles.statLabel}>Cook time</Text>
             <Text style={styles.statValue}>
               {recipeData?.cookTime?.replace(/\t/g, '') || 'N/A'}
             </Text>
           </View>
-          {/* <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Ingredients</Text>
-            <Text style={styles.statValue}>{ingredients?.length ?? 0}</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Steps</Text>
-            <Text style={styles.statValue}>{totalSteps}</Text>
-          </View> */}
         </View>
 
-        {/* ── Content ── */}
-        <View style={styles.container}>
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Ingredients:</Text>
+        <View style={styles.note}>
+          <Info size={15} color="#1E64AC" />
+          <Text style={styles.noteText}>
+            1 katori = 150ml, 1 cup = 200ml, 1 bowl = 300ml
+          </Text>
+        </View>
 
-            {ingredients?.map((item, index) => (
-              <View key={`ingredient-${index}`} style={styles.ingredientRow}>
-                <View style={styles.stepBadge}>
-                  <Text style={styles.stepBadgeText}>{index + 1}</Text>
-                </View>
-                <Text style={styles.ingredientText}>
-                  {item?.quantity} {item?.unit} {item?.name}
-                </Text>
-              </View>
-            ))}
+        <Text style={styles.sectionTitle}>Ingredients</Text>
+        <View style={styles.card}>
+          {ingredients?.map((item, index) => (
+            <View key={`ingredient-${index}`} style={styles.ingredientRow}>
+              <View style={styles.dot} />
+              <Text style={styles.ingredientText}>
+                {item?.quantity} {item?.unit} {item?.name}
+              </Text>
+            </View>
+          ))}
+        </View>
 
-            <Text style={styles.sectionTitleSpaced}>Instructions:</Text>
-
-            {instructions?.map((step, index) => (
-              <View key={`step-${index}`} style={styles.stepSection}>
-                {step?.heading?.toLowerCase() !== 'instructions' && (
-                  <Text style={styles.stepHeading}>{step.heading}</Text>
-                )}
-                {step?.steps?.map((subStep, subIndex) => (
-                  <View
-                    key={`substep-${index}-${subIndex}`}
-                    style={styles.stepRow}
-                  >
-                    <View style={styles.stepBadge}>
-                      <Text style={styles.stepBadgeText}>{subIndex + 1}</Text>
-                    </View>
-                    <Text style={styles.stepText}>{subStep}</Text>
+        <Text style={styles.sectionTitle}>Instructions</Text>
+        <View style={styles.card}>
+          {instructions?.map((step, index) => (
+            <View key={`step-${index}`} style={styles.stepSection}>
+              {step?.heading?.toLowerCase() !== 'instructions' && (
+                <Text style={styles.stepHeading}>{step.heading}</Text>
+              )}
+              {step?.steps?.map((subStep, subIndex) => (
+                <View key={`substep-${index}-${subIndex}`} style={styles.stepRow}>
+                  <View style={styles.stepBadge}>
+                    <Text style={styles.stepBadgeText}>{subIndex + 1}</Text>
                   </View>
-                ))}
-              </View>
-            ))}
-          </View>
+                  <Text style={styles.stepText}>{subStep}</Text>
+                </View>
+              ))}
+            </View>
+          ))}
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
+  screen: { flex: 1, backgroundColor: '#F4F7FB' },
+  scroll: { flex: 1 },
+  container: { padding: 16, paddingBottom: hp(6) },
+  heroTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 20,
+    lineHeight: 28,
+    color: '#FFFFFF',
+    marginTop: 14,
   },
-  screen: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
+  dietBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginTop: 8,
   },
-
-  /* ── Empty State ── */
+  dietBadgeText: { fontFamily: 'Poppins-Medium', fontSize: 12 },
+  statsRow: { flexDirection: 'row', gap: 10 },
+  statBox: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 12,
+  },
+  statTile: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  statLabel: { fontFamily: 'Poppins-Regular', fontSize: 12, color: '#64748B' },
+  statValue: { fontFamily: 'Poppins-SemiBold', fontSize: 14, color: '#0F172A' },
+  note: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#DBEAFE',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 12,
+  },
+  noteText: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12.5,
+    color: '#1E3A8A',
+  },
+  sectionTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 16,
+    color: '#0F172A',
+    marginTop: 18,
+    marginBottom: 10,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 16,
+  },
+  ingredientRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 5,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#1E64AC',
+    marginTop: 9,
+    marginRight: 12,
+  },
+  ingredientText: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#334155',
+  },
+  stepSection: { marginBottom: 6 },
+  stepHeading: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14.5,
+    color: '#0F172A',
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
+  stepBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    marginTop: 1,
+  },
+  stepBadgeText: { fontFamily: 'Poppins-SemiBold', fontSize: 12, color: '#1E64AC' },
+  stepText: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#334155',
+  },
   emptyScreen: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: wp(6),
-    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 32,
   },
-  emptyImage: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
+  emptyTile: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 18,
-    fontFamily: 'Poppins-Medium',
-    color: '#11418A',
-    marginBottom: 8,
-    letterSpacing: 0.2,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#0F172A',
+    marginBottom: 6,
   },
   emptyMessage: {
     fontSize: 14,
@@ -182,185 +268,6 @@ const styles = StyleSheet.create({
     color: '#64748B',
     textAlign: 'center',
     lineHeight: 22,
-    letterSpacing: 0.2,
-  },
-
-  /* ── Hero Header ── */
-  heroHeader: {
-    backgroundColor: '#11418A',
-    paddingTop: Platform.OS === 'ios' ? hp(6) : hp(4),
-    paddingHorizontal: wp(5),
-    paddingBottom: hp(7),
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
-  heroTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: hp(2.5),
-  },
-  backButton: {
-    paddingVertical: hp(0.5),
-  },
-  backIcon: {
-    height: hp(3),
-    width: wp(4),
-    resizeMode: 'contain',
-    tintColor: '#FFFFFF',
-  },
-  dietBadge: {
-    paddingHorizontal: wp(3.5),
-    paddingVertical: hp(0.6),
-    borderRadius: 20,
-  },
-  dietBadgeText: {
-    fontSize: 12,
-    fontFamily: 'Poppins-SemiBold',
-    letterSpacing: 0.2,
-  },
-  heroTitle: {
-    fontSize: 26,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-    marginBottom: hp(1.2),
-    lineHeight: 34,
-  },
-  heroMeasurements: {
-    fontSize: 11,
-    fontFamily: 'Poppins-Regular',
-    color: 'rgba(255,255,255,0.6)',
-    letterSpacing: 0.2,
-  },
-
-  /* ── Floating Stats Card ── */
-  statsCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    marginHorizontal: wp(5),
-    marginTop: -hp(4),
-    paddingVertical: hp(2),
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    elevation: 8,
-    alignItems: 'center',
-  },
-  statBox: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    height: hp(4),
-    backgroundColor: '#E2E8F0',
-  },
-  statLabel: {
-    fontSize: 10,
-    fontFamily: 'Poppins-Regular',
-    color: '#94A3B8',
-    marginBottom: 3,
-    textAlign: 'center',
-  },
-  statValue: {
-    fontSize: 13,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#11418A',
-    textAlign: 'center',
-  },
-
-  /* ── Content ── */
-  container: {
-    padding: wp(4),
-    paddingTop: hp(2.5),
-    paddingBottom: hp(6),
-  },
-  card: {
-    padding: wp(4),
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#11418A',
-    borderTopWidth: 1,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    ...(Platform.OS === 'android' && { elevation: 1 }),
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontFamily: 'Poppins-SemiBold',
-    marginBottom: hp(2),
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  sectionTitleSpaced: {
-    fontSize: 15,
-    fontFamily: 'Poppins-SemiBold',
-    marginBottom: hp(2),
-    marginTop: hp(3),
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  stepSection: {
-    marginBottom: hp(2),
-  },
-  stepHeading: {
-    fontSize: 14,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#11418A',
-    marginBottom: hp(1),
-    letterSpacing: 0.2,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: hp(1.5),
-  },
-  stepBadge: {
-    backgroundColor: '#11418A',
-    borderRadius: 20,
-    minWidth: wp(5.5),
-    height: wp(5.5),
-    marginRight: wp(2.5),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepBadgeText: {
-    color: '#FFFFFF',
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: 10,
-    letterSpacing: 0.2,
-  },
-  stepText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#475569',
-    lineHeight: 22,
-    letterSpacing: 0.2,
-    minWidth: 0,
-  },
-  ingredientRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: hp(1.2),
-  },
-  ingredientText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#475569',
-    lineHeight: 22,
-    flex: 1,
-    minWidth: 0,
-    letterSpacing: 0.2,
   },
 });
 

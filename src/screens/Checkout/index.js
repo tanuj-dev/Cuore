@@ -874,7 +874,7 @@ const Checkout = ({ navigation }) => {
             {/* IAP Status */}
             {(!connected || isLoadingProducts) && (
               <View style={styles.statusContainer}>
-                <ActivityIndicator size="small" color="#11418A" />
+                <ActivityIndicator size="small" color="#1E64AC" />
                 <Text style={styles.statusText}>
                   {!connected
                     ? 'Setting up secure payment...'
@@ -989,7 +989,7 @@ const styles = StyleSheet.create({
   tierLabel: {
     fontFamily: 'Poppins-Medium',
     fontSize: 15,
-    color: '#11418A',
+    color: '#1E64AC',
     marginBottom: 2,
     letterSpacing: -0.2,
   },
@@ -1023,7 +1023,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(3),
   },
   planSelectorChipActive: {
-    borderColor: '#11418A',
+    borderColor: '#1E64AC',
     backgroundColor: '#EFF6FF',
   },
   planSelectorTitle: {
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
   planSelectorTitleActive: {
-    color: '#11418A',
+    color: '#1E64AC',
   },
   planSelectorPrice: {
     marginTop: hp(0.2),
@@ -1041,7 +1041,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   planSelectorPriceActive: {
-    color: '#11418A',
+    color: '#1E64AC',
   },
   planContainer: {
     alignItems: 'center',
@@ -1057,9 +1057,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   selectedBox: {
-    borderColor: '#11418A',
+    borderColor: '#1E64AC',
     backgroundColor: '#EFF6FF',
-    shadowColor: '#11418A',
+    shadowColor: '#1E64AC',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -1085,7 +1085,7 @@ const styles = StyleSheet.create({
   planTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-    color: '#11418A',
+    color: '#1E64AC',
     marginLeft: hp(12),
     marginVertical: hp(1),
     letterSpacing: -0.2,
@@ -1127,7 +1127,7 @@ const styles = StyleSheet.create({
   dailyPrice: {
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    color: '#11418A',
+    color: '#1E64AC',
     letterSpacing: 0.2,
   },
   summaryBox: {
@@ -1151,7 +1151,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
   },
   applyButton: {
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     borderRadius: 8,
     marginLeft: 8,
     justifyContent: 'center',
@@ -1180,10 +1180,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     padding: hp(2),
     borderRadius: 12,
-    shadowColor: '#11418A',
+    shadowColor: '#1E64AC',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1225,7 +1225,7 @@ const styles = StyleSheet.create({
   selectedPlanTitle: {
     fontFamily: 'Poppins-Medium',
     fontSize: 20,
-    color: '#11418A',
+    color: '#1E64AC',
     marginBottom: hp(0.5),
     letterSpacing: -0.3,
   },
@@ -1269,7 +1269,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#11418A',
+    borderColor: '#1E64AC',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: hp(1),
@@ -1278,7 +1278,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
   },
   radioUnselected: {
     width: 20,
@@ -1390,10 +1390,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FECACA',
   },
   selectedPlanTitleText: {
-    color: '#11418A',
+    color: '#1E64AC',
   },
   selectedText: {
-    color: '#11418A',
+    color: '#1E64AC',
   },
   topPickPlan: {
     borderColor: '#10B981',
@@ -1445,7 +1445,7 @@ const styles = StyleSheet.create({
   restoreButtonText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
-    color: '#11418A',
+    color: '#1E64AC',
     textAlign: 'center',
     textDecorationLine: 'underline',
   },
@@ -1459,7 +1459,7 @@ const styles = StyleSheet.create({
   termsLink: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#11418A',
+    color: '#1E64AC',
     textDecorationLine: 'underline',
   },
   linkSeparator: {

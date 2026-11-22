@@ -13,11 +13,12 @@ import {
   KeyboardAvoidingView,
   Keyboard,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ArrowLeft, UserPlus, Trash2, Pencil, Users, Repeat } from 'lucide-react-native';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
+import { Info, UserPlus, Trash2, Pencil, Users, Repeat } from 'lucide-react-native';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -48,6 +49,7 @@ export default function FamilyMembers({ navigation }) {
   const dispatch = useDispatch();
   // AlertComponent must be rendered for alert() to show anything — it is not a global.
   const { alert, AlertComponent } = useCustomAlert();
+  useLightStatusBar();
 
   const items = useSelector(state => state.dependants?.items || []);
   // Whose profile the app is currently acting as. Null is the account holder — the same state
@@ -215,18 +217,20 @@ export default function FamilyMembers({ navigation }) {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back} accessibilityLabel="Back">
-          <ArrowLeft size={20} color="#0F172A" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Family members</Text>
-      </View>
+    <View style={styles.safe}>
+      <HeroHeader
+        title="Family Members"
+        subtitle="Book care for the people you look after"
+        onBack={() => navigation.goBack()}
+      />
 
-      <Text style={styles.intro}>
+      <View style={styles.introCard}>
+        <Info size={18} color="#1E64AC" />
+        <Text style={styles.intro}>
         Add a child or another family member who needs consultations. Each person keeps their own
         records and prescriptions, separate from yours. Tap anyone to use the app as them.
-      </Text>
+        </Text>
+      </View>
 
       {/* Says who the app is acting as RIGHT NOW, and offers the way back. Acting as someone
           else is a mode, and a mode with no indicator is how a parent books their own
@@ -251,7 +255,7 @@ export default function FamilyMembers({ navigation }) {
 
       {loading && !items.length ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#11418A" />
+          <ActivityIndicator size="large" color="#1E64AC" />
         </View>
       ) : (
         <FlatList
@@ -261,7 +265,9 @@ export default function FamilyMembers({ navigation }) {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Users size={34} color="#94A3B8" />
+              <View style={styles.emptyTile}>
+                <Users size={30} color="#1E64AC" />
+              </View>
               <Text style={styles.emptyTitle}>No family members yet</Text>
               <Text style={styles.emptyBody}>
                 Anyone you add here can be chosen when you book a consultation.
@@ -387,16 +393,33 @@ export default function FamilyMembers({ navigation }) {
       </Modal>
 
       {AlertComponent}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: wp(4), paddingVertical: hp(1.4) },
-  back: { padding: wp(1.5), marginRight: wp(1) },
-  title: { fontSize: hp(2.3), fontWeight: '700', color: '#0F172A' },
-  intro: { paddingHorizontal: wp(5), fontSize: hp(1.65), color: '#64748B', lineHeight: hp(2.4), marginBottom: hp(1.5) },
+  safe: { flex: 1, backgroundColor: '#F4F7FB' },
+  introCard: {
+    flexDirection: 'row',
+    gap: wp(3),
+    marginHorizontal: wp(4),
+    marginTop: hp(2),
+    marginBottom: hp(1.5),
+    padding: wp(4),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  intro: { flex: 1, fontSize: 13, fontFamily: 'Poppins-Regular', color: '#64748B', lineHeight: 19 },
+  emptyTile: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { paddingHorizontal: wp(4), paddingBottom: hp(14) },
 
@@ -404,7 +427,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: wp(3.5),
+    borderRadius: 16,
     padding: wp(3.5),
     marginBottom: hp(1.2),
     borderWidth: 1,
@@ -414,24 +437,24 @@ const styles = StyleSheet.create({
     width: wp(11),
     height: wp(11),
     borderRadius: wp(5.5),
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(3),
   },
-  avatarText: { fontSize: hp(2), fontWeight: '700', color: '#11418A' },
+  avatarText: { fontSize: 16, fontFamily: 'Poppins-SemiBold', color: '#1E64AC' },
   cardBody: { flex: 1, minWidth: 0 },
-  cardName: { fontSize: hp(1.9), fontWeight: '600', color: '#0F172A' },
-  cardMeta: { fontSize: hp(1.5), color: '#64748B', marginTop: 2 },
+  cardName: { fontSize: 15, fontFamily: 'Poppins-SemiBold', color: '#0F172A' },
+  cardMeta: { fontSize: 12.5, fontFamily: 'Poppins-Regular', color: '#64748B', marginTop: 1 },
   iconBtn: { padding: wp(2) },
 
   /* The row the app is currently acting as. Outlined rather than filled: it sits in a list of
      people and a solid block would read as a selected list item, not as an active mode. */
-  cardActive: { borderColor: '#11418A', backgroundColor: '#F2F6FB' },
-  avatarActive: { backgroundColor: '#11418A' },
+  cardActive: { borderColor: '#1E64AC', backgroundColor: '#F2F6FB' },
+  avatarActive: { backgroundColor: '#1E64AC' },
   avatarTextActive: { color: '#FFFFFF' },
   swapHint: { fontSize: hp(1.4), color: '#94A3B8', marginTop: 3 },
-  swapHintActive: { color: '#11418A', fontWeight: '600' },
+  swapHintActive: { color: '#1E64AC', fontWeight: '600' },
 
   actingBanner: {
     flexDirection: 'row',
@@ -439,8 +462,8 @@ const styles = StyleSheet.create({
     gap: wp(2),
     marginHorizontal: wp(4),
     marginBottom: hp(1.2),
-    backgroundColor: '#11418A',
-    borderRadius: wp(3),
+    backgroundColor: '#1E64AC',
+    borderRadius: 999,
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(3.5),
   },
@@ -448,23 +471,23 @@ const styles = StyleSheet.create({
   actingAction: { fontSize: hp(1.5), fontWeight: '700', color: '#FFFFFF', textDecorationLine: 'underline' },
 
   empty: { alignItems: 'center', paddingTop: hp(8), paddingHorizontal: wp(10) },
-  emptyTitle: { fontSize: hp(1.95), fontWeight: '600', color: '#334155', marginTop: hp(1.5) },
-  emptyBody: { fontSize: hp(1.6), color: '#94A3B8', textAlign: 'center', marginTop: hp(0.6), lineHeight: hp(2.3) },
+  emptyTitle: { fontSize: 16, fontFamily: 'Poppins-SemiBold', color: '#0F172A', marginTop: hp(1.5) },
+  emptyBody: { fontSize: 13, fontFamily: 'Poppins-Regular', color: '#64748B', textAlign: 'center', marginTop: hp(0.6), lineHeight: hp(2.3) },
 
   addBtn: {
     position: 'absolute',
     left: wp(4),
     right: wp(4),
     bottom: hp(3),
-    backgroundColor: '#11418A',
-    borderRadius: wp(3.5),
+    backgroundColor: '#1E64AC',
+    borderRadius: 999,
     paddingVertical: hp(1.8),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: wp(2),
   },
-  addBtnText: { color: '#FFFFFF', fontSize: hp(1.9), fontWeight: '700' },
+  addBtnText: { color: '#FFFFFF', fontSize: 15, fontFamily: 'Poppins-SemiBold' },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   sheet: {
@@ -484,7 +507,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: wp(2.5),
+    borderRadius: 12,
     paddingHorizontal: wp(3.5),
     paddingVertical: hp(1.3),
     fontSize: hp(1.8),
@@ -501,13 +524,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  chipOn: { backgroundColor: '#11418A', borderColor: '#11418A' },
+  chipOn: { backgroundColor: '#1E64AC', borderColor: '#1E64AC' },
   chipText: { fontSize: hp(1.6), color: '#64748B', fontWeight: '600' },
   chipTextOn: { color: '#FFFFFF' },
   error: { color: '#DC2626', fontSize: hp(1.6), marginTop: hp(1.4) },
   sheetActions: { flexDirection: 'row', gap: wp(3), marginTop: hp(2.5) },
-  cancelBtn: { flex: 1, paddingVertical: hp(1.6), borderRadius: wp(3), alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  cancelBtn: { flex: 1, paddingVertical: hp(1.6), borderRadius: 999, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
   cancelText: { fontSize: hp(1.85), color: '#64748B', fontWeight: '600' },
-  saveBtn: { flex: 1, paddingVertical: hp(1.6), borderRadius: wp(3), alignItems: 'center', backgroundColor: '#11418A' },
+  saveBtn: { flex: 1, paddingVertical: hp(1.6), borderRadius: 999, alignItems: 'center', backgroundColor: '#1E64AC' },
   saveText: { fontSize: hp(1.85), color: '#FFFFFF', fontWeight: '700' },
 });

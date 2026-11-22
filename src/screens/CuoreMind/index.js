@@ -16,15 +16,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { getMind } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { Sun, Moon, Pencil, Brain } from 'lucide-react-native';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const MindSkeleton = () => (
-  <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-    {/* Header */}
-    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: hp(2), paddingVertical: hp(1), backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
-      <SkeletonBox width={wp(4)} height={hp(3.5)} borderRadius={4} />
-      <SkeletonBox width={140} height={20} borderRadius={6} style={{ marginLeft: hp(10) }} />
-    </View>
+const MindSkeleton = ({ onBack }) => (
+  <View style={{ flex: 1, backgroundColor: '#F4F7FB' }}>
+    <HeroHeader title="Sleep & Stress" subtitle="Your sleep, stress and calm-mind routines." onBack={onBack} />
     <ScrollView scrollEnabled={false} style={{ backgroundColor: '#F9FAFB' }} contentContainerStyle={{ padding: wp(4) }}>
       {/* Score gauges */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: hp(2) }}>
@@ -55,18 +54,19 @@ const MindSkeleton = () => (
         <SkeletonBox width={wp(50)} height={hp(12)} borderRadius={8} />
       </View>
     </ScrollView>
-  </SafeAreaView>
+  </View>
 );
 
 const COLOR_SCHEMES = [
-  { borderColor: '#11418A', backgroundColor: '#E8EEF7' },
-  { borderColor: '#0F766E', backgroundColor: '#CCFBF1' },
-  { borderColor: '#7C3AED', backgroundColor: '#EDE9FE' },
-  { borderColor: '#0891B2', backgroundColor: '#CFFAFE' },
+  { borderColor: '#BFDBFE', backgroundColor: '#EFF6FF' },
+  { borderColor: '#99F6E4', backgroundColor: '#F0FDFA' },
+  { borderColor: '#DDD6FE', backgroundColor: '#F5F3FF' },
+  { borderColor: '#A5F3FC', backgroundColor: '#ECFEFF' },
 ];
 
 const Mind = ({ navigation }) => {
   const dispatch = useDispatch();
+  useLightStatusBar();
   const [refreshing, setRefreshing] = useState(false);
 
   const userId = useSelector(state => state.auth.userId);
@@ -142,7 +142,7 @@ const Mind = ({ navigation }) => {
   );
 
   if (!data) {
-    return <MindSkeleton />;
+    return <MindSkeleton onBack={handleGoBack} />;
   }
 
   if (error && !data) {
@@ -168,19 +168,12 @@ const Mind = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <View style={styles.headerContainer}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            style={styles.backButton}
-            onPress={handleGoBack}
-          >
-            <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Sleep & Stress</Text>
-        </View>
-      </View>
+    <View style={styles.safeArea}>
+      <HeroHeader
+        title="Sleep & Stress"
+        subtitle="Your sleep, stress and calm-mind routines."
+        onBack={handleGoBack}
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.container}
@@ -189,7 +182,7 @@ const Mind = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#11418A"
+            tintColor="#1E64AC"
           />
         }
       >
@@ -221,12 +214,14 @@ const Mind = ({ navigation }) => {
           ]}
           activeOpacity={0.7}
         >
-          <Image source={Images.EDIT} style={styles.editIcon} />
+          <Pencil size={16} color="#FFFFFF" />
           <Text style={styles.reassessText}>Re-assess</Text>
         </TouchableOpacity>
 
         <View style={styles.reflectionCard}>
-          <Image source={Images.BRAIN} style={styles.brainIcon} />
+          <View style={styles.brainTile}>
+            <Brain size={18} color="#7C3AED" />
+          </View>
           <View style={styles.reflectionContent}>
             <Text style={styles.reflectionTitle}>Mindful Reflections</Text>
             <Text style={styles.reflectionQuote}>
@@ -237,10 +232,10 @@ const Mind = ({ navigation }) => {
         </View>
 
         <View style={styles.sectionHeader}>
-          <Image source={Images.SUN} style={styles.sectionIcon} />
-          <Text style={styles.sectionTitle}>
-            ☀️ Morning Calm, Mental Clarity
-          </Text>
+          <View style={styles.sectionIconTile}>
+            <Sun size={16} color="#B45309" />
+          </View>
+          <Text style={styles.sectionTitle}>Morning Calm, Mental Clarity</Text>
         </View>
         <ScrollView
           horizontal
@@ -250,7 +245,12 @@ const Mind = ({ navigation }) => {
           {morning?.map((item, index) => renderActivityCard(item, index))}
         </ScrollView>
 
-        <Text style={styles.sectionTitle}>🌙 Quiet Mind, Restful Night</Text>
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionIconTile, styles.sectionIconTileNight]}>
+            <Moon size={16} color="#1E64AC" />
+          </View>
+          <Text style={styles.sectionTitle}>Quiet Mind, Restful Night</Text>
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -263,15 +263,15 @@ const Mind = ({ navigation }) => {
           Stick to one meditation for 21 days to unlock deeper benefits
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
+  brainTile: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#EDE9FE', alignItems: 'center', justifyContent: 'center' },
+  sectionIconTileNight: { backgroundColor: '#DBEAFE' },
+  sectionIconTile: { width: 30, height: 30, borderRadius: 9, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  safeArea: { flex: 1, backgroundColor: '#F4F7FB' },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -312,46 +312,14 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     letterSpacing: 0.2,
   },
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  scrollContent: {
-    padding: wp(4),
-    paddingBottom: hp(8),
-  },
-  scoreContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: hp(2),
-  },
+  container: { flex: 1, backgroundColor: '#F4F7FB' },
+  scrollContent: { padding: wp(4), paddingBottom: hp(8) },
+  scoreContainer: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 16, paddingVertical: hp(2) },
   scoreBox: {
     alignItems: 'center',
   },
-  scoreLabel: {
-    fontFamily: 'Poppins-Regular',
-    marginTop: hp(0.5),
-    fontSize: wp(4),
-    color: '#475569',
-    letterSpacing: 0.2,
-  },
-  reassessButton: {
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#11418A',
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(4),
-    borderRadius: wp(2),
-    marginVertical: hp(2),
-    minWidth: wp(50),
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    ...(Platform.OS === 'android' && { elevation: 2 }),
-  },
+  scoreLabel: { fontFamily: 'Poppins-SemiBold', marginTop: hp(0.5), fontSize: 14, color: '#0F172A' },
+  reassessButton: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#1E64AC', paddingVertical: 13, borderRadius: 14, marginVertical: hp(2) },
   reassessButtonDisabled: {
     opacity: 0.5,
   },
@@ -361,50 +329,17 @@ const styles = StyleSheet.create({
     height: hp(4),
     tintColor: '#FFFFFF',
   },
-  reassessText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    fontSize: 14,
-    marginLeft: wp(1),
-    letterSpacing: 0.3,
-  },
-  reflectionCard: {
-    borderLeftWidth: 4,
-    borderColor: '#DEA1D7',
-    flexDirection: 'row',
-    backgroundColor: '#F2E3F2',
-    padding: hp(1),
-    borderRadius: wp(2),
-    marginBottom: hp(2),
-  },
+  reassessText: { fontFamily: 'Poppins-SemiBold', color: '#FFFFFF', fontSize: 15, marginLeft: 8 },
+  reflectionCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', padding: 16, borderRadius: 16, marginBottom: hp(1) },
   brainIcon: {
     resizeMode: 'contain',
     width: wp(4),
     height: hp(2),
   },
-  reflectionContent: {
-    marginLeft: hp(2),
-    flex: 1,
-  },
-  reflectionTitle: {
-    fontFamily: 'Poppins-Medium',
-    color: '#11418A',
-    fontSize: 16,
-    marginBottom: hp(0.5),
-    letterSpacing: 0.2,
-  },
-  reflectionQuote: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 15,
-    color: '#475569',
-    lineHeight: hp(2.5),
-    letterSpacing: 0.2,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: hp(1),
-  },
+  reflectionContent: { marginLeft: 12, flex: 1 },
+  reflectionTitle: { fontFamily: 'Poppins-SemiBold', color: '#0F172A', fontSize: 15, marginBottom: 4 },
+  reflectionQuote: { fontFamily: 'Poppins-Regular', fontSize: 14, color: '#475569', lineHeight: 21 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginTop: hp(2.5), marginBottom: hp(1.2) },
   sectionIcon: {
     resizeMode: 'contain',
     width: wp(4),
@@ -412,54 +347,14 @@ const styles = StyleSheet.create({
     marginLeft: hp(-1.8),
     tintColor: '#FFFFFF',
   },
-  sectionTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    color: '#11418A',
-    marginBottom: hp(1),
-    marginLeft: hp(0.5),
-    marginTop: hp(2),
-    letterSpacing: 0.2,
-  },
+  sectionTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 16, color: '#0F172A', flex: 1 },
   horizontalScroll: {
     paddingRight: wp(4),
   },
-  activityCard: {
-    borderWidth: 1.5,
-    padding: hp(1.5),
-    height: hp(12),
-    width: wp(50),
-    borderRadius: wp(2),
-    marginRight: wp(2),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    ...(Platform.OS === 'android' && { elevation: 0.5 }),
-  },
-  cardTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#1E293B',
-    marginBottom: hp(0.5),
-    letterSpacing: 0.2,
-  },
-  cardDesc: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    marginTop: hp(1),
-    color: '#64748B',
-    letterSpacing: 0.2,
-  },
-  footerNote: {
-    fontFamily: 'Poppins-Regular',
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#11418A',
-    marginTop: hp(2),
-    marginBottom: hp(5),
-    letterSpacing: 0.2,
-  },
+  activityCard: { borderWidth: 1, padding: 14, minHeight: hp(12), width: wp(50), borderRadius: 16, marginRight: wp(2.5) },
+  cardTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 14, color: '#0F172A', marginBottom: 2 },
+  cardDesc: { fontFamily: 'Poppins-Regular', fontSize: 13, marginTop: 4, color: '#475569' },
+  footerNote: { fontFamily: 'Poppins-Medium', textAlign: 'center', fontSize: 14, color: '#64748B', marginTop: hp(3), marginBottom: hp(5) },
 });
 
 export default Mind;

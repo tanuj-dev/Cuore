@@ -37,7 +37,7 @@ import Toast from '../../components/Toast';
  * never leave a prediction on screen that was built from it.
  */
 
-const BRAND = '#11418A';
+const BRAND = '#1E64AC';
 const PERIOD_RED = '#E5484D';
 const FERTILE_GREEN = '#16A34A';
 

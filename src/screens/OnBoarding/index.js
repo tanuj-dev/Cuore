@@ -13,6 +13,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { ProgressBar } from 'react-native-paper';
+import { ChevronLeft, Info, TriangleAlert, Check } from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import EncryptedStorage from 'react-native-encrypted-storage';
 
@@ -23,7 +24,6 @@ import OnBoardingFour from '../../components/OnBoardingFour';
 import OnBoardingFive from '../../components/OnBoardingFive';
 import OnBoardingSix from '../../components/OnBoardingSix';
 import OnBoardingSeven from '../../components/OnBoardingSeven';
-import images from '../../utilities/Images';
 import { submitOnboarding } from '../../redux/OnBoardng/onBoardingThunk';
 import { createReassessment } from '../../redux/OnBoardng/onBoardingThunk';
 import { getOnboardingThunk } from '../../redux/slices';
@@ -357,12 +357,12 @@ const OnBoarding = ({ navigation, route }) => {
           ) : (
             <TouchableOpacity
               onPress={handleBack}
-              style={{ marginTop: Platform.OS === 'ios' && hp(3) }}
+              style={[styles.backBtn, { marginTop: Platform.OS === 'ios' ? hp(3) : 0 }]}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
             >
-              <Image
-                source={Images.BACK_BUTTON}
-                style={{ resizeMode: 'contain', height: hp(3.5), width: wp(4) }}
-              />
+              <ChevronLeft size={22} color="#0F172A" />
             </TouchableOpacity>
           )}
 
@@ -420,23 +420,16 @@ const OnBoarding = ({ navigation, route }) => {
           )}
           {step === 7 && (
             <View style={styles.warningBox}>
-              <Image
-                source={images.NOTICE}
-                style={{
-                  height: hp(2),
-                  width: hp(2),
-                  resizeMode: 'contain',
-                  marginTop: hp(3),
-                  marginRight: hp(1),
-                }}
-              />
-              <View style={{ paddingHorizontal: hp(2) }}>
+              <View style={styles.noticeIcon}>
+                <Info size={18} color="#B45309" />
+              </View>
+              {/* minWidth:0 lets the text wrap inside the row instead of overflowing it. */}
+              <View style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
                 <Text
                   style={{
-                    fontSize: 16,
-                    color: '#475569',
-                    fontFamily: 'Poppins-Medium',
-                    letterSpacing: 0.2,
+                    fontSize: 15,
+                    color: '#0F172A',
+                    fontFamily: 'Poppins-SemiBold',
                     marginBottom: hp(0.5),
                   }}
                 >
@@ -452,11 +445,12 @@ const OnBoarding = ({ navigation, route }) => {
 
           {/* Step Indicator */}
           <View style={styles.stepRow}>
-            <Text style={styles.stepText}>{`${step} of 7`}</Text>
+            <Text style={styles.stepLabel}>{`Step ${step} of 7`}</Text>
+            <Text style={styles.stepText}>{`${Math.round((step / 7) * 100)}%`}</Text>
           </View>
           <ProgressBar
             progress={step / 7}
-            color="#11418A"
+            color="#1E64AC"
             style={styles.progress}
           />
 
@@ -464,7 +458,9 @@ const OnBoarding = ({ navigation, route }) => {
           {step === 1 && (
             <>
               <View style={styles.disclaimerBox}>
-                <Image source={Images.WARNING} style={styles.disclaimerBoxIcon} />
+                <View style={styles.noticeIcon}>
+                  <TriangleAlert size={18} color="#B45309" />
+                </View>
                 <Text style={styles.disclaimerBoxText}>
                   Cuore is a wellness support tool designed to help you track
                   fitness, nutrition, sleep, stress, and health records. It is
@@ -489,7 +485,7 @@ const OnBoarding = ({ navigation, route }) => {
                   ]}
                 >
                   {disclaimerAccepted ? (
-                    <Text style={styles.disclaimerCheckmark}>✓</Text>
+                    <Check size={14} color="#FFFFFF" strokeWidth={3} />
                   ) : null}
                 </View>
                 <Text style={styles.disclaimerCheckLabel}>
@@ -668,9 +664,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   title: {
-    fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
-    fontSize: 22,
+    fontFamily: 'Poppins-Bold',
+    color: '#0F172A',
+    fontSize: 24,
     marginTop: hp(1.5),
     letterSpacing: -0.3,
   },
@@ -693,7 +689,14 @@ const styles = StyleSheet.create({
   stepRow: {
     marginTop: hp(1.5),
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  stepLabel: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 13,
+    color: '#1E64AC',
+    letterSpacing: 0.2,
   },
   stepText: {
     fontFamily: 'Poppins-Medium',
@@ -702,10 +705,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   progress: {
-    marginTop: hp(2),
-    height: hp(1),
-    borderRadius: 8,
-    marginVertical: hp(1),
+    marginTop: hp(1),
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: '#DBEAFE',
+    marginBottom: hp(1),
   },
   cardInfo: {
     flexDirection: 'row',
@@ -732,12 +736,30 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     letterSpacing: 0.2,
   },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Amber tile for the two notices (CuoreMD warning tone), replacing the bitmap icons.
+  noticeIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(3),
+  },
   disclaimerBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#FEFCE8',
-    borderWidth: 1.5,
-    borderColor: '#FDE047',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
     borderRadius: 12,
     padding: hp(2),
     marginTop: hp(0.5),
@@ -760,8 +782,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#92400E',
     lineHeight: 20,
-    letterSpacing: 0.1,
-    textAlign: 'justify',
   },
   disclaimer: {
     fontFamily: 'Poppins-Regular',
@@ -788,8 +808,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   disclaimerCheckboxChecked: {
-    backgroundColor: '#11418A',
-    borderColor: '#11418A',
+    backgroundColor: '#1E64AC',
+    borderColor: '#1E64AC',
   },
   disclaimerCheckmark: {
     color: '#FFFFFF',
@@ -804,25 +824,25 @@ const styles = StyleSheet.create({
   },
   button: {
     marginBottom: hp(5),
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(2),
-    borderRadius: 12,
+    borderRadius: 14,
     marginTop: hp(4),
     alignItems: 'center',
-    shadowColor: '#11418A',
+    shadowColor: '#1E64AC',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
     ...Platform.select({
       android: { elevation: 3 },
       ios: { elevation: 5 },
     }),
   },
   buttonText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     color: '#FFFFFF',
     fontSize: 16,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   buttonDisabled: {
     backgroundColor: '#94A3B8',
@@ -832,21 +852,26 @@ const styles = StyleSheet.create({
     color: '#E2E8F0',
   },
   warningBox: {
+    // Stretch to the column: sized to its content, the row measured the text one padding wider
+    // than the box and the last word ran past the border.
+    alignSelf: 'stretch',
     flexDirection: 'row',
-    borderWidth: 1.5,
+    alignItems: 'flex-start',
+    borderWidth: 1,
     marginTop: hp(1.5),
     backgroundColor: '#FFFBEB',
-    borderColor: '#FDE047',
+    borderColor: '#FDE68A',
     borderRadius: 12,
     padding: hp(2),
     marginBottom: hp(2),
   },
+  // No letterSpacing: on iOS it is not counted when the text is measured, so the last word
+  // of each line drew past the box's right edge.
   warningText: {
     fontFamily: 'Poppins-Regular',
     color: '#475569',
     fontSize: 14,
     lineHeight: 20,
-    letterSpacing: 0.2,
   },
   bottomText: {
     fontSize: 12,
@@ -888,7 +913,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   modalButton: {
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
     paddingVertical: hp(1.5),
     paddingHorizontal: wp(8),
     borderRadius: 10,

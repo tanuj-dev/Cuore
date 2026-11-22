@@ -145,7 +145,7 @@ export default function PrescriptionView({ navigation, route }) {
     });
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       {AlertComponent}
       <CCHeader
         title={isCertificate ? CERT_LABEL[state.meta?.type] || 'Certificate' : 'Prescription'}
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: CC.primary,
-    borderRadius: 10,
+    borderRadius: 999,
     paddingHorizontal: 20,
     paddingVertical: 11,
     marginTop: 20,
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: 999,
     paddingVertical: 14,
     gap: 8,
   },

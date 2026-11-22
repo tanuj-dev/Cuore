@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#11418A',
+    shadowColor: '#1E64AC',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   appName: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: hp(4),
-    color: '#11418A',
+    color: '#1E64AC',
     letterSpacing: 2,
   },
 
@@ -389,6 +389,6 @@ const styles = StyleSheet.create({
     width: wp(2),
     height: wp(2),
     borderRadius: wp(1),
-    backgroundColor: '#11418A',
+    backgroundColor: '#1E64AC',
   },
 });

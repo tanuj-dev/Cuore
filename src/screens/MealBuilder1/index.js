@@ -6,25 +6,27 @@ import {
   FlatList,
   StyleSheet,
   ScrollView,
-  ImageBackground,
-  Image,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
-import { hp, wp, Images } from '../../utilities';
+import {
+  Minus,
+  Plus,
+  ShoppingCart,
+  TriangleAlert,
+  Scale,
+} from 'lucide-react-native';
+import { hp } from '../../utilities';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import LimitExceededModal from '../../components/LimitExceedModa';
 import { useDispatch } from 'react-redux';
 import { adjustPortion } from '../../redux/slices';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 
-const tagColors = {
-  green: '#00C853',
-  yellow: '#FFD600',
-};
-
 const MealBuilder1 = ({ navigation, route }) => {
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
+  useLightStatusBar();
   console.log('Route params:', route.params);
   const { dishes, targetCalories, sumofCalories, activeTab, activeCuisine } =
     route.params;
@@ -121,75 +123,70 @@ const MealBuilder1 = ({ navigation, route }) => {
   return (
     <>
       {AlertComponent}
-      <ScrollView style={styles.scroll}>
-        <ImageBackground
-          style={styles.backgroundImage}
-          source={Images.BACKGROUND_IMAGE_NUTRITION}
+      <View style={styles.screen}>
+        <HeroHeader
+          title="Your Plate"
+          subtitle="Set portions, then let Cuore balance them."
+          onBack={() => navigation.goBack()}
         >
-          <View style={styles.headerOverlay} />
-          <TouchableOpacity
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            onPress={() => navigation.goBack()}
-            style={styles.headerContainer}
-          >
-            <Image style={styles.backButton} source={Images.BACK_BUTTON} />
-          </TouchableOpacity>
-
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>Cuore plate</Text>
-          </View>
-
           <View style={styles.headerRow}>
-            <View style={styles.headerRowLeft}>
-              <Text style={styles.itemsSelectedText} numberOfLines={1}>
+            <View style={styles.countPill}>
+              <ShoppingCart size={14} color="#FFFFFF" />
+              <Text style={styles.countPillText} numberOfLines={1}>
                 {selectedItems.length} items selected
               </Text>
             </View>
             {selectedItems.length > maxAllowed && (
-              <View style={styles.warningRow}>
-                <Image style={styles.warningIcon} source={Images.WARNING} />
-                <Text style={styles.warningText}>max 4 allowed</Text>
+              <View style={styles.warningPill}>
+                <TriangleAlert size={13} color="#B45309" />
+                <Text style={styles.warningText}>Max 4 allowed</Text>
               </View>
             )}
           </View>
-        </ImageBackground>
+        </HeroHeader>
 
-        {selectedItems.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Image source={Images.EMPTY_CART} style={styles.emptyImage} />
-            <Text style={styles.emptyText}>No items selected.</Text>
-          </View>
-        ) : null}
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.contentWrap}
+          contentInsetAdjustmentBehavior="never"
+        >
+          {selectedItems.length === 0 ? (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyTile}>
+                <ShoppingCart size={28} color="#1E64AC" />
+              </View>
+              <Text style={styles.emptyText}>No items selected.</Text>
+            </View>
+          ) : null}
 
-        <View style={styles.contentWrap}>
           <FlatList
             data={selectedItems}
+            scrollEnabled={false}
             keyExtractor={(item, index) =>
               String(item?.id ?? item?.dishname ?? index)
             }
             renderItem={({ item }) => (
               <View style={styles.dishCard}>
-                <View style={styles.dishRow}>
-                  <View style={styles.dishDot} />
-                  <View style={styles.dishInfo}>
-                    <Text style={styles.dishName}>{item?.dishname}</Text>
-                    <Text style={styles.dishCal}>{item?.calories} cal</Text>
-                  </View>
+                <View style={styles.dishInfo}>
+                  <Text style={styles.dishName}>{item?.dishname}</Text>
+                  <Text style={styles.dishCal}>{item?.calories} cal</Text>
                 </View>
 
                 <View style={styles.portionRow}>
                   <TouchableOpacity
                     onPress={() => decrement(item?.id)}
                     style={styles.portionBtn}
+                    accessibilityLabel="Remove one portion"
                   >
-                    <Text style={styles.portionBtnText}>−</Text>
+                    <Minus size={16} color="#1E64AC" />
                   </TouchableOpacity>
                   <Text style={styles.countText}>{item.count}</Text>
                   <TouchableOpacity
                     onPress={() => increment(item.id)}
-                    style={styles.portionBtn}
+                    style={[styles.portionBtn, styles.portionBtnFilled]}
+                    accessibilityLabel="Add one portion"
                   >
-                    <Text style={styles.portionBtnText}>+</Text>
+                    <Plus size={16} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -198,18 +195,22 @@ const MealBuilder1 = ({ navigation, route }) => {
 
           {selectedItems?.length > 0 && (
             <View style={styles.summaryBox}>
-              <Text style={styles.summaryText}>
-                Total Calories:{' '}
-                <Text style={styles.summaryBold}>{totalCalories}</Text>
-              </Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Total calories</Text>
+                <Text style={styles.summaryBold}>{totalCalories} kcal</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Target</Text>
+                <Text style={styles.summaryValue}>{TargetCalories} kcal</Text>
+              </View>
               {totalCalories > TargetCalories && (
                 <Text style={styles.extraText}>
-                  Extra: {totalCalories - TargetCalories} calories
+                  {totalCalories - TargetCalories} kcal over your target
                 </Text>
               )}
               {selectedItems?.length < 2 && (
                 <Text style={styles.noteText}>
-                  Note: Balance your meal by adding more dishes
+                  Balance your meal by adding more dishes.
                 </Text>
               )}
             </View>
@@ -220,229 +221,152 @@ const MealBuilder1 = ({ navigation, route }) => {
               onPress={handleAdjustPortions}
               style={styles.adjustButton}
               disabled={loading}
+              activeOpacity={0.85}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.adjustButtonText}>Adjust Portions</Text>
+                <>
+                  <Scale size={18} color="#FFFFFF" />
+                  <Text style={styles.adjustButtonText}>Adjust Portions</Text>
+                </>
               )}
             </TouchableOpacity>
           )}
-        </View>
+        </ScrollView>
         <LimitExceededModal
           visible={showLimitModal}
           onClose={() => setShowLimitModal(false)}
         />
-      </ScrollView>
+      </View>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#F8FAFC' },
-  backgroundImage: {
-    height: hp(24),
-    paddingHorizontal: wp(4),
-    paddingTop: Platform.OS === 'ios' ? hp(2) : hp(1),
-    paddingBottom: hp(2),
-    borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  headerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
-  },
-  headerContainer: {
+  screen: { flex: 1, backgroundColor: '#F4F7FB' },
+  scroll: { flex: 1 },
+  contentWrap: { padding: 16, paddingBottom: hp(6) },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 14,
   },
-  backButton: {
-    resizeMode: 'contain',
-    height: hp(3.5),
-    width: wp(4),
-  },
-  titleContainer: {
+  countPill: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: hp(0.5),
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  title: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    color: '#1E293B',
-    letterSpacing: 0.2,
+  countPillText: { fontFamily: 'Poppins-Medium', fontSize: 13, color: '#FFFFFF' },
+  warningPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  headerRow: {
+  warningText: { fontFamily: 'Poppins-Medium', fontSize: 12.5, color: '#B45309' },
+  emptyState: { alignItems: 'center', paddingVertical: 40 },
+  emptyTile: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  emptyText: { fontFamily: 'Poppins-Medium', fontSize: 15, color: '#475569' },
+  dishCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 14,
+    marginBottom: 10,
+  },
+  dishInfo: { flex: 1, minWidth: 0, marginRight: 10 },
+  dishName: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#0F172A' },
+  dishCal: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12.5,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  portionRow: { flexDirection: 'row', alignItems: 'center' },
+  portionBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1E64AC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  portionBtnFilled: { backgroundColor: '#1E64AC' },
+  countText: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 15,
+    color: '#0F172A',
+    minWidth: 32,
+    textAlign: 'center',
+  },
+  summaryBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 16,
+    marginTop: 6,
+  },
+  summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: hp(2),
-    paddingHorizontal: hp(1),
+    paddingVertical: 3,
   },
-  headerRowLeft: {
-    flex: 1,
-    minWidth: 0,
-    marginRight: wp(2),
-  },
-  itemsSelectedText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  warningRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  warningIcon: {
-    width: wp(5),
-    height: hp(2.5),
-    marginRight: wp(1.5),
-    resizeMode: 'contain',
-  },
-  warningText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#DC2626',
-    letterSpacing: 0.2,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: hp(50),
-  },
-  emptyImage: {
-    resizeMode: 'contain',
-    height: hp(20),
-    width: hp(20),
-    marginBottom: hp(2),
-  },
-  emptyText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 16,
-    color: '#64748B',
-    letterSpacing: 0.2,
-  },
-  contentWrap: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    padding: wp(4),
-    paddingBottom: hp(6),
-  },
-  dishCard: {
-    marginHorizontal: hp(1),
-    backgroundColor: '#FFFFFF',
-    padding: hp(2),
-    borderRadius: 12,
-    marginVertical: hp(0.75),
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    ...(Platform.OS === 'android' && { elevation: 1 }),
-  },
-  dishRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dishDot: {
-    height: hp(1.5),
-    width: hp(1.5),
-    borderRadius: hp(0.75),
-    backgroundColor: 'red',
-    marginRight: wp(3),
-  },
-  dishInfo: { flex: 1 },
-  dishName: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  dishCal: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 4,
-    letterSpacing: 0.2,
-  },
-  portionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: hp(1.5),
-    marginLeft: hp(0.5),
-  },
-  portionBtn: {
-    height: hp(3.5),
-    width: hp(3.5),
-    borderRadius: hp(1.75),
-    backgroundColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  portionBtnText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    color: '#11418A',
-  },
-  countText: {
-    fontFamily: 'Poppins-Medium',
-    marginHorizontal: wp(3),
-    fontSize: 16,
-    color: '#1E293B',
-  },
-  summaryBox: {
-    padding: hp(2),
-    borderTopWidth: 1,
-    borderColor: '#E2E8F0',
-    marginTop: hp(1),
-    alignItems: 'flex-end',
-  },
-  summaryText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#475569',
-    letterSpacing: 0.2,
-  },
-  summaryBold: {
-    fontFamily: 'Poppins-Medium',
-    color: '#1E293B',
-  },
+  summaryLabel: { fontFamily: 'Poppins-Regular', fontSize: 14, color: '#475569' },
+  summaryValue: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#0F172A' },
+  summaryBold: { fontFamily: 'Poppins-SemiBold', fontSize: 15, color: '#0F172A' },
   extraText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
     color: '#DC2626',
-    marginTop: 4,
-    letterSpacing: 0.2,
+    marginTop: 8,
   },
   noteText: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#DC2626',
-    marginTop: hp(0.5),
-    letterSpacing: 0.2,
+    fontSize: 13,
+    color: '#B45309',
+    marginTop: 8,
   },
   adjustButton: {
-    backgroundColor: '#11418A',
-    marginHorizontal: wp(10),
-    marginTop: hp(2),
-    paddingVertical: hp(1.5),
+    flexDirection: 'row',
+    gap: 8,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#1E64AC',
     alignItems: 'center',
-    borderRadius: 12,
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    ...(Platform.OS === 'android' && { elevation: 2 }),
+    justifyContent: 'center',
+    marginTop: 16,
   },
   adjustButtonText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 15,
     color: '#FFFFFF',
-    letterSpacing: 0.3,
   },
 });
 

@@ -6,56 +6,44 @@ import {
   TextInput,
   ScrollView,
   StyleSheet,
-  ImageBackground,
-  Image,
   FlatList,
   Animated,
   Easing,
   Platform,
   RefreshControl,
 } from 'react-native';
-import { ProgressBar } from 'react-native-paper';
-import { hp, wp, Images } from '../../utilities';
-import images from '../../utilities/Images';
+import {
+  Coffee,
+  UtensilsCrossed,
+  Search as SearchIcon,
+  ChevronRight,
+  ShoppingCart,
+} from 'lucide-react-native';
+import { hp, wp } from '../../utilities';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { useDispatch, useSelector } from 'react-redux';
 import { getBuilderItems } from '../../redux/slices';
 import ApiErrorFallback from '../../components/ApiError';
 import SkeletonBox from '../../components/SkeletonBox';
 
-const MealBuilderSkeleton = () => (
-  <View style={{ flex: 1 }}>
-    {/* Background header */}
-    <View style={{ height: hp(20), backgroundColor: '#CBD5E1', padding: hp(2), justifyContent: 'space-between' }}>
-      <SkeletonBox width={wp(4)} height={hp(3.5)} borderRadius={4} />
-      <View style={{ alignItems: 'center', gap: hp(1) }}>
-        <SkeletonBox width={120} height={20} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: hp(2), width: '100%', justifyContent: 'space-around' }}>
-          <SkeletonBox width={50} height={30} borderRadius={6} />
-          <SkeletonBox width={hp(20)} height={hp(1)} borderRadius={4} style={{ flex: 1 }} />
-          <SkeletonBox width={60} height={30} borderRadius={6} />
-        </View>
+const GLASS = 'rgba(255,255,255,0.16)';
+
+const MealBuilderSkeleton = ({ onBack }) => (
+  <View style={{ flex: 1, backgroundColor: '#F4F7FB' }}>
+    <HeroHeader title="Cuore Plate" subtitle="Build a meal that fits your target." onBack={onBack}>
+      <View style={{ height: 76, borderRadius: 16, marginTop: 16, backgroundColor: GLASS }} />
+      <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+        <View style={{ flex: 1, height: 40, borderRadius: 20, backgroundColor: GLASS }} />
+        <View style={{ flex: 1, height: 40, borderRadius: 20, backgroundColor: GLASS }} />
       </View>
-    </View>
-    <ScrollView scrollEnabled={false} style={{ backgroundColor: '#F8FAFC' }}>
-      {/* Meal type tabs */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: hp(2), gap: wp(2) }}>
-        <SkeletonBox width={wp(42)} height={hp(5)} borderRadius={10} />
-        <SkeletonBox width={wp(42)} height={hp(5)} borderRadius={10} />
-      </View>
-      {/* Search */}
-      <SkeletonBox width="90%" height={44} borderRadius={12} style={{ alignSelf: 'center', marginBottom: hp(2) }} />
-      {/* Cuisine tabs */}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: hp(2), marginBottom: hp(2) }}>
-        <SkeletonBox width={hp(18)} height={hp(5)} borderRadius={hp(0.6)} />
-        <SkeletonBox width={hp(18)} height={hp(5)} borderRadius={hp(0.6)} />
-      </View>
-      {/* Category cards */}
+    </HeroHeader>
+    <ScrollView scrollEnabled={false} contentContainerStyle={{ padding: wp(4), gap: hp(1.5) }}>
+      <SkeletonBox width="100%" height={46} borderRadius={12} />
+      <SkeletonBox width="100%" height={40} borderRadius={20} />
       {[1, 2, 3, 4].map(i => (
-        <View key={i} style={{ backgroundColor: '#FFF', borderWidth: 1, borderRadius: 12, borderColor: '#E2E8F0', marginHorizontal: hp(2), marginBottom: hp(1.5), padding: hp(2) }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <SkeletonBox width={120} height={16} />
-            <SkeletonBox width={16} height={16} borderRadius={4} />
-          </View>
+        <View key={i} style={{ backgroundColor: '#FFF', borderWidth: 1, borderRadius: 16, borderColor: '#E2E8F0', padding: hp(2) }}>
+          <SkeletonBox width={120} height={16} />
         </View>
       ))}
     </ScrollView>
@@ -63,9 +51,9 @@ const MealBuilderSkeleton = () => (
 );
 
 const tagColors = {
-  Include: '#22C55E',
-  Limit: '#EAB308',
-  Avoid: '#EF4444',
+  Include: '#16A34A',
+  Limit: '#D97706',
+  Avoid: '#DC2626',
 };
 
 const MealBuilder = ({ navigation, route }) => {
@@ -77,6 +65,7 @@ const MealBuilder = ({ navigation, route }) => {
   const [searchText, setSearchText] = useState('');
 
   const { mealItem = 'Breakfast' } = route?.params;
+  useLightStatusBar();
   const dispatch = useDispatch();
   const animationMap = useRef({})?.current;
 
@@ -213,9 +202,8 @@ const MealBuilder = ({ navigation, route }) => {
           <Text style={styles.categoryTitle}>
             {category} ({items.length})
           </Text>
-          <Animated.Image
+          <Animated.View
             style={[
-              styles.categoryChevron,
               {
                 transform: [
                   {
@@ -227,8 +215,9 @@ const MealBuilder = ({ navigation, route }) => {
                 ],
               },
             ]}
-            source={images.RIGHT_ARROW}
-          />
+          >
+            <ChevronRight size={18} color="#94A3B8" />
+          </Animated.View>
         </TouchableOpacity>
 
         <Animated.View
@@ -322,11 +311,20 @@ const MealBuilder = ({ navigation, route }) => {
   };
 
   if (!itemsByCombo || Object.keys(itemsByCombo).length === 0) {
-    return <MealBuilderSkeleton />;
+    return <MealBuilderSkeleton onBack={() => navigation.goBack()} />;
   }
 
+  const targetCalories =
+    activeTab === 'Breakfast' && CaloriesBreakfastIndian
+      ? CaloriesBreakfastIndian
+      : CaloriesDinnerGlobal;
+  const remaining = targetCalories - sumofCalories;
+  const fill = targetCalories
+    ? Math.max(0, Math.min(1, sumofCalories / targetCalories))
+    : 0;
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.screen}>
       {/* Floating Cart */}
       {selectedItems.length > 0 && (
         <TouchableOpacity
@@ -334,490 +332,285 @@ const MealBuilder = ({ navigation, route }) => {
             navigation.navigate('MealBuilder1', {
               dishes: selectedItems,
               activeTab,
-              targetCalories:
-                activeTab === 'Breakfast' && CaloriesBreakfastIndian
-                  ? CaloriesBreakfastIndian
-                  : CaloriesDinnerGlobal,
+              targetCalories,
               activeCuisine,
               sumofCalories,
             })
           }
-          style={styles.floatingText}
+          style={styles.floatingCart}
+          activeOpacity={0.85}
         >
-          <Image source={Images.CART} style={styles.cartImage} />
+          <ShoppingCart size={18} color="#FFFFFF" />
           <Text style={styles.floatingCartText}>
             View Cart ({selectedItems.length})
           </Text>
         </TouchableOpacity>
       )}
 
-      <ImageBackground
-        style={styles.backgroundImage}
-        source={Images.BACKGROUND_IMAGE_NUTRITION}
+      <HeroHeader
+        title="Cuore Plate"
+        subtitle="Build a meal that fits your target."
+        onBack={() => navigation.goBack()}
       >
-        <TouchableOpacity
-          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          onPress={() => navigation.goBack()}
-          style={styles.headerContainer}
-        >
-          <Image style={styles.backButton} source={Images.BACK_BUTTON} />
-        </TouchableOpacity>
-
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Cuore plate</Text>
-        </View>
-
-        <View style={styles.progressRow}>
-          <View>
-            <Text style={styles.target}>Target</Text>
-            <Text style={styles.kcal}>
-              {activeTab === 'Breakfast' && CaloriesBreakfastIndian
-                ? CaloriesBreakfastIndian
-                : CaloriesDinnerGlobal}
-              {' kcal'}
-            </Text>
+        <View style={styles.calCard}>
+          <View style={styles.calRow}>
+            <View>
+              <Text style={styles.calLabel}>Target</Text>
+              <Text style={styles.calValue}>{targetCalories} kcal</Text>
+            </View>
+            <View style={styles.calRight}>
+              <Text style={styles.calLabel}>Remaining</Text>
+              <Text
+                style={[styles.calValue, remaining < 0 && styles.remainingOver]}
+              >
+                {remaining} kcal
+              </Text>
+            </View>
           </View>
-
-          <ProgressBar
-            progress={
-              sumofCalories /
-              (activeTab === 'Breakfast' && CaloriesBreakfastIndian
-                ? CaloriesBreakfastIndian
-                : CaloriesDinnerGlobal)
-            }
-            color="#11418A"
-            style={styles.progress}
-          />
-
-          <View>
-            <Text
+          <View style={styles.track}>
+            <View
               style={[
-                styles.target,
-                (activeTab === 'Breakfast' && CaloriesBreakfastIndian
-                  ? CaloriesBreakfastIndian
-                  : CaloriesDinnerGlobal) -
-                  sumofCalories <
-                  0 && styles.remainingOver,
+                styles.trackFill,
+                { width: `${fill * 100}%` },
+                remaining < 0 && styles.trackFillOver,
               ]}
-            >
-              Remaining
-            </Text>
-            <Text
-              style={[
-                styles.kcal,
-                styles.remainingKcal,
-                (activeTab === 'Breakfast' && CaloriesBreakfastIndian
-                  ? CaloriesBreakfastIndian
-                  : CaloriesDinnerGlobal) -
-                  sumofCalories <
-                  0 && styles.remainingOver,
-              ]}
-            >
-              {(activeTab === 'Breakfast' && CaloriesBreakfastIndian
-                ? CaloriesBreakfastIndian
-                : CaloriesDinnerGlobal) - sumofCalories}{' '}
-              kcal
-            </Text>
+            />
           </View>
         </View>
-      </ImageBackground>
-      <ScrollView
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#11418A"
-          />
-        }
-        nestedScrollEnabled={true}
-        style={styles.scrollView}
-      >
-        <View style={styles.body}>
-          <View style={styles.mealTypeRow}>
+
+        <View style={styles.tabRow}>
             <TouchableOpacity
               onPress={() => setActiveTab('Breakfast')}
-              style={[
-                styles.breakfastBox,
-                activeTab === 'Breakfast'
-                  ? styles.mealTabActive
-                  : styles.mealTabInactive,
-              ]}
+              style={[styles.tabButton, activeTab === 'Breakfast' && styles.tabButtonActive]}
+              activeOpacity={0.8}
             >
-              <Image
-                style={styles.breakfastIcon}
-                source={Images.BREAKFAST}
-                // tintColor="#FFFFFF"
+              <Coffee
+                size={16}
+                color={activeTab === 'Breakfast' ? '#1E64AC' : '#FFFFFF'}
               />
               <Text
-                style={styles.breakfastText}
+                style={[styles.tabText, activeTab === 'Breakfast' && styles.tabTextActive]}
                 numberOfLines={1}
-                adjustsFontSizeToFit
-                allowFontScaling={false}
               >
                 Breakfast
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setActiveTab('LunchDinner')}
-              style={[
-                styles.lunchDinnerBox,
-                activeTab === 'LunchDinner'
-                  ? styles.mealTabActive
-                  : styles.mealTabInactive,
-              ]}
+              style={[styles.tabButton, activeTab === 'LunchDinner' && styles.tabButtonActive]}
+              activeOpacity={0.8}
             >
-              <Image
-                style={styles.lunchDinnerIcon}
-                source={Images.KNIFE}
-                // tintColor="#FFFFFF"
+              <UtensilsCrossed
+                size={16}
+                color={activeTab === 'LunchDinner' ? '#1E64AC' : '#FFFFFF'}
               />
               <Text
-                style={styles.lunchDinnerText}
+                style={[styles.tabText, activeTab === 'LunchDinner' && styles.tabTextActive]}
                 numberOfLines={1}
-                adjustsFontSizeToFit
-                allowFontScaling={false}
               >
-                Lunch Dinner
+                Lunch/Dinner
               </Text>
             </TouchableOpacity>
-          </View>
+        </View>
+      </HeroHeader>
+
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#1E64AC"
+          />
+        }
+        nestedScrollEnabled={true}
+        style={styles.scrollView}
+        keyboardShouldPersistTaps="handled"
+        contentInsetAdjustmentBehavior="never"
+      >
+        <View style={styles.searchBox}>
+          <SearchIcon size={18} color="#94A3B8" />
+          <TextInput
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholderTextColor="#94A3B8"
+            placeholder="Search meals..."
+            style={styles.searchInput}
+          />
         </View>
 
-        <>
-          {/* Search */}
-          <View style={styles.searchBox}>
-            <Image style={styles.searchIcon} source={Images.SEARCH} />
-            <TextInput
-              value={searchText}
-              onChangeText={setSearchText}
-              placeholderTextColor={'#6B7280'}
-              placeholder="Search meals..."
-              style={styles.searchInput}
-            />
-          </View>
-
-          <View style={styles.cuisineRow}>
-            {/* Indian Tab */}
+        <View style={styles.cuisineRow}>
             <TouchableOpacity
               onPress={() => setActiveCuisine('Indian')}
-              style={[
-                styles.cuisineBox,
-                activeCuisine === 'Indian'
-                  ? styles.cuisineSelected
-                  : styles.cuisineUnselected,
-              ]}
+              style={[styles.cuisineBox, activeCuisine === 'Indian' && styles.cuisineSelected]}
+              activeOpacity={0.8}
             >
               <Text
-                style={
-                  activeCuisine === 'Indian'
-                    ? styles.cuisineSelectedText
-                    : styles.cuisineUnselectedText
-                }
+                style={[styles.cuisineText, activeCuisine === 'Indian' && styles.cuisineSelectedText]}
               >
                 Indian
               </Text>
             </TouchableOpacity>
-
-            {/* Global Tab */}
             <TouchableOpacity
               onPress={() => setActiveCuisine('Global')}
-              style={[
-                styles.cuisineBox,
-                activeCuisine === 'Global'
-                  ? styles.cuisineSelected
-                  : styles.cuisineUnselected,
-              ]}
+              style={[styles.cuisineBox, activeCuisine === 'Global' && styles.cuisineSelected]}
+              activeOpacity={0.8}
             >
               <Text
-                style={
-                  activeCuisine === 'Global'
-                    ? styles.cuisineSelectedText
-                    : styles.cuisineUnselectedText
-                }
+                style={[styles.cuisineText, activeCuisine === 'Global' && styles.cuisineSelectedText]}
               >
                 Global
               </Text>
             </TouchableOpacity>
-          </View>
-          <View style={styles.tagRow}>
-            {['Include', 'Limit', 'Avoid'].map(tag => (
-              <View key={tag} style={styles.tagItem}>
-                <View
-                  style={{
-                    height: hp(2),
-                    width: wp(4),
-                    borderRadius: hp(2),
-                    backgroundColor: tagColors[tag],
-                  }}
-                />
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
+        </View>
 
-          <FlatList
-            data={sectionedData}
-            keyExtractor={(item, index) => item.category + index}
-            renderItem={renderCard}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={
-              <Text style={styles.emptyListText}>No items found</Text>
-            }
-          />
-        </>
+        <View style={styles.tagRow}>
+          {['Include', 'Limit', 'Avoid'].map(tag => (
+            <View key={tag} style={styles.tagItem}>
+              <View
+                style={[styles.tagDot, { backgroundColor: tagColors[tag] }]}
+              />
+              <Text style={styles.tagText}>{tag}</Text>
+            </View>
+          ))}
+        </View>
+
+        <FlatList
+          data={sectionedData}
+          keyExtractor={(item, index) => item.category + index}
+          renderItem={renderCard}
+          scrollEnabled={false}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <Text style={styles.emptyListText}>No items found</Text>
+          }
+        />
       </ScrollView>
     </View>
   );
 };
 
-// --- styles unchanged ---
-
 const styles = StyleSheet.create({
-  backgroundImage: {
-    height: hp(20),
-    padding: hp(2),
-    // flex: 1,
-    // marginBottom: hp(1),
+  screen: { flex: 1, backgroundColor: '#F4F7FB' },
+  scrollView: { flex: 1, backgroundColor: '#F4F7FB' },
+  calCard: {
+    marginTop: 16,
+    backgroundColor: GLASS,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 16,
+    padding: 14,
   },
-  headerContainer: {
-    // marginTop: Platform.OS == 'ios' && hp(4),
+  calRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  calRight: { alignItems: 'flex-end' },
+  calLabel: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  calValue: { fontFamily: 'Poppins-SemiBold', fontSize: 16, color: '#FFFFFF' },
+  remainingOver: { color: '#FECACA' },
+  track: {
+    height: 8,
+    borderRadius: 4,
+    marginTop: 10,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    overflow: 'hidden',
+  },
+  trackFill: { height: '100%', borderRadius: 4, backgroundColor: '#FFFFFF' },
+  trackFillOver: { backgroundColor: '#FCA5A5' },
+  tabRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  tabButton: {
+    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  backButton: {
-    marginTop: Platform.OS == 'ios' ? hp(0) : hp(1),
-    resizeMode: 'contain',
-    height: hp(3.5),
-    width: wp(4),
-  },
-  titleContainer: {
-    alignItems: 'center',
-    // marginTop: hp(1),
-  },
-  title: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  progressRow: {
-    marginTop: hp(2.5),
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  progress: {
-    height: hp(1),
-    width: hp(20),
-    borderRadius: wp(2),
-    marginVertical: hp(1),
-  },
-  target: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  kcal: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 15,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  remainingKcal: {
-    fontFamily: 'Poppins-Medium',
-    color: '#0D9488',
-    letterSpacing: 0.2,
-  },
-  remainingOver: { color: '#DC2626' },
-  body: {
-    padding: hp(2),
-    // marginTop: hp(1),
-  },
-  mealTypeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  breakfastBox: {
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
-    padding: hp(1),
-    paddingHorizontal: wp(2.5),
-    borderRadius: 10,
-    width: wp(42),
+    gap: 6,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: GLASS,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
-  breakfastIcon: {
-    height: hp(3),
-    width: wp(5),
-    marginRight: wp(1.5),
-    resizeMode: 'contain',
-    tintColor: '#FFFFFF',
-  },
-  breakfastText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: hp(1.6),
-    color: '#FFFFFF',
-    flexShrink: 1,
-    letterSpacing: 0.2,
-  },
-  lunchDinnerBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: wp(42),
-    flexDirection: 'row',
-    padding: hp(1.4),
-    paddingHorizontal: wp(1.5),
-    borderRadius: 10,
-  },
-  lunchDinnerIcon: {
-    height: hp(2),
-    width: wp(5),
-    marginRight: wp(1.5),
-    resizeMode: 'contain',
-    tintColor: '#FFFFFF',
-  },
-  lunchDinnerText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: hp(1.6),
-    color: '#FFFFFF',
-    flexShrink: 1,
-    letterSpacing: 0.2,
-  },
+  tabButtonActive: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
+  tabText: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#FFFFFF' },
+  tabTextActive: { color: '#1E64AC', fontFamily: 'Poppins-SemiBold' },
   searchBox: {
-    marginHorizontal: hp(2),
+    marginHorizontal: wp(4),
+    marginTop: hp(2),
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    padding: hp(1),
-    paddingHorizontal: hp(2),
-    borderRadius: 12,
     alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    height: 46,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginTop: hp(2),
-  },
-  searchIcon: {
-    height: hp(2),
-    width: wp(4),
-    marginRight: hp(1),
-    resizeMode: 'contain',
   },
   searchInput: {
     fontFamily: 'Poppins-Regular',
     flex: 1,
-    paddingVertical: hp(1),
     fontSize: 14,
-    color: '#1E293B',
-    letterSpacing: 0.2,
+    color: '#0F172A',
+    paddingVertical: 0,
   },
   cuisineRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: hp(2),
-    // backgroundColor: 'red',
-    // width: wp(90),
-    // backgroundColor: 'red',
-  },
-  cuisineSelected: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#11418A',
-    width: hp(18),
-    paddingVertical: hp(1.3),
-    borderRadius: hp(0.6),
+    gap: 10,
+    marginHorizontal: wp(4),
+    marginTop: hp(1.5),
   },
   cuisineBox: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    flex: 1,
+    height: 40,
     borderRadius: 20,
-
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  cuisineSelectedText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
-  cuisineUnselected: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#E2E8F0',
-    width: hp(18),
-    paddingVertical: hp(1.3),
-    borderRadius: hp(0.6),
-  },
-  cuisineUnselectedText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#475569',
-    letterSpacing: 0.2,
-  },
+  cuisineSelected: { backgroundColor: '#1E64AC', borderColor: '#1E64AC' },
+  cuisineText: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#475569' },
+  cuisineSelectedText: { color: '#FFFFFF', fontFamily: 'Poppins-SemiBold' },
   tagRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: hp(2),
-    marginTop: hp(2),
-    marginHorizontal: hp(1),
-    marginVertical: hp(1),
-  },
-  tagItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  tagText: {
-    fontFamily: 'Poppins-Regular',
-    marginLeft: hp(0.5),
-    fontSize: 14,
-    color: '#475569',
-    letterSpacing: 0.2,
-  },
-  cartImage: {
-    width: hp(4),
-    height: hp(4),
-    resizeMode: 'cover',
-    tintColor: 'white',
-  },
-  floatingText: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#11418A',
+    gap: 20,
+    marginVertical: hp(2),
+  },
+  tagItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  tagDot: { height: 10, width: 10, borderRadius: 5 },
+  tagText: { fontFamily: 'Poppins-Regular', fontSize: 13, color: '#475569' },
+  floatingCart: {
     position: 'absolute',
-    borderRadius: 12,
-    paddingHorizontal: hp(2),
-    right: wp(28),
+    alignSelf: 'center',
     bottom: hp(3),
     zIndex: 999,
-    width: wp(45),
-    padding: hp(1),
-    height: hp(6),
-    shadowColor: '#11418A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#1E64AC',
+    borderRadius: 999,
+    paddingHorizontal: 22,
+    height: 48,
+    shadowColor: '#1E64AC',
     shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
     elevation: 4,
   },
   floatingCartText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins-SemiBold',
     color: '#FFFFFF',
-    marginLeft: hp(1),
     fontSize: 14,
-    letterSpacing: 0.3,
   },
-  scrollView: { backgroundColor: '#F8FAFC' },
-  mealTabActive: { backgroundColor: '#11418A' },
-  mealTabInactive: { backgroundColor: '#94A3B8' },
   categoryCard: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     borderColor: '#E2E8F0',
-    marginHorizontal: hp(2),
+    marginHorizontal: wp(4),
     marginBottom: hp(1.5),
     padding: hp(2),
     ...(Platform.OS === 'android' && { elevation: 0.5 }),
@@ -827,16 +620,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  categoryHeaderActive: { marginBottom: hp(2) },
+  categoryHeaderActive: { marginBottom: hp(1.5) },
   categoryTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  categoryChevron: {
-    height: hp(2),
-    width: wp(3),
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14.5,
+    color: '#0F172A',
   },
   expandedWrap: { overflow: 'hidden' },
   itemRowWrap: { marginTop: hp(0.5) },
@@ -847,64 +635,40 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     minHeight: hp(8),
     marginVertical: hp(0.2),
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: hp(1.5),
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  healthDot: {
-    height: hp(2),
-    width: wp(4),
-    borderRadius: hp(1),
-  },
-  itemInfo: {
-    flex: 1,
-    marginLeft: hp(2),
-    justifyContent: 'center',
-  },
-  itemName: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 14,
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
+  healthDot: { height: 10, width: 10, borderRadius: 5 },
+  itemInfo: { flex: 1, minWidth: 0, marginLeft: 12, marginRight: 8 },
+  itemName: { fontFamily: 'Poppins-Medium', fontSize: 14, color: '#0F172A' },
   itemCal: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 13,
+    fontSize: 12.5,
     color: '#64748B',
     marginTop: 2,
-    letterSpacing: 0.2,
   },
   addItemBtn: {
     minWidth: wp(18),
-    height: hp(4),
+    height: 32,
+    paddingHorizontal: 12,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
-    borderColor: '#11418A',
+    borderColor: '#1E64AC',
   },
-  addItemBtnAdded: {
-    backgroundColor: '#D1FAE5',
-    borderColor: '#22C55E',
-  },
-  addItemBtnText: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 13,
-    color: '#11418A',
-    letterSpacing: 0.2,
-  },
-  addItemBtnTextAdded: {
-    color: '#15803D',
-  },
+  addItemBtnAdded: { backgroundColor: '#DCFCE7', borderColor: '#16A34A' },
+  addItemBtnText: { fontFamily: 'Poppins-Medium', fontSize: 13, color: '#1E64AC' },
+  addItemBtnTextAdded: { color: '#15803D' },
   emptyListText: {
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: 24,
     color: '#64748B',
     fontSize: 14,
-    letterSpacing: 0.2,
   },
   listContent: { paddingBottom: 100 },
 });

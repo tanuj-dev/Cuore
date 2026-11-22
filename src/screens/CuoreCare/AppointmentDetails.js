@@ -252,8 +252,8 @@ export default function AppointmentDetails({ navigation, route }) {
   if (!isThis) {
     const failed = !!loadError && !loading;
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <CCHeader title="Appointment" onBack={onBack} />
+      <SafeAreaView style={styles.safe} edges={[]}>
+        <CCHeader title="Appointment" subtitle="Your consultation details" onBack={onBack} />
         <View style={styles.center}>
           {failed ? (
             <>
@@ -279,9 +279,9 @@ export default function AppointmentDetails({ navigation, route }) {
   const meta = modeMeta(appt.mode);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       {AlertComponent}
-      <CCHeader title="Appointment" onBack={onBack} />
+      <CCHeader title="Appointment" subtitle="Your consultation details" onBack={onBack} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}

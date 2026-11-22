@@ -2,19 +2,28 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   Image,
-  ActivityIndicator,
   Linking,
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  Pressable,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import { ShieldCheck } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useKeyboardScrollToEnd } from '../../hooks/useKeyboardScrollToEnd';
+import { Images } from '../../utilities';
+import { sendOtp } from '../../redux/slices';
+import Toast from '../../components/Toast';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
+import { Text, TextInput } from '../../components/ui/Text';
+import Button from '../../components/ui/Button';
+import Segmented from '../../components/ui/Segmented';
+import FocusedStatusBar from '../../components/ui/FocusedStatusBar';
+import { font, radius, spacing, useTheme } from '../../theme';
 
 /* iOS: a plain ScrollView that scrolls to the end when the keyboard opens (useKeyboardScrollToEnd),
  * because KeyboardAwareScrollView left the fields under the keyboard there. Android keeps
@@ -22,13 +31,11 @@ import { useKeyboardScrollToEnd } from '../../hooks/useKeyboardScrollToEnd';
 const Scroller = Platform.OS === 'ios' ? ScrollView : KeyboardAwareScrollView;
 const SCROLLER_ANDROID_PROPS =
   Platform.OS === 'ios' ? {} : { enableOnAndroid: true };
-import { Images, hp, wp } from '../../utilities';
-import { sendOtp, loginCaregiverThunk } from '../../redux/slices';
-import Toast from '../../components/Toast';
-import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const Login = ({ navigation }) => {
-  const { ref: scrollRef, keyboardOpen } = useKeyboardScrollToEnd();
+  const t = useTheme();
+  const insets = useSafeAreaInsets();
+  const { ref: scrollRef } = useKeyboardScrollToEnd();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [tab, setTab] = useState('User');
   const [loading, setLoading] = useState(false);
@@ -82,130 +89,160 @@ const Login = ({ navigation }) => {
     }
   };
 
+  const isCaregiver = tab === 'Caregiver';
+
   return (
     <KeyboardAvoidingView
-      style={styles.scroll}
+      style={[styles.root, { backgroundColor: t.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <FocusedStatusBar style="light-content" />
       <Scroller
         {...SCROLLER_ANDROID_PROPS}
         ref={scrollRef}
-        style={styles.scroll}
-        // The bottom padding only centres the card while the keyboard is shut; with it open it
-        // would push the number field and Verify up under the keyboard's top edge.
+        style={styles.root}
         contentContainerStyle={[
-          styles.container,
-          keyboardOpen && styles.containerKeyboard,
+          styles.content,
+          { paddingBottom: insets.bottom + spacing.xl },
         ]}
         keyboardShouldPersistTaps="handled"
+        // The hero paints under the status bar itself; no automatic top inset.
+        contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
       >
         {AlertComponent}
-        <Image source={Images.APP_LOGO} style={styles.logo} />
-        <Text style={styles.loginText}>
-          Log in with your registered mobile number
-        </Text>
-        <View style={styles.card}>
-          <View style={styles.switchTabs}>
-            <TouchableOpacity
-              onPress={() => setTab('User')}
-              style={tab === 'User' ? styles.activeTab : styles.inactiveTab}
-            >
-              <Text
-                style={
-                  tab === 'User' ? styles.activeTabText : styles.inactiveTabText
-                }
-              >
-                User
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setTab('Caregiver')}
-              style={
-                tab === 'Caregiver' ? styles.activeTab : styles.inactiveTab
-              }
-            >
-              <Text
-                style={
-                  tab === 'Caregiver'
-                    ? styles.activeTabText
-                    : styles.inactiveTabText
-                }
-              >
-                Caregiver
-              </Text>
-            </TouchableOpacity>
+
+        <View style={[styles.hero, { paddingTop: insets.top + spacing.xxl }]}>
+          {/* The gradient paints only its content box, so it sits behind the padded wrapper. */}
+          <LinearGradient
+            colors={[t.brandDark, t.brand]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.logoTile}>
+            <Image source={Images.APP_LOGO} style={styles.logo} />
           </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.countryCodeContainer}>
-              <Text style={styles.flagEmoji}>🇮🇳</Text>
-              <Text style={styles.countryCode}>+91</Text>
-            </View>
-            <TextInput
-              style={styles.phoneInput}
-              placeholder="9876543210"
-              keyboardType="numeric"
-              placeholderTextColor="#999"
-              value={phoneNumber}
-              onChangeText={text => {
-                const cleaned = text.replace(/[^0-9]/g, '');
-                if (cleaned.length <= 10) {
-                  setPhoneNumber(cleaned);
-                  setToast(null);
-                } else {
-                  setToast({
-                    message: 'Mobile number must be 10 digits only',
-                    type: 'error',
-                  });
-                }
-              }}
-            />
-          </View>
-          {toast && (
-            <Toast
-              message={toast.message}
-              type={toast.type}
-              onHide={() => setToast(null)}
-            />
-          )}
-
-          {tab === 'User' && (
-            <TouchableOpacity onPress={() => navigation.navigate('NewAccount')}>
-              <Text style={styles.signupText}>
-                New user? <Text style={styles.signupLink}>Sign up</Text>
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity
-            onPress={handleSendOtp}
-            style={styles.verifyButton}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.verifyText}>Verify</Text>
-            )}
-          </TouchableOpacity>
-
-          <Text style={styles.termsText}>
-            By clicking, I accept the{' '}
-            <Text
-              style={styles.termsLink}
-              onPress={() => Linking.openURL('https://cuore.health/terms')}
-            >
-              Terms & Conditions
-            </Text>{' '}
-            and{' '}
-            <Text
-              style={styles.termsLink}
-              onPress={() => Linking.openURL('https://cuore.health/privacy')}
-            >
-              Privacy
-            </Text>
+          <Text style={[font.h1, styles.heroTitle]}>Welcome to Cuore</Text>
+          <Text style={[font.body, styles.heroSub]}>
+            Your everyday health companion.
           </Text>
+          <View style={styles.trust}>
+            <ShieldCheck size={16} color="rgba(255,255,255,0.9)" />
+            <Text style={[font.small, styles.trustText]}>
+              Secure sign in with a one-time code
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.formWrap}>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: t.surface, borderColor: t.border },
+            ]}
+          >
+            <Text style={[font.h2, { color: t.text }]}>Sign in</Text>
+            <Text style={[font.body, styles.cardSub, { color: t.textMuted }]}>
+              Log in with your registered mobile number.
+            </Text>
+
+            {/* Segmented pads its row for full-width use; cancel that inside the card. */}
+            <View style={{ marginHorizontal: -spacing.lg }}>
+              <Segmented
+                options={[
+                  { key: 'User', label: 'User' },
+                  { key: 'Caregiver', label: 'Caregiver' },
+                ]}
+                value={tab}
+                onChange={setTab}
+              />
+            </View>
+
+            <View
+              style={[
+                styles.phoneRow,
+                { backgroundColor: t.bg, borderColor: t.border },
+              ]}
+            >
+              <Text style={[font.bodyStrong, { color: t.text }]}>+91</Text>
+              <View style={[styles.sep, { backgroundColor: t.border }]} />
+              <TextInput
+                style={[styles.phoneInput, { color: t.text }]}
+                placeholder="Mobile number"
+                keyboardType="number-pad"
+                textContentType="telephoneNumber"
+                autoComplete="tel"
+                placeholderTextColor={t.textMuted}
+                value={phoneNumber}
+                returnKeyType="done"
+                onSubmitEditing={handleSendOtp}
+                accessibilityLabel="Mobile number"
+                onChangeText={text => {
+                  const cleaned = text.replace(/[^0-9]/g, '');
+                  if (cleaned.length <= 10) {
+                    setPhoneNumber(cleaned);
+                    setToast(null);
+                  } else {
+                    setToast({
+                      message: 'Mobile number must be 10 digits only',
+                      type: 'error',
+                    });
+                  }
+                }}
+              />
+            </View>
+            {toast && (
+              <Toast
+                message={toast.message}
+                type={toast.type}
+                onHide={() => setToast(null)}
+              />
+            )}
+
+            <Button
+              label="Send code"
+              onPress={handleSendOtp}
+              loading={loading}
+              style={{ marginTop: spacing.xl }}
+            />
+
+            <View style={styles.links}>
+              {!isCaregiver && (
+                <Pressable
+                  onPress={() => navigation.navigate('NewAccount')}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                >
+                  <Text style={[font.small, { color: t.textMuted }]}>
+                    New to Cuore?{' '}
+                    <Text style={{ color: t.brand, fontWeight: '700' }}>
+                      Create account
+                    </Text>
+                  </Text>
+                </Pressable>
+              )}
+              <Text style={[font.small, styles.terms, { color: t.textMuted }]}>
+                By continuing, you accept the{' '}
+                <Text
+                  style={{ color: t.brand, fontWeight: '700' }}
+                  onPress={() => Linking.openURL('https://cuore.health/terms')}
+                >
+                  Terms & Conditions
+                </Text>{' '}
+                and{' '}
+                <Text
+                  style={{ color: t.brand, fontWeight: '700' }}
+                  onPress={() =>
+                    Linking.openURL('https://cuore.health/privacy')
+                  }
+                >
+                  Privacy Policy
+                </Text>
+                .
+              </Text>
+            </View>
+          </View>
         </View>
       </Scroller>
     </KeyboardAvoidingView>
@@ -215,176 +252,44 @@ const Login = ({ navigation }) => {
 export default Login;
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+  root: { flex: 1 },
+  content: { flexGrow: 1 },
+  hero: { paddingHorizontal: spacing.xl, paddingBottom: 72 },
+  logoTile: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#ffffff',
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingBottom: hp(20),
-    paddingHorizontal: wp(6),
-    backgroundColor: '#FFFFFF',
-  },
-  containerKeyboard: {
-    paddingBottom: hp(3),
-  },
-  logo: {
-    width: wp(30),
-    height: hp(6),
-    resizeMode: 'contain',
-    alignSelf: 'center',
-    marginBottom: hp(2.5),
-  },
-  loginText: {
-    fontFamily: 'Poppins-Regular',
-    textAlign: 'center',
-    fontSize: 15,
-    color: '#64748B',
-    marginBottom: hp(3.5),
-    letterSpacing: 0.2,
-  },
+  logo: { width: 112, height: 34, resizeMode: 'contain' },
+  heroTitle: { color: '#fff', marginTop: spacing.lg, fontSize: 30 },
+  heroSub: { color: 'rgba(255,255,255,0.85)', marginTop: 6, maxWidth: 320 },
+  trust: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xl },
+  trustText: { color: 'rgba(255,255,255,0.9)', marginLeft: 8 },
+  formWrap: { paddingHorizontal: spacing.lg, marginTop: -48 },
   card: {
-    backgroundColor: '#FFFFFF',
-    padding: hp(2.5),
-    borderRadius: 16,
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    ...Platform.select({
-      android: { elevation: 2 },
-      ios: { elevation: 5 },
-    }),
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    padding: spacing.xl,
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
   },
-  switchTabs: {
+  cardSub: { marginTop: 6, marginBottom: spacing.xl },
+  phoneRow: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    marginBottom: hp(2.5),
-    padding: hp(0.4),
-  },
-  activeTab: {
-    flex: 1,
-    backgroundColor: '#11418A',
-    paddingVertical: hp(1.4),
-    borderRadius: 10,
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    ...Platform.select({
-      android: { elevation: 2 },
-      ios: { elevation: 3 },
-    }),
-  },
-  inactiveTab: {
-    flex: 1,
-    paddingVertical: hp(1.4),
-  },
-  activeTabText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontSize: 15,
-    letterSpacing: 0.2,
-  },
-  inactiveTabText: {
-    fontFamily: 'Poppins-Regular',
-    color: '#94A3B8',
-    textAlign: 'center',
-    fontSize: 15,
-    letterSpacing: 0.2,
-  },
-  inputContainer: {
-    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    paddingHorizontal: wp(3.5),
-    paddingVertical: Platform.OS === 'ios' ? hp(1.5) : hp(1),
-    marginBottom: hp(2),
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    height: 58,
+    marginTop: spacing.sm,
   },
-  countryCodeContainer: {
-    marginRight: wp(2.5),
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: wp(2.5),
-    borderRightWidth: 1,
-    borderRightColor: '#E2E8F0',
-  },
-  flagEmoji: {
-    fontSize: hp(2.5),
-    marginRight: wp(1.5),
-  },
-  countryCode: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 15,
-    color: '#475569',
-    letterSpacing: 0.2,
-  },
-  phoneInput: {
-    fontFamily: 'Poppins-Regular',
-    flex: 1,
-    fontSize: 15,
-    color: '#1E293B',
-    letterSpacing: 0.3,
-  },
-  errorText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 13,
-    color: '#EF4444',
-    marginBottom: hp(1),
-    marginLeft: wp(2),
-  },
-  signupText: {
-    fontFamily: 'Poppins-Regular',
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: hp(2),
-    letterSpacing: 0.2,
-  },
-  termsText: {
-    fontFamily: 'Poppins-Regular',
-    textAlign: 'center',
-    fontSize: 12,
-    color: '#94A3B8',
-    marginBottom: hp(1),
-    marginTop: hp(1.5),
-    lineHeight: 18,
-    letterSpacing: 0.1,
-  },
-  termsLink: {
-    fontFamily: 'Poppins-Medium',
-    color: '#11418A',
-    textDecorationLine: 'underline',
-  },
-  signupLink: {
-    fontFamily: 'Poppins-Medium',
-    color: '#11418A',
-    letterSpacing: 0.2,
-  },
-  verifyButton: {
-    backgroundColor: '#11418A',
-    borderRadius: 12,
-    paddingVertical: hp(2),
-    alignItems: 'center',
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    ...Platform.select({
-      android: { elevation: 3 },
-      ios: { elevation: 5 },
-    }),
-  },
-  verifyText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    fontSize: 16,
-    letterSpacing: 0.5,
-  },
+  sep: { width: 1, height: 24, marginHorizontal: spacing.md },
+  phoneInput: { flex: 1, fontSize: 17, fontWeight: '600', height: '100%' },
+  links: { marginTop: spacing.lg, alignItems: 'center', gap: spacing.md },
+  terms: { textAlign: 'center', lineHeight: 19 },
 });

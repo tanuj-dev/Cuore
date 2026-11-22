@@ -5,11 +5,11 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
-  Platform,
 } from 'react-native';
-import { hp, wp, Images } from '../../utilities';
-import ProfileHeader from '../../components/ProfileHeader';
+import { Pencil, Phone, UserRound } from 'lucide-react-native';
+import { hp, wp } from '../../utilities';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateProfile, getProfile } from '../../redux/slices';
 import ToastMessage from '../../components/Toast';
@@ -26,6 +26,7 @@ const EditCaregiver = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'success' });
   const role = useSelector(state => state.auth.role);
+  useLightStatusBar();
 
   useEffect(() => {
     if (caregiverData) {
@@ -108,9 +109,27 @@ const EditCaregiver = ({ navigation }) => {
     navigation.goBack();
   }, [caregiverData, navigation]);
 
+  const canEdit = role !== 'caregiver';
+
   return (
     <View style={styles.screen}>
-      <ProfileHeader navigation={navigation} title="Edit Caregiver" />
+      <HeroHeader
+        title="Caregiver"
+        subtitle="Who helps manage your care"
+        onBack={() => navigation.goBack()}
+        right={
+          !isEditing && canEdit ? (
+            <TouchableOpacity
+              onPress={() => setIsEditing(true)}
+              style={styles.heroBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Edit caregiver"
+            >
+              <Pencil size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          ) : null
+        }
+      />
       {toast.message ? (
         <ToastMessage
           top={60}
@@ -119,53 +138,46 @@ const EditCaregiver = ({ navigation }) => {
           onHide={() => setToast({ message: '', type: 'success' })}
         />
       ) : null}
-      <View style={styles.container}>
-        <View style={styles.headerRow}>
-          {!isEditing && (
-            <TouchableOpacity
-              disabled={role === 'caregiver'}
-              onPress={() => setIsEditing(true)}
-            >
-              <Image source={Images.EDIT} style={styles.editIcon} />
-            </TouchableOpacity>
+      <View style={styles.body}>
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.tile}>
+              <UserRound size={20} color="#1E64AC" />
+            </View>
+            <View style={styles.cardHeadText}>
+              <Text style={styles.cardTitle}>Caregiver details</Text>
+              <Text style={styles.cardSub}>
+                {isEditing ? 'Update the mobile number' : 'Tap the pencil to edit'}
+              </Text>
+            </View>
+          </View>
+
+          <Text style={styles.label}>Caregiver mobile</Text>
+          <View style={[styles.inputRow, !isEditing && styles.inputRowOff]}>
+            <Phone size={18} color="#94A3B8" />
+            <Text style={styles.prefix}>+91</Text>
+            <TextInput
+              style={[styles.input, !isEditing && styles.inputOff]}
+              value={caregiverMobile}
+              editable={isEditing}
+              keyboardType="number-pad"
+              onChangeText={handleMobileChange}
+              placeholder="10-digit mobile"
+              placeholderTextColor="#94A3B8"
+            />
+          </View>
+
+          {isEditing && (
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+                <Text style={styles.saveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
-
-        {/* <View style={styles.inputGroup}>
-          <Text style={styles.label}>Caregiver Name</Text>
-          <TextInput
-            style={[styles.input, !isEditing && styles.disabledInput]}
-            value={caregiverName}
-            editable={isEditing}
-            onChangeText={handleNameChange}
-            placeholder="Enter caregiver name"
-            placeholderTextColor="#9CA3AF"
-          />
-        </View> */}
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Caregiver Mobile</Text>
-          <TextInput
-            style={[styles.input, !isEditing && styles.disabledInput]}
-            value={caregiverMobile}
-            editable={isEditing}
-            keyboardType="number-pad"
-            onChangeText={handleMobileChange}
-            placeholder="+91XXXXXXXXXX"
-            placeholderTextColor="#64748B"
-          />
-        </View>
-
-        {isEditing && (
-          <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-              <Text style={styles.saveText}>Save</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
     </View>
   );
@@ -174,85 +186,86 @@ const EditCaregiver = ({ navigation }) => {
 export default memo(EditCaregiver);
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
+  screen: { flex: 1, backgroundColor: '#F4F7FB' },
+  body: { padding: wp(4) },
+  heroBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  container: {
+  card: {
     padding: wp(5),
-    margin: wp(4),
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    ...(Platform.OS === 'android' && { elevation: 1 }),
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+  cardHead: { flexDirection: 'row', alignItems: 'center', marginBottom: hp(2.5) },
+  tile: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#DBEAFE',
     alignItems: 'center',
-    marginBottom: hp(2),
+    justifyContent: 'center',
   },
-  editIcon: {
-    width: wp(5),
-    height: wp(5),
-    resizeMode: 'contain',
-  },
-  inputGroup: {
-    marginBottom: hp(2),
-  },
+  cardHeadText: { flex: 1, marginLeft: wp(3.5) },
+  cardTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 16, color: '#0F172A' },
+  cardSub: { fontFamily: 'Poppins-Regular', fontSize: 13, color: '#64748B' },
   label: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#475569',
-    marginBottom: hp(0.5),
-    letterSpacing: 0.2,
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: hp(0.8),
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    paddingHorizontal: wp(3.5),
+    height: hp(6),
+    backgroundColor: '#FFFFFF',
+  },
+  inputRowOff: { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' },
+  prefix: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    color: '#0F172A',
+    marginLeft: wp(2.5),
   },
   input: {
+    flex: 1,
     fontFamily: 'Poppins-Regular',
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    paddingHorizontal: wp(3),
-    height: hp(6),
-    color: '#1E293B',
+    fontSize: 15,
+    color: '#0F172A',
+    marginLeft: wp(2),
+    paddingVertical: 0,
   },
-  disabledInput: {
-    backgroundColor: '#F1F5F9',
-    color: '#94A3B8',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: hp(3),
-  },
+  inputOff: { color: '#64748B' },
+  buttonRow: { flexDirection: 'row', gap: wp(3), marginTop: hp(3) },
   saveBtn: {
+    flex: 1,
     alignItems: 'center',
-    backgroundColor: '#11418A',
-    paddingVertical: hp(1.5),
-    width: wp(40),
-    borderRadius: 10,
+    backgroundColor: '#1E64AC',
+    paddingVertical: hp(1.6),
+    borderRadius: 999,
   },
-  saveText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
+  saveText: { fontFamily: 'Poppins-SemiBold', color: '#FFFFFF', fontSize: 15 },
   cancelBtn: {
-    backgroundColor: '#FFFFFF',
-    width: wp(40),
+    flex: 1,
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    paddingVertical: hp(1.5),
-    borderRadius: 10,
+    paddingVertical: hp(1.6),
+    borderRadius: 999,
   },
-  cancelText: {
-    fontFamily: 'Poppins-Regular',
-    color: '#475569',
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
+  cancelText: { fontFamily: 'Poppins-Medium', color: '#0F172A', fontSize: 15 },
 });

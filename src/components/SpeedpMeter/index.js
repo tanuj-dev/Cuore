@@ -71,9 +71,11 @@ const GaugeMeter = ({ value = 50, size = 250, thickness = 20 }) => {
     <View style={styles.container}>
       <Svg width={size} height={radius + 40}>
         {/* Color Segments */}
-        {arcPath(180, 98, '#FC3A21')} {/* Red */}
-        {arcPath(98, 55, '#FF8D10')} {/* Orange */}
-        {arcPath(55, 0, '#15D270')} {/* Green */}
+        {/* Red, orange, green. No space between the calls: a bare " " here is a text node
+            inside <Svg> and raised "Text strings must be rendered within a <Text>". */}
+        {arcPath(180, 98, '#FC3A21')}
+        {arcPath(98, 55, '#FF8D10')}
+        {arcPath(55, 0, '#15D270')}
         {/* Needle */}
         <Line
           x1={center}

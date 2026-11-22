@@ -88,8 +88,8 @@ export default function DoctorList({ navigation, route }) {
   }, [dispatch, search]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <CCHeader title="Choose a doctor" onBack={onBack} />
+    <SafeAreaView style={styles.safe} edges={[]}>
+      <CCHeader title="Choose a doctor" subtitle="Doctors at your clinic" onBack={onBack} />
 
       <View style={styles.searchWrap}>
         <Search size={18} color={CC.muted} />

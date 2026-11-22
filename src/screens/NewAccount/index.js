@@ -1,36 +1,34 @@
 import React, { useState } from 'react';
 import {
-  Image,
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   Pressable,
   ScrollView,
   Linking,
   Platform,
   KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  Keyboard,
 } from 'react-native';
+import { Check, ShieldCheck } from 'lucide-react-native';
 import Toast from '../../components/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import { Images, hp, wp, Color } from '../../utilities';
-import color from '../../utilities/Color';
-import images from '../../utilities/Images';
 import { createAccountThunk } from '../../redux/slices';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import EncryptedStorage from 'react-native-encrypted-storage';
-import { create } from 'react-test-renderer';
+import { Text } from '../../components/ui/Text';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import Field from '../../components/ui/Field';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { font, radius, spacing, useTheme } from '../../theme';
 
 const CreateAccountScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
+  const t = useTheme();
 
-  // 🧩 Local state for all input fields
+  // Local state for all input fields
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [familyNumber, setFamilyNumber] = useState('');
@@ -39,11 +37,11 @@ const CreateAccountScreen = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // 🔄 Optional: get loading from redux
+  // Optional: get loading from redux
   const { loading } = useSelector(state => state.auth || {});
 
   const handleCreateAccount = async () => {
-    // 🔹 Basic validations
+    // Basic validations
     if (!fullName.trim() || !mobileNumber.trim()) {
       alert('Missing Fields', 'Please fill all required fields.');
       return;
@@ -55,7 +53,7 @@ const CreateAccountScreen = () => {
       return;
     }
 
-    // 🔹 Mobile number must be exactly 10 digits
+    // Mobile number must be exactly 10 digits
     const isValidMobile = /^[0-9]{10}$/.test(mobileNumber);
     if (!isValidMobile) {
       setToast({
@@ -65,7 +63,7 @@ const CreateAccountScreen = () => {
       return;
     }
 
-    // 🔹 Terms and Conditions check
+    // Terms and Conditions check
     if (!isChecked) {
       setToast({
         message: 'Please agree to the Terms and Conditions.',
@@ -74,15 +72,15 @@ const CreateAccountScreen = () => {
       return;
     }
 
-    // 🔹 Terms and Conditions check
+    // Terms and Conditions check
     if (!isChecked) {
       alert('Terms Required', 'Please agree to the Terms and Conditions.');
       return;
     }
 
-    // ✅ Proceed with account creation logic
+    // Proceed with account creation logic
 
-    // 🔹 Payload (match backend keys)
+    // Payload (match backend keys)
     const payload = {
       phone: `+91${mobileNumber}`,
       display_name: fullName,
@@ -140,310 +138,184 @@ const CreateAccountScreen = () => {
     }
   };
 
+  const onDigits = setter => text => {
+    const digitsOnly = text.replace(/[^0-9]/g, '');
+    if (digitsOnly.length <= 10) {
+      setter(digitsOnly);
+    } else {
+      setToast({
+        message: 'Mobile number must be 10 digits only',
+        type: 'error',
+      });
+    }
+  };
+
   return (
-    <>
+    <View style={[styles.root, { backgroundColor: t.bg }]}>
       {AlertComponent}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+        style={styles.root}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView
-            contentContainerStyle={styles.container}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* 🔙 Back Button */}
-            <Pressable
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              style={styles.backArrow}
-              onPress={() => navigation.goBack()}
-            >
-              <Image
-                source={Images.BACK_BUTTON}
-                style={{
-                  height: hp(3.5),
-                  width: wp(4),
-                  resizeMode: 'contain',
-                }}
-              />
-            </Pressable>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          // The hero paints under the status bar itself; no automatic top inset.
+          contentInsetAdjustmentBehavior="never"
+          showsVerticalScrollIndicator={false}
+        >
+          <HeroHeader
+            title="Create account"
+            subtitle="Join Cuore in a minute"
+            onBack={() => navigation.goBack()}
+            bottom={56}
+          />
 
-            {/* 🩺 Logo */}
-            <Image
-              style={{
-                resizeMode: 'contain',
-                height: hp(4.5),
-                width: wp(30),
-                alignSelf: 'center',
-                marginBottom: hp(2.5),
-              }}
-              source={images.APP_LOGO}
-            />
+          <View style={styles.formWrap}>
+            <Card style={styles.card}>
+              <View style={{ gap: spacing.lg }}>
+                <Field
+                  label="Full name"
+                  required
+                  placeholder="Enter your full name"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  autoCapitalize="words"
+                  textContentType="name"
+                />
+                <Field
+                  label="Mobile number"
+                  required
+                  prefix="+91"
+                  placeholder="10-digit number"
+                  keyboardType="number-pad"
+                  value={mobileNumber}
+                  onChangeText={onDigits(setMobileNumber)}
+                />
+                <Field
+                  label="Family member's mobile number"
+                  prefix="+91"
+                  placeholder="So they can see your progress"
+                  keyboardType="number-pad"
+                  value={familyNumber}
+                  onChangeText={onDigits(setFamilyNumber)}
+                />
+                <Field
+                  label="Doctor's code"
+                  placeholder="Link to your doctor for supervision"
+                  value={doctorCode}
+                  onChangeText={setDoctorCode}
+                  autoCapitalize="characters"
+                />
+                <Field
+                  label="Corporate code"
+                  placeholder="Only for corporate plan users"
+                  value={corporateCode}
+                  onChangeText={setCorporateCode}
+                  autoCapitalize="characters"
+                />
+              </View>
 
-            {/* 🧾 Title */}
-            <Text style={styles.title}>Create Account</Text>
+              {toast && (
+                <Toast
+                  message={toast.message}
+                  type={toast.type}
+                  onHide={() => setToast(null)}
+                  top={100}
+                />
+              )}
 
-            {/* Full Name */}
-            <Text style={styles.label}>
-              Full Name <Text style={styles.optional}>(Required)</Text>
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter user’s full name"
-              placeholderTextColor="#94A3B8"
-              value={fullName}
-              onChangeText={setFullName}
-            />
+              <View style={[styles.info, { backgroundColor: t.infoSoft }]}>
+                <ShieldCheck size={18} color={t.info} />
+                <Text style={[font.small, styles.infoText, { color: t.text }]}>
+                  By entering your caregiver's and doctor's contact details,
+                  you authorize Cuore to share relevant health information with
+                  them to enable coordinated, personalized care as part of your
+                  program.
+                </Text>
+              </View>
 
-            {/* Mobile Number */}
-            <Text style={styles.label}>
-              Mobile Number <Text style={styles.optional}>(Required)</Text>
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your registered mobile number"
-              placeholderTextColor="#94A3B8"
-              keyboardType="phone-pad"
-              value={mobileNumber}
-              onChangeText={text => {
-                const digitsOnly = text.replace(/[^0-9]/g, '');
-                if (digitsOnly.length <= 10) {
-                  setMobileNumber(digitsOnly);
-                } else {
-                  setToast({
-                    message: 'Mobile number must be 10 digits only',
-                    type: 'error',
-                  });
-                }
-              }}
-            />
-            {toast && (
-              <Toast
-                message={toast.message}
-                type={toast.type}
-                onHide={() => setToast(null)}
-                top={100}
-              />
-            )}
-            {/* Family member's mobile */}
-            <Text style={styles.label}>Family member's mobile number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="So they can see your progress"
-              placeholderTextColor="#94A3B8"
-              keyboardType="phone-pad"
-              value={familyNumber}
-              onChangeText={text => {
-                const digitsOnly = text.replace(/[^0-9]/g, '');
-                if (digitsOnly.length <= 10) {
-                  setFamilyNumber(digitsOnly);
-                } else {
-                  setToast({
-                    message: 'Mobile number must be 10 digits only',
-                    type: 'error',
-                  });
-                }
-              }}
-            />
-
-            {/* Doctor's code */}
-            <Text style={styles.label}>Doctor's Code</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Link to your doctor for supervision"
-              placeholderTextColor="#94A3B8"
-              value={doctorCode}
-              onChangeText={setDoctorCode}
-            />
-
-            {/* Corporate code */}
-            <Text style={styles.label}>Corporate Code</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Only for corporate plan users"
-              placeholderTextColor="#94A3B8"
-              value={corporateCode}
-              onChangeText={setCorporateCode}
-            />
-
-            {/* Info */}
-            <Text style={styles.infoText}>
-              By entering your caregiver’s and doctor’s contact details, you
-              authorize Cuore to share relevant health information with them to
-              enable coordinated, personalized care as part of your program.
-            </Text>
-
-            {/* Terms Checkbox */}
-            <View style={styles.checkboxContainer}>
-              <TouchableOpacity
-                style={styles.customCheckbox}
+              <Pressable
+                style={styles.checkRow}
                 onPress={() => setIsChecked(!isChecked)}
-                activeOpacity={0.7}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isChecked }}
               >
                 <View
                   style={[
-                    styles.checkboxBox,
-                    isChecked && styles.checkboxBoxChecked,
+                    styles.checkBox,
+                    {
+                      borderColor: isChecked ? t.brand : t.border,
+                      backgroundColor: isChecked ? t.brand : t.surface,
+                    },
                   ]}
                 >
-                  {isChecked && <Text style={styles.checkmark}>✓</Text>}
+                  {isChecked && <Check size={15} color="#fff" strokeWidth={3} />}
                 </View>
-              </TouchableOpacity>
-              <Text style={styles.checkboxLabel}>
-                By clicking, I accept the{' '}
-                <Text
-                  style={styles.link}
-                  onPress={() => Linking.openURL('https://cuore.health/terms')}
-                >
-                  Terms & Conditions
-                </Text>{' '}
-                and{' '}
-                <Text
-                  style={styles.link}
-                  onPress={() =>
-                    Linking.openURL('https://cuore.health/privacy')
-                  }
-                >
-                  Privacy
+                <Text style={[font.small, styles.checkText, { color: t.textMuted }]}>
+                  I accept the{' '}
+                  <Text
+                    style={{ color: t.brand, fontWeight: '700' }}
+                    onPress={() => Linking.openURL('https://cuore.health/terms')}
+                  >
+                    Terms & Conditions
+                  </Text>{' '}
+                  and{' '}
+                  <Text
+                    style={{ color: t.brand, fontWeight: '700' }}
+                    onPress={() =>
+                      Linking.openURL('https://cuore.health/privacy')
+                    }
+                  >
+                    Privacy Policy
+                  </Text>
+                  .
                 </Text>
-              </Text>
-            </View>
+              </Pressable>
 
-            {/* Verify Button */}
-            <TouchableOpacity
-              onPress={handleCreateAccount}
-              style={[
-                styles.verifyButton,
-                { backgroundColor: loading ? '#94A3B8' : '#11418A' },
-              ]}
-              disabled={loading}
-            >
-              <Text style={styles.verifyText}>
-                {loading ? 'Creating...' : 'Verify'}
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </TouchableWithoutFeedback>
+              <Button
+                label="Create account"
+                onPress={handleCreateAccount}
+                loading={loading}
+                style={{ marginTop: spacing.xl }}
+              />
+            </Card>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
-    </>
+    </View>
   );
 };
 
-// 🧾 Styles
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FFFFFF',
-    padding: wp(5),
-    flexGrow: 1,
+  root: { flex: 1 },
+  content: { flexGrow: 1, paddingBottom: spacing.xxxl },
+  formWrap: { paddingHorizontal: spacing.lg, marginTop: -36 },
+  card: { padding: spacing.xl, borderRadius: radius.xl },
+  info: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginTop: spacing.xl,
   },
-  backArrow: {
-    // marginBottom: hp(2),
-    // marginTop: Platform.OS === 'ios' ? hp(2) : hp(1),
-    padding: hp(0.5),
-  },
-  title: {
-    color: '#1E293B',
-    fontSize: 24,
-    fontFamily: 'Poppins-Medium',
-    textAlign: 'center',
-    marginBottom: hp(3),
-    letterSpacing: -0.3,
-  },
-  label: {
-    color: '#475569',
-    fontSize: 14,
-    marginBottom: hp(0.8),
-    marginTop: hp(1.8),
-    fontFamily: 'Poppins-Medium',
-    letterSpacing: 0.2,
-  },
-  optional: {
-    fontStyle: 'italic',
-    fontFamily: 'Poppins-Regular',
-    color: '#94A3B8',
-  },
-  input: {
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    paddingVertical: hp(1.6),
-    paddingHorizontal: wp(4),
-    fontSize: 15,
-    backgroundColor: '#F8FAFC',
-    fontFamily: 'Poppins-Regular',
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-  infoText: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: hp(2),
-    marginBottom: hp(2),
-    fontFamily: 'Poppins-Regular',
-    lineHeight: 20,
-    letterSpacing: 0.1,
-  },
-  checkboxContainer: {
+  infoText: { flex: 1, lineHeight: 19 },
+  checkRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: hp(2.5),
-    marginTop: hp(1),
+    marginTop: spacing.lg,
   },
-  customCheckbox: {
-    marginRight: wp(2.5),
-    marginTop: hp(0.3),
-  },
-  checkboxBox: {
+  checkBox: {
     width: 22,
     height: 22,
     borderWidth: 2,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
     borderRadius: 6,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
+    marginRight: spacing.md,
+    marginTop: 1,
   },
-  checkboxBoxChecked: {
-    backgroundColor: '#11418A',
-    borderColor: '#11418A',
-  },
-  checkmark: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Poppins-Medium',
-  },
-  checkboxLabel: {
-    flex: 1,
-    fontSize: 13,
-    color: '#64748B',
-    fontFamily: 'Poppins-Regular',
-    lineHeight: 20,
-    letterSpacing: 0.1,
-  },
-  link: {
-    color: '#11418A',
-    textDecorationLine: 'underline',
-    fontFamily: 'Poppins-Medium',
-  },
-  verifyButton: {
-    paddingVertical: hp(2),
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#11418A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    ...Platform.select({
-      android: { elevation: 3 },
-      ios: { elevation: 5 },
-    }),
-  },
-  verifyText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Poppins-Medium',
-    letterSpacing: 0.5,
-  },
+  checkText: { flex: 1, lineHeight: 20 },
 });
 
 export default CreateAccountScreen;

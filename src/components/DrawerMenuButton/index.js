@@ -16,7 +16,7 @@ import { Menu } from 'lucide-react-native';
 
 import { hp } from '../../utilities';
 
-export default function DrawerMenuButton({ color = '#11418A', style }) {
+export default function DrawerMenuButton({ color = '#1E64AC', style }) {
   const navigation = useNavigation();
   const open = useCallback(
     () => navigation.dispatch(DrawerActions.openDrawer()),

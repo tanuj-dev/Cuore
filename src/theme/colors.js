@@ -5,7 +5,7 @@ export const lightColors = {
   text: '#1E293B',
   subText: '#64748B',
   border: '#E2E8F0',
-  primary: '#11418A',
+  primary: '#1E64AC',
   danger: '#EF4444',
   icon: '#64748B',
   tabInactive: '#94A3B8',

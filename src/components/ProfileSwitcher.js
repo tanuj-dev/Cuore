@@ -36,7 +36,7 @@ import { ChevronDown, Check, User, Users } from 'lucide-react-native';
 import { setActiveProfile } from '../redux/Dependants/slice';
 import { fetchDependants } from '../redux/Dependants/thunks';
 
-const BRAND = '#11418A';
+const BRAND = '#1E64AC';
 
 export default function ProfileSwitcher({ style, compact = false }) {
   const dispatch = useDispatch();

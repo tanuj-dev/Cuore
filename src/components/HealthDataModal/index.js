@@ -152,7 +152,7 @@ const HealthDataModal = ({ visible, onClose }) => {
     if (loadingLatest && !latest) {
       return (
         <View style={styles.centered}>
-          <ActivityIndicator color="#11418A" />
+          <ActivityIndicator color="#1E64AC" />
         </View>
       );
     }
@@ -207,7 +207,7 @@ const HealthDataModal = ({ visible, onClose }) => {
           </View>
         ) : loadingSeries ? (
           <View style={styles.chartCard}>
-            <ActivityIndicator color="#11418A" />
+            <ActivityIndicator color="#1E64AC" />
           </View>
         ) : null}
 
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     marginTop: hp(0.2),
   },
-  rowValue: { fontSize: wp(4), fontFamily: 'Poppins-Medium', color: '#11418A' },
+  rowValue: { fontSize: wp(4), fontFamily: 'Poppins-Medium', color: '#1E64AC' },
   rowUnit: { fontSize: wp(3), fontFamily: 'Poppins-Regular', color: '#64748B' },
 
   footnote: {

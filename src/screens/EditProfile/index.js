@@ -14,7 +14,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pencil, Camera } from 'lucide-react-native';
+import HeroHeader from '../../components/ui/HeroHeader';
+import { useLightStatusBar } from '../../hooks/useLightStatusBar';
 import { hp, wp, Images } from '../../utilities';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateProfile, getProfile } from './../../redux/slices';
@@ -24,6 +26,7 @@ import { useCustomAlert } from '../../hooks/useCustomAlert';
 
 const EditProfile = ({ navigation }) => {
   const { alert, AlertComponent } = useCustomAlert();
+  useLightStatusBar();
   const [userName, setUserName] = useState('M. Johnson');
   const [userMobile, setUserMobile] = useState('981121234');
   const [toastMessage, setToastMessage] = useState('');
@@ -348,7 +351,24 @@ const EditProfile = ({ navigation }) => {
   return (
     <>
       {AlertComponent}
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <View style={styles.safeArea}>
+      <HeroHeader
+        title="Edit Profile"
+        subtitle="Your name, photo and mobile"
+        onBack={() => navigation.goBack()}
+        right={
+          !isEditing ? (
+            <TouchableOpacity
+              style={styles.heroBtn}
+              onPress={() => setIsEditing(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile"
+            >
+              <Pencil size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          ) : null
+        }
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? hp(8) : 0}
@@ -367,18 +387,6 @@ const EditProfile = ({ navigation }) => {
             />
           )}
           <View>
-            <View style={styles.header}>
-              <View style={styles.headerRow}>
-                <TouchableOpacity
-                  hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                  onPress={() => navigation.goBack()}
-                >
-                  <Image source={Images.BACK_BUTTON} style={styles.backIcon} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Edit Profile</Text>
-              </View>
-            </View>
-
             <View style={styles.container}>
               <View style={styles.profileRow}>
                 <TouchableOpacity onPress={showImagePickerOptions}>
@@ -400,18 +408,19 @@ const EditProfile = ({ navigation }) => {
                     <Image style={styles.placeholderImage} source={Images.UNCLE} />
                   )}
                 </TouchableOpacity>
-                {!isEditing && (
-                  <TouchableOpacity
-                    style={styles.editButtonWrap}
-                    onPress={() => setIsEditing(true)}
-                  >
-                    <Image source={Images.EDIT} style={styles.editIcon} />
-                  </TouchableOpacity>
-                )}
-                <TouchableOpacity onPress={showImagePickerOptions}>
-                  <Text style={styles.tapToChangeText}>
-                    {isEditing ? 'Tap to change picture' : ''}
-                  </Text>
+                <TouchableOpacity
+                  onPress={showImagePickerOptions}
+                  style={styles.photoText}
+                >
+                  <Text style={styles.photoTitle}>Profile photo</Text>
+                  <View style={styles.photoHintRow}>
+                    <Camera size={14} color={isEditing ? '#1E64AC' : '#94A3B8'} />
+                    <Text
+                      style={[styles.tapToChangeText, isEditing && styles.tapToChangeOn]}
+                    >
+                      {isEditing ? 'Tap to change picture' : 'Tap the pencil to edit'}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               </View>
 
@@ -423,7 +432,7 @@ const EditProfile = ({ navigation }) => {
                 'numeric',
               )}
 
-              <View style={styles.buttonRow}>
+              <View style={isEditing ? styles.buttonRow : null}>
                 {isEditing && (
                   <TouchableOpacity
                     style={[styles.saveBtn, isLoading && styles.saveBtnDisabled]}
@@ -452,81 +461,60 @@ const EditProfile = ({ navigation }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    ...(Platform.OS === 'android' && { elevation: 0.5 }),
-  },
-  headerRow: {
+  safeArea: { flex: 1, backgroundColor: '#F4F7FB' },
+  keyboardView: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingBottom: hp(6) },
+  heroBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
-    padding: hp(2),
-    flexDirection: 'row',
-  },
-  backIcon: {
-    height: hp(3.5),
-    width: wp(4),
-    resizeMode: 'contain',
-  },
-  headerTitle: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 20,
-    color: '#1E293B',
-    marginLeft: hp(2),
-    letterSpacing: 0.2,
+    justifyContent: 'center',
   },
   container: {
     padding: wp(5),
     margin: wp(4),
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    ...(Platform.OS === 'android' && { elevation: 1 }),
   },
   profileRow: {
     flexDirection: 'row',
-    marginBottom: hp(4),
+    marginBottom: hp(3),
     alignItems: 'center',
   },
   profileImage: {
-    width: wp(13),
-    height: wp(13),
-    borderRadius: wp(6.5),
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     resizeMode: 'cover',
+    backgroundColor: '#DBEAFE',
   },
   placeholderImage: {
-    resizeMode: 'contain',
-    height: hp(5),
-    width: wp(12),
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    resizeMode: 'cover',
   },
-  editButtonWrap: {
-    marginLeft: hp(30),
-  },
+  photoText: { flex: 1, marginLeft: wp(4) },
+  photoTitle: { fontFamily: 'Poppins-SemiBold', fontSize: 16, color: '#0F172A' },
+  photoHintRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
   tapToChangeText: {
-    marginLeft: hp(2),
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Poppins-Regular',
-    color: '#475569',
-    letterSpacing: 0.2,
+    color: '#64748B',
   },
+  tapToChangeOn: { color: '#1E64AC', fontFamily: 'Poppins-Medium' },
   prefixText: {
     fontFamily: 'Poppins-Regular',
     color: '#64748B',
@@ -538,42 +526,42 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
   },
   label: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#475569',
-    marginBottom: hp(0.5),
-    letterSpacing: 0.2,
+    fontFamily: 'Poppins-Medium',
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: hp(0.8),
   },
   input: {
     fontFamily: 'Poppins-Regular',
     fontSize: 16,
-    color: '#1E293B',
+    color: '#0F172A',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 10,
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(1),
+    borderRadius: 12,
+    paddingHorizontal: wp(3.5),
+    paddingVertical: hp(1.4),
   },
   inputEditable: {
     backgroundColor: '#FFFFFF',
   },
   inputDisabled: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
+    color: '#64748B',
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 10,
-    paddingHorizontal: wp(3),
+    borderRadius: 12,
+    paddingHorizontal: wp(3.5),
     paddingVertical: hp(0.5),
   },
   inputRowEditable: {
     backgroundColor: '#FFFFFF',
   },
   inputRowDisabled: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
   },
   inputInner: {
     flex: 1,
@@ -590,47 +578,28 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: hp(3),
+    gap: wp(3),
+    marginTop: hp(2),
   },
   saveBtn: {
+    flex: 1,
     alignItems: 'center',
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(6),
-    width: wp(40),
-    borderRadius: 10,
-    backgroundColor: '#11418A',
+    paddingVertical: hp(1.6),
+    borderRadius: 999,
+    backgroundColor: '#1E64AC',
   },
-  saveBtnDisabled: {
-    opacity: 0.7,
-  },
-  saveText: {
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
+  saveBtnDisabled: { opacity: 0.7 },
+  saveText: { fontFamily: 'Poppins-SemiBold', color: '#FFFFFF', fontSize: 15 },
   cancelBtn: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
-    width: wp(40),
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(6),
-    borderRadius: 10,
+    paddingVertical: hp(1.6),
+    borderRadius: 999,
   },
-  cancelText: {
-    fontFamily: 'Poppins-Regular',
-    color: '#475569',
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
-  editIcon: {
-    width: wp(5),
-    height: wp(5),
-    resizeMode: 'contain',
-  },
+  cancelText: { fontFamily: 'Poppins-Medium', color: '#0F172A', fontSize: 15 },
 });
 
 export default EditProfile;

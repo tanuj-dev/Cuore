@@ -45,7 +45,7 @@ const ALL_MODES = [
   { key: 'in_person', label: 'Walk-in', desc: 'Visit the clinic', icon: Stethoscope },
   { key: 'video', label: 'Video', desc: 'Face-to-face', icon: Video },
   { key: 'voice', label: 'Voice', desc: 'Audio only', icon: Phone },
-  { key: 'chat', label: 'Chat', desc: 'Text messages', icon: MessageSquare },
+  { key: 'chat', label: 'Chat', desc: 'Messages', icon: MessageSquare },
 ];
 
 // Device timezone (falls back to the backend default for older Hermes without full Intl).
@@ -381,9 +381,13 @@ export default function BookAppointment({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       {AlertComponent}
-      <CCHeader title="Book consultation" onBack={() => navigation.goBack()} />
+      <CCHeader
+        title="Book consultation"
+        subtitle="Pick a time that suits you"
+        onBack={() => navigation.goBack()}
+      />
 
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scroll}
