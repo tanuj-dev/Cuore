@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Image,
   RefreshControl,
   Platform,
+  Animated,
+  Pressable,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { wp, hp, Images } from '../../utilities';
@@ -19,6 +21,7 @@ import SkeletonBox from '../../components/SkeletonBox';
 import { Info, Check, Pencil, ChevronRight } from 'lucide-react-native';
 import HeroHeader from '../../components/ui/HeroHeader';
 import { useLightStatusBar } from '../../hooks/useLightStatusBar';
+import { useTabBarSpace } from '../../hooks/useTabBarSpace';
 
 const PredictSkeleton = () => (
   <View style={{ flex: 1, backgroundColor: '#F4F7FB' }}>
@@ -169,8 +172,75 @@ const hexToRgb = hex => {
   return `${r}, ${g}, ${b}`;
 };
 
+// Trend / History switch: the blue pill slides between the two options instead of jumping.
+const TrendHistoryToggle = ({ value, onChange }) => {
+  const [width, setWidth] = useState(0);
+  const isHistory = value === 'history';
+  const slide = useRef(new Animated.Value(isHistory ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(slide, {
+      toValue: isHistory ? 1 : 0,
+      useNativeDriver: true,
+      speed: 16,
+      bounciness: 5,
+    }).start();
+  }, [isHistory, slide]);
+
+  // 4pt of padding on each side of the track.
+  const half = width > 0 ? (width - 8) / 2 : 0;
+
+  return (
+    <View
+      style={styles.tabContainer}
+      onLayout={e => setWidth(e.nativeEvent.layout.width)}
+    >
+      {half > 0 && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.tabIndicator,
+            {
+              width: half,
+              transform: [
+                {
+                  translateX: slide.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, half],
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
+      )}
+      <Pressable
+        onPress={() => onChange('Predict', 'Predict')}
+        style={styles.tab}
+        accessibilityRole="button"
+        accessibilityState={{ selected: !isHistory }}
+      >
+        <Text style={!isHistory ? styles.activeText : styles.inactiveText}>
+          Trend
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={() => onChange('history', 'History')}
+        style={styles.tab}
+        accessibilityRole="button"
+        accessibilityState={{ selected: isHistory }}
+      >
+        <Text style={isHistory ? styles.activeText : styles.inactiveText}>
+          History
+        </Text>
+      </Pressable>
+    </View>
+  );
+};
+
 const Predict = ({ navigation }) => {
   useLightStatusBar();
+  const tabSpace = useTabBarSpace();
   const [showRowData, setShowRowData] = useState([]);
   const [activeTab, setActiveTab] = useState('Predict');
   const [refreshing, setRefreshing] = useState(false);
@@ -207,10 +277,23 @@ const Predict = ({ navigation }) => {
     }
   }, [dispatch, userId]);
 
-  const handleTabChange = useCallback((tab, historyValue) => {
-    setHistory(historyValue);
-    setActiveTab(tab);
-  }, []);
+  // The charts fade back in after a Trend/History switch so the lines don't snap.
+  const chartFade = useRef(new Animated.Value(1)).current;
+
+  const handleTabChange = useCallback(
+    (tab, historyValue) => {
+      if (tab === activeTab) return;
+      setHistory(historyValue);
+      setActiveTab(tab);
+      chartFade.setValue(0);
+      Animated.timing(chartFade, {
+        toValue: 1,
+        duration: 320,
+        useNativeDriver: true,
+      }).start();
+    },
+    [activeTab, chartFade],
+  );
 
   const handleToggleShowData = useCallback(title => {
     setShowRowData(prev =>
@@ -256,6 +339,9 @@ const Predict = ({ navigation }) => {
     <View style={styles.safeArea}>
       {loading && <Loader />}
       <ScrollView
+        // Clears the frosted tab bar this list scrolls under.
+        contentInset={{ bottom: tabSpace }}
+        scrollIndicatorInsets={{ bottom: tabSpace }}
         // The hero paints under the status bar itself.
         contentInsetAdjustmentBehavior="never"
         refreshControl={
@@ -293,43 +379,10 @@ const Predict = ({ navigation }) => {
             return (
               <View key={`module-${item?.title}-${index}`} style={styles.card}>
                 {hasTabs && (
-                  <View style={styles.tabContainer}>
-                    <TouchableOpacity
-                      onPress={() => handleTabChange('Predict', 'Predict')}
-                      style={[
-                        styles.tab,
-                        activeTab === 'Predict' && styles.activeTab,
-                      ]}
-                    >
-                      <Text
-                        style={
-                          activeTab === 'Predict'
-                            ? styles.activeText
-                            : styles.inactiveText
-                        }
-                      >
-                        Trend
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      onPress={() => handleTabChange('history', 'History')}
-                      style={[
-                        styles.tab,
-                        activeTab === 'history' && styles.activeTab,
-                      ]}
-                    >
-                      <Text
-                        style={
-                          activeTab === 'history'
-                            ? styles.activeText
-                            : styles.inactiveText
-                        }
-                      >
-                        History
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  <TrendHistoryToggle
+                    value={activeTab}
+                    onChange={handleTabChange}
+                  />
                 )}
                 <View style={styles.cardHeader}>
                   <View style={styles.showDataRow}>
@@ -361,6 +414,7 @@ const Predict = ({ navigation }) => {
                     </Text>
                   </TouchableOpacity>
                 </View>
+                <Animated.View style={{ opacity: chartFade }}>
                 <LineChart
                   key={item?.title}
                   data={chartData}
@@ -394,6 +448,7 @@ const Predict = ({ navigation }) => {
                   withShadow={false}
                   withInnerLines={false}
                 />
+                </Animated.View>
                 {TITLES_BELOW_GRAPH.includes(item?.title) && (
                   <Text style={styles.titleBelow}>
                     {getTitleDisplay(item?.title)}
@@ -711,14 +766,19 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   tab: {
-    paddingHorizontal: hp(3.5),
+    flex: 1,
     paddingVertical: hp(1),
     alignItems: 'center',
     borderRadius: 999,
-    backgroundColor: 'transparent',
-    marginHorizontal: hp(0.3),
   },
-  activeTab: { backgroundColor: '#1E64AC' },
+  tabIndicator: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 4,
+    borderRadius: 999,
+    backgroundColor: '#1E64AC',
+  },
   activeText: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',

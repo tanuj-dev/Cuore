@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLightStatusBar } from '../../hooks/useLightStatusBar';
+import { useTabBarSpace } from '../../hooks/useTabBarSpace';
 import LinearGradient from 'react-native-linear-gradient';
 import HeroDiscs from '../../components/ui/HeroDiscs';
 import { useDispatch, useSelector } from 'react-redux';
@@ -71,6 +72,7 @@ export default function CuoreCareHome({ navigation }) {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   useLightStatusBar();
+  const tabSpace = useTabBarSpace();
   const subscription = useSelector(state => state.cuoreCare.subscription);
   const access = useSelector(state => state.cuoreCare.access);
   const appointments = useSelector(state => state.cuoreCare.appointments);
@@ -156,6 +158,9 @@ export default function CuoreCareHome({ navigation }) {
     return (
       <View style={styles.safe}>
         <ScrollView
+          // Clears the frosted tab bar this list scrolls under.
+          contentInset={{ bottom: tabSpace }}
+          scrollIndicatorInsets={{ bottom: tabSpace }}
           contentContainerStyle={styles.paywallScroll}
           contentInsetAdjustmentBehavior="never"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -280,6 +285,9 @@ export default function CuoreCareHome({ navigation }) {
       </View>
 
       <ScrollView
+        // Clears the frosted tab bar this list scrolls under.
+        contentInset={{ bottom: tabSpace }}
+        scrollIndicatorInsets={{ bottom: tabSpace }}
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >

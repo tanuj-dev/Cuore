@@ -43,6 +43,7 @@ import {
 } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLightStatusBar } from '../../hooks/useLightStatusBar';
+import { useTabBarSpace } from '../../hooks/useTabBarSpace';
 import { fetchNotifications } from '../../redux/Notifications/thunks';
 import { getTodayConsultations } from '../../redux/CuoreCare/thunks';
 import ConsultationTimeCard from './ConsultationTimeCard';
@@ -365,6 +366,7 @@ const Today = ({ navigation, route }) => {
   // Once the hero has scrolled under the status bar, a solid strip keeps the clock readable.
   const [heroScrolledAway, setHeroScrolledAway] = useState(false);
   useLightStatusBar();
+  const tabSpace = useTabBarSpace();
   // Launch edits (5 Nov): a user swap changes Home too — see FamilyMemberDay.
   const activeProfileId = useSelector(s => s.dependants?.activeProfileId) || null;
   const familyMembers = useSelector(s => s.dependants?.items);
@@ -969,6 +971,9 @@ const Today = ({ navigation, route }) => {
       />
 
       <ScrollView
+        // Clears the frosted tab bar this list scrolls under.
+        contentInset={{ bottom: tabSpace }}
+        scrollIndicatorInsets={{ bottom: tabSpace }}
         nestedScrollEnabled
         refreshControl={
           <RefreshControl

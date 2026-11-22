@@ -51,6 +51,7 @@ import {
   LogOut,
 } from 'lucide-react-native';
 import { useLightStatusBar } from '../../hooks/useLightStatusBar';
+import { useTabBarSpace } from '../../hooks/useTabBarSpace';
 
 const profileOptions = [
   {
@@ -127,6 +128,7 @@ const profileOptions = [
 const Profile = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   useLightStatusBar();
+  const tabSpace = useTabBarSpace();
   const dispatch = useDispatch();
   const { alert, AlertComponent } = useCustomAlert();
   // Group the options by section
@@ -472,6 +474,9 @@ const Profile = ({ navigation }) => {
         onDismiss={handleSubscriptionExpiryDismiss}
       />
       <ScrollView
+        // Clears the frosted tab bar this list scrolls under.
+        contentInset={{ bottom: tabSpace }}
+        scrollIndicatorInsets={{ bottom: tabSpace }}
         // The hero paints under the status bar itself.
         contentInsetAdjustmentBehavior="never"
         refreshControl={

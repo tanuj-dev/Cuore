@@ -1,8 +1,14 @@
-import React, { useEffect } from 'react';
-import { View, Image, Platform } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Image, Platform, Animated, StyleSheet } from 'react-native';
+import { BlurView } from '@react-native-community/blur';
 import { createStackNavigator } from '@react-navigation/stack';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {
+  GLASS_TAB_BAR,
+  tabBarBottomGap,
+  useTabBarSpace,
+} from '../hooks/useTabBarSpace';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -137,24 +143,45 @@ function BottomTabNavigator() {
           tabBarLabelStyle: {
             fontSize: 10.5,
             fontFamily: 'Poppins-SemiBold',
-            marginTop: 2,
+            marginTop: 0,
           },
-          tabBarStyle: {
-            marginHorizontal: 16,
-            marginBottom: insets.bottom > 0 ? 4 : 10,
-            marginTop: 6,
-            height: 66,
-            paddingTop: 8,
-            paddingBottom: 8,
-            borderRadius: 26,
-            borderTopWidth: 0,
-            backgroundColor: t.surface,
-            shadowColor: '#0f172a',
-            shadowOpacity: 0.12,
-            shadowRadius: 18,
-            shadowOffset: { width: 0, height: 6 },
-            elevation: 12,
-          },
+          tabBarStyle: GLASS_TAB_BAR
+            ? {
+                // iOS: frosted glass floating over the screen, like the system bars on new
+                // iPhones. Screens scroll underneath it (see useTabBarSpace).
+                position: 'absolute',
+                // The bar is pinned left: 0 / right: 0 by the navigator, so the side gaps
+                // have to be margins.
+                marginHorizontal: 16,
+                bottom: tabBarBottomGap(insets),
+                height: 60,
+                paddingTop: 5,
+                paddingBottom: 5,
+                borderRadius: 26,
+                borderTopWidth: 0,
+                backgroundColor: 'transparent',
+                shadowColor: '#0f172a',
+                shadowOpacity: 0.1,
+                shadowRadius: 18,
+                shadowOffset: { width: 0, height: 6 },
+              }
+            : {
+                marginHorizontal: 16,
+                marginBottom: tabBarBottomGap(insets),
+                marginTop: 6,
+                height: 60,
+                paddingTop: 5,
+                paddingBottom: 5,
+                borderRadius: 26,
+                borderTopWidth: 0,
+                backgroundColor: t.surface,
+                shadowColor: '#0f172a',
+                shadowOpacity: 0.12,
+                shadowRadius: 18,
+                shadowOffset: { width: 0, height: 6 },
+                elevation: 12,
+              },
+          tabBarBackground: GLASS_TAB_BAR ? GlassTabBackground : undefined,
           // The selected tab sits in a soft brand pill, not just a tinted icon.
           tabBarActiveBackgroundColor: t.brandSoft,
           tabBarItemStyle: { borderRadius: 18, marginHorizontal: 1, overflow: 'hidden' },
@@ -164,20 +191,32 @@ function BottomTabNavigator() {
         <Tab.Screen
           name="Today"
           component={TodayStack}
-          options={{ tabBarIcon: ({ color }) => <House size={22} color={color} /> }}
+          options={{ tabBarIcon: ({ color, focused }) => (
+              <TabIcon focused={focused}>
+                <House size={22} color={color} />
+              </TabIcon>
+            ) }}
         />
 
         <Tab.Screen
           name="Explore"
           component={ExploreStack}
-          options={{ tabBarIcon: ({ color }) => <Compass size={22} color={color} /> }}
+          options={{ tabBarIcon: ({ color, focused }) => (
+              <TabIcon focused={focused}>
+                <Compass size={22} color={color} />
+              </TabIcon>
+            ) }}
         />
 
         <Tab.Screen
           name="Trend"
           component={PredictStack}
           options={{
-            tabBarIcon: ({ color }) => <TrendingUp size={22} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon focused={focused}>
+                <TrendingUp size={22} color={color} />
+              </TabIcon>
+            ),
           }}
         />
 
@@ -188,7 +227,11 @@ function BottomTabNavigator() {
             name="Notes"
             component={Notes}
             options={{
-              tabBarIcon: ({ color }) => <NotebookPen size={22} color={color} />,
+              tabBarIcon: ({ color, focused }) => (
+              <TabIcon focused={focused}>
+                <NotebookPen size={22} color={color} />
+              </TabIcon>
+            ),
             }}
           />
         )}
@@ -198,7 +241,11 @@ function BottomTabNavigator() {
             name="CuoreCare"
             component={CuoreCareStack}
             options={{
-              tabBarIcon: ({ color }) => <Stethoscope size={22} color={color} />,
+              tabBarIcon: ({ color, focused }) => (
+              <TabIcon focused={focused}>
+                <Stethoscope size={22} color={color} />
+              </TabIcon>
+            ),
             }}
           />
         )}
@@ -208,6 +255,7 @@ function BottomTabNavigator() {
           component={ProfileStack}
           options={{
             tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused}>
               <View
                 style={{
                   borderWidth: 2,
@@ -221,11 +269,37 @@ function BottomTabNavigator() {
                   style={{ width: 24, height: 24, borderRadius: 12 }}
                 />
               </View>
+              </TabIcon>
             ),
           }}
         />
       </Tab.Navigator>
     </SafeAreaView>
+  );
+}
+
+/* The selected tab's icon pops up slightly with a spring; the others settle back. */
+function TabIcon({ focused, children }) {
+  const pop = useRef(new Animated.Value(focused ? 1 : 0)).current;
+  useEffect(() => {
+    Animated.spring(pop, {
+      toValue: focused ? 1 : 0,
+      useNativeDriver: true,
+      speed: 18,
+      bounciness: 10,
+    }).start();
+  }, [focused, pop]);
+  return (
+    <Animated.View
+      style={{
+        transform: [
+          { scale: pop.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] }) },
+          { translateY: pop.interpolate({ inputRange: [0, 1], outputRange: [0, -1] }) },
+        ],
+      }}
+    >
+      {children}
+    </Animated.View>
   );
 }
 
@@ -252,7 +326,71 @@ const TAB_FIRST_SCREEN = {
   CuoreCare: 'CuoreCareHome',
 };
 
-function tabScreenLayout({ children, route }) {
+// Tab screens whose own scroll view runs under the glass bar (useTabBarSpace). Every other
+// screen in a tab stops at the top of the bar, so nothing it has is ever hidden behind it.
+const GLASS_SCREENS = new Set([
+  'TodayMain', 'ExploreMain', 'Predict', 'ProfileMain', 'CuoreCareHome',
+]);
+
+/* Frosted-glass fill behind the iOS tab bar. */
+function GlassTabBackground() {
+  return (
+    <View style={styles.glass}>
+      <BlurView
+        style={StyleSheet.absoluteFill}
+        blurType="ultraThinMaterialLight"
+        blurAmount={24}
+        reducedTransparencyFallbackColor="#FFFFFF"
+      />
+      <View style={styles.glassTint} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  glass: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 26,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.7)',
+  },
+  glassTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+});
+
+function tabScreenLayout({ children, route, navigation }) {
+  return (
+    <TabScene route={route} navigation={navigation}>
+      {children}
+    </TabScene>
+  );
+}
+
+function TabScene({ children, route, navigation }) {
+  const tabSpace = useTabBarSpace();
+  // The tab's content fades and rises in each time the tab is selected. This replaces the
+  // navigator's built-in 'shift' animation, which could leave a tab blank when tabs were
+  // switched quickly (an interrupted transition left the screen invisible). Every run here
+  // starts from 0 and always ends at fully visible, so a fast tap can't strand it.
+  const appear = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    return navigation.addListener('focus', () => {
+      appear.stopAnimation();
+      appear.setValue(0);
+      Animated.timing(appear, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (!finished) {
+          appear.setValue(1);
+        }
+      });
+    });
+  }, [navigation, appear]);
   const focused =
     getFocusedRouteNameFromRoute(route) ?? TAB_FIRST_SCREEN[route.name] ?? route.name;
   // Always the SAME wrapper element, only its edges change. Returning bare children for
@@ -260,12 +398,32 @@ function tabScreenLayout({ children, route }) {
   // focused screen crossed between the two groups, which remounted the whole tab stack and
   // threw the user back to its first screen (My Health "did nothing" from Today).
   const selfInset = SELF_INSET.has(focused);
+  const underGlass = GLASS_SCREENS.has(focused);
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: selfInset ? 'transparent' : 'white' }}
+      style={{
+        flex: 1,
+        backgroundColor: selfInset ? 'transparent' : 'white',
+        paddingBottom: underGlass ? 0 : tabSpace,
+      }}
       edges={selfInset ? [] : ['top']}
     >
-      {children}
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: appear,
+          transform: [
+            {
+              translateY: appear.interpolate({
+                inputRange: [0, 1],
+                outputRange: [8, 0],
+              }),
+            },
+          ],
+        }}
+      >
+        {children}
+      </Animated.View>
     </SafeAreaView>
   );
 }

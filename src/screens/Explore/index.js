@@ -11,6 +11,7 @@ import HeroDiscs from '../../components/ui/HeroDiscs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronRight } from 'lucide-react-native';
 import { useLightStatusBar } from '../../hooks/useLightStatusBar';
+import { useTabBarSpace } from '../../hooks/useTabBarSpace';
 import React, { useMemo, useCallback, useState } from 'react';
 import { hp, wp, Images } from '../../utilities';
 import { useSelector } from 'react-redux';
@@ -79,6 +80,7 @@ const HERO = ['#1E3A8A', '#1E64AC'];
 const Explore = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   useLightStatusBar();
+  const tabSpace = useTabBarSpace();
   const { alert, AlertComponent } = useCustomAlert();
   const mealsOn = useSelector(state => mealCardsEnabled(state.home?.data));
   const currentDayKey = useMemo(() => {
@@ -237,6 +239,9 @@ const Explore = ({ navigation }) => {
       {AlertComponent}
       <View style={styles.safeArea}>
         <FlatList
+          // Clears the frosted tab bar this list scrolls under.
+          contentInset={{ bottom: tabSpace }}
+          scrollIndicatorInsets={{ bottom: tabSpace }}
           data={MODULES}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
